@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>mouse shortcuts: allow same functions as kb shortcuts - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ba7f4d69af62d20e13fea78a408095e017410651.html">ba7f4d69af62d20e13fea78a408095e017410651</a>
+<b>parent</b> <a href="../commit/2b8333f553c14c15398e810353e192eb05938580.html">2b8333f553c14c15398e810353e192eb05938580</a>
+<b>Author:</b> Avi Halachmi (:avih) &lt;<a href="mailto:avihpit@yahoo.com">avihpit@yahoo.com</a>&gt;
+<b>Date:</b>   Thu, 10 Oct 2019 23:02:26 +0300
+
+mouse shortcuts: allow same functions as kb shortcuts
+
+Previously mouse shortcuts supported only ttywrite.
+
+This required adding an &quot;Arg&quot; function ttysend - which does what the
+original mouse shortcuts did.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">x.c</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>3 files changed, 18 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -155,9 +155,9 @@ static unsigned int defaultattr = 11;
+</a>  * Beware that overloading Button1 will disable the selection.
+  */
+ static MouseShortcut mshortcuts[] = {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	/* button               mask            string */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ Button4,              XK_ANY_MOD,     &quot;\031&quot; },
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	{ Button5,              XK_ANY_MOD,     &quot;\005&quot; },
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	/* mask                 button   function        argument */
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	{ XK_ANY_MOD,           Button4, ttysend,        {.s = &quot;\031&quot;} },
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	{ XK_ANY_MOD,           Button5, ttysend,        {.s = &quot;\005&quot;} },
+</a> };
+ 
+ /* Internal keyboard shortcuts. */
+<b>diff --git a/<a id="h1" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -74,6 +74,7 @@ typedef union {
+</a> 	uint ui;
+ 	float f;
+ 	const void *v;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	const char *s;
+</a> } Arg;
+ 
+ void die(const char *, ...);
+<b>diff --git a/<a id="h2" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -29,9 +29,10 @@ typedef struct {
+</a> } Shortcut;
+ 
+ typedef struct {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	uint b;
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	uint mask;
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-	char *s;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	uint mod;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	uint button;
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	void (*func)(const Arg *);
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	const Arg arg;
+</a> } MouseShortcut;
+ 
+ typedef struct {
+<a href="#h2-1" id="h2-1" class="h">@@ -56,6 +57,7 @@ static void selpaste(const Arg *);
+</a> static void zoom(const Arg *);
+ static void zoomabs(const Arg *);
+ static void zoomreset(const Arg *);
+<a href="#h2-1-3" id="h2-1-3" class="i">+static void ttysend(const Arg *);
+</a> 
+ /* config.h for applying patches and the configuration. */
+ #include &quot;config.h&quot;
+<a href="#h2-2" id="h2-2" class="h">@@ -312,6 +314,12 @@ zoomreset(const Arg *arg)
+</a> 	}
+ }
+ 
+<a href="#h2-2-3" id="h2-2-3" class="i">+void
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+ttysend(const Arg *arg)
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+{
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+	ttywrite(arg-&gt;s, strlen(arg-&gt;s), 1);
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+}
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+
+</a> int
+ evcol(XEvent *e)
+ {
+<a href="#h2-3" id="h2-3" class="h">@@ -421,9 +429,9 @@ bpress(XEvent *e)
+</a> 	}
+ 
+ 	for (ms = mshortcuts; ms &lt; mshortcuts + LEN(mshortcuts); ms++) {
+<a href="#h2-3-3" id="h2-3-3" class="d">-		if (e-&gt;xbutton.button == ms-&gt;b
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-				&amp;&amp; match(ms-&gt;mask, e-&gt;xbutton.state)) {
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-			ttywrite(ms-&gt;s, strlen(ms-&gt;s), 1);
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+		if (e-&gt;xbutton.button == ms-&gt;button
+</a><a href="#h2-3-7" id="h2-3-7" class="i">+				&amp;&amp; match(ms-&gt;mod, e-&gt;xbutton.state)) {
+</a><a href="#h2-3-8" id="h2-3-8" class="i">+			ms-&gt;func(&amp;(ms-&gt;arg));
+</a> 			return;
+ 		}
+ 	}
+</pre>
+</div>
+</body>
+</html>

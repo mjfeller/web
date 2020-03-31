@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed the layout symbol bug reported by Nibble (but using a different approach as he suggested) - optimised drawbar() and arrange() handling for multiple monitors, arrange only arranges the relevant monitors when applicable, same with drawbar - need to release 5.7.1 - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9e8dd3479da9f484c9aa37adcd327989149e89ef.html">9e8dd3479da9f484c9aa37adcd327989149e89ef</a>
+<b>parent</b> <a href="../commit/0b72be924d3f0daa63e45a09951d6cb6cc9b335e.html">0b72be924d3f0daa63e45a09951d6cb6cc9b335e</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Sun, 27 Sep 2009 10:31:14 +0100
+
+fixed the layout symbol bug reported by Nibble (but using a different approach as he suggested)
+- optimised drawbar() and arrange() handling for multiple monitors, arrange only arranges the relevant monitors when applicable, same with drawbar
+- need to release 5.7.1
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">66</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 39 insertions(+), 29 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,5 +1,5 @@
+</a> # dwm version
+<a href="#h0-0-1" id="h0-0-1" class="d">-VERSION = 5.7
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+VERSION = 5.7.1
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -152,7 +152,8 @@ typedef struct {
+</a> /* function declarations */
+ static void applyrules(Client *c);
+ static Bool applysizehints(Client *c, int *x, int *y, int *w, int *h, Bool interact);
+<a href="#h1-0-3" id="h1-0-3" class="d">-static void arrange(void);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+static void arrange(Monitor *m);
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+static void arrangemon(Monitor *m);
+</a> static void attach(Client *c);
+ static void attachstack(Client *c);
+ static void buttonpress(XEvent *e);
+<a href="#h1-1" id="h1-1" class="h">@@ -379,18 +380,24 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, Bool interact) {
+</a> }
+ 
+ void
+<a href="#h1-1-3" id="h1-1-3" class="d">-arrange(void) {
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	Monitor *m;
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	for(m = mons; m; m = m-&gt;next)
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+arrange(Monitor *m) {
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	if(m)
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+		showhide(m-&gt;stack);
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+	else for(m = mons; m; m = m-&gt;next)
+</a> 		showhide(m-&gt;stack);
+ 	focus(NULL);
+<a href="#h1-1-13" id="h1-1-13" class="d">-	for(m = mons; m; m = m-&gt;next) {
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-		strncpy(m-&gt;ltsymbol, m-&gt;lt[m-&gt;sellt]-&gt;symbol, sizeof m-&gt;ltsymbol);
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-		if(m-&gt;lt[m-&gt;sellt]-&gt;arrange)
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-			m-&gt;lt[m-&gt;sellt]-&gt;arrange(m);
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-		restack(m);
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-	}
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+	if(m)
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+		arrangemon(m);
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+	else for(m = mons; m; m = m-&gt;next)
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+		arrangemon(m);
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+}
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+void
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+arrangemon(Monitor *m) {
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+	strncpy(m-&gt;ltsymbol, m-&gt;lt[m-&gt;sellt]-&gt;symbol, sizeof m-&gt;ltsymbol);
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+	if(m-&gt;lt[m-&gt;sellt]-&gt;arrange)
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+		m-&gt;lt[m-&gt;sellt]-&gt;arrange(m);
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+	restack(m);
+</a> }
+ 
+ void
+<a href="#h1-2" id="h1-2" class="h">@@ -546,7 +553,7 @@ configurenotify(XEvent *e) {
+</a> 			updatebars();
+ 			for(m = mons; m; m = m-&gt;next)
+ 				XMoveResizeWindow(dpy, m-&gt;barwin, m-&gt;wx, m-&gt;by, m-&gt;ww, bh);
+<a href="#h1-2-3" id="h1-2-3" class="d">-			arrange();
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+			arrange(NULL);
+</a> 		}
+ 	}
+ }
+<a href="#h1-3" id="h1-3" class="h">@@ -1139,7 +1146,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y, c-&gt;w, c-&gt;h); /* some windows require this */
+ 	XMapWindow(dpy, c-&gt;win);
+ 	setclientstate(c, NormalState);
+<a href="#h1-3-3" id="h1-3-3" class="d">-	arrange();
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	arrange(c-&gt;mon);
+</a> }
+ 
+ void
+<a href="#h1-4" id="h1-4" class="h">@@ -1265,7 +1272,7 @@ propertynotify(XEvent *e) {
+</a> 		case XA_WM_TRANSIENT_FOR:
+ 			XGetTransientForHint(dpy, c-&gt;win, &amp;trans);
+ 			if(!c-&gt;isfloating &amp;&amp; (c-&gt;isfloating = (wintoclient(trans) != NULL)))
+<a href="#h1-4-3" id="h1-4-3" class="d">-				arrange();
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+				arrange(c-&gt;mon);
+</a> 			break;
+ 		case XA_WM_NORMAL_HINTS:
+ 			updatesizehints(c);
+<a href="#h1-5" id="h1-5" class="h">@@ -1360,7 +1367,7 @@ restack(Monitor *m) {
+</a> 	XEvent ev;
+ 	XWindowChanges wc;
+ 
+<a href="#h1-5-3" id="h1-5-3" class="d">-	drawbars();
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	drawbar(m);
+</a> 	if(!m-&gt;sel)
+ 		return;
+ 	if(m-&gt;sel-&gt;isfloating || !m-&gt;lt[m-&gt;sellt]-&gt;arrange)
+<a href="#h1-6" id="h1-6" class="h">@@ -1427,7 +1434,7 @@ sendmon(Client *c, Monitor *m) {
+</a> 	attach(c);
+ 	attachstack(c);
+ 	focus(NULL);
+<a href="#h1-6-3" id="h1-6-3" class="d">-	arrange();
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+	arrange(NULL);
+</a> }
+ 
+ void
+<a href="#h1-7" id="h1-7" class="h">@@ -1442,12 +1449,14 @@ void
+</a> setlayout(const Arg *arg) {
+ 	if(!arg || !arg-&gt;v || arg-&gt;v != selmon-&gt;lt[selmon-&gt;sellt])
+ 		selmon-&gt;sellt ^= 1;
+<a href="#h1-7-3" id="h1-7-3" class="d">-	if(arg &amp;&amp; arg-&gt;v)
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	if(arg &amp;&amp; arg-&gt;v) {
+</a> 		selmon-&gt;lt[selmon-&gt;sellt] = (Layout *)arg-&gt;v;
+<a href="#h1-7-6" id="h1-7-6" class="i">+		strncpy(selmon-&gt;ltsymbol, selmon-&gt;lt[selmon-&gt;sellt]-&gt;symbol, sizeof selmon-&gt;ltsymbol);
+</a><a href="#h1-7-7" id="h1-7-7" class="i">+	}
+</a> 	if(selmon-&gt;sel)
+<a href="#h1-7-9" id="h1-7-9" class="d">-		arrange();
+</a><a href="#h1-7-10" id="h1-7-10" class="i">+		arrange(selmon);
+</a> 	else
+<a href="#h1-7-12" id="h1-7-12" class="d">-		drawbars();
+</a><a href="#h1-7-13" id="h1-7-13" class="i">+		drawbar(selmon);
+</a> }
+ 
+ /* arg &gt; 1.0 will set mfact absolutly */
+<a href="#h1-8" id="h1-8" class="h">@@ -1461,7 +1470,7 @@ setmfact(const Arg *arg) {
+</a> 	if(f &lt; 0.1 || f &gt; 0.9)
+ 		return;
+ 	selmon-&gt;mfact = f;
+<a href="#h1-8-3" id="h1-8-3" class="d">-	arrange();
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	arrange(selmon);
+</a> }
+ 
+ void
+<a href="#h1-9" id="h1-9" class="h">@@ -1558,7 +1567,7 @@ void
+</a> tag(const Arg *arg) {
+ 	if(selmon-&gt;sel &amp;&amp; arg-&gt;ui &amp; TAGMASK) {
+ 		selmon-&gt;sel-&gt;tags = arg-&gt;ui &amp; TAGMASK;
+<a href="#h1-9-3" id="h1-9-3" class="d">-		arrange();
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+		arrange(selmon);
+</a> 	}
+ }
+ 
+<a href="#h1-10" id="h1-10" class="h">@@ -1615,7 +1624,7 @@ togglebar(const Arg *arg) {
+</a> 	selmon-&gt;showbar = !selmon-&gt;showbar;
+ 	updatebarpos(selmon);
+ 	XMoveResizeWindow(dpy, selmon-&gt;barwin, selmon-&gt;wx, selmon-&gt;by, selmon-&gt;ww, bh);
+<a href="#h1-10-3" id="h1-10-3" class="d">-	arrange();
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+	arrange(selmon);
+</a> }
+ 
+ void
+<a href="#h1-11" id="h1-11" class="h">@@ -1626,7 +1635,7 @@ togglefloating(const Arg *arg) {
+</a> 	if(selmon-&gt;sel-&gt;isfloating)
+ 		resize(selmon-&gt;sel, selmon-&gt;sel-&gt;x, selmon-&gt;sel-&gt;y,
+ 		       selmon-&gt;sel-&gt;w, selmon-&gt;sel-&gt;h, False);
+<a href="#h1-11-3" id="h1-11-3" class="d">-	arrange();
+</a><a href="#h1-11-4" id="h1-11-4" class="i">+	arrange(selmon);
+</a> }
+ 
+ void
+<a href="#h1-12" id="h1-12" class="h">@@ -1638,7 +1647,7 @@ toggletag(const Arg *arg) {
+</a> 	newtags = selmon-&gt;sel-&gt;tags ^ (arg-&gt;ui &amp; TAGMASK);
+ 	if(newtags) {
+ 		selmon-&gt;sel-&gt;tags = newtags;
+<a href="#h1-12-3" id="h1-12-3" class="d">-		arrange();
+</a><a href="#h1-12-4" id="h1-12-4" class="i">+		arrange(selmon);
+</a> 	}
+ }
+ 
+<a href="#h1-13" id="h1-13" class="h">@@ -1648,7 +1657,7 @@ toggleview(const Arg *arg) {
+</a> 
+ 	if(newtagset) {
+ 		selmon-&gt;tagset[selmon-&gt;seltags] = newtagset;
+<a href="#h1-13-3" id="h1-13-3" class="d">-		arrange();
+</a><a href="#h1-13-4" id="h1-13-4" class="i">+		arrange(selmon);
+</a> 	}
+ }
+ 
+<a href="#h1-14" id="h1-14" class="h">@@ -1663,6 +1672,7 @@ unfocus(Client *c) {
+</a> 
+ void
+ unmanage(Client *c, Bool destroyed) {
+<a href="#h1-14-3" id="h1-14-3" class="i">+	Monitor *m = c-&gt;mon;
+</a> 	XWindowChanges wc;
+ 
+ 	/* The server grab construct avoids race conditions. */
+<a href="#h1-15" id="h1-15" class="h">@@ -1681,7 +1691,7 @@ unmanage(Client *c, Bool destroyed) {
+</a> 	}
+ 	free(c);
+ 	focus(NULL);
+<a href="#h1-15-3" id="h1-15-3" class="d">-	arrange();
+</a><a href="#h1-15-4" id="h1-15-4" class="i">+	arrange(m);
+</a> }
+ 
+ void
+<a href="#h1-16" id="h1-16" class="h">@@ -1908,7 +1918,7 @@ view(const Arg *arg) {
+</a> 	selmon-&gt;seltags ^= 1; /* toggle sel tagset */
+ 	if(arg-&gt;ui &amp; TAGMASK)
+ 		selmon-&gt;tagset[selmon-&gt;seltags] = arg-&gt;ui &amp; TAGMASK;
+<a href="#h1-16-3" id="h1-16-3" class="d">-	arrange();
+</a><a href="#h1-16-4" id="h1-16-4" class="i">+	arrange(selmon);
+</a> }
+ 
+ Client *
+<a href="#h1-17" id="h1-17" class="h">@@ -1986,7 +1996,7 @@ zoom(const Arg *arg) {
+</a> 	detach(c);
+ 	attach(c);
+ 	focus(c);
+<a href="#h1-17-3" id="h1-17-3" class="d">-	arrange();
+</a><a href="#h1-17-4" id="h1-17-4" class="i">+	arrange(c-&gt;mon);
+</a> }
+ 
+ int
+</pre>
+</div>
+</body>
+</html>

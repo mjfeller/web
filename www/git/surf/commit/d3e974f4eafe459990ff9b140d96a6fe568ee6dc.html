@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Get rid of integer member b in Arg - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d3e974f4eafe459990ff9b140d96a6fe568ee6dc.html">d3e974f4eafe459990ff9b140d96a6fe568ee6dc</a>
+<b>parent</b> <a href="../commit/70c1b548abea41411b2dd2c91832a4212a25385c.html">70c1b548abea41411b2dd2c91832a4212a25385c</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sat, 20 May 2017 17:04:49 +0200
+
+Get rid of integer member b in Arg
+
+There&#39;s no need to keep another integer member there, use directly the i
+integer one.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">147</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 80 insertions(+), 81 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -130,8 +130,8 @@ static Key keys[] = {
+</a> 	{ 0,                     GDK_KEY_Escape, stop,       { 0 } },
+ 	{ MODKEY,                GDK_KEY_c,      stop,       { 0 } },
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_r,      reload,     { .b = 1 } },
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ MODKEY,                GDK_KEY_r,      reload,     { .b = 0 } },
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_r,      reload,     { .i = 1 } },
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	{ MODKEY,                GDK_KEY_r,      reload,     { .i = 0 } },
+</a> 
+ 	{ MODKEY,                GDK_KEY_l,      navigate,   { .i = +1 } },
+ 	{ MODKEY,                GDK_KEY_h,      navigate,   { .i = -1 } },
+<a href="#h0-1" id="h0-1" class="h">@@ -153,8 +153,8 @@ static Key keys[] = {
+</a> 	{ MODKEY,                GDK_KEY_minus,  zoom,       { .i = -1 } },
+ 	{ MODKEY,                GDK_KEY_plus,   zoom,       { .i = +1 } },
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	{ MODKEY,                GDK_KEY_p,      clipboard,  { .b = 1 } },
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	{ MODKEY,                GDK_KEY_y,      clipboard,  { .b = 0 } },
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	{ MODKEY,                GDK_KEY_p,      clipboard,  { .i = 1 } },
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	{ MODKEY,                GDK_KEY_y,      clipboard,  { .i = 0 } },
+</a> 
+ 	{ MODKEY,                GDK_KEY_n,      find,       { .i = +1 } },
+ 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_n,      find,       { .i = -1 } },
+<a href="#h0-2" id="h0-2" class="h">@@ -181,9 +181,9 @@ static Key keys[] = {
+</a> /* target can be OnDoc, OnLink, OnImg, OnMedia, OnEdit, OnBar, OnSel, OnAny */
+ static Button buttons[] = {
+ 	/* target       event mask      button  function        argument        stop event */
+<a href="#h0-2-3" id="h0-2-3" class="d">-	{ OnLink,       0,              2,      clicknewwindow, { .b = 0 },     1 },
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	{ OnLink,       MODKEY,         2,      clicknewwindow, { .b = 1 },     1 },
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	{ OnLink,       MODKEY,         1,      clicknewwindow, { .b = 1 },     1 },
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	{ OnLink,       0,              2,      clicknewwindow, { .i = 0 },     1 },
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	{ OnLink,       MODKEY,         2,      clicknewwindow, { .i = 1 },     1 },
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	{ OnLink,       MODKEY,         1,      clicknewwindow, { .i = 1 },     1 },
+</a> 	{ OnAny,        0,              8,      clicknavigate,  { .i = -1 },    1 },
+ 	{ OnAny,        0,              9,      clicknavigate,  { .i = +1 },    1 },
+ 	{ OnMedia,      MODKEY,         1,      clickexternplayer, { 0 },       1 },
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -96,7 +96,6 @@ typedef enum {
+</a> } ParamName;
+ 
+ typedef union {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	int b;
+</a> 	int i;
+ 	float f;
+ 	const void *v;
+<a href="#h1-1" id="h1-1" class="h">@@ -414,7 +413,7 @@ sigchld(int unused)
+</a> void
+ sighup(int unused)
+ {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	Arg a = { .b = 0 };
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	Arg a = { .i = 0 };
+</a> 	Client *c;
+ 
+ 	for (c = clients; c; c = c-&gt;next)
+<a href="#h1-2" id="h1-2" class="h">@@ -611,7 +610,7 @@ updatetitle(Client *c)
+</a> 	const char *name = c-&gt;overtitle ? c-&gt;overtitle :
+ 	                   c-&gt;title ? c-&gt;title : &quot;&quot;;
+ 
+<a href="#h1-2-3" id="h1-2-3" class="d">-	if (curconfig[ShowIndicators].val.b) {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	if (curconfig[ShowIndicators].val.i) {
+</a> 		gettogglestats(c);
+ 		getpagestats(c);
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -633,16 +632,16 @@ void
+</a> gettogglestats(Client *c)
+ {
+ 	togglestats[0] = cookiepolicy_set(cookiepolicy_get());
+<a href="#h1-3-3" id="h1-3-3" class="d">-	togglestats[1] = curconfig[CaretBrowsing].val.b ?   &#39;C&#39; : &#39;c&#39;;
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-	togglestats[2] = curconfig[Geolocation].val.b ?     &#39;G&#39; : &#39;g&#39;;
+</a><a href="#h1-3-5" id="h1-3-5" class="d">-	togglestats[3] = curconfig[DiskCache].val.b ?       &#39;D&#39; : &#39;d&#39;;
+</a><a href="#h1-3-6" id="h1-3-6" class="d">-	togglestats[4] = curconfig[LoadImages].val.b ?      &#39;I&#39; : &#39;i&#39;;
+</a><a href="#h1-3-7" id="h1-3-7" class="d">-	togglestats[5] = curconfig[JavaScript].val.b ?      &#39;S&#39; : &#39;s&#39;;
+</a><a href="#h1-3-8" id="h1-3-8" class="d">-	togglestats[6] = curconfig[Plugins].val.b ?         &#39;V&#39; : &#39;v&#39;;
+</a><a href="#h1-3-9" id="h1-3-9" class="d">-	togglestats[7] = curconfig[Style].val.b ?           &#39;M&#39; : &#39;m&#39;;
+</a><a href="#h1-3-10" id="h1-3-10" class="d">-	togglestats[8] = curconfig[FrameFlattening].val.b ? &#39;F&#39; : &#39;f&#39;;
+</a><a href="#h1-3-11" id="h1-3-11" class="d">-	togglestats[9] = curconfig[Certificate].val.b ?     &#39;X&#39; : &#39;x&#39;;
+</a><a href="#h1-3-12" id="h1-3-12" class="d">-	togglestats[10] = curconfig[StrictTLS].val.b ?      &#39;T&#39; : &#39;t&#39;;
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+	togglestats[1] = curconfig[CaretBrowsing].val.i ?   &#39;C&#39; : &#39;c&#39;;
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+	togglestats[2] = curconfig[Geolocation].val.i ?     &#39;G&#39; : &#39;g&#39;;
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+	togglestats[3] = curconfig[DiskCache].val.i ?       &#39;D&#39; : &#39;d&#39;;
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+	togglestats[4] = curconfig[LoadImages].val.i ?      &#39;I&#39; : &#39;i&#39;;
+</a><a href="#h1-3-17" id="h1-3-17" class="i">+	togglestats[5] = curconfig[JavaScript].val.i ?      &#39;S&#39; : &#39;s&#39;;
+</a><a href="#h1-3-18" id="h1-3-18" class="i">+	togglestats[6] = curconfig[Plugins].val.i ?         &#39;V&#39; : &#39;v&#39;;
+</a><a href="#h1-3-19" id="h1-3-19" class="i">+	togglestats[7] = curconfig[Style].val.i ?           &#39;M&#39; : &#39;m&#39;;
+</a><a href="#h1-3-20" id="h1-3-20" class="i">+	togglestats[8] = curconfig[FrameFlattening].val.i ? &#39;F&#39; : &#39;f&#39;;
+</a><a href="#h1-3-21" id="h1-3-21" class="i">+	togglestats[9] = curconfig[Certificate].val.i ?     &#39;X&#39; : &#39;x&#39;;
+</a><a href="#h1-3-22" id="h1-3-22" class="i">+	togglestats[10] = curconfig[StrictTLS].val.i ?      &#39;T&#39; : &#39;t&#39;;
+</a> 	togglestats[11] = &#39;\0&#39;;
+ }
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -733,18 +732,18 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a> 
+ 	switch (p) {
+ 	case AcceleratedCanvas:
+<a href="#h1-4-3" id="h1-4-3" class="d">-		webkit_settings_set_enable_accelerated_2d_canvas(s, a-&gt;b);
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		webkit_settings_set_enable_accelerated_2d_canvas(s, a-&gt;i);
+</a> 		break;
+ 	case AccessMicrophone:
+ 		return; /* do nothing */
+ 	case AccessWebcam:
+ 		return; /* do nothing */
+ 	case CaretBrowsing:
+<a href="#h1-4-11" id="h1-4-11" class="d">-		webkit_settings_set_enable_caret_browsing(s, a-&gt;b);
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+		webkit_settings_set_enable_caret_browsing(s, a-&gt;i);
+</a> 		refresh = 0;
+ 		break;
+ 	case Certificate:
+<a href="#h1-4-16" id="h1-4-16" class="d">-		if (a-&gt;b)
+</a><a href="#h1-4-17" id="h1-4-17" class="i">+		if (a-&gt;i)
+</a> 			setcert(c, geturi(c));
+ 		return; /* do not update */
+ 	case CookiePolicies:
+<a href="#h1-5" id="h1-5" class="h">@@ -756,7 +755,7 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a> 		break;
+ 	case DiskCache:
+ 		webkit_web_context_set_cache_model(
+<a href="#h1-5-3" id="h1-5-3" class="d">-		    webkit_web_view_get_context(c-&gt;view), a-&gt;b ?
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		    webkit_web_view_get_context(c-&gt;view), a-&gt;i ?
+</a> 		    WEBKIT_CACHE_MODEL_WEB_BROWSER :
+ 		    WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
+ 		return; /* do not update */
+<a href="#h1-6" id="h1-6" class="h">@@ -764,44 +763,44 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a> 		webkit_settings_set_default_charset(s, a-&gt;v);
+ 		return; /* do not update */
+ 	case DNSPrefetch:
+<a href="#h1-6-3" id="h1-6-3" class="d">-		webkit_settings_set_enable_dns_prefetching(s, a-&gt;b);
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+		webkit_settings_set_enable_dns_prefetching(s, a-&gt;i);
+</a> 		return; /* do not update */
+ 	case FileURLsCrossAccess:
+<a href="#h1-6-7" id="h1-6-7" class="d">-		webkit_settings_set_allow_file_access_from_file_urls(s, a-&gt;b);
+</a><a href="#h1-6-8" id="h1-6-8" class="d">-		webkit_settings_set_allow_universal_access_from_file_urls(s, a-&gt;b);
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+		webkit_settings_set_allow_file_access_from_file_urls(s, a-&gt;i);
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+		webkit_settings_set_allow_universal_access_from_file_urls(s, a-&gt;i);
+</a> 		return; /* do not update */
+ 	case FontSize:
+ 		webkit_settings_set_default_font_size(s, a-&gt;i);
+ 		return; /* do not update */
+ 	case FrameFlattening:
+<a href="#h1-6-16" id="h1-6-16" class="d">-		webkit_settings_set_enable_frame_flattening(s, a-&gt;b);
+</a><a href="#h1-6-17" id="h1-6-17" class="i">+		webkit_settings_set_enable_frame_flattening(s, a-&gt;i);
+</a> 		break;
+ 	case Geolocation:
+ 		refresh = 0;
+ 		break;
+ 	case HideBackground:
+<a href="#h1-6-23" id="h1-6-23" class="d">-		if (a-&gt;b)
+</a><a href="#h1-6-24" id="h1-6-24" class="i">+		if (a-&gt;i)
+</a> 			webkit_web_view_set_background_color(c-&gt;view, &amp;bgcolor);
+ 		return; /* do not update */
+ 	case Inspector:
+<a href="#h1-6-28" id="h1-6-28" class="d">-		webkit_settings_set_enable_developer_extras(s, a-&gt;b);
+</a><a href="#h1-6-29" id="h1-6-29" class="i">+		webkit_settings_set_enable_developer_extras(s, a-&gt;i);
+</a> 		return; /* do not update */
+ 	case Java:
+<a href="#h1-6-32" id="h1-6-32" class="d">-		webkit_settings_set_enable_java(s, a-&gt;b);
+</a><a href="#h1-6-33" id="h1-6-33" class="i">+		webkit_settings_set_enable_java(s, a-&gt;i);
+</a> 		return; /* do not update */
+ 	case JavaScript:
+<a href="#h1-6-36" id="h1-6-36" class="d">-		webkit_settings_set_enable_javascript(s, a-&gt;b);
+</a><a href="#h1-6-37" id="h1-6-37" class="i">+		webkit_settings_set_enable_javascript(s, a-&gt;i);
+</a> 		break;
+ 	case KioskMode:
+ 		return; /* do nothing */
+ 	case LoadImages:
+<a href="#h1-6-42" id="h1-6-42" class="d">-		webkit_settings_set_auto_load_images(s, a-&gt;b);
+</a><a href="#h1-6-43" id="h1-6-43" class="i">+		webkit_settings_set_auto_load_images(s, a-&gt;i);
+</a> 		break;
+ 	case MediaManualPlay:
+<a href="#h1-6-46" id="h1-6-46" class="d">-		webkit_settings_set_media_playback_requires_user_gesture(s, a-&gt;b);
+</a><a href="#h1-6-47" id="h1-6-47" class="i">+		webkit_settings_set_media_playback_requires_user_gesture(s, a-&gt;i);
+</a> 		break;
+ 	case Plugins:
+<a href="#h1-6-50" id="h1-6-50" class="d">-		webkit_settings_set_enable_plugins(s, a-&gt;b);
+</a><a href="#h1-6-51" id="h1-6-51" class="i">+		webkit_settings_set_enable_plugins(s, a-&gt;i);
+</a> 		break;
+ 	case PreferredLanguages:
+ 		return; /* do nothing */
+<a href="#h1-7" id="h1-7" class="h">@@ -818,27 +817,27 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a> 	case ShowIndicators:
+ 		break;
+ 	case SmoothScrolling:
+<a href="#h1-7-3" id="h1-7-3" class="d">-		webkit_settings_set_enable_smooth_scrolling(s, a-&gt;b);
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+		webkit_settings_set_enable_smooth_scrolling(s, a-&gt;i);
+</a> 		return; /* do not update */
+ 	case SiteQuirks:
+<a href="#h1-7-7" id="h1-7-7" class="d">-		webkit_settings_set_enable_site_specific_quirks(s, a-&gt;b);
+</a><a href="#h1-7-8" id="h1-7-8" class="i">+		webkit_settings_set_enable_site_specific_quirks(s, a-&gt;i);
+</a> 		break;
+ 	case SpellChecking:
+ 		webkit_web_context_set_spell_checking_enabled(
+<a href="#h1-7-12" id="h1-7-12" class="d">-		    webkit_web_view_get_context(c-&gt;view), a-&gt;b);
+</a><a href="#h1-7-13" id="h1-7-13" class="i">+		    webkit_web_view_get_context(c-&gt;view), a-&gt;i);
+</a> 		return; /* do not update */
+ 	case SpellLanguages:
+ 		return; /* do nothing */
+ 	case StrictTLS:
+ 		webkit_web_context_set_tls_errors_policy(
+<a href="#h1-7-19" id="h1-7-19" class="d">-		    webkit_web_view_get_context(c-&gt;view), a-&gt;b ?
+</a><a href="#h1-7-20" id="h1-7-20" class="i">+		    webkit_web_view_get_context(c-&gt;view), a-&gt;i ?
+</a> 		    WEBKIT_TLS_ERRORS_POLICY_FAIL :
+ 		    WEBKIT_TLS_ERRORS_POLICY_IGNORE);
+ 		break;
+ 	case Style:
+ 		webkit_user_content_manager_remove_all_style_sheets(
+ 		    webkit_web_view_get_user_content_manager(c-&gt;view));
+<a href="#h1-7-27" id="h1-7-27" class="d">-		if (a-&gt;b)
+</a><a href="#h1-7-28" id="h1-7-28" class="i">+		if (a-&gt;i)
+</a> 			setstyle(c, getstyle(geturi(c)));
+ 		refresh = 0;
+ 		break;
+<a href="#h1-8" id="h1-8" class="h">@@ -981,7 +980,7 @@ newwindow(Client *c, const Arg *a, int noembed)
+</a> 	cmd[i++] = argv0;
+ 	cmd[i++] = &quot;-a&quot;;
+ 	cmd[i++] = curconfig[CookiePolicies].val.v;
+<a href="#h1-8-3" id="h1-8-3" class="d">-	cmd[i++] = curconfig[ScrollBars].val.b ? &quot;-B&quot; : &quot;-b&quot;;
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	cmd[i++] = curconfig[ScrollBars].val.i ? &quot;-B&quot; : &quot;-b&quot;;
+</a> 	if (cookiefile &amp;&amp; g_strcmp0(cookiefile, &quot;&quot;)) {
+ 		cmd[i++] = &quot;-c&quot;;
+ 		cmd[i++] = cookiefile;
+<a href="#h1-9" id="h1-9" class="h">@@ -990,32 +989,32 @@ newwindow(Client *c, const Arg *a, int noembed)
+</a> 		cmd[i++] = &quot;-C&quot;;
+ 		cmd[i++] = stylefile;
+ 	}
+<a href="#h1-9-3" id="h1-9-3" class="d">-	cmd[i++] = curconfig[DiskCache].val.b ? &quot;-D&quot; : &quot;-d&quot;;
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+	cmd[i++] = curconfig[DiskCache].val.i ? &quot;-D&quot; : &quot;-d&quot;;
+</a> 	if (embed &amp;&amp; !noembed) {
+ 		cmd[i++] = &quot;-e&quot;;
+ 		snprintf(tmp, LENGTH(tmp), &quot;%lu&quot;, embed);
+ 		cmd[i++] = tmp;
+ 	}
+<a href="#h1-9-10" id="h1-9-10" class="d">-	cmd[i++] = curconfig[RunInFullscreen].val.b ? &quot;-F&quot; : &quot;-f&quot; ;
+</a><a href="#h1-9-11" id="h1-9-11" class="d">-	cmd[i++] = curconfig[Geolocation].val.b ?     &quot;-G&quot; : &quot;-g&quot; ;
+</a><a href="#h1-9-12" id="h1-9-12" class="d">-	cmd[i++] = curconfig[LoadImages].val.b ?      &quot;-I&quot; : &quot;-i&quot; ;
+</a><a href="#h1-9-13" id="h1-9-13" class="d">-	cmd[i++] = curconfig[KioskMode].val.b ?       &quot;-K&quot; : &quot;-k&quot; ;
+</a><a href="#h1-9-14" id="h1-9-14" class="d">-	cmd[i++] = curconfig[Style].val.b ?           &quot;-M&quot; : &quot;-m&quot; ;
+</a><a href="#h1-9-15" id="h1-9-15" class="d">-	cmd[i++] = curconfig[Inspector].val.b ?       &quot;-N&quot; : &quot;-n&quot; ;
+</a><a href="#h1-9-16" id="h1-9-16" class="d">-	cmd[i++] = curconfig[Plugins].val.b ?         &quot;-P&quot; : &quot;-p&quot; ;
+</a><a href="#h1-9-17" id="h1-9-17" class="i">+	cmd[i++] = curconfig[RunInFullscreen].val.i ? &quot;-F&quot; : &quot;-f&quot; ;
+</a><a href="#h1-9-18" id="h1-9-18" class="i">+	cmd[i++] = curconfig[Geolocation].val.i ?     &quot;-G&quot; : &quot;-g&quot; ;
+</a><a href="#h1-9-19" id="h1-9-19" class="i">+	cmd[i++] = curconfig[LoadImages].val.i ?      &quot;-I&quot; : &quot;-i&quot; ;
+</a><a href="#h1-9-20" id="h1-9-20" class="i">+	cmd[i++] = curconfig[KioskMode].val.i ?       &quot;-K&quot; : &quot;-k&quot; ;
+</a><a href="#h1-9-21" id="h1-9-21" class="i">+	cmd[i++] = curconfig[Style].val.i ?           &quot;-M&quot; : &quot;-m&quot; ;
+</a><a href="#h1-9-22" id="h1-9-22" class="i">+	cmd[i++] = curconfig[Inspector].val.i ?       &quot;-N&quot; : &quot;-n&quot; ;
+</a><a href="#h1-9-23" id="h1-9-23" class="i">+	cmd[i++] = curconfig[Plugins].val.i ?         &quot;-P&quot; : &quot;-p&quot; ;
+</a> 	if (scriptfile &amp;&amp; g_strcmp0(scriptfile, &quot;&quot;)) {
+ 		cmd[i++] = &quot;-r&quot;;
+ 		cmd[i++] = scriptfile;
+ 	}
+<a href="#h1-9-28" id="h1-9-28" class="d">-	cmd[i++] = curconfig[JavaScript].val.b ? &quot;-S&quot; : &quot;-s&quot;;
+</a><a href="#h1-9-29" id="h1-9-29" class="d">-	cmd[i++] = curconfig[StrictTLS].val.b ? &quot;-T&quot; : &quot;-t&quot;;
+</a><a href="#h1-9-30" id="h1-9-30" class="i">+	cmd[i++] = curconfig[JavaScript].val.i ? &quot;-S&quot; : &quot;-s&quot;;
+</a><a href="#h1-9-31" id="h1-9-31" class="i">+	cmd[i++] = curconfig[StrictTLS].val.i ? &quot;-T&quot; : &quot;-t&quot;;
+</a> 	if (fulluseragent &amp;&amp; g_strcmp0(fulluseragent, &quot;&quot;)) {
+ 		cmd[i++] = &quot;-u&quot;;
+ 		cmd[i++] = fulluseragent;
+ 	}
+ 	if (showxid)
+ 		cmd[i++] = &quot;-w&quot;;
+<a href="#h1-9-38" id="h1-9-38" class="d">-	cmd[i++] = curconfig[Certificate].val.b ? &quot;-X&quot; : &quot;-x&quot; ;
+</a><a href="#h1-9-39" id="h1-9-39" class="i">+	cmd[i++] = curconfig[Certificate].val.i ? &quot;-X&quot; : &quot;-x&quot; ;
+</a> 	/* do not keep zoom level */
+ 	cmd[i++] = &quot;--&quot;;
+ 	if ((uri = a-&gt;v))
+<a href="#h1-10" id="h1-10" class="h">@@ -1084,24 +1083,24 @@ newview(Client *c, WebKitWebView *rv)
+</a> 		    webkit_web_view_new_with_related_view(rv));
+ 	} else {
+ 		settings = webkit_settings_new_with_settings(
+<a href="#h1-10-3" id="h1-10-3" class="d">-		   &quot;allow-file-access-from-file-urls&quot;, curconfig[FileURLsCrossAccess].val.b,
+</a><a href="#h1-10-4" id="h1-10-4" class="d">-		   &quot;allow-universal-access-from-file-urls&quot;, curconfig[FileURLsCrossAccess].val.b,
+</a><a href="#h1-10-5" id="h1-10-5" class="d">-		   &quot;auto-load-images&quot;, curconfig[LoadImages].val.b,
+</a><a href="#h1-10-6" id="h1-10-6" class="i">+		   &quot;allow-file-access-from-file-urls&quot;, curconfig[FileURLsCrossAccess].val.i,
+</a><a href="#h1-10-7" id="h1-10-7" class="i">+		   &quot;allow-universal-access-from-file-urls&quot;, curconfig[FileURLsCrossAccess].val.i,
+</a><a href="#h1-10-8" id="h1-10-8" class="i">+		   &quot;auto-load-images&quot;, curconfig[LoadImages].val.i,
+</a> 		   &quot;default-charset&quot;, curconfig[DefaultCharset].val.v,
+ 		   &quot;default-font-size&quot;, curconfig[FontSize].val.i,
+<a href="#h1-10-11" id="h1-10-11" class="d">-		   &quot;enable-caret-browsing&quot;, curconfig[CaretBrowsing].val.b,
+</a><a href="#h1-10-12" id="h1-10-12" class="d">-		   &quot;enable-developer-extras&quot;, curconfig[Inspector].val.b,
+</a><a href="#h1-10-13" id="h1-10-13" class="d">-		   &quot;enable-dns-prefetching&quot;, curconfig[DNSPrefetch].val.b,
+</a><a href="#h1-10-14" id="h1-10-14" class="d">-		   &quot;enable-frame-flattening&quot;, curconfig[FrameFlattening].val.b,
+</a><a href="#h1-10-15" id="h1-10-15" class="d">-		   &quot;enable-html5-database&quot;, curconfig[DiskCache].val.b,
+</a><a href="#h1-10-16" id="h1-10-16" class="d">-		   &quot;enable-html5-local-storage&quot;, curconfig[DiskCache].val.b,
+</a><a href="#h1-10-17" id="h1-10-17" class="d">-		   &quot;enable-java&quot;, curconfig[Java].val.b,
+</a><a href="#h1-10-18" id="h1-10-18" class="d">-		   &quot;enable-javascript&quot;, curconfig[JavaScript].val.b,
+</a><a href="#h1-10-19" id="h1-10-19" class="d">-		   &quot;enable-plugins&quot;, curconfig[Plugins].val.b,
+</a><a href="#h1-10-20" id="h1-10-20" class="d">-		   &quot;enable-accelerated-2d-canvas&quot;, curconfig[AcceleratedCanvas].val.b,
+</a><a href="#h1-10-21" id="h1-10-21" class="d">-		   &quot;enable-site-specific-quirks&quot;, curconfig[SiteQuirks].val.b,
+</a><a href="#h1-10-22" id="h1-10-22" class="d">-		   &quot;enable-smooth-scrolling&quot;, curconfig[SmoothScrolling].val.b,
+</a><a href="#h1-10-23" id="h1-10-23" class="d">-		   &quot;media-playback-requires-user-gesture&quot;, curconfig[MediaManualPlay].val.b,
+</a><a href="#h1-10-24" id="h1-10-24" class="i">+		   &quot;enable-caret-browsing&quot;, curconfig[CaretBrowsing].val.i,
+</a><a href="#h1-10-25" id="h1-10-25" class="i">+		   &quot;enable-developer-extras&quot;, curconfig[Inspector].val.i,
+</a><a href="#h1-10-26" id="h1-10-26" class="i">+		   &quot;enable-dns-prefetching&quot;, curconfig[DNSPrefetch].val.i,
+</a><a href="#h1-10-27" id="h1-10-27" class="i">+		   &quot;enable-frame-flattening&quot;, curconfig[FrameFlattening].val.i,
+</a><a href="#h1-10-28" id="h1-10-28" class="i">+		   &quot;enable-html5-database&quot;, curconfig[DiskCache].val.i,
+</a><a href="#h1-10-29" id="h1-10-29" class="i">+		   &quot;enable-html5-local-storage&quot;, curconfig[DiskCache].val.i,
+</a><a href="#h1-10-30" id="h1-10-30" class="i">+		   &quot;enable-java&quot;, curconfig[Java].val.i,
+</a><a href="#h1-10-31" id="h1-10-31" class="i">+		   &quot;enable-javascript&quot;, curconfig[JavaScript].val.i,
+</a><a href="#h1-10-32" id="h1-10-32" class="i">+		   &quot;enable-plugins&quot;, curconfig[Plugins].val.i,
+</a><a href="#h1-10-33" id="h1-10-33" class="i">+		   &quot;enable-accelerated-2d-canvas&quot;, curconfig[AcceleratedCanvas].val.i,
+</a><a href="#h1-10-34" id="h1-10-34" class="i">+		   &quot;enable-site-specific-quirks&quot;, curconfig[SiteQuirks].val.i,
+</a><a href="#h1-10-35" id="h1-10-35" class="i">+		   &quot;enable-smooth-scrolling&quot;, curconfig[SmoothScrolling].val.i,
+</a><a href="#h1-10-36" id="h1-10-36" class="i">+		   &quot;media-playback-requires-user-gesture&quot;, curconfig[MediaManualPlay].val.i,
+</a> 		   NULL);
+ /* For more interesting settings, have a look at
+  * http://webkitgtk.org/reference/webkit2gtk/stable/WebKitSettings.html */
+<a href="#h1-11" id="h1-11" class="h">@@ -1128,11 +1127,11 @@ newview(Client *c, WebKitWebView *rv)
+</a> 		    WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES);
+ 		/* TLS */
+ 		webkit_web_context_set_tls_errors_policy(context,
+<a href="#h1-11-3" id="h1-11-3" class="d">-		    curconfig[StrictTLS].val.b ? WEBKIT_TLS_ERRORS_POLICY_FAIL :
+</a><a href="#h1-11-4" id="h1-11-4" class="i">+		    curconfig[StrictTLS].val.i ? WEBKIT_TLS_ERRORS_POLICY_FAIL :
+</a> 		    WEBKIT_TLS_ERRORS_POLICY_IGNORE);
+ 		/* disk cache */
+ 		webkit_web_context_set_cache_model(context,
+<a href="#h1-11-8" id="h1-11-8" class="d">-		    curconfig[DiskCache].val.b ? WEBKIT_CACHE_MODEL_WEB_BROWSER :
+</a><a href="#h1-11-9" id="h1-11-9" class="i">+		    curconfig[DiskCache].val.i ? WEBKIT_CACHE_MODEL_WEB_BROWSER :
+</a> 		    WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
+ 
+ 		/* Currently only works with text file to be compatible with curl */
+<a href="#h1-12" id="h1-12" class="h">@@ -1149,7 +1148,7 @@ newview(Client *c, WebKitWebView *rv)
+</a> 		webkit_web_context_set_spell_checking_languages(context,
+ 		    curconfig[SpellLanguages].val.v);
+ 		webkit_web_context_set_spell_checking_enabled(context,
+<a href="#h1-12-3" id="h1-12-3" class="d">-		    curconfig[SpellChecking].val.b);
+</a><a href="#h1-12-4" id="h1-12-4" class="i">+		    curconfig[SpellChecking].val.i);
+</a> 
+ 		g_signal_connect(G_OBJECT(context), &quot;download-started&quot;,
+ 		                 G_CALLBACK(downloadstarted), c);
+<a href="#h1-13" id="h1-13" class="h">@@ -1282,7 +1281,7 @@ winevent(GtkWidget *w, GdkEvent *e, Client *c)
+</a> 		updatetitle(c);
+ 		break;
+ 	case GDK_KEY_PRESS:
+<a href="#h1-13-3" id="h1-13-3" class="d">-		if (!curconfig[KioskMode].val.b) {
+</a><a href="#h1-13-4" id="h1-13-4" class="i">+		if (!curconfig[KioskMode].val.i) {
+</a> 			for (i = 0; i &lt; LENGTH(keys); ++i) {
+ 				if (gdk_keyval_to_lower(e-&gt;key.keyval) ==
+ 				    keys[i].keyval &amp;&amp;
+<a href="#h1-14" id="h1-14" class="h">@@ -1334,15 +1333,15 @@ showview(WebKitWebView *v, Client *c)
+</a> 		puts(winid);
+ 	}
+ 
+<a href="#h1-14-3" id="h1-14-3" class="d">-	if (curconfig[HideBackground].val.b)
+</a><a href="#h1-14-4" id="h1-14-4" class="i">+	if (curconfig[HideBackground].val.i)
+</a> 		webkit_web_view_set_background_color(c-&gt;view, &amp;bgcolor);
+ 
+<a href="#h1-14-7" id="h1-14-7" class="d">-	if (!curconfig[KioskMode].val.b) {
+</a><a href="#h1-14-8" id="h1-14-8" class="i">+	if (!curconfig[KioskMode].val.i) {
+</a> 		gdk_window_set_events(gwin, GDK_ALL_EVENTS_MASK);
+ 		gdk_window_add_filter(gwin, processx, c);
+ 	}
+ 
+<a href="#h1-14-13" id="h1-14-13" class="d">-	if (curconfig[RunInFullscreen].val.b)
+</a><a href="#h1-14-14" id="h1-14-14" class="i">+	if (curconfig[RunInFullscreen].val.i)
+</a> 		togglefullscreen(c, NULL);
+ 
+ 	if (curconfig[ZoomLevel].val.f != 1.0)
+<a href="#h1-15" id="h1-15" class="h">@@ -1533,7 +1532,7 @@ permissionrequested(WebKitWebView *v, WebKitPermissionRequest *r, Client *c)
+</a> 		return FALSE;
+ 	}
+ 
+<a href="#h1-15-3" id="h1-15-3" class="d">-	if (curconfig[param].val.b)
+</a><a href="#h1-15-4" id="h1-15-4" class="i">+	if (curconfig[param].val.i)
+</a> 		webkit_permission_request_allow(r);
+ 	else
+ 		webkit_permission_request_deny(r);
+<a href="#h1-16" id="h1-16" class="h">@@ -1715,7 +1714,7 @@ pasteuri(GtkClipboard *clipboard, const char *text, gpointer d)
+</a> void
+ reload(Client *c, const Arg *a)
+ {
+<a href="#h1-16-3" id="h1-16-3" class="d">-	if (a-&gt;b)
+</a><a href="#h1-16-4" id="h1-16-4" class="i">+	if (a-&gt;i)
+</a> 		webkit_web_view_reload_bypass_cache(c-&gt;view);
+ 	else
+ 		webkit_web_view_reload(c-&gt;view);
+<a href="#h1-17" id="h1-17" class="h">@@ -1755,7 +1754,7 @@ showcert(Client *c, const Arg *a)
+</a> void
+ clipboard(Client *c, const Arg *a)
+ {
+<a href="#h1-17-3" id="h1-17-3" class="d">-	if (a-&gt;b) { /* load clipboard uri */
+</a><a href="#h1-17-4" id="h1-17-4" class="i">+	if (a-&gt;i) { /* load clipboard uri */
+</a> 		gtk_clipboard_request_text(gtk_clipboard_get(
+ 		                           GDK_SELECTION_PRIMARY),
+ 		                           pasteuri, c);
+<a href="#h1-18" id="h1-18" class="h">@@ -1833,7 +1832,7 @@ stop(Client *c, const Arg *a)
+</a> void
+ toggle(Client *c, const Arg *a)
+ {
+<a href="#h1-18-3" id="h1-18-3" class="d">-	curconfig[a-&gt;i].val.b ^= 1;
+</a><a href="#h1-18-4" id="h1-18-4" class="i">+	curconfig[a-&gt;i].val.i ^= 1;
+</a> 	setparameter(c, 1, (ParamName)a-&gt;i, &amp;curconfig[a-&gt;i].val);
+ }
+ 
+<a href="#h1-19" id="h1-19" class="h">@@ -1861,7 +1860,7 @@ toggleinspector(Client *c, const Arg *a)
+</a> {
+ 	if (webkit_web_inspector_is_attached(c-&gt;inspector))
+ 		webkit_web_inspector_close(c-&gt;inspector);
+<a href="#h1-19-3" id="h1-19-3" class="d">-	else if (curconfig[Inspector].val.b)
+</a><a href="#h1-19-4" id="h1-19-4" class="i">+	else if (curconfig[Inspector].val.i)
+</a> 		webkit_web_inspector_show(c-&gt;inspector);
+ }
+ 
+<a href="#h1-20" id="h1-20" class="h">@@ -1903,7 +1902,7 @@ clicknewwindow(Client *c, const Arg *a, WebKitHitTestResult *h)
+</a> 	Arg arg;
+ 
+ 	arg.v = webkit_hit_test_result_get_link_uri(h);
+<a href="#h1-20-3" id="h1-20-3" class="d">-	newwindow(c, &amp;arg, a-&gt;b);
+</a><a href="#h1-20-4" id="h1-20-4" class="i">+	newwindow(c, &amp;arg, a-&gt;i);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

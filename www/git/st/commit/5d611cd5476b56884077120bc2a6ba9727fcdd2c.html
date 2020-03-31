@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added macro to test flags, removed tmovecursor(). - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5d611cd5476b56884077120bc2a6ba9727fcdd2c.html">5d611cd5476b56884077120bc2a6ba9727fcdd2c</a>
+<b>parent</b> <a href="../commit/4db3df312ada9d92564d5580fb4e67f7704efff8.html">4db3df312ada9d92564d5580fb4e67f7704efff8</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 26 Aug 2010 23:43:08 +0200
+
+added macro to test flags, removed tmovecursor().
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">42</td><td><span class="i">+++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 15 insertions(+), 27 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -34,6 +34,7 @@
+</a> #define BETWEEN(x, a, b)  ((a) &lt;= (x) &amp;&amp; (x) &lt;= (b))
+ #define LIMIT(x, a, b)    (x) = (x) &lt; (a) ? (a) : (x) &gt; (b) ? (b) : (x)
+ #define ATTRCMP(a, b) ((a).mode != (b).mode || (a).fg != (b).fg || (a).bg != (b).bg)
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define IS_SET(flag) (term.mode &amp; flag)
+</a> 
+ /* Attribute, Cursor, Character state, Terminal mode, Screen draw mode */
+ enum { ATTR_NULL=0 , ATTR_REVERSE=1 , ATTR_UNDERLINE=2, ATTR_BOLD=4, ATTR_GFX=8 };
+<a href="#h0-1" id="h0-1" class="h">@@ -128,7 +129,7 @@ static void csireset(void);
+</a> 
+ static void tclearregion(int, int, int, int);
+ static void tcursor(int);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void tmovecursor(int);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static void twrapcursor(void);
+</a> static void tdeletechar(int);
+ static void tdeleteline(int);
+ static void tinsertblank(int);
+<a href="#h0-2" id="h0-2" class="h">@@ -437,29 +438,13 @@ tmoveto(int x, int y) {
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="d">-tmovecursor(int dir) {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	int xf = term.c.x, yf = term.c.y;
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-	switch(dir) {
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-	case CURSOR_UP:
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-		yf--;
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-		break;
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-	case CURSOR_DOWN:
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-		yf++;
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-		break;
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-	case CURSOR_LEFT:
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-		xf--;
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-		break;
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-	case CURSOR_RIGHT:
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-		xf++;
+</a><a href="#h0-2-18" id="h0-2-18" class="d">-		if(term.mode &amp; MODE_WRAP &amp;&amp; xf &gt;= term.col) {
+</a><a href="#h0-2-19" id="h0-2-19" class="d">-			xf = 0, yf++;
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-			if(yf &gt; term.bot)
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-				yf = term.bot, tscroll();
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-		}
+</a><a href="#h0-2-23" id="h0-2-23" class="d">-		break;
+</a><a href="#h0-2-24" id="h0-2-24" class="d">-	}
+</a><a href="#h0-2-25" id="h0-2-25" class="d">-	tmoveto(xf, yf);
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+twrapcursor(void) {
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+	int y = term.c.y+1;
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+    if(y &gt; term.bot) {
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+        tmoveto(0, term.bot);
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+        tscroll();
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+    } else 
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+        tmoveto(0, y);
+</a> }
+ 	
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -969,7 +954,7 @@ tputc(char c) {
+</a> 			tputtab();
+ 			break;
+ 		case &#39;\b&#39;:
+<a href="#h0-3-3" id="h0-3-3" class="d">-			tmovecursor(CURSOR_LEFT);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			tmoveto(term.c.x-1, term.c.y);
+</a> 			break;
+ 		case &#39;\r&#39;:
+ 			tmoveto(0, term.c.y);
+<a href="#h0-4" id="h0-4" class="h">@@ -986,7 +971,10 @@ tputc(char c) {
+</a> 			break;
+ 		default:
+ 			tsetchar(c);
+<a href="#h0-4-3" id="h0-4-3" class="d">-			tmovecursor(CURSOR_RIGHT);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+            if(term.c.x+1 &lt; term.col) {
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+                tmoveto(term.c.x+1, term.c.y);
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+            } else if(IS_SET(MODE_WRAP))
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+                twrapcursor();
+</a> 			break;
+ 		}
+ 	}
+<a href="#h0-5" id="h0-5" class="h">@@ -1282,7 +1270,7 @@ kpress(XEvent *ev) {
+</a> 		case XK_Down:
+ 		case XK_Left:
+ 		case XK_Right:
+<a href="#h0-5-3" id="h0-5-3" class="d">-			sprintf(buf, &quot;\033%c%c&quot;, term.mode &amp; MODE_APPKEYPAD ? &#39;O&#39; : &#39;[&#39;, &quot;DACB&quot;[ksym - XK_Left]);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+			sprintf(buf, &quot;\033%c%c&quot;, IS_SET(MODE_APPKEYPAD) ? &#39;O&#39; : &#39;[&#39;, &quot;DACB&quot;[ksym - XK_Left]);
+</a> 			ttywrite(buf, 3);
+ 			break;
+ 		case XK_Insert:
+</pre>
+</div>
+</body>
+</html>

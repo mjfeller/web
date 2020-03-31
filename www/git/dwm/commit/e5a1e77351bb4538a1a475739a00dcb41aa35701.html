@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>testing Brians multiscreen issue fix - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e5a1e77351bb4538a1a475739a00dcb41aa35701.html">e5a1e77351bb4538a1a475739a00dcb41aa35701</a>
+<b>parent</b> <a href="../commit/8262d9e663a98ab74b938bb5cdf0ddfd733bc5df.html">8262d9e663a98ab74b938bb5cdf0ddfd733bc5df</a>
+<b>Author:</b> anselm@garbe.us &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Fri,  4 Nov 2011 20:02:35 +0100
+
+testing Brians multiscreen issue fix
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">18</td><td><span class="i">+++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -340,14 +340,14 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, Bool interact) {
+</a> 			*y = 0;
+ 	}
+ 	else {
+<a href="#h0-0-3" id="h0-0-3" class="d">-		if(*x &gt; m-&gt;mx + m-&gt;mw)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-			*x = m-&gt;mx + m-&gt;mw - WIDTH(c);
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-		if(*y &gt; m-&gt;my + m-&gt;mh)
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-			*y = m-&gt;my + m-&gt;mh - HEIGHT(c);
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-		if(*x + *w + 2 * c-&gt;bw &lt; m-&gt;mx)
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-			*x = m-&gt;mx;
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-		if(*y + *h + 2 * c-&gt;bw &lt; m-&gt;my)
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-			*y = m-&gt;my;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		if(*x &gt;= m-&gt;wx + m-&gt;ww)
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+			*x = m-&gt;wx + m-&gt;ww - WIDTH(c);
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		if(*y &gt;= m-&gt;wy + m-&gt;wh)
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+			*y = m-&gt;wy + m-&gt;wh - HEIGHT(c);
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		if(*x + *w + 2 * c-&gt;bw &lt;= m-&gt;wx)
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+			*x = m-&gt;wx;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		if(*y + *h + 2 * c-&gt;bw &lt;= m-&gt;wy)
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+			*y = m-&gt;wy;
+</a> 	}
+ 	if(*h &lt; bh)
+ 		*h = bh;
+<a href="#h0-1" id="h0-1" class="h">@@ -1146,7 +1146,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 			c-&gt;y = c-&gt;mon-&gt;my + c-&gt;mon-&gt;mh - HEIGHT(c);
+ 		c-&gt;x = MAX(c-&gt;x, c-&gt;mon-&gt;mx);
+ 		/* only fix client y-offset, if the client center might cover the bar */
+<a href="#h0-1-3" id="h0-1-3" class="d">-		c-&gt;y = MAX(c-&gt;y, ((c-&gt;mon-&gt;by == 0) &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &gt;= c-&gt;mon-&gt;wx)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		c-&gt;y = MAX(c-&gt;y, ((c-&gt;mon-&gt;by == c-&gt;mon-&gt;my) &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &gt;= c-&gt;mon-&gt;wx)
+</a> 		           &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &lt; c-&gt;mon-&gt;wx + c-&gt;mon-&gt;ww)) ? bh : c-&gt;mon-&gt;my);
+ 		c-&gt;bw = borderpx;
+ 	}
+</pre>
+</div>
+</body>
+</html>

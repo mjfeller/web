@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fix issues in example scripts - stagit - static site generate for git repositories
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="stagit Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>stagit</h1><span class="desc">static site generate for git repositories
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/587b01428d6ec2be1ab6b468198663118d483990.html">587b01428d6ec2be1ab6b468198663118d483990</a>
+<b>parent</b> <a href="../commit/477d50169a42431d7fb0f939eb851ef6a2d80c3a.html">477d50169a42431d7fb0f939eb851ef6a2d80c3a</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Fri,  1 Mar 2019 11:49:29 +0100
+
+fix issues in example scripts
+
+- in case cd fails don&#39;t continue (don&#39;t write in previous directory).
+- post-receive: quote $(pwd) in case it has spaces.
+
+found by shellcheck tool.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">example_create.sh</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">example_post-receive.sh</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 2 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/example_create.sh.html">example_create.sh</a> b/<a href="../file/example_create.sh.html">example_create.sh</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -30,7 +30,7 @@ for dir in &quot;${reposdir}/&quot;*/; do
+</a> 	printf &quot;%s... &quot; &quot;${d}&quot;
+ 
+ 	mkdir -p &quot;${curdir}/${d}&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	cd &quot;${curdir}/${d}&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	cd &quot;${curdir}/${d}&quot; || continue
+</a> 	stagit -c &quot;.cache&quot; &quot;${reposdir}/${r}&quot;
+ 
+ 	# symlinks
+<b>diff --git a/<a id="h1" href="../file/example_post-receive.sh.html">example_post-receive.sh</a> b/<a href="../file/example_post-receive.sh.html">example_post-receive.sh</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -14,7 +14,7 @@ export LC_CTYPE=&quot;en_US.UTF-8&quot;
+</a> 
+ name=&quot;$1&quot;
+ if test &quot;${name}&quot; = &quot;&quot;; then
+<a href="#h1-0-3" id="h1-0-3" class="d">-	name=$(basename $(pwd))
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	name=$(basename &quot;$(pwd)&quot;)
+</a> fi
+ 
+ # config
+</pre>
+</div>
+</body>
+</html>

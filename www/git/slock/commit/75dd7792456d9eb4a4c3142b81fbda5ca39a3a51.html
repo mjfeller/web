@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>prepared release - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/75dd7792456d9eb4a4c3142b81fbda5ca39a3a51.html">75dd7792456d9eb4a4c3142b81fbda5ca39a3a51</a>
+<b>parent</b> <a href="../commit/1460b14f450d65c68bf519538de5b5df1a7bc01c.html">1460b14f450d65c68bf519538de5b5df1a7bc01c</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 29 Jul 2008 19:14:53 +0100
+
+prepared release
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">10</td><td><span class="i">++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">slock.c</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 8 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -14,17 +14,15 @@ INCS = -I. -I/usr/include -I${X11INC}
+</a> LIBS = -L/usr/lib -lc -lcrypt -L${X11LIB} -lX11 -lXext
+ 
+ # flags
+<a href="#h0-0-3" id="h0-0-3" class="d">-CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;  -DHAVE_SHADOW_H
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-LDFLAGS = ${LIBS}
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-#CFLAGS = -g -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot; -DHAVE_SHADOW_H
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-#LDFLAGS = -g ${LIBS}
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; -DHAVE_SHADOW_H
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+CFLAGS = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+LDFLAGS = -s ${LIBS}
+</a> 
+<a href="#h0-0-11" id="h0-0-11" class="d">-# On *BSD remove -DHAVE_SHADOW_H from CFLAGS and add -DHAVE_BSD_AUTH
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+# On *BSD remove -DHAVE_SHADOW_H from CPPFLAGS and add -DHAVE_BSD_AUTH
+</a> # On OpenBSD and Darwin remove -lcrypt from LIBS
+ 
+ # compiler and linker
+ CC = cc
+<a href="#h0-0-17" id="h0-0-17" class="d">-LD = ${CC}
+</a> 
+ # Install mode. On BSD systems MODE=2755 and GROUP=auth
+ # On others MODE=4755 and GROUP=root
+<b>diff --git a/<a id="h1" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -22,7 +22,7 @@
+</a> #include &lt;bsd_auth.h&gt;
+ #endif
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-void
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+static void
+</a> die(const char *errstr, ...) {
+ 	va_list ap;
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -33,7 +33,7 @@ die(const char *errstr, ...) {
+</a> }
+ 
+ #ifndef HAVE_BSD_AUTH
+<a href="#h1-1-3" id="h1-1-3" class="d">-const char *
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+static const char *
+</a> get_password() { /* only run as root */
+ 	const char *rval;
+ 	struct passwd *pw;
+<a href="#h1-2" id="h1-2" class="h">@@ -132,11 +132,12 @@ main(int argc, char **argv) {
+</a> 		if(ev.type == KeyPress) {
+ 			buf[0] = 0;
+ 			num = XLookupString(&amp;ev.xkey, buf, sizeof buf, &amp;ksym, 0);
+<a href="#h1-2-3" id="h1-2-3" class="d">-			if(IsKeypadKey(ksym)) 
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+			if(IsKeypadKey(ksym)) {
+</a> 				if(ksym == XK_KP_Enter)
+ 					ksym = XK_Return;
+ 				else if(ksym &gt;= XK_KP_0 &amp;&amp; ksym &lt;= XK_KP_9)
+ 					ksym = (ksym - XK_KP_0) + XK_0;
+<a href="#h1-2-9" id="h1-2-9" class="i">+			}
+</a> 			if(IsFunctionKey(ksym) || IsKeypadKey(ksym)
+ 					|| IsMiscFunctionKey(ksym) || IsPFKey(ksym)
+ 					|| IsPrivateKeypadKey(ksym))
+</pre>
+</div>
+</body>
+</html>

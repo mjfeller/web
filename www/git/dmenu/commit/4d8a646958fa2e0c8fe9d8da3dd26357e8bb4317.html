@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>got rid of compile time xidx, grabbing the mouse pointer instead, falling back to screen 0 if no pointer available - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4d8a646958fa2e0c8fe9d8da3dd26357e8bb4317.html">4d8a646958fa2e0c8fe9d8da3dd26357e8bb4317</a>
+<b>parent</b> <a href="../commit/b89a9501c75744f1393ec943ca520c8b59501610.html">b89a9501c75744f1393ec943ca520c8b59501610</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 16 Jul 2008 18:38:53 +0100
+
+got rid of compile time xidx, grabbing the mouse pointer instead, falling back to screen 0 if no pointer available
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.h</a></td><td> | </td><td class="num">5</td><td><span class="i"></span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">23</td><td><span class="i">+++++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>2 files changed, 17 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,9 +6,4 @@ static const char *normbgcolor = &quot;#cccccc&quot;;
+</a> static const char *normfgcolor = &quot;#000000&quot;;
+ static const char *selbgcolor  = &quot;#0066ff&quot;;
+ static const char *selfgcolor  = &quot;#ffffff&quot;;
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a> static unsigned int spaceitem  = 30; /* px between menu items */
+<a href="#h0-0-5" id="h0-0-5" class="d">-
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-#ifdef XINERAMA
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-static unsigned int xidx       = 0;  /* Xinerama screen index to use */
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-#endif
+</a><b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -16,7 +16,8 @@
+</a> #endif
+ 
+ /* macros */
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define CLEANMASK(mask) (mask &amp; ~(numlockmask | LockMask))
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#define CLEANMASK(mask)         (mask &amp; ~(numlockmask | LockMask))
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+#define INRECT(X,Y,RX,RY,RW,RH) ((X) &gt;= (RX) &amp;&amp; (X) &lt; (RX) + (RW) &amp;&amp; (Y) &gt;= (RY) &amp;&amp; (Y) &lt; (RY) + (RH))
+</a> 
+ /* enums */
+ enum { ColFG, ColBG, ColLast };
+<a href="#h1-1" id="h1-1" class="h">@@ -585,7 +586,7 @@ run(void) {
+</a> 
+ void
+ setup(Bool topbar) {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	int i, j, x, y;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	int i, j, n, x, y;
+</a> 	XModifierKeymap *modmap;
+ 	XSetWindowAttributes wa;
+ #if XINERAMA
+<a href="#h1-2" id="h1-2" class="h">@@ -618,10 +619,20 @@ setup(Bool topbar) {
+</a> 	mh = dc.font.height + 2;
+ #if XINERAMA
+ 	if(XineramaIsActive(dpy)) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-		info = XineramaQueryScreens(dpy, &amp;i);
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-		x = info[xidx].x_org;
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-		y = topbar ? info[xidx].y_org : info[xidx].y_org + info[xidx].height - mh;
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-		mw = info[xidx].width;
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+		i = 0;
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+		info = XineramaQueryScreens(dpy, &amp;n);
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+		if(n &gt; 1) {
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+			int di;
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+			unsigned int dui;
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+			Window dummy;
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+			if(XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x, &amp;y, &amp;di, &amp;di, &amp;dui))
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+				for(i = 0; i &lt; n; i++)
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+					if(INRECT(x, y, info[i].x_org, info[i].y_org, info[i].width, info[i].height))
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+						break;
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+		}
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+		x = info[i].x_org;
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+		y = topbar ? info[i].y_org : info[i].y_org + info[i].height - mh;
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+		mw = info[i].width;
+</a> 		XFree(info);
+ 	}
+ 	else
+</pre>
+</div>
+</body>
+</html>

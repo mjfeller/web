@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adapt updatetitle() - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e6cefa584e605b8a9984b1a542098df1191adcb1.html">e6cefa584e605b8a9984b1a542098df1191adcb1</a>
+<b>parent</b> <a href="../commit/b5096b1c8f0416395758ab033e87b249b09b7a36.html">b5096b1c8f0416395758ab033e87b249b09b7a36</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Fri, 20 Nov 2015 16:59:15 +0100
+
+Adapt updatetitle()
+
+Now always show loading progress, still print mouse over link uri before
+page uri. Process simplyfied because we use const strings.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">26</td><td><span class="i">++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1414,29 +1414,27 @@ getpagestats(Client *c)
+</a> void
+ updatetitle(Client *c)
+ {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	char *t;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	char *title;
+</a> 
+ 	if (showindicators) {
+ 		gettogglestats(c);
+ 		getpagestats(c);
+ 
+<a href="#h0-0-10" id="h0-0-10" class="d">-		if (c-&gt;linkhover) {
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-			t = g_strdup_printf(&quot;%s:%s | %s&quot;, togglestats, pagestats,
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-			                    c-&gt;linkhover);
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-		} else if (c-&gt;progress != 100) {
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-			t = g_strdup_printf(&quot;[%i%%] %s:%s | %s&quot;, c-&gt;progress,
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-			                    togglestats, pagestats,
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-			                    c-&gt;title == NULL ? &quot;&quot; : c-&gt;title);
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		if (c-&gt;progress != 100) {
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+			title = g_strdup_printf(&quot;[%i%%] %s:%s | %s&quot;,
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+			    c-&gt;progress, togglestats, pagestats,
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+			    c-&gt;targeturi ? c-&gt;targeturi : c-&gt;title);
+</a> 		} else {
+<a href="#h0-0-22" id="h0-0-22" class="d">-			t = g_strdup_printf(&quot;%s:%s | %s&quot;, togglestats, pagestats,
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-			                    c-&gt;title == NULL ? &quot;&quot; : c-&gt;title);
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+			title = g_strdup_printf(&quot;%s:%s | %s&quot;,
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+			    togglestats, pagestats,
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+			    c-&gt;targeturi ? c-&gt;targeturi : c-&gt;title);
+</a> 		}
+ 
+<a href="#h0-0-29" id="h0-0-29" class="d">-		gtk_window_set_title(GTK_WINDOW(c-&gt;win), t);
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-		g_free(t);
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+		gtk_window_set_title(GTK_WINDOW(c-&gt;win), title);
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+		g_free(title);
+</a> 	} else {
+<a href="#h0-0-34" id="h0-0-34" class="d">-		gtk_window_set_title(GTK_WINDOW(c-&gt;win), (c-&gt;title == NULL) ?
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-		                     &quot;&quot; : c-&gt;title);
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+		gtk_window_set_title(GTK_WINDOW(c-&gt;win), c-&gt;title ?
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+		    c-&gt;title : &quot;&quot;);
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

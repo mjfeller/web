@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Keep the line-lengths at bay - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0a43b78d00ebac574376ffd93223a751e21e265e.html">0a43b78d00ebac574376ffd93223a751e21e265e</a>
+<b>parent</b> <a href="../commit/bd069b08c5fe4fea3c78f6991a849b19ed40cbe0.html">bd069b08c5fe4fea3c78f6991a849b19ed40cbe0</a>
+<b>Author:</b> FRIGN &lt;<a href="mailto:dev@frign.de">dev@frign.de</a>&gt;
+<b>Date:</b>   Sat,  1 Oct 2016 23:50:49 +0200
+
+Keep the line-lengths at bay
+
+This makes the code more readable and prevents wraparounds in the
+editor.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">70</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 42 insertions(+), 28 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -76,10 +76,9 @@ dontkillme(void)
+</a> 	if (fclose(f)) {
+ 		if (errno == EACCES)
+ 			die(&quot;slock: unable to disable OOM killer. &quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-			    &quot;suid or sgid set?\n&quot;);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			    &quot;Make sure to suid or sgid slock.\n&quot;);
+</a> 		else
+<a href="#h0-0-6" id="h0-0-6" class="d">-			die(&quot;slock: fclose %s: %s\n&quot;, oomfile,
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-			    strerror(errno));
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+			die(&quot;slock: fclose %s: %s\n&quot;, oomfile, strerror(errno));
+</a> 	}
+ }
+ #endif
+<a href="#h0-1" id="h0-1" class="h">@@ -104,17 +103,20 @@ gethash(void)
+</a> 	if (hash[0] == &#39;x&#39; &amp;&amp; hash[1] == &#39;\0&#39;) {
+ 		struct spwd *sp;
+ 		if (!(sp = getspnam(pw-&gt;pw_name)))
+<a href="#h0-1-3" id="h0-1-3" class="d">-			die(&quot;slock: getspnam: cannot retrieve shadow entry (make sure to suid or sgid slock)\n&quot;);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			die(&quot;slock: getspnam: cannot retrieve shadow entry. &quot;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			    &quot;Make sure to suid or sgid slock.\n&quot;);
+</a> 		hash = sp-&gt;sp_pwdp;
+ 	}
+ #else
+ 	if (hash[0] == &#39;*&#39; &amp;&amp; hash[1] == &#39;\0&#39;) {
+ #ifdef __OpenBSD__
+ 		if (!(pw = getpwuid_shadow(getuid())))
+<a href="#h0-1-12" id="h0-1-12" class="d">-			die(&quot;slock: getpwnam_shadow: cannot retrieve shadow entry (make sure to suid or sgid slock)\n&quot;);
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+			die(&quot;slock: getpwnam_shadow: cannot retrieve shadow entry. &quot;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+			    &quot;Make sure to suid or sgid slock.\n&quot;);
+</a> 		hash = pw-&gt;pw_passwd;
+ #else
+<a href="#h0-1-17" id="h0-1-17" class="d">-		die(&quot;slock: getpwuid: cannot retrieve shadow entry (make sure to suid or sgid slock)\n&quot;);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		die(&quot;slock: getpwuid: cannot retrieve shadow entry. &quot;
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+		    &quot;Make sure to suid or sgid slock.\n&quot;);
+</a> #endif /* __OpenBSD__ */
+ 	}
+ #endif /* HAVE_SHADOW_H */
+<a href="#h0-2" id="h0-2" class="h">@@ -126,6 +128,7 @@ static void
+</a> readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
+        const char *hash)
+ {
+<a href="#h0-2-3" id="h0-2-3" class="i">+	XRRScreenChangeNotifyEvent *rre;
+</a> 	char buf[32], passwd[256], *inputhash;
+ 	int num, screen, running, failure;
+ 	unsigned int len, color;
+<a href="#h0-3" id="h0-3" class="h">@@ -177,25 +180,29 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
+</a> 					passwd[len--] = 0;
+ 				break;
+ 			default:
+<a href="#h0-3-3" id="h0-3-3" class="d">-				if (num &amp;&amp; !iscntrl((int)buf[0]) &amp;&amp; (len + num &lt; sizeof(passwd))) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+				if (num &amp;&amp; !iscntrl((int)buf[0]) &amp;&amp;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+				    (len + num &lt; sizeof(passwd))) {
+</a> 					memcpy(passwd + len, buf, num);
+ 					len += num;
+ 				}
+ 				break;
+ 			}
+<a href="#h0-3-11" id="h0-3-11" class="d">-			color = len ? INPUT : (failure || failonclear ? FAILED : INIT);
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+			color = len ? INPUT : ((failure || failonclear) ? FAILED : INIT);
+</a> 			if (running &amp;&amp; oldc != color) {
+ 				for (screen = 0; screen &lt; nscreens; screen++) {
+<a href="#h0-3-15" id="h0-3-15" class="d">-					XSetWindowBackground(dpy, locks[screen]-&gt;win, locks[screen]-&gt;colors[color]);
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+					XSetWindowBackground(dpy,
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+					                     locks[screen]-&gt;win,
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+					                     locks[screen]-&gt;colors[color]);
+</a> 					XClearWindow(dpy, locks[screen]-&gt;win);
+ 				}
+ 				oldc = color;
+ 			}
+ 		} else if (rr-&gt;active &amp;&amp; ev.type == rr-&gt;evbase + RRScreenChangeNotify) {
+<a href="#h0-3-24" id="h0-3-24" class="d">-			XRRScreenChangeNotifyEvent *rre = (XRRScreenChangeNotifyEvent*)&amp;ev;
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+			rre = (XRRScreenChangeNotifyEvent*)&amp;ev;
+</a> 			for (screen = 0; screen &lt; nscreens; screen++) {
+ 				if (locks[screen]-&gt;win == rre-&gt;window) {
+<a href="#h0-3-28" id="h0-3-28" class="d">-					XResizeWindow(dpy, locks[screen]-&gt;win, rre-&gt;width, rre-&gt;height);
+</a><a href="#h0-3-29" id="h0-3-29" class="i">+					XResizeWindow(dpy, locks[screen]-&gt;win,
+</a><a href="#h0-3-30" id="h0-3-30" class="i">+					              rre-&gt;width, rre-&gt;height);
+</a> 					XClearWindow(dpy, locks[screen]-&gt;win);
+ 				}
+ 			}
+<a href="#h0-4" id="h0-4" class="h">@@ -221,31 +228,37 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
+</a> 	lock-&gt;root = RootWindow(dpy, lock-&gt;screen);
+ 
+ 	for (i = 0; i &lt; NUMCOLS; i++) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-		XAllocNamedColor(dpy, DefaultColormap(dpy, lock-&gt;screen), colorname[i], &amp;color, &amp;dummy);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		XAllocNamedColor(dpy, DefaultColormap(dpy, lock-&gt;screen),
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+		                 colorname[i], &amp;color, &amp;dummy);
+</a> 		lock-&gt;colors[i] = color.pixel;
+ 	}
+ 
+ 	/* init */
+ 	wa.override_redirect = 1;
+ 	wa.background_pixel = lock-&gt;colors[INIT];
+<a href="#h0-4-12" id="h0-4-12" class="d">-	lock-&gt;win = XCreateWindow(dpy, lock-&gt;root, 0, 0, DisplayWidth(dpy, lock-&gt;screen), DisplayHeight(dpy, lock-&gt;screen),
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-	                          0, DefaultDepth(dpy, lock-&gt;screen), CopyFromParent,
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-	                          DefaultVisual(dpy, lock-&gt;screen), CWOverrideRedirect | CWBackPixel, &amp;wa);
+</a><a href="#h0-4-15" id="h0-4-15" class="i">+	lock-&gt;win = XCreateWindow(dpy, lock-&gt;root, 0, 0,
+</a><a href="#h0-4-16" id="h0-4-16" class="i">+	                          DisplayWidth(dpy, lock-&gt;screen),
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+	                          DisplayHeight(dpy, lock-&gt;screen),
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+	                          0, DefaultDepth(dpy, lock-&gt;screen),
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+	                          CopyFromParent,
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+	                          DefaultVisual(dpy, lock-&gt;screen),
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+	                          CWOverrideRedirect | CWBackPixel, &amp;wa);
+</a> 	lock-&gt;pmap = XCreateBitmapFromData(dpy, lock-&gt;win, curs, 8, 8);
+<a href="#h0-4-23" id="h0-4-23" class="d">-	invisible = XCreatePixmapCursor(dpy, lock-&gt;pmap, lock-&gt;pmap, &amp;color, &amp;color, 0, 0);
+</a><a href="#h0-4-24" id="h0-4-24" class="i">+	invisible = XCreatePixmapCursor(dpy, lock-&gt;pmap, lock-&gt;pmap,
+</a><a href="#h0-4-25" id="h0-4-25" class="i">+	                                &amp;color, &amp;color, 0, 0);
+</a> 	XDefineCursor(dpy, lock-&gt;win, invisible);
+ 
+ 	/* Try to grab mouse pointer *and* keyboard for 600ms, else fail the lock */
+ 	for (i = 0, ptgrab = kbgrab = -1; i &lt; 6; i++) {
+ 		if (ptgrab != GrabSuccess) {
+ 			ptgrab = XGrabPointer(dpy, lock-&gt;root, False,
+<a href="#h0-4-32" id="h0-4-32" class="d">-			         ButtonPressMask | ButtonReleaseMask |
+</a><a href="#h0-4-33" id="h0-4-33" class="d">-			         PointerMotionMask, GrabModeAsync,
+</a><a href="#h0-4-34" id="h0-4-34" class="d">-			         GrabModeAsync, None, invisible, CurrentTime);
+</a><a href="#h0-4-35" id="h0-4-35" class="i">+			                      ButtonPressMask | ButtonReleaseMask |
+</a><a href="#h0-4-36" id="h0-4-36" class="i">+			                      PointerMotionMask, GrabModeAsync,
+</a><a href="#h0-4-37" id="h0-4-37" class="i">+			                      GrabModeAsync, None, invisible, CurrentTime);
+</a> 		}
+ 		if (kbgrab != GrabSuccess) {
+ 			kbgrab = XGrabKeyboard(dpy, lock-&gt;root, True,
+<a href="#h0-4-41" id="h0-4-41" class="d">-			         GrabModeAsync, GrabModeAsync, CurrentTime);
+</a><a href="#h0-4-42" id="h0-4-42" class="i">+			                       GrabModeAsync, GrabModeAsync, CurrentTime);
+</a> 		}
+ 
+ 		/* input is grabbed: we can lock the screen */
+<a href="#h0-5" id="h0-5" class="h">@@ -268,9 +281,11 @@ lockscreen(Display *dpy, struct xrandr *rr, int screen)
+</a> 
+ 	/* we couldn&#39;t grab all input: fail out */
+ 	if (ptgrab != GrabSuccess)
+<a href="#h0-5-3" id="h0-5-3" class="d">-		fprintf(stderr, &quot;slock: unable to grab mouse pointer for screen %d\n&quot;, screen);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		fprintf(stderr, &quot;slock: unable to grab mouse pointer for screen %d\n&quot;,
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+		        screen);
+</a> 	if (kbgrab != GrabSuccess)
+<a href="#h0-5-7" id="h0-5-7" class="d">-		fprintf(stderr, &quot;slock: unable to grab keyboard for screen %d\n&quot;, screen);
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+		fprintf(stderr, &quot;slock: unable to grab keyboard for screen %d\n&quot;,
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+		        screen);
+</a> 	return NULL;
+ }
+ 
+<a href="#h0-6" id="h0-6" class="h">@@ -303,13 +318,13 @@ main(int argc, char **argv) {
+</a> 	/* validate drop-user and -group */
+ 	errno = 0;
+ 	if (!(pwd = getpwnam(user)))
+<a href="#h0-6-3" id="h0-6-3" class="d">-		die(&quot;slock: getpwnam %s: %s\n&quot;, user, errno ?
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-		    strerror(errno) : &quot;user entry not found&quot;);
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+		die(&quot;slock: getpwnam %s: %s\n&quot;, user,
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+		    errno ? strerror(errno) : &quot;user entry not found&quot;);
+</a> 	duid = pwd-&gt;pw_uid;
+ 	errno = 0;
+ 	if (!(grp = getgrnam(group)))
+<a href="#h0-6-10" id="h0-6-10" class="d">-		die(&quot;slock: getgrnam %s: %s\n&quot;, group, errno ?
+</a><a href="#h0-6-11" id="h0-6-11" class="d">-		    strerror(errno) : &quot;group entry not found&quot;);
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+		die(&quot;slock: getgrnam %s: %s\n&quot;, group,
+</a><a href="#h0-6-13" id="h0-6-13" class="i">+		    errno ? strerror(errno) : &quot;group entry not found&quot;);
+</a> 	dgid = grp-&gt;gr_gid;
+ 
+ #ifdef __linux__
+<a href="#h0-7" id="h0-7" class="h">@@ -360,8 +375,7 @@ main(int argc, char **argv) {
+</a> 			if (close(ConnectionNumber(dpy)) &lt; 0)
+ 				die(&quot;slock: close: %s\n&quot;, strerror(errno));
+ 			execvp(argv[0], argv);
+<a href="#h0-7-3" id="h0-7-3" class="d">-			fprintf(stderr, &quot;slock: execvp %s: %s\n&quot;, argv[0],
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-			        strerror(errno));
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+			fprintf(stderr, &quot;slock: execvp %s: %s\n&quot;, argv[0], strerror(errno));
+</a> 			_exit(1);
+ 		}
+ 	}
+</pre>
+</div>
+</body>
+</html>

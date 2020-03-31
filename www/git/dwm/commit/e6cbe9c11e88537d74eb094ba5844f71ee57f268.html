@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed XSync handling and finished man page - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e6cbe9c11e88537d74eb094ba5844f71ee57f268.html">e6cbe9c11e88537d74eb094ba5844f71ee57f268</a>
+<b>parent</b> <a href="../commit/f60c597d653bd7eab6c620fc53d732ca75f6a880.html">f60c597d653bd7eab6c620fc53d732ca75f6a880</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Sat, 15 Jul 2006 18:51:44 +0200
+
+fixed XSync handling and finished man page
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">7</td><td><span class="i">+++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">draw.c</a></td><td> | </td><td class="num">7</td><td><span class="i">+++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.1</a></td><td> | </td><td class="num">58</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">event.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">main.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>5 files changed, 64 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -49,13 +49,12 @@ focus(Client *c)
+</a> 	Client *old = sel;
+ 	XEvent ev;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	XFlush(dpy);
+</a> 	sel = c;
+ 	if(old &amp;&amp; old != c)
+ 		drawtitle(old);
+ 	drawtitle(c);
+ 	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+<a href="#h0-0-9" id="h0-0-9" class="d">-	XFlush(dpy);
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	XSync(dpy, False);
+</a> 	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+ }
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -303,7 +302,7 @@ resize(Client *c, Bool inc)
+</a> 	e.above = None;
+ 	e.override_redirect = False;
+ 	XSendEvent(dpy, c-&gt;win, False, StructureNotifyMask, (XEvent *)&amp;e);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	XFlush(dpy);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	XSync(dpy, False);
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -393,7 +392,7 @@ unmanage(Client *c)
+</a> 
+ 	free(c);
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-	XFlush(dpy);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	XSync(dpy, False);
+</a> 	XSetErrorHandler(xerror);
+ 	XUngrabServer(dpy);
+ 	arrange(NULL);
+<b>diff --git a/<a id="h1" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -131,7 +131,7 @@ drawstatus()
+</a> 	drawtext(stext, !istile, False);
+ 
+ 	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, bw, bh, 0, 0);
+<a href="#h1-0-3" id="h1-0-3" class="d">-	XFlush(dpy);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	XSync(dpy, False);
+</a> }
+ 
+ void
+<a href="#h1-1" id="h1-1" class="h">@@ -163,9 +163,8 @@ drawtitle(Client *c)
+</a> 	dc.x += dc.w;
+ 	dc.w = textw(c-&gt;name);
+ 	drawtext(c-&gt;name, !istile, True);
+<a href="#h1-1-3" id="h1-1-3" class="d">-	XCopyArea(dpy, dc.drawable, c-&gt;title, dc.gc,
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-			0, 0, c-&gt;tw, c-&gt;th, 0, 0);
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	XFlush(dpy);
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	XCopyArea(dpy, dc.drawable, c-&gt;title, dc.gc, 0, 0, c-&gt;tw, c-&gt;th, 0, 0);
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	XSync(dpy, False);
+</a> }
+ 
+ unsigned long
+<b>diff --git a/<a id="h2" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -7,14 +7,60 @@ dwm \- dynamic window manager
+</a> .SH DESCRIPTION
+ .SS Overview
+ .B dwm
+<a href="#h2-0-3" id="h2-0-3" class="d">-is a dynamic window manager for X11.
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+is a dynamic window manager for X11. It consists of a small status bar at the
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+top of the screen and arranges windows in either a tiled or floating mode.
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+.P
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+If 
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+.B dwm
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+is in tiled mode, it consists of two columns. The left master column
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+contains only one window per time, the right column contains all other windows 
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+in a stack. In tiled mode
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+.B dwm
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+.B don&#39;t
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+handles incremental resizals, some terminal programs like
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+.B xterm
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+may not work correctly with this in tiled mode.
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+.P
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+If
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+.B dwm
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+is in floating mode, it arranges all windows with the reqyested geometry and
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+allows the user to move or resize them. Some windows, like
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+dialog windows, are treated floating even if
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+.B dwm
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+is in tiled mode. In floating mode
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+.B dwm
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+handles incremental resizals.
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+.P
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+Windows are grouped by tags. You can view all windows with a specific tag per
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+time.  However, each window is allowed to contain more than one tag, which
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+allows to make windows visible in all views.
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+.P
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+.B dwm
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+reads from
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+.I stdin
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+to display status text, if written.
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+.P
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+.B dwm
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+draws 1-pixel borders around windows to indicate the focus state and save as
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+much screen real estate as possible. Unfocused windows contain a small bar
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+in front of the window indicating the tags and the window title.
+</a> .SS Options
+ .TP
+ .B \-v
+<a href="#h2-0-44" id="h2-0-44" class="d">-prints version information to stdout, then exits.
+</a><a href="#h2-0-45" id="h2-0-45" class="d">-.SS Status text
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+prints version information to
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+.I stdout
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+, then exits.
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+.SS Customization
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+.B dwm
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+is customized through editing its source code. It is assumed that
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+dwm users are high experienced users who know how a window manager works
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+and who are able to patch
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+.B dwm
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+for their needs. This keeps
+</a> .B dwm
+<a href="#h2-0-57" id="h2-0-57" class="d">-reads from stdin to display status text if provided.
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+fast, secure and simple, because it does not process any input data, except
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+window properties and the status text read from
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+.I stdin .
+</a> .SS Default Key Bindings
+ .TP 16
+ .I Key	
+<a href="#h2-1" id="h2-1" class="h">@@ -96,3 +142,7 @@ Lowers current
+</a> Resizes current
+ .B window
+ while dragging
+<a href="#h2-1-3" id="h2-1-3" class="i">+.SH BUGS
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+Some terminal programs do not behave correctly in tiled mode, because
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+incremental resizals are ignored to use maximum screen real estate. You can
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+patch the code to fix this.
+</a><b>diff --git a/<a id="h3" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -73,7 +73,7 @@ movemouse(Client *c)
+</a> 			handler[Expose](&amp;ev);
+ 			break;
+ 		case MotionNotify:
+<a href="#h3-0-3" id="h3-0-3" class="d">-			XFlush(dpy);
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+			XSync(dpy, False);
+</a> 			c-&gt;x = ocx + (ev.xmotion.x - x1);
+ 			c-&gt;y = ocy + (ev.xmotion.y - y1);
+ 			resize(c, False);
+<a href="#h3-1" id="h3-1" class="h">@@ -105,7 +105,7 @@ resizemouse(Client *c)
+</a> 			handler[Expose](&amp;ev);
+ 			break;
+ 		case MotionNotify:
+<a href="#h3-1-3" id="h3-1-3" class="d">-			XFlush(dpy);
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+			XSync(dpy, False);
+</a> 			c-&gt;w = abs(ocx - ev.xmotion.x);
+ 			c-&gt;h = abs(ocy - ev.xmotion.y);
+ 			c-&gt;x = (ocx &lt;= ev.xmotion.x) ? ocx : ocx - c-&gt;w;
+<a href="#h3-2" id="h3-2" class="h">@@ -191,7 +191,7 @@ configurerequest(XEvent *e)
+</a> 	ev-&gt;value_mask &amp;= ~CWStackMode;
+ 	ev-&gt;value_mask |= CWBorderWidth;
+ 	XConfigureWindow(dpy, ev-&gt;window, ev-&gt;value_mask, &amp;wc);
+<a href="#h3-2-3" id="h3-2-3" class="d">-	XFlush(dpy);
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+	XSync(dpy, False);
+</a> }
+ 
+ static void
+<b>diff --git a/<a id="h4" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -131,7 +131,7 @@ sendevent(Window w, Atom a, long value)
+</a> 	e.xclient.data.l[0] = value;
+ 	e.xclient.data.l[1] = CurrentTime;
+ 	XSendEvent(dpy, w, False, NoEventMask, &amp;e);
+<a href="#h4-0-3" id="h4-0-3" class="d">-	XFlush(dpy);
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	XSync(dpy, False);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

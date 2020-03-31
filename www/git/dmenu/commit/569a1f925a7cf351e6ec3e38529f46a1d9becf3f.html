@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied cursor, vertical and paste patches for upcoming 4.1 dmenu version (due to the fact that surf is using dmenu as well) - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/569a1f925a7cf351e6ec3e38529f46a1d9becf3f.html">569a1f925a7cf351e6ec3e38529f46a1d9becf3f</a>
+<b>parent</b> <a href="../commit/0f4d3ffdb5759070682b241c6fcc864bbd329037.html">0f4d3ffdb5759070682b241c6fcc864bbd329037</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Sat, 28 Nov 2009 12:28:15 +0000
+
+applied cursor, vertical and paste patches for upcoming 4.1 dmenu version (due to the fact that surf is using dmenu as well)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">LICENSE</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dmenu.1</a></td><td> | </td><td class="num">7</td><td><span class="i">++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dmenu.c</a></td><td> | </td><td class="num">163</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>4 files changed, 149 insertions(+), 28 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/LICENSE.html">LICENSE</a> b/<a href="../file/LICENSE.html">LICENSE</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,9 @@
+</a> MIT/X Consortium License
+ 
+<a href="#h0-0-2" id="h0-0-2" class="d">-© 2006-2008 Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+© 2006-2009 Anselm R. Garbe &lt;anselm@garbe.us&gt;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+© 2009 Gottox &lt;gottox@s01.de&gt;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+© 2009 Markus Schnalke &lt;meillo@marmaro.de&gt;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+© 2009 Evan Gates &lt;evan.gates@gmail.com&gt;
+</a> © 2006-2008 Sander van Dijk &lt;a dot h dot vandijk at gmail dot com&gt;
+ © 2006-2007 Michał Janeczek &lt;janeczek at gmail dot com&gt;
+ 
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,5 +1,5 @@
+</a> # dmenu version
+<a href="#h1-0-1" id="h1-0-1" class="d">-VERSION = 4.0
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+VERSION = 4.1
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h2" href="../file/dmenu.1.html">dmenu.1</a> b/<a href="../file/dmenu.1.html">dmenu.1</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,6 +5,7 @@ dmenu \- dynamic menu
+</a> .B dmenu
+ .RB [ \-i ]
+ .RB [ \-b ]
+<a href="#h2-0-3" id="h2-0-3" class="i">+.RB [ \-l &quot; &lt;lines&gt;&quot;]
+</a> .RB [ \-fn &quot; &lt;font&gt;&quot;]
+ .RB [ \-nb &quot; &lt;color&gt;&quot;]
+ .RB [ \-nf &quot; &lt;color&gt;&quot;]
+<a href="#h2-1" id="h2-1" class="h">@@ -26,6 +27,10 @@ makes dmenu match menu entries case insensitively.
+</a> .B \-b
+ defines that dmenu appears at the bottom.
+ .TP
+<a href="#h2-1-3" id="h2-1-3" class="i">+.B \-l &lt;lines&gt;
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+activates vertical list mode.
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+The given number of lines will be displayed. Window height will get adjusted.
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+.TP
+</a> .B \-fn &lt;font&gt;
+ defines the font.
+ .TP
+<a href="#h2-2" id="h2-2" class="h">@@ -57,7 +62,7 @@ dmenu is completely controlled by the keyboard. The following keys are recognize
+</a> Appends the character to the text in the input field.  This works as a filter:
+ only items containing this text will be displayed.
+ .TP
+<a href="#h2-2-3" id="h2-2-3" class="d">-.B Left/Right (Mod1\-h/Mod1\-l)
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+.B Left/Right (Up/Down) (Mod1\-h/Mod1\-l)
+</a> Select the previous/next item.
+ .TP
+ .B PageUp/PageDown (Mod1\-k/Mod1\-j)
+<b>diff --git a/<a id="h3" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -18,6 +18,7 @@
+</a> #define CLEANMASK(mask)         (mask &amp; ~(numlockmask | LockMask))
+ #define INRECT(X,Y,RX,RY,RW,RH) ((X) &gt;= (RX) &amp;&amp; (X) &lt; (RX) + (RW) &amp;&amp; (Y) &gt;= (RY) &amp;&amp; (Y) &lt; (RY) + (RH))
+ #define MIN(a, b)               ((a) &lt; (b) ? (a) : (b))
+<a href="#h3-0-3" id="h3-0-3" class="i">+#define MAX(a, b)               ((a) &gt; (b) ? (a) : (b))
+</a> 
+ /* enums */
+ enum { ColFG, ColBG, ColLast };
+<a href="#h3-1" id="h3-1" class="h">@@ -47,10 +48,12 @@ struct Item {
+</a> 
+ /* forward declarations */
+ static void appenditem(Item *i, Item **list, Item **last);
+<a href="#h3-1-3" id="h3-1-3" class="d">-static void calcoffsets(void);
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+static void calcoffsetsh(void);
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+static void calcoffsetsv(void);
+</a> static char *cistrstr(const char *s, const char *sub);
+ static void cleanup(void);
+<a href="#h3-1-8" id="h3-1-8" class="d">-static void drawmenu(void);
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+static void drawmenuh(void);
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+static void drawmenuv(void);
+</a> static void drawtext(const char *text, unsigned long col[ColLast]);
+ static void eprint(const char *errstr, ...);
+ static unsigned long getcolor(const char *colstr);
+<a href="#h3-2" id="h3-2" class="h">@@ -73,6 +76,7 @@ static char text[4096];
+</a> static int cmdw = 0;
+ static int promptw = 0;
+ static int ret = 0;
+<a href="#h3-2-3" id="h3-2-3" class="i">+static int cursor = 0;
+</a> static int screen;
+ static unsigned int mw, mh;
+ static unsigned int numlockmask = 0;
+<a href="#h3-3" id="h3-3" class="h">@@ -88,6 +92,10 @@ static Item *curr = NULL;
+</a> static Window root, win;
+ static int (*fstrncmp)(const char *, const char *, size_t n) = strncmp;
+ static char *(*fstrstr)(const char *, const char *) = strstr;
+<a href="#h3-3-3" id="h3-3-3" class="i">+static Bool vlist = False;
+</a><a href="#h3-3-4" id="h3-3-4" class="i">+static unsigned int lines = 5;
+</a><a href="#h3-3-5" id="h3-3-5" class="i">+static void (*calcoffsets)(void) = calcoffsetsh;
+</a><a href="#h3-3-6" id="h3-3-6" class="i">+static void (*drawmenu)(void) = drawmenuh;
+</a> 
+ void
+ appenditem(Item *i, Item **list, Item **last) {
+<a href="#h3-4" id="h3-4" class="h">@@ -101,7 +109,7 @@ appenditem(Item *i, Item **list, Item **last) {
+</a> }
+ 
+ void
+<a href="#h3-4-3" id="h3-4-3" class="d">-calcoffsets(void) {
+</a><a href="#h3-4-4" id="h3-4-4" class="i">+calcoffsetsh(void) {
+</a> 	int tw;
+ 	unsigned int w;
+ 
+<a href="#h3-5" id="h3-5" class="h">@@ -127,6 +135,26 @@ calcoffsets(void) {
+</a> 	}
+ }
+ 
+<a href="#h3-5-3" id="h3-5-3" class="i">+void
+</a><a href="#h3-5-4" id="h3-5-4" class="i">+calcoffsetsv(void) {
+</a><a href="#h3-5-5" id="h3-5-5" class="i">+	static unsigned int w;
+</a><a href="#h3-5-6" id="h3-5-6" class="i">+
+</a><a href="#h3-5-7" id="h3-5-7" class="i">+	if(!curr)
+</a><a href="#h3-5-8" id="h3-5-8" class="i">+		return;
+</a><a href="#h3-5-9" id="h3-5-9" class="i">+	w = (dc.font.height + 2) * (lines + 1);
+</a><a href="#h3-5-10" id="h3-5-10" class="i">+	for(next = curr; next; next=next-&gt;right) {
+</a><a href="#h3-5-11" id="h3-5-11" class="i">+		w -= dc.font.height + 2;
+</a><a href="#h3-5-12" id="h3-5-12" class="i">+		if(w &lt;= 0)
+</a><a href="#h3-5-13" id="h3-5-13" class="i">+			break;
+</a><a href="#h3-5-14" id="h3-5-14" class="i">+	}
+</a><a href="#h3-5-15" id="h3-5-15" class="i">+	w = (dc.font.height + 2) * (lines + 1);
+</a><a href="#h3-5-16" id="h3-5-16" class="i">+	for(prev = curr; prev &amp;&amp; prev-&gt;left; prev=prev-&gt;left) {
+</a><a href="#h3-5-17" id="h3-5-17" class="i">+		w -= dc.font.height + 2;
+</a><a href="#h3-5-18" id="h3-5-18" class="i">+		if(w &lt;= 0)
+</a><a href="#h3-5-19" id="h3-5-19" class="i">+			break;
+</a><a href="#h3-5-20" id="h3-5-20" class="i">+	}
+</a><a href="#h3-5-21" id="h3-5-21" class="i">+}
+</a><a href="#h3-5-22" id="h3-5-22" class="i">+
+</a> char *
+ cistrstr(const char *s, const char *sub) {
+ 	int c, csub;
+<a href="#h3-6" id="h3-6" class="h">@@ -171,7 +199,17 @@ cleanup(void) {
+</a> }
+ 
+ void
+<a href="#h3-6-3" id="h3-6-3" class="d">-drawmenu(void) {
+</a><a href="#h3-6-4" id="h3-6-4" class="i">+drawcursor(void) {
+</a><a href="#h3-6-5" id="h3-6-5" class="i">+	XRectangle r = { dc.x, dc.y + 2, 1, dc.h - 4 };
+</a><a href="#h3-6-6" id="h3-6-6" class="i">+
+</a><a href="#h3-6-7" id="h3-6-7" class="i">+	r.x += textnw(text, cursor) + dc.font.height / 2;
+</a><a href="#h3-6-8" id="h3-6-8" class="i">+
+</a><a href="#h3-6-9" id="h3-6-9" class="i">+	XSetForeground(dpy, dc.gc, dc.norm[ColFG]);
+</a><a href="#h3-6-10" id="h3-6-10" class="i">+	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h3-6-11" id="h3-6-11" class="i">+}
+</a><a href="#h3-6-12" id="h3-6-12" class="i">+
+</a><a href="#h3-6-13" id="h3-6-13" class="i">+void
+</a><a href="#h3-6-14" id="h3-6-14" class="i">+drawmenuh(void) {
+</a> 	Item *i;
+ 
+ 	dc.x = 0;
+<a href="#h3-7" id="h3-7" class="h">@@ -190,6 +228,7 @@ drawmenu(void) {
+</a> 	if(cmdw &amp;&amp; item)
+ 		dc.w = cmdw;
+ 	drawtext(text[0] ? text : NULL, dc.norm);
+<a href="#h3-7-3" id="h3-7-3" class="i">+	drawcursor();
+</a> 	dc.x += cmdw;
+ 	if(curr) {
+ 		dc.w = spaceitem;
+<a href="#h3-8" id="h3-8" class="h">@@ -212,6 +251,39 @@ drawmenu(void) {
+</a> }
+ 
+ void
+<a href="#h3-8-3" id="h3-8-3" class="i">+drawmenuv(void) {
+</a><a href="#h3-8-4" id="h3-8-4" class="i">+	Item *i;
+</a><a href="#h3-8-5" id="h3-8-5" class="i">+
+</a><a href="#h3-8-6" id="h3-8-6" class="i">+	dc.x = 0;
+</a><a href="#h3-8-7" id="h3-8-7" class="i">+	dc.y = 0;
+</a><a href="#h3-8-8" id="h3-8-8" class="i">+	dc.w = mw;
+</a><a href="#h3-8-9" id="h3-8-9" class="i">+	dc.h = mh;
+</a><a href="#h3-8-10" id="h3-8-10" class="i">+	drawtext(NULL, dc.norm);
+</a><a href="#h3-8-11" id="h3-8-11" class="i">+	/* print prompt? */
+</a><a href="#h3-8-12" id="h3-8-12" class="i">+	if(promptw) {
+</a><a href="#h3-8-13" id="h3-8-13" class="i">+		dc.w = promptw;
+</a><a href="#h3-8-14" id="h3-8-14" class="i">+		drawtext(prompt, dc.sel);
+</a><a href="#h3-8-15" id="h3-8-15" class="i">+	}
+</a><a href="#h3-8-16" id="h3-8-16" class="i">+	dc.x += promptw;
+</a><a href="#h3-8-17" id="h3-8-17" class="i">+	dc.w = mw - promptw;
+</a><a href="#h3-8-18" id="h3-8-18" class="i">+	/* print command */
+</a><a href="#h3-8-19" id="h3-8-19" class="i">+	drawtext(text[0] ? text : NULL, dc.norm);
+</a><a href="#h3-8-20" id="h3-8-20" class="i">+	if(curr) {
+</a><a href="#h3-8-21" id="h3-8-21" class="i">+		dc.x = 0;
+</a><a href="#h3-8-22" id="h3-8-22" class="i">+		dc.w = mw;
+</a><a href="#h3-8-23" id="h3-8-23" class="i">+		dc.y += dc.font.height + 2;
+</a><a href="#h3-8-24" id="h3-8-24" class="i">+		/* determine maximum items */
+</a><a href="#h3-8-25" id="h3-8-25" class="i">+		for(i = curr; i != next; i=i-&gt;right) {
+</a><a href="#h3-8-26" id="h3-8-26" class="i">+			drawtext(i-&gt;text, (sel == i) ? dc.sel : dc.norm);
+</a><a href="#h3-8-27" id="h3-8-27" class="i">+			dc.y += dc.font.height + 2;
+</a><a href="#h3-8-28" id="h3-8-28" class="i">+		}
+</a><a href="#h3-8-29" id="h3-8-29" class="i">+		drawtext(NULL, dc.norm);
+</a><a href="#h3-8-30" id="h3-8-30" class="i">+	}
+</a><a href="#h3-8-31" id="h3-8-31" class="i">+	XCopyArea(dpy, dc.drawable, win, dc.gc, 0, 0, mw, mh, 0, 0);
+</a><a href="#h3-8-32" id="h3-8-32" class="i">+	XFlush(dpy);
+</a><a href="#h3-8-33" id="h3-8-33" class="i">+}
+</a><a href="#h3-8-34" id="h3-8-34" class="i">+
+</a><a href="#h3-8-35" id="h3-8-35" class="i">+void
+</a> drawtext(const char *text, unsigned long col[ColLast]) {
+ 	char buf[256];
+ 	int i, x, y, h, len, olen;
+<a href="#h3-9" id="h3-9" class="h">@@ -222,8 +294,8 @@ drawtext(const char *text, unsigned long col[ColLast]) {
+</a> 	if(!text)
+ 		return;
+ 	olen = strlen(text);
+<a href="#h3-9-3" id="h3-9-3" class="d">-	h = dc.font.ascent + dc.font.descent;
+</a><a href="#h3-9-4" id="h3-9-4" class="d">-	y = dc.y + (dc.h / 2) - (h / 2) + dc.font.ascent;
+</a><a href="#h3-9-5" id="h3-9-5" class="i">+	h = dc.font.height;
+</a><a href="#h3-9-6" id="h3-9-6" class="i">+	y = dc.y + ((h+2) / 2) - (h / 2) + dc.font.ascent;
+</a> 	x = dc.x + (h / 2);
+ 	/* shorten text if necessary */
+ 	for(len = MIN(olen, sizeof buf); len &amp;&amp; textnw(text, len) &gt; dc.w - h; len--);
+<a href="#h3-10" id="h3-10" class="h">@@ -353,7 +425,7 @@ kpress(XKeyEvent * e) {
+</a> 			text[0] = 0;
+ 			match(text);
+ 			drawmenu();
+<a href="#h3-10-3" id="h3-10-3" class="d">-			return;
+</a><a href="#h3-10-4" id="h3-10-4" class="i">+			break;
+</a> 		case XK_w:
+ 		case XK_W:
+ 			if(len) {
+<a href="#h3-11" id="h3-11" class="h">@@ -365,7 +437,7 @@ kpress(XKeyEvent * e) {
+</a> 				match(text);
+ 				drawmenu();
+ 			}
+<a href="#h3-11-3" id="h3-11-3" class="d">-			return;
+</a><a href="#h3-11-4" id="h3-11-4" class="i">+			break;
+</a> 		}
+ 	}
+ 	if(CLEANMASK(e-&gt;state) &amp; Mod1Mask) {
+<a href="#h3-12" id="h3-12" class="h">@@ -389,19 +461,39 @@ kpress(XKeyEvent * e) {
+</a> 		case XK_G:
+ 			ksym = XK_End;
+ 			break;
+<a href="#h3-12-3" id="h3-12-3" class="i">+		case XK_p:
+</a><a href="#h3-12-4" id="h3-12-4" class="i">+			{
+</a><a href="#h3-12-5" id="h3-12-5" class="i">+				FILE *fp;
+</a><a href="#h3-12-6" id="h3-12-6" class="i">+				char *c;
+</a><a href="#h3-12-7" id="h3-12-7" class="i">+				if(!(fp = (FILE*)popen(&quot;sselp&quot;, &quot;r&quot;)))
+</a><a href="#h3-12-8" id="h3-12-8" class="i">+					fprintf(stderr, &quot;dmenu: Could not popen sselp\n&quot;);
+</a><a href="#h3-12-9" id="h3-12-9" class="i">+				c = fgets(text + len, sizeof(text) - len, fp);
+</a><a href="#h3-12-10" id="h3-12-10" class="i">+				pclose(fp);
+</a><a href="#h3-12-11" id="h3-12-11" class="i">+				if(c == NULL)
+</a><a href="#h3-12-12" id="h3-12-12" class="i">+					return;
+</a><a href="#h3-12-13" id="h3-12-13" class="i">+			}
+</a><a href="#h3-12-14" id="h3-12-14" class="i">+			len = strlen(text);
+</a><a href="#h3-12-15" id="h3-12-15" class="i">+			if(len &amp;&amp; text[len-1] == &#39;\n&#39;)
+</a><a href="#h3-12-16" id="h3-12-16" class="i">+				text[--len] = &#39;\0&#39;;
+</a><a href="#h3-12-17" id="h3-12-17" class="i">+			match(text);
+</a><a href="#h3-12-18" id="h3-12-18" class="i">+			drawmenu();
+</a><a href="#h3-12-19" id="h3-12-19" class="i">+			return;
+</a> 		}
+ 	}
+ 	switch(ksym) {
+ 	default:
+ 		if(num &amp;&amp; !iscntrl((int) buf[0])) {
+ 			buf[num] = 0;
+<a href="#h3-12-26" id="h3-12-26" class="d">-			strncpy(text + len, buf, sizeof text - len);
+</a><a href="#h3-12-27" id="h3-12-27" class="i">+			memmove(text + cursor + num, text + cursor, sizeof text - cursor);
+</a><a href="#h3-12-28" id="h3-12-28" class="i">+			strncpy(text + cursor, buf, sizeof text - cursor);
+</a><a href="#h3-12-29" id="h3-12-29" class="i">+			cursor+=num;
+</a> 			match(text);
+ 		}
+ 		break;
+ 	case XK_BackSpace:
+<a href="#h3-12-34" id="h3-12-34" class="d">-		if(len) {
+</a><a href="#h3-12-35" id="h3-12-35" class="d">-			text[--len] = 0;
+</a><a href="#h3-12-36" id="h3-12-36" class="i">+		if(cursor &gt; 0) {
+</a><a href="#h3-12-37" id="h3-12-37" class="i">+			memmove(text + cursor + -1, text + cursor, sizeof text - cursor);
+</a><a href="#h3-12-38" id="h3-12-38" class="i">+			cursor--;
+</a> 			match(text);
+ 		}
+ 		break;
+<a href="#h3-13" id="h3-13" class="h">@@ -426,13 +518,18 @@ kpress(XKeyEvent * e) {
+</a> 		calcoffsets();
+ 		break;
+ 	case XK_Left:
+<a href="#h3-13-3" id="h3-13-3" class="d">-		if(!(sel &amp;&amp; sel-&gt;left))
+</a><a href="#h3-13-4" id="h3-13-4" class="d">-			return;
+</a><a href="#h3-13-5" id="h3-13-5" class="d">-		sel=sel-&gt;left;
+</a><a href="#h3-13-6" id="h3-13-6" class="d">-		if(sel-&gt;right == curr) {
+</a><a href="#h3-13-7" id="h3-13-7" class="d">-			curr = prev;
+</a><a href="#h3-13-8" id="h3-13-8" class="d">-			calcoffsets();
+</a><a href="#h3-13-9" id="h3-13-9" class="i">+	case XK_Up:
+</a><a href="#h3-13-10" id="h3-13-10" class="i">+		if(sel &amp;&amp; sel-&gt;left){
+</a><a href="#h3-13-11" id="h3-13-11" class="i">+			sel=sel-&gt;left;
+</a><a href="#h3-13-12" id="h3-13-12" class="i">+			if(sel-&gt;right == curr) {
+</a><a href="#h3-13-13" id="h3-13-13" class="i">+				curr = prev;
+</a><a href="#h3-13-14" id="h3-13-14" class="i">+				calcoffsets();
+</a><a href="#h3-13-15" id="h3-13-15" class="i">+			}
+</a> 		}
+<a href="#h3-13-17" id="h3-13-17" class="i">+		else if(cursor &gt; 0)
+</a><a href="#h3-13-18" id="h3-13-18" class="i">+			cursor--;
+</a><a href="#h3-13-19" id="h3-13-19" class="i">+		else
+</a><a href="#h3-13-20" id="h3-13-20" class="i">+			return;
+</a> 		break;
+ 	case XK_Next:
+ 		if(!next)
+<a href="#h3-14" id="h3-14" class="h">@@ -457,21 +554,30 @@ kpress(XKeyEvent * e) {
+</a> 		running = False;
+ 		break;
+ 	case XK_Right:
+<a href="#h3-14-3" id="h3-14-3" class="d">-		if(!(sel &amp;&amp; sel-&gt;right))
+</a><a href="#h3-14-4" id="h3-14-4" class="d">-			return;
+</a><a href="#h3-14-5" id="h3-14-5" class="d">-		sel=sel-&gt;right;
+</a><a href="#h3-14-6" id="h3-14-6" class="d">-		if(sel == next) {
+</a><a href="#h3-14-7" id="h3-14-7" class="d">-			curr = next;
+</a><a href="#h3-14-8" id="h3-14-8" class="d">-			calcoffsets();
+</a><a href="#h3-14-9" id="h3-14-9" class="i">+	case XK_Down:
+</a><a href="#h3-14-10" id="h3-14-10" class="i">+		if(cursor &lt; len)
+</a><a href="#h3-14-11" id="h3-14-11" class="i">+			cursor++;
+</a><a href="#h3-14-12" id="h3-14-12" class="i">+		else if(sel &amp;&amp; sel-&gt;right) {
+</a><a href="#h3-14-13" id="h3-14-13" class="i">+			sel=sel-&gt;right;
+</a><a href="#h3-14-14" id="h3-14-14" class="i">+			if(sel == next) {
+</a><a href="#h3-14-15" id="h3-14-15" class="i">+				curr = next;
+</a><a href="#h3-14-16" id="h3-14-16" class="i">+				calcoffsets();
+</a><a href="#h3-14-17" id="h3-14-17" class="i">+			}
+</a> 		}
+<a href="#h3-14-19" id="h3-14-19" class="i">+		else
+</a><a href="#h3-14-20" id="h3-14-20" class="i">+			return;
+</a> 		break;
+ 	case XK_Tab:
+ 		if(!sel)
+ 			return;
+ 		strncpy(text, sel-&gt;text, sizeof text);
+<a href="#h3-14-26" id="h3-14-26" class="i">+		cursor = strlen(text);
+</a> 		match(text);
+ 		break;
+ 	}
+<a href="#h3-14-30" id="h3-14-30" class="i">+	len = strlen(text);
+</a><a href="#h3-14-31" id="h3-14-31" class="i">+	cursor = MIN(cursor, len);
+</a><a href="#h3-14-32" id="h3-14-32" class="i">+	cursor = MAX(cursor, 0);
+</a> 	drawmenu();
+ }
+ 
+<a href="#h3-15" id="h3-15" class="h">@@ -598,6 +704,7 @@ setup(Bool topbar) {
+</a> 
+ 	/* menu window geometry */
+ 	mh = dc.font.height + 2;
+<a href="#h3-15-3" id="h3-15-3" class="i">+	mh = vlist ? mh * (lines+1) : mh;
+</a> #if XINERAMA
+ 	if(XineramaIsActive(dpy) &amp;&amp; (info = XineramaQueryScreens(dpy, &amp;n))) {
+ 		i = 0;
+<a href="#h3-16" id="h3-16" class="h">@@ -676,6 +783,12 @@ main(int argc, char *argv[]) {
+</a> 		}
+ 		else if(!strcmp(argv[i], &quot;-b&quot;))
+ 			topbar = False;
+<a href="#h3-16-3" id="h3-16-3" class="i">+		else if(!strcmp(argv[i], &quot;-l&quot;)) {
+</a><a href="#h3-16-4" id="h3-16-4" class="i">+			vlist = True;
+</a><a href="#h3-16-5" id="h3-16-5" class="i">+			calcoffsets = calcoffsetsv;
+</a><a href="#h3-16-6" id="h3-16-6" class="i">+			drawmenu = drawmenuv;
+</a><a href="#h3-16-7" id="h3-16-7" class="i">+			if(++i &lt; argc) lines += atoi(argv[i]);
+</a><a href="#h3-16-8" id="h3-16-8" class="i">+		}
+</a> 		else if(!strcmp(argv[i], &quot;-fn&quot;)) {
+ 			if(++i &lt; argc) font = argv[i];
+ 		}
+<a href="#h3-17" id="h3-17" class="h">@@ -695,9 +808,9 @@ main(int argc, char *argv[]) {
+</a> 			if(++i &lt; argc) selfgcolor = argv[i];
+ 		}
+ 		else if(!strcmp(argv[i], &quot;-v&quot;))
+<a href="#h3-17-3" id="h3-17-3" class="d">-			eprint(&quot;dmenu-&quot;VERSION&quot;, © 2006-2008 dmenu engineers, see LICENSE for details\n&quot;);
+</a><a href="#h3-17-4" id="h3-17-4" class="i">+			eprint(&quot;dmenu-&quot;VERSION&quot;, © 2006-2009 dmenu engineers, see LICENSE for details\n&quot;);
+</a> 		else
+<a href="#h3-17-6" id="h3-17-6" class="d">-			eprint(&quot;usage: dmenu [-i] [-b] [-fn &lt;font&gt;] [-nb &lt;color&gt;] [-nf &lt;color&gt;]\n&quot;
+</a><a href="#h3-17-7" id="h3-17-7" class="i">+			eprint(&quot;usage: dmenu [-i] [-b] [-l &lt;lines&gt;] [-fn &lt;font&gt;] [-nb &lt;color&gt;] [-nf &lt;color&gt;]\n&quot;
+</a> 			       &quot;             [-p &lt;prompt&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-v]\n&quot;);
+ 	if(!setlocale(LC_CTYPE, &quot;&quot;) || !XSupportsLocale())
+ 		fprintf(stderr, &quot;warning: no locale support\n&quot;);
+</pre>
+</div>
+</body>
+</html>

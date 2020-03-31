@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>finished libsl/drw integration - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5364697914fd4272fc1a6494b4fc522d2935427a.html">5364697914fd4272fc1a6494b4fc522d2935427a</a>
+<b>parent</b> <a href="../commit/7edc59631193813cf4d64030f8864de36b193cfc.html">7edc59631193813cf4d64030f8864de36b193cfc</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Sun, 16 Jun 2013 15:20:29 +0200
+
+finished libsl/drw integration
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">drw.c</a></td><td> | </td><td class="num">150</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">drw.h</a></td><td> | </td><td class="num">46</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">-------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">253</td><td><span class="i">++++++++++++++++++++++</span><span class="d">---------------------------------------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 185 insertions(+), 264 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/drw.c.html">drw.c</a> b/<a href="../file/drw.c.html">drw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,15 +8,17 @@
+</a> #include &quot;util.h&quot;
+ 
+ Drw *
+<a href="#h0-0-3" id="h0-0-3" class="d">-drw_create(Display *dpy, int screen, Window win, unsigned int w, unsigned int h) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+drw_create(Display *dpy, int screen, Window root, unsigned int w, unsigned int h) {
+</a> 	Drw *drw = (Drw *)calloc(1, sizeof(Drw));
+<a href="#h0-0-6" id="h0-0-6" class="i">+	if(!drw)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		return NULL;
+</a> 	drw-&gt;dpy = dpy;
+ 	drw-&gt;screen = screen;
+<a href="#h0-0-10" id="h0-0-10" class="d">-	drw-&gt;win = win;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	drw-&gt;root = root;
+</a> 	drw-&gt;w = w;
+ 	drw-&gt;h = h;
+<a href="#h0-0-14" id="h0-0-14" class="d">-	drw-&gt;drwable = XCreatePixmap(dpy, win, w, h, DefaultDepth(dpy, screen));
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-	drw-&gt;gc = XCreateGC(dpy, win, 0, NULL);
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	drw-&gt;drawable = XCreatePixmap(dpy, root, w, h, DefaultDepth(dpy, screen));
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	drw-&gt;gc = XCreateGC(dpy, root, 0, NULL);
+</a> 	XSetLineAttributes(dpy, drw-&gt;gc, 1, LineSolid, CapButt, JoinMiter);
+ 	return drw;
+ }
+<a href="#h0-1" id="h0-1" class="h">@@ -27,27 +29,28 @@ drw_resize(Drw *drw, unsigned int w, unsigned int h) {
+</a> 		return;
+ 	drw-&gt;w = w;
+ 	drw-&gt;h = h;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	XFreePixmap(drw-&gt;dpy, drw-&gt;drwable);
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	drw-&gt;drwable = XCreatePixmap(drw-&gt;dpy, drw-&gt;win, w, h, DefaultDepth(drw-&gt;dpy, drw-&gt;screen));
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	if(drw-&gt;drawable != 0)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+		XFreePixmap(drw-&gt;dpy, drw-&gt;drawable);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	drw-&gt;drawable = XCreatePixmap(drw-&gt;dpy, drw-&gt;root, w, h, DefaultDepth(drw-&gt;dpy, drw-&gt;screen));
+</a> }
+ 
+ void
+ drw_free(Drw *drw) {
+<a href="#h0-1-12" id="h0-1-12" class="d">-	XFreePixmap(drw-&gt;dpy, drw-&gt;drwable);
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	XFreePixmap(drw-&gt;dpy, drw-&gt;drawable);
+</a> 	XFreeGC(drw-&gt;dpy, drw-&gt;gc);
+ 	free(drw);
+ }
+ 
+ Fnt *
+<a href="#h0-1-19" id="h0-1-19" class="d">-drw_font_create(Drw *drw, const char *fontname) {
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+drw_font_create(Display *dpy, const char *fontname) {
+</a> 	Fnt *font;
+ 	char *def, **missing;
+ 	int n;
+ 
+<a href="#h0-1-25" id="h0-1-25" class="d">-	if(!drw)
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-		return NULL;
+</a> 	font = (Fnt *)calloc(1, sizeof(Fnt));
+<a href="#h0-1-28" id="h0-1-28" class="d">-	font-&gt;set = XCreateFontSet(drw-&gt;dpy, fontname, &amp;missing, &amp;n, &amp;def);
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+	if(!font)
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+		return NULL;
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+	font-&gt;set = XCreateFontSet(dpy, fontname, &amp;missing, &amp;n, &amp;def);
+</a> 	if(missing) {
+ 		while(n--)
+ 			fprintf(stderr, &quot;drw: missing fontset: %s\n&quot;, missing[n]);
+<a href="#h0-2" id="h0-2" class="h">@@ -65,8 +68,8 @@ drw_font_create(Drw *drw, const char *fontname) {
+</a> 		}
+ 	}
+ 	else {
+<a href="#h0-2-3" id="h0-2-3" class="d">-		if(!(font-&gt;xfont = XLoadQueryFont(drw-&gt;dpy, fontname))
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		&amp;&amp; !(font-&gt;xfont = XLoadQueryFont(drw-&gt;dpy, &quot;fixed&quot;)))
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		if(!(font-&gt;xfont = XLoadQueryFont(dpy, fontname))
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		&amp;&amp; !(font-&gt;xfont = XLoadQueryFont(dpy, &quot;fixed&quot;)))
+</a> 			die(&quot;error, cannot load font: &#39;%s&#39;\n&quot;, fontname);
+ 		font-&gt;ascent = font-&gt;xfont-&gt;ascent;
+ 		font-&gt;descent = font-&gt;xfont-&gt;descent;
+<a href="#h0-3" id="h0-3" class="h">@@ -76,22 +79,28 @@ drw_font_create(Drw *drw, const char *fontname) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="d">-drw_font_free(Drw *drw, Fnt *font) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	if(!drw || !font)
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+drw_font_free(Display *dpy, Fnt *font) {
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	if(!font)
+</a> 		return;
+ 	if(font-&gt;set)
+<a href="#h0-3-9" id="h0-3-9" class="d">-		XFreeFontSet(drw-&gt;dpy, font-&gt;set);
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+		XFreeFontSet(dpy, font-&gt;set);
+</a> 	else
+<a href="#h0-3-12" id="h0-3-12" class="d">-		XFreeFont(drw-&gt;dpy, font-&gt;xfont);
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+		XFreeFont(dpy, font-&gt;xfont);
+</a> 	free(font);
+ }
+ 
+ Clr *
+ drw_clr_create(Drw *drw, const char *clrname) {
+<a href="#h0-3-19" id="h0-3-19" class="d">-	Clr *clr = (Clr *)calloc(1, sizeof(Clr));
+</a><a href="#h0-3-20" id="h0-3-20" class="d">-	Colormap cmap = DefaultColormap(drw-&gt;dpy, drw-&gt;screen);
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+	Clr *clr;
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+	Colormap cmap;
+</a> 	XColor color;
+ 
+<a href="#h0-3-25" id="h0-3-25" class="i">+	if(!drw)
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+		return NULL;
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+	clr = (Clr *)calloc(1, sizeof(Clr));
+</a><a href="#h0-3-28" id="h0-3-28" class="i">+	if(!clr)
+</a><a href="#h0-3-29" id="h0-3-29" class="i">+		return NULL;
+</a><a href="#h0-3-30" id="h0-3-30" class="i">+	cmap = DefaultColormap(drw-&gt;dpy, drw-&gt;screen);
+</a> 	if(!XAllocNamedColor(drw-&gt;dpy, cmap, clrname, &amp;color, &amp;color))
+ 		die(&quot;error, cannot allocate color &#39;%s&#39;\n&quot;, clrname);
+ 	clr-&gt;rgb = color.pixel;
+<a href="#h0-4" id="h0-4" class="h">@@ -99,7 +108,7 @@ drw_clr_create(Drw *drw, const char *clrname) {
+</a> }
+ 
+ void
+<a href="#h0-4-3" id="h0-4-3" class="d">-drw_clr_free(Drw *drw, Clr *clr) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+drw_clr_free(Clr *clr) {
+</a> 	if(!clr)
+ 		return;
+ 	free(clr);
+<a href="#h0-5" id="h0-5" class="h">@@ -107,96 +116,113 @@ drw_clr_free(Drw *drw, Clr *clr) {
+</a> 
+ void
+ drw_setfont(Drw *drw, Fnt *font) {
+<a href="#h0-5-3" id="h0-5-3" class="d">-	if(!drw)
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-		return;
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-	drw-&gt;font = font;
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+	if(drw)
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+		drw-&gt;font = font;
+</a> }
+ 
+ void
+<a href="#h0-5-11" id="h0-5-11" class="d">-drw_setfg(Drw *drw, Clr *clr) {
+</a><a href="#h0-5-12" id="h0-5-12" class="d">-	if(!drw) 
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+drw_settheme(Drw *drw, Theme *theme) {
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+	if(!drw || !theme) 
+</a> 		return;
+<a href="#h0-5-16" id="h0-5-16" class="d">-	drw-&gt;fg = clr;
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+	drw-&gt;theme = theme;
+</a> }
+ 
+ void
+<a href="#h0-5-21" id="h0-5-21" class="d">-drw_setbg(Drw *drw, Clr *clr) {
+</a><a href="#h0-5-22" id="h0-5-22" class="d">-	if(!drw)
+</a><a href="#h0-5-23" id="h0-5-23" class="d">-		return;
+</a><a href="#h0-5-24" id="h0-5-24" class="d">-	drw-&gt;bg = clr;
+</a><a href="#h0-5-25" id="h0-5-25" class="d">-}
+</a><a href="#h0-5-26" id="h0-5-26" class="d">-
+</a><a href="#h0-5-27" id="h0-5-27" class="d">-void
+</a><a href="#h0-5-28" id="h0-5-28" class="d">-drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h, Bool filled, Bool empty, Bool invert) {
+</a><a href="#h0-5-29" id="h0-5-29" class="i">+drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h, int filled, int empty, int invert) {
+</a> 	int dx;
+ 
+<a href="#h0-5-32" id="h0-5-32" class="d">-	if(!drw || !drw-&gt;font || !drw-&gt;fg || !drw-&gt;bg)
+</a><a href="#h0-5-33" id="h0-5-33" class="i">+	if(!drw || !drw-&gt;font || !drw-&gt;theme)
+</a> 		return;
+<a href="#h0-5-35" id="h0-5-35" class="d">-	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;bg-&gt;rgb : drw-&gt;fg-&gt;rgb);
+</a><a href="#h0-5-36" id="h0-5-36" class="i">+	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;theme-&gt;bg-&gt;rgb : drw-&gt;theme-&gt;fg-&gt;rgb);
+</a> 	dx = (drw-&gt;font-&gt;ascent + drw-&gt;font-&gt;descent + 2) / 4;
+ 	if(filled)
+<a href="#h0-5-39" id="h0-5-39" class="d">-		XFillRectangle(drw-&gt;dpy, drw-&gt;drwable, drw-&gt;gc, x+1, y+1, dx+1, dx+1);
+</a><a href="#h0-5-40" id="h0-5-40" class="i">+		XFillRectangle(drw-&gt;dpy, drw-&gt;drawable, drw-&gt;gc, x+1, y+1, dx+1, dx+1);
+</a> 	else if(empty)
+<a href="#h0-5-42" id="h0-5-42" class="d">-		XDrawRectangle(drw-&gt;dpy, drw-&gt;drwable, drw-&gt;gc, x+1, y+1, dx, dx);
+</a><a href="#h0-5-43" id="h0-5-43" class="i">+		XDrawRectangle(drw-&gt;dpy, drw-&gt;drawable, drw-&gt;gc, x+1, y+1, dx, dx);
+</a> }
+ 
+ void
+<a href="#h0-5-47" id="h0-5-47" class="d">-drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *text, Bool invert) {
+</a><a href="#h0-5-48" id="h0-5-48" class="i">+drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *text, int invert) {
+</a> 	char buf[256];
+<a href="#h0-5-50" id="h0-5-50" class="d">-	int i, tx, ty, len, olen;
+</a><a href="#h0-5-51" id="h0-5-51" class="i">+	int i, tx, ty, th, len, olen;
+</a> 	Extnts tex;
+ 
+<a href="#h0-5-54" id="h0-5-54" class="d">-	if(!drw || !drw-&gt;fg || !drw-&gt;bg)
+</a><a href="#h0-5-55" id="h0-5-55" class="i">+	if(!drw || !drw-&gt;theme)
+</a> 		return;
+<a href="#h0-5-57" id="h0-5-57" class="d">-	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;fg-&gt;rgb : drw-&gt;bg-&gt;rgb);
+</a><a href="#h0-5-58" id="h0-5-58" class="d">-	XFillRectangle(drw-&gt;dpy, drw-&gt;drwable, drw-&gt;gc, x, y, w, h);
+</a><a href="#h0-5-59" id="h0-5-59" class="i">+	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;theme-&gt;fg-&gt;rgb : drw-&gt;theme-&gt;bg-&gt;rgb);
+</a><a href="#h0-5-60" id="h0-5-60" class="i">+	XFillRectangle(drw-&gt;dpy, drw-&gt;drawable, drw-&gt;gc, x, y, w, h);
+</a> 	if(!text || !drw-&gt;font)
+ 		return;
+ 	olen = strlen(text);
+<a href="#h0-5-64" id="h0-5-64" class="d">-	drw_getexts(drw, text, olen, &amp;tex);
+</a><a href="#h0-5-65" id="h0-5-65" class="d">-	ty = y + (h / 2) - tex.yOff;
+</a><a href="#h0-5-66" id="h0-5-66" class="d">-	tx = x + tex.xOff;
+</a><a href="#h0-5-67" id="h0-5-67" class="i">+	drw_font_getexts(drw-&gt;font, text, olen, &amp;tex);
+</a><a href="#h0-5-68" id="h0-5-68" class="i">+	th = drw-&gt;font-&gt;ascent + drw-&gt;font-&gt;descent;
+</a><a href="#h0-5-69" id="h0-5-69" class="i">+	ty = y + (h / 2) - (th / 2) + drw-&gt;font-&gt;ascent;
+</a><a href="#h0-5-70" id="h0-5-70" class="i">+	tx = x + (h / 2);
+</a> 	/* shorten text if necessary */
+ 	for(len = MIN(olen, sizeof buf); len &amp;&amp; tex.w &gt; w - tex.h; len--)
+<a href="#h0-5-73" id="h0-5-73" class="d">-		drw_getexts(drw, text, len, &amp;tex);
+</a><a href="#h0-5-74" id="h0-5-74" class="i">+		drw_font_getexts(drw-&gt;font, text, len, &amp;tex);
+</a> 	if(!len)
+ 		return;
+ 	memcpy(buf, text, len);
+ 	if(len &lt; olen)
+ 		for(i = len; i &amp;&amp; i &gt; len - 3; buf[--i] = &#39;.&#39;);
+<a href="#h0-5-80" id="h0-5-80" class="d">-	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;bg-&gt;rgb : drw-&gt;fg-&gt;rgb);
+</a><a href="#h0-5-81" id="h0-5-81" class="i">+	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;theme-&gt;bg-&gt;rgb : drw-&gt;theme-&gt;fg-&gt;rgb);
+</a> 	if(drw-&gt;font-&gt;set)
+<a href="#h0-5-83" id="h0-5-83" class="d">-		XmbDrawString(drw-&gt;dpy, drw-&gt;drwable, drw-&gt;font-&gt;set, drw-&gt;gc, tx, ty, buf, len);
+</a><a href="#h0-5-84" id="h0-5-84" class="i">+		XmbDrawString(drw-&gt;dpy, drw-&gt;drawable, drw-&gt;font-&gt;set, drw-&gt;gc, tx, ty, buf, len);
+</a> 	else
+<a href="#h0-5-86" id="h0-5-86" class="d">-		XDrawString(drw-&gt;dpy, drw-&gt;drwable, drw-&gt;gc, tx, ty, buf, len);
+</a><a href="#h0-5-87" id="h0-5-87" class="i">+		XDrawString(drw-&gt;dpy, drw-&gt;drawable, drw-&gt;gc, tx, ty, buf, len);
+</a> }
+ 
+ void
+<a href="#h0-5-91" id="h0-5-91" class="d">-drw_map(Drw *drw, int x, int y, unsigned int w, unsigned int h) {
+</a><a href="#h0-5-92" id="h0-5-92" class="i">+drw_map(Drw *drw, Window win, int x, int y, unsigned int w, unsigned int h) {
+</a> 	if(!drw)
+ 		return;
+<a href="#h0-5-95" id="h0-5-95" class="d">-	XCopyArea(drw-&gt;dpy, drw-&gt;drwable, drw-&gt;win, drw-&gt;gc, x, y, w, h, x, y);
+</a><a href="#h0-5-96" id="h0-5-96" class="i">+	XCopyArea(drw-&gt;dpy, drw-&gt;drawable, win, drw-&gt;gc, x, y, w, h, x, y);
+</a> 	XSync(drw-&gt;dpy, False);
+ }
+ 
+ 
+ void
+<a href="#h0-5-102" id="h0-5-102" class="d">-drw_getexts(Drw *drw, const char *text, unsigned int len, Extnts *tex) {
+</a><a href="#h0-5-103" id="h0-5-103" class="i">+drw_font_getexts(Fnt *font, const char *text, unsigned int len, Extnts *tex) {
+</a> 	XRectangle r;
+ 
+<a href="#h0-5-106" id="h0-5-106" class="d">-	if(!drw || !drw-&gt;font || !text)
+</a><a href="#h0-5-107" id="h0-5-107" class="i">+	if(!font || !text)
+</a> 		return;
+<a href="#h0-5-109" id="h0-5-109" class="d">-	if(drw-&gt;font-&gt;set) {
+</a><a href="#h0-5-110" id="h0-5-110" class="d">-		XmbTextExtents(drw-&gt;font-&gt;set, text, len, NULL, &amp;r);
+</a><a href="#h0-5-111" id="h0-5-111" class="d">-		tex-&gt;xOff = r.x;
+</a><a href="#h0-5-112" id="h0-5-112" class="d">-		tex-&gt;yOff = r.y;
+</a><a href="#h0-5-113" id="h0-5-113" class="i">+	if(font-&gt;set) {
+</a><a href="#h0-5-114" id="h0-5-114" class="i">+		XmbTextExtents(font-&gt;set, text, len, NULL, &amp;r);
+</a> 		tex-&gt;w = r.width;
+ 		tex-&gt;h = r.height;
+ 	}
+ 	else {
+<a href="#h0-5-119" id="h0-5-119" class="d">-		tex-&gt;h = drw-&gt;font-&gt;ascent + drw-&gt;font-&gt;descent;
+</a><a href="#h0-5-120" id="h0-5-120" class="d">-		tex-&gt;w = XTextWidth(drw-&gt;font-&gt;xfont, text, len);
+</a><a href="#h0-5-121" id="h0-5-121" class="d">-		tex-&gt;xOff = tex-&gt;h / 2;
+</a><a href="#h0-5-122" id="h0-5-122" class="d">-		tex-&gt;yOff = (tex-&gt;h / 2) + drw-&gt;font-&gt;ascent;
+</a><a href="#h0-5-123" id="h0-5-123" class="i">+		tex-&gt;h = font-&gt;ascent + font-&gt;descent;
+</a><a href="#h0-5-124" id="h0-5-124" class="i">+		tex-&gt;w = XTextWidth(font-&gt;xfont, text, len);
+</a> 	}
+ }
+<a href="#h0-5-127" id="h0-5-127" class="i">+
+</a><a href="#h0-5-128" id="h0-5-128" class="i">+unsigned int
+</a><a href="#h0-5-129" id="h0-5-129" class="i">+drw_font_getexts_width(Fnt *font, const char *text, unsigned int len) {
+</a><a href="#h0-5-130" id="h0-5-130" class="i">+	Extnts tex;
+</a><a href="#h0-5-131" id="h0-5-131" class="i">+
+</a><a href="#h0-5-132" id="h0-5-132" class="i">+	if(!font)
+</a><a href="#h0-5-133" id="h0-5-133" class="i">+		return -1;
+</a><a href="#h0-5-134" id="h0-5-134" class="i">+	drw_font_getexts(font, text, len, &amp;tex);
+</a><a href="#h0-5-135" id="h0-5-135" class="i">+	return tex.w;
+</a><a href="#h0-5-136" id="h0-5-136" class="i">+}
+</a><a href="#h0-5-137" id="h0-5-137" class="i">+
+</a><a href="#h0-5-138" id="h0-5-138" class="i">+Cur *
+</a><a href="#h0-5-139" id="h0-5-139" class="i">+drw_cur_create(Drw *drw, int shape) {
+</a><a href="#h0-5-140" id="h0-5-140" class="i">+	Cur *cur = (Cur *)calloc(1, sizeof(Cur));
+</a><a href="#h0-5-141" id="h0-5-141" class="i">+
+</a><a href="#h0-5-142" id="h0-5-142" class="i">+	if(!drw || !cur)
+</a><a href="#h0-5-143" id="h0-5-143" class="i">+		return NULL;
+</a><a href="#h0-5-144" id="h0-5-144" class="i">+	cur-&gt;cursor = XCreateFontCursor(drw-&gt;dpy, shape);
+</a><a href="#h0-5-145" id="h0-5-145" class="i">+	return cur;
+</a><a href="#h0-5-146" id="h0-5-146" class="i">+}
+</a><a href="#h0-5-147" id="h0-5-147" class="i">+
+</a><a href="#h0-5-148" id="h0-5-148" class="i">+void
+</a><a href="#h0-5-149" id="h0-5-149" class="i">+drw_cur_free(Drw *drw, Cur *cursor) {
+</a><a href="#h0-5-150" id="h0-5-150" class="i">+	if(!drw || !cursor)
+</a><a href="#h0-5-151" id="h0-5-151" class="i">+		return;
+</a><a href="#h0-5-152" id="h0-5-152" class="i">+	XFreeCursor(drw-&gt;dpy, cursor-&gt;cursor);
+</a><a href="#h0-5-153" id="h0-5-153" class="i">+	free(cursor);
+</a><a href="#h0-5-154" id="h0-5-154" class="i">+}
+</a><b>diff --git a/<a id="h1" href="../file/drw.h.html">drw.h</a> b/<a href="../file/drw.h.html">drw.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -5,6 +5,10 @@ typedef struct {
+</a> } Clr;
+ 
+ typedef struct {
+<a href="#h1-0-3" id="h1-0-3" class="i">+	Cursor cursor;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+} Cur;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+typedef struct {
+</a> 	int ascent;
+ 	int descent;
+ 	unsigned int h;
+<a href="#h1-1" id="h1-1" class="h">@@ -13,22 +17,25 @@ typedef struct {
+</a> } Fnt;
+ 
+ typedef struct {
+<a href="#h1-1-3" id="h1-1-3" class="i">+	Clr *fg;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	Clr *bg;
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	Clr *border;
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+} Theme;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+typedef struct {
+</a> 	unsigned int w, h;
+ 	Display *dpy;
+ 	int screen;
+<a href="#h1-1-12" id="h1-1-12" class="d">-	Window win;
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-	Drawable drwable;
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+	Window root;
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+	Drawable drawable;
+</a> 	GC gc;
+<a href="#h1-1-17" id="h1-1-17" class="d">-	Clr *fg;
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-	Clr *bg;
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+	Theme *theme;
+</a> 	Fnt *font;
+ } Drw;
+ 
+ typedef struct {
+ 	unsigned int w;
+ 	unsigned int h;
+<a href="#h1-1-26" id="h1-1-26" class="d">-	int xOff;
+</a><a href="#h1-1-27" id="h1-1-27" class="d">-	int yOff;
+</a> } Extnts;
+ 
+ /* Drawable abstraction */
+<a href="#h1-2" id="h1-2" class="h">@@ -37,25 +44,26 @@ void drw_resize(Drw *drw, unsigned int w, unsigned int h);
+</a> void drw_free(Drw *drw);
+ 
+ /* Fnt abstraction */
+<a href="#h1-2-3" id="h1-2-3" class="d">-Fnt *drw_font_create(Drw *drw, const char *fontname);
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-void drw_font_free(Drw *drw, Fnt *font);
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+Fnt *drw_font_create(Display *dpy, const char *fontname);
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+void drw_font_free(Display *dpy, Fnt *font);
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+void drw_font_getexts(Fnt *font, const char *text, unsigned int len, Extnts *extnts);
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+unsigned int drw_font_getexts_width(Fnt *font, const char *text, unsigned int len);
+</a> 
+<a href="#h1-2-10" id="h1-2-10" class="d">-/* Clrour abstraction */
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+/* Colour abstraction */
+</a> Clr *drw_clr_create(Drw *drw, const char *clrname);
+<a href="#h1-2-13" id="h1-2-13" class="d">-void drw_clr_free(Drw *drw, Clr *clr);
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+void drw_clr_free(Clr *clr);
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+/* Cursor abstraction */
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+Cur *drw_cur_create(Drw *drw, int shape);
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+void drw_cur_free(Drw *drw, Cur *cursor);
+</a> 
+ /* Drawing context manipulation */
+ void drw_setfont(Drw *drw, Fnt *font);
+<a href="#h1-2-22" id="h1-2-22" class="d">-void drw_setfg(Drw *drw, Clr *clr);
+</a><a href="#h1-2-23" id="h1-2-23" class="d">-void drw_setbg(Drw *drw, Clr *clr);
+</a><a href="#h1-2-24" id="h1-2-24" class="i">+void drw_settheme(Drw *drw, Theme *theme);
+</a> 
+ /* Drawing functions */
+<a href="#h1-2-27" id="h1-2-27" class="d">-void drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h, Bool filled, Bool empty, Bool invert);
+</a><a href="#h1-2-28" id="h1-2-28" class="d">-void drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *text, Bool invert);
+</a><a href="#h1-2-29" id="h1-2-29" class="i">+void drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h, int filled, int empty, int invert);
+</a><a href="#h1-2-30" id="h1-2-30" class="i">+void drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *text, int invert);
+</a> 
+ /* Map functions */
+<a href="#h1-2-33" id="h1-2-33" class="d">-void drw_map(Drw *drw, int x, int y, unsigned int w, unsigned int h);
+</a><a href="#h1-2-34" id="h1-2-34" class="d">-
+</a><a href="#h1-2-35" id="h1-2-35" class="d">-/* Text functions */
+</a><a href="#h1-2-36" id="h1-2-36" class="d">-void drw_getexts(Drw *drw, const char *text, unsigned int len, Extnts *extnts);
+</a><a href="#h1-2-37" id="h1-2-37" class="d">-
+</a><a href="#h1-2-38" id="h1-2-38" class="i">+void drw_map(Drw *drw, Window win, int x, int y, unsigned int w, unsigned int h);
+</a><b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -54,7 +54,7 @@
+</a> #define WIDTH(X)                ((X)-&gt;w + 2 * (X)-&gt;bw)
+ #define HEIGHT(X)               ((X)-&gt;h + 2 * (X)-&gt;bw)
+ #define TAGMASK                 ((1 &lt;&lt; LENGTH(tags)) - 1)
+<a href="#h2-0-3" id="h2-0-3" class="d">-#define TEXTW(X)                (textnw(X, strlen(X)) + dc.font.height)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+#define TEXTW(X)                (drw_font_getexts_width(drw-&gt;font, X, strlen(X)) + drw-&gt;font-&gt;h)
+</a> 
+ /* enums */
+ enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+<a href="#h2-1" id="h2-1" class="h">@@ -99,21 +99,6 @@ struct Client {
+</a> };
+ 
+ typedef struct {
+<a href="#h2-1-3" id="h2-1-3" class="d">-	int x, y, w, h;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	unsigned long norm[ColLast];
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-	unsigned long sel[ColLast];
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-	Drawable drawable;
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-	GC gc;
+</a><a href="#h2-1-8" id="h2-1-8" class="d">-	struct {
+</a><a href="#h2-1-9" id="h2-1-9" class="d">-		int ascent;
+</a><a href="#h2-1-10" id="h2-1-10" class="d">-		int descent;
+</a><a href="#h2-1-11" id="h2-1-11" class="d">-		int height;
+</a><a href="#h2-1-12" id="h2-1-12" class="d">-		XFontSet set;
+</a><a href="#h2-1-13" id="h2-1-13" class="d">-		XFontStruct *xfont;
+</a><a href="#h2-1-14" id="h2-1-14" class="d">-	} font;
+</a><a href="#h2-1-15" id="h2-1-15" class="d">-} DC; /* draw context */
+</a><a href="#h2-1-16" id="h2-1-16" class="d">-
+</a><a href="#h2-1-17" id="h2-1-17" class="d">-typedef struct {
+</a> 	unsigned int mod;
+ 	KeySym keysym;
+ 	void (*func)(const Arg *);
+<a href="#h2-2" id="h2-2" class="h">@@ -178,22 +163,18 @@ static void detachstack(Client *c);
+</a> static Monitor *dirtomon(int dir);
+ static void drawbar(Monitor *m);
+ static void drawbars(void);
+<a href="#h2-2-3" id="h2-2-3" class="d">-static void drawsquare(Bool filled, Bool empty, Bool invert, unsigned long col[ColLast]);
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-static void drawtext(const char *text, unsigned long col[ColLast], Bool invert);
+</a> static void enternotify(XEvent *e);
+ static void expose(XEvent *e);
+ static void focus(Client *c);
+ static void focusin(XEvent *e);
+ static void focusmon(const Arg *arg);
+ static void focusstack(const Arg *arg);
+<a href="#h2-2-11" id="h2-2-11" class="d">-static unsigned long getcolor(const char *colstr);
+</a> static Bool getrootptr(int *x, int *y);
+ static long getstate(Window w);
+ static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+ static void grabbuttons(Client *c, Bool focused);
+ static void grabkeys(void);
+ static void incnmaster(const Arg *arg);
+<a href="#h2-2-18" id="h2-2-18" class="d">-static void initfont(const char *fontstr);
+</a> static void keypress(XEvent *e);
+ static void killclient(const Arg *arg);
+ static void manage(Window w, XWindowAttributes *wa);
+<a href="#h2-3" id="h2-3" class="h">@@ -226,7 +207,6 @@ static void sigchld(int unused);
+</a> static void spawn(const Arg *arg);
+ static void tag(const Arg *arg);
+ static void tagmon(const Arg *arg);
+<a href="#h2-3-3" id="h2-3-3" class="d">-static int textnw(const char *text, unsigned int len);
+</a> static void tile(Monitor *);
+ static void togglebar(const Arg *arg);
+ static void togglefloating(const Arg *arg);
+<a href="#h2-4" id="h2-4" class="h">@@ -279,10 +259,13 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> };
+ static Atom wmatom[WMLast], netatom[NetLast];
+ static Bool running = True;
+<a href="#h2-4-3" id="h2-4-3" class="d">-static Cursor cursor[CurLast];
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+static Cur *cursor[CurLast];
+</a><a href="#h2-4-5" id="h2-4-5" class="i">+static Theme thmnorm[ColLast];
+</a><a href="#h2-4-6" id="h2-4-6" class="i">+static Theme thmsel[ColLast];
+</a> static Display *dpy;
+<a href="#h2-4-8" id="h2-4-8" class="d">-static DC dc;
+</a><a href="#h2-4-9" id="h2-4-9" class="d">-static Monitor *mons = NULL, *selmon = NULL;
+</a><a href="#h2-4-10" id="h2-4-10" class="i">+static Drw *drw;
+</a><a href="#h2-4-11" id="h2-4-11" class="i">+static Fnt *fnt;
+</a><a href="#h2-4-12" id="h2-4-12" class="i">+static Monitor *mons, *selmon;
+</a> static Window root;
+ 
+ /* configuration, allows nested code to access above variables */
+<a href="#h2-5" id="h2-5" class="h">@@ -486,18 +469,20 @@ cleanup(void) {
+</a> 	for(m = mons; m; m = m-&gt;next)
+ 		while(m-&gt;stack)
+ 			unmanage(m-&gt;stack, False);
+<a href="#h2-5-3" id="h2-5-3" class="d">-	if(dc.font.set)
+</a><a href="#h2-5-4" id="h2-5-4" class="d">-		XFreeFontSet(dpy, dc.font.set);
+</a><a href="#h2-5-5" id="h2-5-5" class="d">-	else
+</a><a href="#h2-5-6" id="h2-5-6" class="d">-		XFreeFont(dpy, dc.font.xfont);
+</a> 	XUngrabKey(dpy, AnyKey, AnyModifier, root);
+<a href="#h2-5-8" id="h2-5-8" class="d">-	XFreePixmap(dpy, dc.drawable);
+</a><a href="#h2-5-9" id="h2-5-9" class="d">-	XFreeGC(dpy, dc.gc);
+</a><a href="#h2-5-10" id="h2-5-10" class="d">-	XFreeCursor(dpy, cursor[CurNormal]);
+</a><a href="#h2-5-11" id="h2-5-11" class="d">-	XFreeCursor(dpy, cursor[CurResize]);
+</a><a href="#h2-5-12" id="h2-5-12" class="d">-	XFreeCursor(dpy, cursor[CurMove]);
+</a> 	while(mons)
+ 		cleanupmon(mons);
+<a href="#h2-5-15" id="h2-5-15" class="i">+	drw_cur_free(drw, cursor[CurNormal]);
+</a><a href="#h2-5-16" id="h2-5-16" class="i">+	drw_cur_free(drw, cursor[CurResize]);
+</a><a href="#h2-5-17" id="h2-5-17" class="i">+	drw_cur_free(drw, cursor[CurMove]);
+</a><a href="#h2-5-18" id="h2-5-18" class="i">+	drw_font_free(dpy, fnt);
+</a><a href="#h2-5-19" id="h2-5-19" class="i">+	drw_clr_free(thmnorm-&gt;border);
+</a><a href="#h2-5-20" id="h2-5-20" class="i">+	drw_clr_free(thmnorm-&gt;bg);
+</a><a href="#h2-5-21" id="h2-5-21" class="i">+	drw_clr_free(thmnorm-&gt;fg);
+</a><a href="#h2-5-22" id="h2-5-22" class="i">+	drw_clr_free(thmsel-&gt;border);
+</a><a href="#h2-5-23" id="h2-5-23" class="i">+	drw_clr_free(thmsel-&gt;bg);
+</a><a href="#h2-5-24" id="h2-5-24" class="i">+	drw_clr_free(thmsel-&gt;fg);
+</a><a href="#h2-5-25" id="h2-5-25" class="i">+	drw_free(drw);
+</a> 	XSync(dpy, False);
+ 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+ 	XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
+<a href="#h2-6" id="h2-6" class="h">@@ -581,9 +566,7 @@ configurenotify(XEvent *e) {
+</a> 		sw = ev-&gt;width;
+ 		sh = ev-&gt;height;
+ 		if(updategeom() || dirty) {
+<a href="#h2-6-3" id="h2-6-3" class="d">-			if(dc.drawable != 0)
+</a><a href="#h2-6-4" id="h2-6-4" class="d">-				XFreePixmap(dpy, dc.drawable);
+</a><a href="#h2-6-5" id="h2-6-5" class="d">-			dc.drawable = XCreatePixmap(dpy, root, sw, bh, DefaultDepth(dpy, screen));
+</a><a href="#h2-6-6" id="h2-6-6" class="i">+			drw_resize(drw, sw, bh);
+</a> 			updatebars();
+ 			for(m = mons; m; m = m-&gt;next)
+ 				XMoveResizeWindow(dpy, m-&gt;barwin, m-&gt;wx, m-&gt;by, m-&gt;ww, bh);
+<a href="#h2-7" id="h2-7" class="h">@@ -710,9 +693,8 @@ dirtomon(int dir) {
+</a> 
+ void
+ drawbar(Monitor *m) {
+<a href="#h2-7-3" id="h2-7-3" class="d">-	int x;
+</a><a href="#h2-7-4" id="h2-7-4" class="i">+	int x, xx, w;
+</a> 	unsigned int i, occ = 0, urg = 0;
+<a href="#h2-7-6" id="h2-7-6" class="d">-	unsigned long *col;
+</a> 	Client *c;
+ 
+ 	for(c = m-&gt;clients; c; c = c-&gt;next) {
+<a href="#h2-8" id="h2-8" class="h">@@ -720,42 +702,44 @@ drawbar(Monitor *m) {
+</a> 		if(c-&gt;isurgent)
+ 			urg |= c-&gt;tags;
+ 	}
+<a href="#h2-8-3" id="h2-8-3" class="d">-	dc.x = 0;
+</a><a href="#h2-8-4" id="h2-8-4" class="i">+	x = 0;
+</a> 	for(i = 0; i &lt; LENGTH(tags); i++) {
+<a href="#h2-8-6" id="h2-8-6" class="d">-		dc.w = TEXTW(tags[i]);
+</a><a href="#h2-8-7" id="h2-8-7" class="d">-		col = m-&gt;tagset[m-&gt;seltags] &amp; 1 &lt;&lt; i ? dc.sel : dc.norm;
+</a><a href="#h2-8-8" id="h2-8-8" class="d">-		drawtext(tags[i], col, urg &amp; 1 &lt;&lt; i);
+</a><a href="#h2-8-9" id="h2-8-9" class="d">-		drawsquare(m == selmon &amp;&amp; selmon-&gt;sel &amp;&amp; selmon-&gt;sel-&gt;tags &amp; 1 &lt;&lt; i,
+</a><a href="#h2-8-10" id="h2-8-10" class="d">-		           occ &amp; 1 &lt;&lt; i, urg &amp; 1 &lt;&lt; i, col);
+</a><a href="#h2-8-11" id="h2-8-11" class="d">-		dc.x += dc.w;
+</a><a href="#h2-8-12" id="h2-8-12" class="d">-	}
+</a><a href="#h2-8-13" id="h2-8-13" class="d">-	dc.w = blw = TEXTW(m-&gt;ltsymbol);
+</a><a href="#h2-8-14" id="h2-8-14" class="d">-	drawtext(m-&gt;ltsymbol, dc.norm, False);
+</a><a href="#h2-8-15" id="h2-8-15" class="d">-	dc.x += dc.w;
+</a><a href="#h2-8-16" id="h2-8-16" class="d">-	x = dc.x;
+</a><a href="#h2-8-17" id="h2-8-17" class="i">+		w = TEXTW(tags[i]);
+</a><a href="#h2-8-18" id="h2-8-18" class="i">+		drw_settheme(drw, m-&gt;tagset[m-&gt;seltags] &amp; 1 &lt;&lt; i ? thmsel : thmnorm);
+</a><a href="#h2-8-19" id="h2-8-19" class="i">+		drw_text(drw, x, 0, w, bh, tags[i], urg &amp; 1 &lt;&lt; i);
+</a><a href="#h2-8-20" id="h2-8-20" class="i">+		drw_rect(drw, x, 0, w, bh, m == selmon &amp;&amp; selmon-&gt;sel &amp;&amp; selmon-&gt;sel-&gt;tags &amp; 1 &lt;&lt; i,
+</a><a href="#h2-8-21" id="h2-8-21" class="i">+		           occ &amp; 1 &lt;&lt; i, urg &amp; 1 &lt;&lt; i);
+</a><a href="#h2-8-22" id="h2-8-22" class="i">+		x += w;
+</a><a href="#h2-8-23" id="h2-8-23" class="i">+	}
+</a><a href="#h2-8-24" id="h2-8-24" class="i">+	w = blw = TEXTW(m-&gt;ltsymbol);
+</a><a href="#h2-8-25" id="h2-8-25" class="i">+	drw_settheme(drw, thmnorm);
+</a><a href="#h2-8-26" id="h2-8-26" class="i">+	drw_text(drw, x, 0, w, bh, m-&gt;ltsymbol, 0);
+</a><a href="#h2-8-27" id="h2-8-27" class="i">+	x += w;
+</a><a href="#h2-8-28" id="h2-8-28" class="i">+	xx = x;
+</a> 	if(m == selmon) { /* status is only drawn on selected monitor */
+<a href="#h2-8-30" id="h2-8-30" class="d">-		dc.w = TEXTW(stext);
+</a><a href="#h2-8-31" id="h2-8-31" class="d">-		dc.x = m-&gt;ww - dc.w;
+</a><a href="#h2-8-32" id="h2-8-32" class="d">-		if(dc.x &lt; x) {
+</a><a href="#h2-8-33" id="h2-8-33" class="d">-			dc.x = x;
+</a><a href="#h2-8-34" id="h2-8-34" class="d">-			dc.w = m-&gt;ww - x;
+</a><a href="#h2-8-35" id="h2-8-35" class="i">+		w = TEXTW(stext);
+</a><a href="#h2-8-36" id="h2-8-36" class="i">+		x = m-&gt;ww - w;
+</a><a href="#h2-8-37" id="h2-8-37" class="i">+		if(x &lt; xx) {
+</a><a href="#h2-8-38" id="h2-8-38" class="i">+			x = xx;
+</a><a href="#h2-8-39" id="h2-8-39" class="i">+			w = m-&gt;ww - xx;
+</a> 		}
+<a href="#h2-8-41" id="h2-8-41" class="d">-		drawtext(stext, dc.norm, False);
+</a><a href="#h2-8-42" id="h2-8-42" class="i">+		drw_text(drw, x, 0, w, bh, stext, 0);
+</a> 	}
+ 	else
+<a href="#h2-8-45" id="h2-8-45" class="d">-		dc.x = m-&gt;ww;
+</a><a href="#h2-8-46" id="h2-8-46" class="d">-	if((dc.w = dc.x - x) &gt; bh) {
+</a><a href="#h2-8-47" id="h2-8-47" class="d">-		dc.x = x;
+</a><a href="#h2-8-48" id="h2-8-48" class="i">+		x = m-&gt;ww;
+</a><a href="#h2-8-49" id="h2-8-49" class="i">+	if((w = x - xx) &gt; bh) {
+</a><a href="#h2-8-50" id="h2-8-50" class="i">+		x = xx;
+</a> 		if(m-&gt;sel) {
+<a href="#h2-8-52" id="h2-8-52" class="d">-			col = m == selmon ? dc.sel : dc.norm;
+</a><a href="#h2-8-53" id="h2-8-53" class="d">-			drawtext(m-&gt;sel-&gt;name, col, False);
+</a><a href="#h2-8-54" id="h2-8-54" class="d">-			drawsquare(m-&gt;sel-&gt;isfixed, m-&gt;sel-&gt;isfloating, False, col);
+</a><a href="#h2-8-55" id="h2-8-55" class="i">+			drw_settheme(drw, m == selmon ? thmsel : thmnorm);
+</a><a href="#h2-8-56" id="h2-8-56" class="i">+			drw_text(drw, x, 0, w, bh, m-&gt;sel-&gt;name, 0);
+</a><a href="#h2-8-57" id="h2-8-57" class="i">+			drw_rect(drw, x, 0, w, bh, m-&gt;sel-&gt;isfixed, m-&gt;sel-&gt;isfloating, 0);
+</a><a href="#h2-8-58" id="h2-8-58" class="i">+		}
+</a><a href="#h2-8-59" id="h2-8-59" class="i">+		else {
+</a><a href="#h2-8-60" id="h2-8-60" class="i">+			drw_settheme(drw, thmnorm);
+</a><a href="#h2-8-61" id="h2-8-61" class="i">+			drw_text(drw, x, 0, w, bh, NULL, 0);
+</a> 		}
+<a href="#h2-8-63" id="h2-8-63" class="d">-		else
+</a><a href="#h2-8-64" id="h2-8-64" class="d">-			drawtext(NULL, dc.norm, False);
+</a> 	}
+<a href="#h2-8-66" id="h2-8-66" class="d">-	XCopyArea(dpy, dc.drawable, m-&gt;barwin, dc.gc, 0, 0, m-&gt;ww, bh, 0, 0);
+</a><a href="#h2-8-67" id="h2-8-67" class="d">-	XSync(dpy, False);
+</a><a href="#h2-8-68" id="h2-8-68" class="i">+	drw_map(drw, m-&gt;barwin, 0, 0, m-&gt;ww, bh);
+</a> }
+ 
+ void
+<a href="#h2-9" id="h2-9" class="h">@@ -767,45 +751,6 @@ drawbars(void) {
+</a> }
+ 
+ void
+<a href="#h2-9-3" id="h2-9-3" class="d">-drawsquare(Bool filled, Bool empty, Bool invert, unsigned long col[ColLast]) {
+</a><a href="#h2-9-4" id="h2-9-4" class="d">-	int x;
+</a><a href="#h2-9-5" id="h2-9-5" class="d">-
+</a><a href="#h2-9-6" id="h2-9-6" class="d">-	XSetForeground(dpy, dc.gc, col[invert ? ColBG : ColFG]);
+</a><a href="#h2-9-7" id="h2-9-7" class="d">-	x = (dc.font.ascent + dc.font.descent + 2) / 4;
+</a><a href="#h2-9-8" id="h2-9-8" class="d">-	if(filled)
+</a><a href="#h2-9-9" id="h2-9-9" class="d">-		XFillRectangle(dpy, dc.drawable, dc.gc, dc.x+1, dc.y+1, x+1, x+1);
+</a><a href="#h2-9-10" id="h2-9-10" class="d">-	else if(empty)
+</a><a href="#h2-9-11" id="h2-9-11" class="d">-		XDrawRectangle(dpy, dc.drawable, dc.gc, dc.x+1, dc.y+1, x, x);
+</a><a href="#h2-9-12" id="h2-9-12" class="d">-}
+</a><a href="#h2-9-13" id="h2-9-13" class="d">-
+</a><a href="#h2-9-14" id="h2-9-14" class="d">-void
+</a><a href="#h2-9-15" id="h2-9-15" class="d">-drawtext(const char *text, unsigned long col[ColLast], Bool invert) {
+</a><a href="#h2-9-16" id="h2-9-16" class="d">-	char buf[256];
+</a><a href="#h2-9-17" id="h2-9-17" class="d">-	int i, x, y, h, len, olen;
+</a><a href="#h2-9-18" id="h2-9-18" class="d">-
+</a><a href="#h2-9-19" id="h2-9-19" class="d">-	XSetForeground(dpy, dc.gc, col[invert ? ColFG : ColBG]);
+</a><a href="#h2-9-20" id="h2-9-20" class="d">-	XFillRectangle(dpy, dc.drawable, dc.gc, dc.x, dc.y, dc.w, dc.h);
+</a><a href="#h2-9-21" id="h2-9-21" class="d">-	if(!text)
+</a><a href="#h2-9-22" id="h2-9-22" class="d">-		return;
+</a><a href="#h2-9-23" id="h2-9-23" class="d">-	olen = strlen(text);
+</a><a href="#h2-9-24" id="h2-9-24" class="d">-	h = dc.font.ascent + dc.font.descent;
+</a><a href="#h2-9-25" id="h2-9-25" class="d">-	y = dc.y + (dc.h / 2) - (h / 2) + dc.font.ascent;
+</a><a href="#h2-9-26" id="h2-9-26" class="d">-	x = dc.x + (h / 2);
+</a><a href="#h2-9-27" id="h2-9-27" class="d">-	/* shorten text if necessary */
+</a><a href="#h2-9-28" id="h2-9-28" class="d">-	for(len = MIN(olen, sizeof buf); len &amp;&amp; textnw(text, len) &gt; dc.w - h; len--);
+</a><a href="#h2-9-29" id="h2-9-29" class="d">-	if(!len)
+</a><a href="#h2-9-30" id="h2-9-30" class="d">-		return;
+</a><a href="#h2-9-31" id="h2-9-31" class="d">-	memcpy(buf, text, len);
+</a><a href="#h2-9-32" id="h2-9-32" class="d">-	if(len &lt; olen)
+</a><a href="#h2-9-33" id="h2-9-33" class="d">-		for(i = len; i &amp;&amp; i &gt; len - 3; buf[--i] = &#39;.&#39;);
+</a><a href="#h2-9-34" id="h2-9-34" class="d">-	XSetForeground(dpy, dc.gc, col[invert ? ColBG : ColFG]);
+</a><a href="#h2-9-35" id="h2-9-35" class="d">-	if(dc.font.set)
+</a><a href="#h2-9-36" id="h2-9-36" class="d">-		XmbDrawString(dpy, dc.drawable, dc.font.set, dc.gc, x, y, buf, len);
+</a><a href="#h2-9-37" id="h2-9-37" class="d">-	else
+</a><a href="#h2-9-38" id="h2-9-38" class="d">-		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+</a><a href="#h2-9-39" id="h2-9-39" class="d">-}
+</a><a href="#h2-9-40" id="h2-9-40" class="d">-
+</a><a href="#h2-9-41" id="h2-9-41" class="d">-void
+</a> enternotify(XEvent *e) {
+ 	Client *c;
+ 	Monitor *m;
+<a href="#h2-10" id="h2-10" class="h">@@ -848,7 +793,7 @@ focus(Client *c) {
+</a> 		detachstack(c);
+ 		attachstack(c);
+ 		grabbuttons(c, True);
+<a href="#h2-10-3" id="h2-10-3" class="d">-		XSetWindowBorder(dpy, c-&gt;win, dc.sel[ColBorder]);
+</a><a href="#h2-10-4" id="h2-10-4" class="i">+		XSetWindowBorder(dpy, c-&gt;win, thmsel-&gt;border-&gt;rgb);
+</a> 		setfocus(c);
+ 	}
+ 	else {
+<a href="#h2-11" id="h2-11" class="h">@@ -922,16 +867,6 @@ getatomprop(Client *c, Atom prop) {
+</a> 	return atom;
+ }
+ 
+<a href="#h2-11-3" id="h2-11-3" class="d">-unsigned long
+</a><a href="#h2-11-4" id="h2-11-4" class="d">-getcolor(const char *colstr) {
+</a><a href="#h2-11-5" id="h2-11-5" class="d">-	Colormap cmap = DefaultColormap(dpy, screen);
+</a><a href="#h2-11-6" id="h2-11-6" class="d">-	XColor color;
+</a><a href="#h2-11-7" id="h2-11-7" class="d">-
+</a><a href="#h2-11-8" id="h2-11-8" class="d">-	if(!XAllocNamedColor(dpy, cmap, colstr, &amp;color, &amp;color))
+</a><a href="#h2-11-9" id="h2-11-9" class="d">-		die(&quot;error, cannot allocate color &#39;%s&#39;\n&quot;, colstr);
+</a><a href="#h2-11-10" id="h2-11-10" class="d">-	return color.pixel;
+</a><a href="#h2-11-11" id="h2-11-11" class="d">-}
+</a><a href="#h2-11-12" id="h2-11-12" class="d">-
+</a> Bool
+ getrootptr(int *x, int *y) {
+ 	int di;
+<a href="#h2-12" id="h2-12" class="h">@@ -1028,40 +963,6 @@ incnmaster(const Arg *arg) {
+</a> 	arrange(selmon);
+ }
+ 
+<a href="#h2-12-3" id="h2-12-3" class="d">-void
+</a><a href="#h2-12-4" id="h2-12-4" class="d">-initfont(const char *fontstr) {
+</a><a href="#h2-12-5" id="h2-12-5" class="d">-	char *def, **missing;
+</a><a href="#h2-12-6" id="h2-12-6" class="d">-	int n;
+</a><a href="#h2-12-7" id="h2-12-7" class="d">-
+</a><a href="#h2-12-8" id="h2-12-8" class="d">-	dc.font.set = XCreateFontSet(dpy, fontstr, &amp;missing, &amp;n, &amp;def);
+</a><a href="#h2-12-9" id="h2-12-9" class="d">-	if(missing) {
+</a><a href="#h2-12-10" id="h2-12-10" class="d">-		while(n--)
+</a><a href="#h2-12-11" id="h2-12-11" class="d">-			fprintf(stderr, &quot;dwm: missing fontset: %s\n&quot;, missing[n]);
+</a><a href="#h2-12-12" id="h2-12-12" class="d">-		XFreeStringList(missing);
+</a><a href="#h2-12-13" id="h2-12-13" class="d">-	}
+</a><a href="#h2-12-14" id="h2-12-14" class="d">-	if(dc.font.set) {
+</a><a href="#h2-12-15" id="h2-12-15" class="d">-		XFontStruct **xfonts;
+</a><a href="#h2-12-16" id="h2-12-16" class="d">-		char **font_names;
+</a><a href="#h2-12-17" id="h2-12-17" class="d">-
+</a><a href="#h2-12-18" id="h2-12-18" class="d">-		dc.font.ascent = dc.font.descent = 0;
+</a><a href="#h2-12-19" id="h2-12-19" class="d">-		XExtentsOfFontSet(dc.font.set);
+</a><a href="#h2-12-20" id="h2-12-20" class="d">-		n = XFontsOfFontSet(dc.font.set, &amp;xfonts, &amp;font_names);
+</a><a href="#h2-12-21" id="h2-12-21" class="d">-		while(n--) {
+</a><a href="#h2-12-22" id="h2-12-22" class="d">-			dc.font.ascent = MAX(dc.font.ascent, (*xfonts)-&gt;ascent);
+</a><a href="#h2-12-23" id="h2-12-23" class="d">-			dc.font.descent = MAX(dc.font.descent,(*xfonts)-&gt;descent);
+</a><a href="#h2-12-24" id="h2-12-24" class="d">-			xfonts++;
+</a><a href="#h2-12-25" id="h2-12-25" class="d">-		}
+</a><a href="#h2-12-26" id="h2-12-26" class="d">-	}
+</a><a href="#h2-12-27" id="h2-12-27" class="d">-	else {
+</a><a href="#h2-12-28" id="h2-12-28" class="d">-		if(!(dc.font.xfont = XLoadQueryFont(dpy, fontstr))
+</a><a href="#h2-12-29" id="h2-12-29" class="d">-		&amp;&amp; !(dc.font.xfont = XLoadQueryFont(dpy, &quot;fixed&quot;)))
+</a><a href="#h2-12-30" id="h2-12-30" class="d">-			die(&quot;error, cannot load font: &#39;%s&#39;\n&quot;, fontstr);
+</a><a href="#h2-12-31" id="h2-12-31" class="d">-		dc.font.ascent = dc.font.xfont-&gt;ascent;
+</a><a href="#h2-12-32" id="h2-12-32" class="d">-		dc.font.descent = dc.font.xfont-&gt;descent;
+</a><a href="#h2-12-33" id="h2-12-33" class="d">-	}
+</a><a href="#h2-12-34" id="h2-12-34" class="d">-	dc.font.height = dc.font.ascent + dc.font.descent;
+</a><a href="#h2-12-35" id="h2-12-35" class="d">-}
+</a><a href="#h2-12-36" id="h2-12-36" class="d">-
+</a> #ifdef XINERAMA
+ static Bool
+ isuniquegeom(XineramaScreenInfo *unique, size_t n, XineramaScreenInfo *info) {
+<a href="#h2-13" id="h2-13" class="h">@@ -1140,7 +1041,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 
+ 	wc.border_width = c-&gt;bw;
+ 	XConfigureWindow(dpy, w, CWBorderWidth, &amp;wc);
+<a href="#h2-13-3" id="h2-13-3" class="d">-	XSetWindowBorder(dpy, w, dc.norm[ColBorder]);
+</a><a href="#h2-13-4" id="h2-13-4" class="i">+	XSetWindowBorder(dpy, w, thmnorm-&gt;border-&gt;rgb);
+</a> 	configure(c); /* propagates border_width, if size doesn&#39;t change */
+ 	updatewindowtype(c);
+ 	updatesizehints(c);
+<a href="#h2-14" id="h2-14" class="h">@@ -1232,7 +1133,7 @@ movemouse(const Arg *arg) {
+</a> 	ocx = c-&gt;x;
+ 	ocy = c-&gt;y;
+ 	if(XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+<a href="#h2-14-3" id="h2-14-3" class="d">-	None, cursor[CurMove], CurrentTime) != GrabSuccess)
+</a><a href="#h2-14-4" id="h2-14-4" class="i">+	None, cursor[CurMove]-&gt;cursor, CurrentTime) != GrabSuccess)
+</a> 		return;
+ 	if(!getrootptr(&amp;x, &amp;y))
+ 		return;
+<a href="#h2-15" id="h2-15" class="h">@@ -1378,7 +1279,7 @@ resizemouse(const Arg *arg) {
+</a> 	ocx = c-&gt;x;
+ 	ocy = c-&gt;y;
+ 	if(XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+<a href="#h2-15-3" id="h2-15-3" class="d">-	                None, cursor[CurResize], CurrentTime) != GrabSuccess)
+</a><a href="#h2-15-4" id="h2-15-4" class="i">+	                None, cursor[CurResize]-&gt;cursor, CurrentTime) != GrabSuccess)
+</a> 		return;
+ 	XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w + c-&gt;bw - 1, c-&gt;h + c-&gt;bw - 1);
+ 	do {
+<a href="#h2-16" id="h2-16" class="h">@@ -1597,10 +1498,12 @@ setup(void) {
+</a> 	/* init screen */
+ 	screen = DefaultScreen(dpy);
+ 	root = RootWindow(dpy, screen);
+<a href="#h2-16-3" id="h2-16-3" class="d">-	initfont(font);
+</a><a href="#h2-16-4" id="h2-16-4" class="i">+	fnt = drw_font_create(dpy, font);
+</a> 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+<a href="#h2-16-7" id="h2-16-7" class="d">-	bh = dc.h = dc.font.height + 2;
+</a><a href="#h2-16-8" id="h2-16-8" class="i">+	bh = fnt-&gt;h + 2;
+</a><a href="#h2-16-9" id="h2-16-9" class="i">+	drw = drw_create(dpy, screen, root, sw, sh);
+</a><a href="#h2-16-10" id="h2-16-10" class="i">+	drw_setfont(drw, fnt);
+</a> 	updategeom();
+ 	/* init atoms */
+ 	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+<a href="#h2-17" id="h2-17" class="h">@@ -1616,21 +1519,16 @@ setup(void) {
+</a> 	netatom[NetWMWindowTypeDialog] = XInternAtom(dpy, &quot;_NET_WM_WINDOW_TYPE_DIALOG&quot;, False);
+ 	netatom[NetClientList] = XInternAtom(dpy, &quot;_NET_CLIENT_LIST&quot;, False);
+ 	/* init cursors */
+<a href="#h2-17-3" id="h2-17-3" class="d">-	cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
+</a><a href="#h2-17-4" id="h2-17-4" class="d">-	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
+</a><a href="#h2-17-5" id="h2-17-5" class="d">-	cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
+</a><a href="#h2-17-6" id="h2-17-6" class="i">+	cursor[CurNormal] = drw_cur_create(drw, XC_left_ptr);
+</a><a href="#h2-17-7" id="h2-17-7" class="i">+	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
+</a><a href="#h2-17-8" id="h2-17-8" class="i">+	cursor[CurMove] = drw_cur_create(drw, XC_fleur);
+</a> 	/* init appearance */
+<a href="#h2-17-10" id="h2-17-10" class="d">-	dc.norm[ColBorder] = getcolor(normbordercolor);
+</a><a href="#h2-17-11" id="h2-17-11" class="d">-	dc.norm[ColBG] = getcolor(normbgcolor);
+</a><a href="#h2-17-12" id="h2-17-12" class="d">-	dc.norm[ColFG] = getcolor(normfgcolor);
+</a><a href="#h2-17-13" id="h2-17-13" class="d">-	dc.sel[ColBorder] = getcolor(selbordercolor);
+</a><a href="#h2-17-14" id="h2-17-14" class="d">-	dc.sel[ColBG] = getcolor(selbgcolor);
+</a><a href="#h2-17-15" id="h2-17-15" class="d">-	dc.sel[ColFG] = getcolor(selfgcolor);
+</a><a href="#h2-17-16" id="h2-17-16" class="d">-	dc.drawable = XCreatePixmap(dpy, root, DisplayWidth(dpy, screen), bh, DefaultDepth(dpy, screen));
+</a><a href="#h2-17-17" id="h2-17-17" class="d">-	dc.gc = XCreateGC(dpy, root, 0, NULL);
+</a><a href="#h2-17-18" id="h2-17-18" class="d">-	XSetLineAttributes(dpy, dc.gc, 1, LineSolid, CapButt, JoinMiter);
+</a><a href="#h2-17-19" id="h2-17-19" class="d">-	if(!dc.font.set)
+</a><a href="#h2-17-20" id="h2-17-20" class="d">-		XSetFont(dpy, dc.gc, dc.font.xfont-&gt;fid);
+</a><a href="#h2-17-21" id="h2-17-21" class="i">+	thmnorm-&gt;border = drw_clr_create(drw, normbordercolor);
+</a><a href="#h2-17-22" id="h2-17-22" class="i">+	thmnorm-&gt;bg = drw_clr_create(drw, normbgcolor);
+</a><a href="#h2-17-23" id="h2-17-23" class="i">+	thmnorm-&gt;fg = drw_clr_create(drw, normfgcolor);
+</a><a href="#h2-17-24" id="h2-17-24" class="i">+	thmsel-&gt;border = drw_clr_create(drw, selbordercolor);
+</a><a href="#h2-17-25" id="h2-17-25" class="i">+	thmsel-&gt;bg = drw_clr_create(drw, selbgcolor);
+</a><a href="#h2-17-26" id="h2-17-26" class="i">+	thmsel-&gt;fg = drw_clr_create(drw, selfgcolor);
+</a> 	/* init bars */
+ 	updatebars();
+ 	updatestatus();
+<a href="#h2-18" id="h2-18" class="h">@@ -1639,7 +1537,7 @@ setup(void) {
+</a> 			PropModeReplace, (unsigned char *) netatom, NetLast);
+ 	XDeleteProperty(dpy, root, netatom[NetClientList]);
+ 	/* select for events */
+<a href="#h2-18-3" id="h2-18-3" class="d">-	wa.cursor = cursor[CurNormal];
+</a><a href="#h2-18-4" id="h2-18-4" class="i">+	wa.cursor = cursor[CurNormal]-&gt;cursor;
+</a> 	wa.event_mask = SubstructureRedirectMask|SubstructureNotifyMask|ButtonPressMask|PointerMotionMask
+ 	                |EnterWindowMask|LeaveWindowMask|StructureNotifyMask|PropertyChangeMask;
+ 	XChangeWindowAttributes(dpy, root, CWEventMask|CWCursor, &amp;wa);
+<a href="#h2-19" id="h2-19" class="h">@@ -1699,17 +1597,6 @@ tagmon(const Arg *arg) {
+</a> 	sendmon(selmon-&gt;sel, dirtomon(arg-&gt;i));
+ }
+ 
+<a href="#h2-19-3" id="h2-19-3" class="d">-int
+</a><a href="#h2-19-4" id="h2-19-4" class="d">-textnw(const char *text, unsigned int len) {
+</a><a href="#h2-19-5" id="h2-19-5" class="d">-	XRectangle r;
+</a><a href="#h2-19-6" id="h2-19-6" class="d">-
+</a><a href="#h2-19-7" id="h2-19-7" class="d">-	if(dc.font.set) {
+</a><a href="#h2-19-8" id="h2-19-8" class="d">-		XmbTextExtents(dc.font.set, text, len, NULL, &amp;r);
+</a><a href="#h2-19-9" id="h2-19-9" class="d">-		return r.width;
+</a><a href="#h2-19-10" id="h2-19-10" class="d">-	}
+</a><a href="#h2-19-11" id="h2-19-11" class="d">-	return XTextWidth(dc.font.xfont, text, len);
+</a><a href="#h2-19-12" id="h2-19-12" class="d">-}
+</a><a href="#h2-19-13" id="h2-19-13" class="d">-
+</a> void
+ tile(Monitor *m) {
+ 	unsigned int i, n, h, mw, my, ty;
+<a href="#h2-20" id="h2-20" class="h">@@ -1787,7 +1674,7 @@ unfocus(Client *c, Bool setfocus) {
+</a> 	if(!c)
+ 		return;
+ 	grabbuttons(c, False);
+<a href="#h2-20-3" id="h2-20-3" class="d">-	XSetWindowBorder(dpy, c-&gt;win, dc.norm[ColBorder]);
+</a><a href="#h2-20-4" id="h2-20-4" class="i">+	XSetWindowBorder(dpy, c-&gt;win, thmnorm-&gt;border-&gt;rgb);
+</a> 	if(setfocus) {
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+ 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
+<a href="#h2-21" id="h2-21" class="h">@@ -1846,7 +1733,7 @@ updatebars(void) {
+</a> 		m-&gt;barwin = XCreateWindow(dpy, root, m-&gt;wx, m-&gt;by, m-&gt;ww, bh, 0, DefaultDepth(dpy, screen),
+ 		                          CopyFromParent, DefaultVisual(dpy, screen),
+ 		                          CWOverrideRedirect|CWBackPixmap|CWEventMask, &amp;wa);
+<a href="#h2-21-3" id="h2-21-3" class="d">-		XDefineCursor(dpy, m-&gt;barwin, cursor[CurNormal]);
+</a><a href="#h2-21-4" id="h2-21-4" class="i">+		XDefineCursor(dpy, m-&gt;barwin, cursor[CurNormal]-&gt;cursor);
+</a> 		XMapRaised(dpy, m-&gt;barwin);
+ 	}
+ }
+</pre>
+</div>
+</body>
+</html>

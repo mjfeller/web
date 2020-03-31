@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add MC for a single line - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cf332a325dafe7e9ed6d87df9dcec29149c5042c.html">cf332a325dafe7e9ed6d87df9dcec29149c5042c</a>
+<b>parent</b> <a href="../commit/1f0d981bd7a1450ddfae3591c6e457253b3a6842.html">1f0d981bd7a1450ddfae3591c6e457253b3a6842</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Fri, 31 Jan 2014 21:53:53 +0100
+
+Add MC for a single line
+
+This sequence print the current line. It is different to the
+&#39;printer on&#39; sequence, where all the characters that arrive to the
+terminal are printer. Here only the ascii characters are printed.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">41</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 32 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -356,6 +356,8 @@ static void strparse(void);
+</a> static void strreset(void);
+ 
+ static int tattrset(int);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void tprinter(char *s, size_t len);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void tdumpline(int);
+</a> static void tclearregion(int, int, int, int);
+ static void tcursor(int);
+ static void tdeletechar(int);
+<a href="#h0-1" id="h0-1" class="h">@@ -470,7 +472,7 @@ static STREscape strescseq;
+</a> static int cmdfd;
+ static pid_t pid;
+ static Selection sel;
+<a href="#h0-1-3" id="h0-1-3" class="d">-static int iofd;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static int iofd = STDOUT_FILENO;
+</a> static char **opt_cmd = NULL;
+ static char *opt_io = NULL;
+ static char *opt_title = NULL;
+<a href="#h0-2" id="h0-2" class="h">@@ -1985,6 +1987,8 @@ csihandle(void) {
+</a> 		switch(csiescseq.arg[0]) {
+ 		case 0:
+ 		case 1:
+<a href="#h0-2-3" id="h0-2-3" class="i">+			tdumpline(term.c.y);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			break;
+</a> 		case 4:
+ 			term.mode &amp;= ~MODE_PRINT;
+ 			break;
+<a href="#h0-3" id="h0-3" class="h">@@ -2266,6 +2270,31 @@ strreset(void) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="i">+tprinter(char *s, size_t len) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	if(iofd != -1 &amp;&amp; xwrite(iofd, s, len) &lt; 0) {
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+		fprintf(stderr, &quot;Error writing in %s:%s\n&quot;,
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+			opt_io, strerror(errno));
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+		close(iofd);
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+		iofd = -1;
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+	}
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+}
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+void
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+tdumpline(int n) {
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+	Glyph *bp, *end;
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+	bp = &amp;term.line[n][0];
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+	end = &amp;bp[term.col-1];
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+	while(end &gt; bp &amp;&amp; !strcmp(&quot; &quot;, end-&gt;c))
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+		--end;
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+	if(bp != end || strcmp(bp-&gt;c, &quot; &quot;)) {
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+		for( ;bp &lt;= end; ++bp)
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+			tprinter(bp-&gt;c, strlen(bp-&gt;c));
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+	}
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+	tprinter(&quot;\n&quot;, 1);
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+}
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+void
+</a> tputtab(bool forward) {
+ 	uint x = term.c.x;
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -2346,14 +2375,8 @@ tputc(char *c, int len) {
+</a> 		width = wcwidth(u8char);
+ 	}
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-	if(IS_SET(MODE_PRINT) &amp;&amp; iofd != -1) {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		if(xwrite(iofd, c, len) &lt; 0) {
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-			fprintf(stderr, &quot;Error writing in %s:%s\n&quot;,
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-				opt_io, strerror(errno));
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-			close(iofd);
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-			iofd = -1;
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-		}
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-	}
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+	if(IS_SET(MODE_PRINT))
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+		tprinter(c, len);
+</a> 
+ 	/*
+ 	 * STR sequences must be checked before anything else
+</pre>
+</div>
+</body>
+</html>

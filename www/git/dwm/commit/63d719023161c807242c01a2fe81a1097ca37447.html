@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Johannes Hofmann&#39;s patch, please test - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/63d719023161c807242c01a2fe81a1097ca37447.html">63d719023161c807242c01a2fe81a1097ca37447</a>
+<b>parent</b> <a href="../commit/b279cef670e4d0e744e50331fce7a1f4a4e73798.html">b279cef670e4d0e744e50331fce7a1f4a4e73798</a>
+<b>Author:</b> anselm@anselm1 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Mon,  4 Aug 2008 17:39:36 +0100
+
+applied Johannes Hofmann&#39;s patch, please test
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">58</td><td><span class="i">++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 18 insertions(+), 40 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -159,9 +159,7 @@ static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+</a> static void grabbuttons(Client *c, Bool focused);
+ static void grabkeys(void);
+ static void initfont(const char *fontstr);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static Bool isoccupied(unsigned int t);
+</a> static Bool isprotodel(Client *c);
+<a href="#h0-0-5" id="h0-0-5" class="d">-static Bool isurgent(unsigned int t);
+</a> static void keypress(XEvent *e);
+ static void killclient(const Arg *arg);
+ static void manage(Window w, XWindowAttributes *wa);
+<a href="#h0-1" id="h0-1" class="h">@@ -500,19 +498,23 @@ die(const char *errstr, ...) {
+</a> 
+ void
+ drawbar(void) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	int i, x;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	int x;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	unsigned int i, occ = 0, urg = 0;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	unsigned long *col;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	Client *c;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	for(c = clients; c; c = c-&gt;next) {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		occ |= c-&gt;tags;
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		if(c-&gt;isurgent)
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+			urg |= c-&gt;tags;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	}
+</a> 
+ 	dc.x = 0;
+ 	for(i = 0; i &lt; LENGTH(tags); i++) {
+ 		dc.w = TEXTW(tags[i]);
+<a href="#h0-1-18" id="h0-1-18" class="d">-		if(tagset[seltags] &amp; 1 &lt;&lt; i) {
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-			drawtext(tags[i], dc.sel, isurgent(i));
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-			drawsquare(sel &amp;&amp; sel-&gt;tags &amp; 1 &lt;&lt; i, isoccupied(i), isurgent(i), dc.sel);
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-		}
+</a><a href="#h0-1-22" id="h0-1-22" class="d">-		else {
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-			drawtext(tags[i], dc.norm, isurgent(i));
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-			drawsquare(sel &amp;&amp; sel-&gt;tags &amp; 1 &lt;&lt; i, isoccupied(i), isurgent(i), dc.norm);
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-		}
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+		col = tagset[seltags] &amp; 1 &lt;&lt; i ? dc.sel : dc.norm;
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+		drawtext(tags[i], col, urg &amp; 1 &lt;&lt; i);
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+		drawsquare(sel &amp;&amp; sel-&gt;tags &amp; 1 &lt;&lt; i, occ &amp; 1 &lt;&lt; i, urg &amp; 1 &lt;&lt; i, col);
+</a> 		dc.x += dc.w;
+ 	}
+ 	if(blw &gt; 0) {
+<a href="#h0-2" id="h0-2" class="h">@@ -741,7 +743,7 @@ grabbuttons(Client *c, Bool focused) {
+</a> 			if(buttons[i].click == ClkClientWin)
+ 				for(j = 0; j &lt; LENGTH(modifiers); j++)
+ 					XGrabButton(dpy, buttons[i].button, buttons[i].mask | modifiers[j], c-&gt;win, False, BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+<a href="#h0-2-3" id="h0-2-3" class="d">-        } else
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	} else
+</a> 		XGrabButton(dpy, AnyButton, AnyModifier, c-&gt;win, False,
+ 		            BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+ }
+<a href="#h0-3" id="h0-3" class="h">@@ -749,6 +751,7 @@ grabbuttons(Client *c, Bool focused) {
+</a> void
+ grabkeys(void) {
+ 	unsigned int i, j;
+<a href="#h0-3-3" id="h0-3-3" class="i">+	unsigned int modifiers[] = { 0, LockMask, numlockmask, numlockmask|LockMask };
+</a> 	KeyCode code;
+ 	XModifierKeymap *modmap;
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -764,14 +767,9 @@ grabkeys(void) {
+</a> 	XUngrabKey(dpy, AnyKey, AnyModifier, root);
+ 	for(i = 0; i &lt; LENGTH(keys); i++) {
+ 		code = XKeysymToKeycode(dpy, keys[i].keysym);
+<a href="#h0-4-3" id="h0-4-3" class="d">-		XGrabKey(dpy, code, keys[i].mod, root, True,
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-				GrabModeAsync, GrabModeAsync);
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-		XGrabKey(dpy, code, keys[i].mod|LockMask, root, True,
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-				GrabModeAsync, GrabModeAsync);
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-		XGrabKey(dpy, code, keys[i].mod|numlockmask, root, True,
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-				GrabModeAsync, GrabModeAsync);
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-		XGrabKey(dpy, code, keys[i].mod|numlockmask|LockMask, root, True,
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-				GrabModeAsync, GrabModeAsync);
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+		for(j = 0; j &lt; LENGTH(modifiers); j++)
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+			XGrabKey(dpy, code, keys[i].mod | modifiers[j], root, True,
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+			         GrabModeAsync, GrabModeAsync);
+</a> 	}
+ }
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -816,16 +814,6 @@ initfont(const char *fontstr) {
+</a> }
+ 
+ Bool
+<a href="#h0-5-3" id="h0-5-3" class="d">-isoccupied(unsigned int t) {
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	Client *c;
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-
+</a><a href="#h0-5-6" id="h0-5-6" class="d">-	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h0-5-7" id="h0-5-7" class="d">-		if(c-&gt;tags &amp; 1 &lt;&lt; t)
+</a><a href="#h0-5-8" id="h0-5-8" class="d">-			return True;
+</a><a href="#h0-5-9" id="h0-5-9" class="d">-	return False;
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-}
+</a><a href="#h0-5-11" id="h0-5-11" class="d">-
+</a><a href="#h0-5-12" id="h0-5-12" class="d">-Bool
+</a> isprotodel(Client *c) {
+ 	int i, n;
+ 	Atom *protocols;
+<a href="#h0-6" id="h0-6" class="h">@@ -840,16 +828,6 @@ isprotodel(Client *c) {
+</a> 	return ret;
+ }
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-Bool
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-isurgent(unsigned int t) {
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-	Client *c;
+</a><a href="#h0-6-6" id="h0-6-6" class="d">-
+</a><a href="#h0-6-7" id="h0-6-7" class="d">-	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h0-6-8" id="h0-6-8" class="d">-		if(c-&gt;isurgent &amp;&amp; c-&gt;tags &amp; 1 &lt;&lt; t)
+</a><a href="#h0-6-9" id="h0-6-9" class="d">-			return True;
+</a><a href="#h0-6-10" id="h0-6-10" class="d">-	return False;
+</a><a href="#h0-6-11" id="h0-6-11" class="d">-}
+</a><a href="#h0-6-12" id="h0-6-12" class="d">-
+</a> void
+ keypress(XEvent *e) {
+ 	unsigned int i;
+</pre>
+</div>
+</body>
+</html>

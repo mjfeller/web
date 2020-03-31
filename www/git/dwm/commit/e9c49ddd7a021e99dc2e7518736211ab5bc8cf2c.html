@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed procevent, more refactoring - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e9c49ddd7a021e99dc2e7518736211ab5bc8cf2c.html">e9c49ddd7a021e99dc2e7518736211ab5bc8cf2c</a>
+<b>parent</b> <a href="../commit/f8415019d4edc1cd4f310adb256e6656e85bfe75.html">f8415019d4edc1cd4f310adb256e6656e85bfe75</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Mon, 19 Feb 2007 15:23:35 +0100
+
+removed procevent, more refactoring
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">11</td><td><span class="i"></span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">main.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>3 files changed, 6 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -115,7 +115,6 @@ extern void zoom(Arg *arg);			/* zooms the focused client to master area, arg is
+</a> 
+ /* event.c */
+ extern void grabkeys(void);			/* grab all keys defined in config.h */
+<a href="#h0-0-3" id="h0-0-3" class="d">-extern void procevent(void);			/* process pending X events */
+</a> 
+ /* main.c */
+ extern void drawstatus(void);			/* draw the bar */
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -368,14 +368,3 @@ grabkeys(void) {
+</a> 				GrabModeAsync, GrabModeAsync);
+ 	}
+ }
+<a href="#h1-0-3" id="h1-0-3" class="d">-
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-void
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-procevent(void) {
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-	XEvent ev;
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	while(XPending(dpy)) {
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-		XNextEvent(dpy, &amp;ev);
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-		if(handler[ev.type])
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-			(handler[ev.type])(&amp;ev); /* call handler */
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	}
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-}
+</a><b>diff --git a/<a id="h2" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -379,6 +379,7 @@ main(int argc, char *argv[]) {
+</a> 	char *p;
+ 	int r, xfd;
+ 	fd_set rd;
+<a href="#h2-0-3" id="h2-0-3" class="i">+	XEvent ev;
+</a> 
+ 	if(argc == 2 &amp;&amp; !strncmp(&quot;-v&quot;, argv[1], 3)) {
+ 		fputs(&quot;dwm-&quot;VERSION&quot;, (C)opyright MMVI-MMVII Anselm R. Garbe\n&quot;, stdout);
+<a href="#h2-1" id="h2-1" class="h">@@ -411,7 +412,6 @@ main(int argc, char *argv[]) {
+</a> 
+ 	/* main event loop, also reads status text from stdin */
+ 	XSync(dpy, False);
+<a href="#h2-1-3" id="h2-1-3" class="d">-	procevent();
+</a> 	readin = True;
+ 	while(running) {
+ 		FD_ZERO(&amp;rd);
+<a href="#h2-2" id="h2-2" class="h">@@ -443,7 +443,11 @@ main(int argc, char *argv[]) {
+</a> 			drawstatus();
+ 		}
+ 		if(FD_ISSET(xfd, &amp;rd))
+<a href="#h2-2-3" id="h2-2-3" class="d">-			procevent();
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+			while(XPending(dpy)) {
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+				XNextEvent(dpy, &amp;ev);
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+				if(handler[ev.type])
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+					(handler[ev.type])(&amp;ev); /* call handler */
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+			}
+</a> 	}
+ 	cleanup();
+ 	XCloseDisplay(dpy);
+</pre>
+</div>
+</body>
+</html>

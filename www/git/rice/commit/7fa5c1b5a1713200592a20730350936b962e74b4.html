@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cleanup installer - rice - config file
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="rice Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>rice</h1><span class="desc">config file
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7fa5c1b5a1713200592a20730350936b962e74b4.html">7fa5c1b5a1713200592a20730350936b962e74b4</a>
+<b>parent</b> <a href="../commit/92589c8f89f277f7cb8a99d5cc98eb2dc69b0ba9.html">92589c8f89f277f7cb8a99d5cc98eb2dc69b0ba9</a>
+<b>Author:</b> Mark Feller &lt;<a href="mailto:mfeller@recurly.com">mfeller@recurly.com</a>&gt;
+<b>Date:</b>   Wed, 15 Jan 2020 13:27:07 -0700
+
+cleanup installer
+
+Signed-off-by: Mark Feller &lt;mfeller@recurly.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">install</a></td><td> | </td><td class="num">28</td><td><span class="i">+++++++++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>1 file changed, 13 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/install.html">install</a> b/<a href="../file/install.html">install</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,16 +1,13 @@
+</a> #!/bin/sh
+ #
+<a href="#h0-0-2" id="h0-0-2" class="d">-# Auto installer for macOS packages and dot files
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+# Auto installer for Fedora packages and dot files
+</a> dotrepo=${dotrepo:-&quot;https://gitlab.com/mark.feller/rice.git&quot;}
+ pkgfile=${pkgfile:-&quot;https://gitlab.com/mark.feller/rice/raw/master/pkgs/fedora/packages&quot;}
+ logfile=${logfile:-&quot;/var/log/rice.log&quot;}
+ 
+<a href="#h0-0-8" id="h0-0-8" class="d">-log() {
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-    printf &#39;\033[1;33m%s \033[m%s\033[m %s\n&#39; &quot;-&gt;&quot; &quot;${2:+[1;36m}$1${2:+[m}&quot; &quot;$2&quot; \
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-        | tee &quot;$logfile&quot;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-}
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-die() { log &quot;$2&quot; &amp;&amp; exit 1 ; }
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+log() { printf &#39;\033[1;33m%s \033[m%s\033[m %s\n&#39; &quot;-&gt;&quot; &quot;${2:+[1;36m}$1${2:+[m}&quot; &quot;$2&quot; | tee &quot;$logfile&quot;; }
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+die() { log &quot;$2&quot;; exit 1; }
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+try() { &quot;$@&quot; || die &quot;Cannot $*&quot;; }
+</a> 
+ trim_string() {
+     # Usage: trim_string &quot;   example   string    &quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -23,16 +20,16 @@ pre_install() {
+</a>     # Run any preinstall setup necessary
+ 
+     log &quot;Enabling RPM Fustion&quot;
+<a href="#h0-1-3" id="h0-1-3" class="d">-    dnf install -y \
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+    try dnf install -y \
+</a>         https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-&quot;$(rpm -E %fedora)&quot;.noarch.rpm \
+         https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-&quot;$(rpm -E %fedora)&quot;.noarch.rpm \
+<a href="#h0-1-7" id="h0-1-7" class="d">-        &gt; &quot;$logfile&quot;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+        &gt;&gt; &quot;$logfile&quot;
+</a> 
+     log &quot;Enabled i3-gaps community repo&quot;
+<a href="#h0-1-11" id="h0-1-11" class="d">-    dnf copr enable gregw/i3desktop &gt; &quot;$logfile&quot;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+    dnf copr enable gregw/i3desktop &gt;&gt; &quot;$logfile&quot;
+</a> 
+     log &quot;Enabled alacritty community repo&quot;
+<a href="#h0-1-15" id="h0-1-15" class="d">-    dnf copr enable pschyska/alacritty &gt; &quot;$logfile&quot;
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+    dnf copr enable pschyska/alacritty &gt;&gt; &quot;$logfile&quot;
+</a> }
+ 
+ install_package() {
+<a href="#h0-2" id="h0-2" class="h">@@ -41,11 +38,11 @@ install_package() {
+</a>     case $2 in
+         G)
+             log &quot;Installing go package $1&quot;
+<a href="#h0-2-3" id="h0-2-3" class="d">-            go get -u &quot;$1&quot; &gt; &quot;$logfile&quot;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+            try go get -u &quot;$1&quot; &gt;&gt; &quot;$logfile&quot;
+</a>             ;;
+         *)
+             log &quot;Installing $1...&quot;
+<a href="#h0-2-8" id="h0-2-8" class="d">-            dnf install -y &quot;$1&quot; &gt; &quot;$logfile&quot;
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+            try dnf install -y &quot;$1&quot; &gt;&gt; &quot;$logfile&quot;
+</a>             ;;
+     esac
+ }
+<a href="#h0-3" id="h0-3" class="h">@@ -59,7 +56,7 @@ install_packages() {
+</a>     packages=$(sed &#39;/^$/d&#39; /tmp/pkgs | sed &#39;/^#/d&#39;)
+     while IFS=&#39;	&#39; read -r flag program comment; do
+         program=$(trim_string &quot;$program&quot;)
+<a href="#h0-3-3" id="h0-3-3" class="d">-        install_package &quot;$program&quot; &quot;$flag&quot;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+        install_package $program $flag
+</a>     done &lt;&lt;EOF
+ $packages
+ EOF
+<a href="#h0-4" id="h0-4" class="h">@@ -69,10 +66,11 @@ install_dots() {
+</a>     # Clone and install dot files
+ 
+     log &quot;Fetching dot files&quot;
+<a href="#h0-4-3" id="h0-4-3" class="d">-    git clone &quot;$dotrepo&quot; ~/.config/rice &gt; &quot;$logfile&quot; || log &quot;Dots have already been cloned&quot;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+    git clone &quot;$dotrepo&quot; ~/.config/rice &gt;&gt; &quot;$logfile&quot; || log &quot;Dots have already been cloned&quot;
+</a>     (cd ~/.config/rice &amp;&amp; stow --target=&quot;$HOME&quot; --ignore=&#39;gitignore&#39; dots)
+ }
+ 
+<a href="#h0-4-8" id="h0-4-8" class="i">+
+</a> log &quot;Running installer for Fedora&quot;
+ pre_install
+ install_packages
+</pre>
+</div>
+</body>
+</html>

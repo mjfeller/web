@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Allow tilde expansion in loaduri - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/befe481a9b970cf2bc90ca671e1df1d1082ac41e.html">befe481a9b970cf2bc90ca671e1df1d1082ac41e</a>
+<b>parent</b> <a href="../commit/d6954e15417da723c7938bf11e328dacdfefdc26.html">d6954e15417da723c7938bf11e328dacdfefdc26</a>
+<b>Author:</b> nzl &lt;<a href="mailto:uruabi@gmail.com">uruabi@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 15 Mar 2018 03:46:52 +0800
+
+Allow tilde expansion in loaduri
+
+also fixed a bug that ~foo/ was expanded to /home/fo/o/
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">63</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>1 file changed, 40 insertions(+), 23 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -146,6 +146,7 @@ static void sigchld(int unused);
+</a> static void sighup(int unused);
+ static char *buildfile(const char *path);
+ static char *buildpath(const char *path);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static char *untildepath(const char *path);
+</a> static const char *getuserhomedir(const char *user);
+ static const char *getcurrentuserhomedir(void);
+ static Client *newclient(Client *c);
+<a href="#h0-1" id="h0-1" class="h">@@ -470,26 +471,12 @@ getcurrentuserhomedir(void)
+</a> char *
+ buildpath(const char *path)
+ {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	char *apath, *name, *p, *fpath;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	const char *homedir;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	if (path[0] == &#39;~&#39;) {
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		if (path[1] == &#39;/&#39; || path[1] == &#39;\0&#39;) {
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-			p = (char *)&amp;path[1];
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-			homedir = getcurrentuserhomedir();
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-		} else {
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-			if ((p = strchr(path, &#39;/&#39;)))
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-				name = g_strndup(&amp;path[1], --p - path);
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-			else
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-				name = g_strdup(&amp;path[1]);
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	char *apath, *fpath;
+</a> 
+<a href="#h0-1-17" id="h0-1-17" class="d">-			homedir = getuserhomedir(name);
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-			g_free(name);
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-		}
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-		apath = g_build_filename(homedir, p, NULL);
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-	} else {
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	if (path[0] == &#39;~&#39;)
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+		apath = untildepath(path);
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+	else
+</a> 		apath = g_strdup(path);
+<a href="#h0-1-26" id="h0-1-26" class="d">-	}
+</a> 
+ 	/* creating directory */
+ 	if (g_mkdir_with_parents(apath, 0700) &lt; 0)
+<a href="#h0-2" id="h0-2" class="h">@@ -501,6 +488,28 @@ buildpath(const char *path)
+</a> 	return fpath;
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+char *
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+untildepath(const char *path)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+{
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+       char *apath, *name, *p;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+       const char *homedir;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+       if (path[1] == &#39;/&#39; || path[1] == &#39;\0&#39;) {
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+               p = (char *)&amp;path[1];
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+               homedir = getcurrentuserhomedir();
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+       } else {
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+               if ((p = strchr(path, &#39;/&#39;)))
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+                       name = g_strndup(&amp;path[1], p - (path + 1));
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+               else
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+                       name = g_strdup(&amp;path[1]);
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+               homedir = getuserhomedir(name);
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+               g_free(name);
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+       }
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+       apath = g_build_filename(homedir, p, NULL);
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+       return apath;
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+}
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+
+</a> Client *
+ newclient(Client *rc)
+ {
+<a href="#h0-3" id="h0-3" class="h">@@ -522,7 +531,7 @@ void
+</a> loaduri(Client *c, const Arg *a)
+ {
+ 	struct stat st;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	char *url, *path;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	char *url, *path, *apath;
+</a> 	const char *uri = a-&gt;v;
+ 
+ 	if (g_strcmp0(uri, &quot;&quot;) == 0)
+<a href="#h0-4" id="h0-4" class="h">@@ -533,11 +542,19 @@ loaduri(Client *c, const Arg *a)
+</a> 	    g_str_has_prefix(uri, &quot;file://&quot;)  ||
+ 	    g_str_has_prefix(uri, &quot;about:&quot;)) {
+ 		url = g_strdup(uri);
+<a href="#h0-4-3" id="h0-4-3" class="d">-	} else if (!stat(uri, &amp;st) &amp;&amp; (path = realpath(uri, NULL))) {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		url = g_strdup_printf(&quot;file://%s&quot;, path);
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-		free(path);
+</a> 	} else {
+<a href="#h0-4-7" id="h0-4-7" class="d">-		url = g_strdup_printf(&quot;http://%s&quot;, uri);
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+		if (uri[0] == &#39;~&#39;)
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+			apath = untildepath(uri);
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+		else
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+			apath = (char *)uri;
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+		if (!stat(apath, &amp;st) &amp;&amp; (path = realpath(apath, NULL))) {
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+			url = g_strdup_printf(&quot;file://%s&quot;, path);
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+			free(path);
+</a><a href="#h0-4-15" id="h0-4-15" class="i">+		} else {
+</a><a href="#h0-4-16" id="h0-4-16" class="i">+			url = g_strdup_printf(&quot;http://%s&quot;, uri);
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+		}
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+		if (apath != uri)
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+			free(apath);
+</a> 	}
+ 
+ 	setatom(c, AtomUri, url);
+</pre>
+</div>
+</body>
+</html>

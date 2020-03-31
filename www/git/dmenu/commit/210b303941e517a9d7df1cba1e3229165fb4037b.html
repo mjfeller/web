@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>paring - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/210b303941e517a9d7df1cba1e3229165fb4037b.html">210b303941e517a9d7df1cba1e3229165fb4037b</a>
+<b>parent</b> <a href="../commit/47e3e8be7b7df3ed37929dab8941f71cbee19fa9.html">47e3e8be7b7df3ed37929dab8941f71cbee19fa9</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Thu,  5 May 2011 15:46:48 +0100
+
+paring
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++</span><span class="d">-------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">draw.c</a></td><td> | </td><td class="num">7</td><td><span class="i">++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>2 files changed, 13 insertions(+), 24 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -36,9 +36,8 @@ static void paste(void);
+</a> static void readstdin(void);
+ static void run(void);
+ static void setup(void);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void usage(void);
+</a> 
+<a href="#h0-0-5" id="h0-0-5" class="d">-static char text[BUFSIZ];
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+static char text[BUFSIZ] = &quot;&quot;;
+</a> static int bh, mw, mh;
+ static int inputw = 0;
+ static int lines = 0;
+<a href="#h0-1" id="h0-1" class="h">@@ -79,7 +78,7 @@ main(int argc, char *argv[]) {
+</a> 		else if(!strcmp(argv[i], &quot;-i&quot;))
+ 			fstrncmp = strncasecmp;
+ 		else if(i == argc-1)
+<a href="#h0-1-3" id="h0-1-3" class="d">-			usage();
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			goto usage;
+</a> 		/* double flags */
+ 		else if(!strcmp(argv[i], &quot;-l&quot;))
+ 			lines = atoi(argv[++i]);
+<a href="#h0-2" id="h0-2" class="h">@@ -98,15 +97,19 @@ main(int argc, char *argv[]) {
+</a> 		else if(!strcmp(argv[i], &quot;-sf&quot;))
+ 			selfgcolor = argv[++i];
+ 		else
+<a href="#h0-2-3" id="h0-2-3" class="d">-			usage();
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			goto usage;
+</a> 
+ 	dc = initdc();
+ 	initfont(dc, font);
+ 	readstdin();
+ 	setup();
+ 	run();
+<a href="#h0-2-11" id="h0-2-11" class="i">+	return EXIT_FAILURE;
+</a> 
+<a href="#h0-2-13" id="h0-2-13" class="d">-	return EXIT_FAILURE;  /* should not reach */
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+usage:
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	fputs(&quot;usage: dmenu [-b] [-i] [-l lines] [-m monitor] [-p prompt] [-fn font]\n&quot;
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+	      &quot;             [-nb color] [-nf color] [-sb color] [-sf color] [-v]\n&quot;, stderr);
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+	return EXIT_FAILURE;
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -223,7 +226,7 @@ keypress(XKeyEvent *ev) {
+</a> 
+ 	len = strlen(text);
+ 	XLookupString(ev, buf, sizeof buf, &amp;ksym, NULL);
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(ev-&gt;state &amp; ControlMask) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	if(ev-&gt;state &amp; ControlMask)
+</a> 		switch(tolower(ksym)) {
+ 		default:
+ 			return;
+<a href="#h0-4" id="h0-4" class="h">@@ -277,7 +280,6 @@ keypress(XKeyEvent *ev) {
+</a> 			XConvertSelection(dc-&gt;dpy, XA_PRIMARY, utf8, utf8, win, CurrentTime);
+ 			return;
+ 		}
+<a href="#h0-4-3" id="h0-4-3" class="d">-	}
+</a> 	switch(ksym) {
+ 	default:
+ 		if(!iscntrl(*buf))
+<a href="#h0-5" id="h0-5" class="h">@@ -341,7 +343,6 @@ keypress(XKeyEvent *ev) {
+</a> 	case XK_Return:
+ 	case XK_KP_Enter:
+ 		fputs((sel &amp;&amp; !(ev-&gt;state &amp; ShiftMask)) ? sel-&gt;text : text, stdout);
+<a href="#h0-5-3" id="h0-5-3" class="d">-		fflush(stdout);
+</a> 		exit(EXIT_SUCCESS);
+ 	case XK_Right:
+ 		if(cursor &lt; len) {
+<a href="#h0-6" id="h0-6" class="h">@@ -403,7 +404,7 @@ match(void) {
+</a> 		else
+ 			matches = lsubstr;
+ 	}
+<a href="#h0-6-3" id="h0-6-3" class="d">-	curr = prev = next = sel = matches;
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	curr = sel = matches;
+</a> 	calcoffsets();
+ }
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -438,11 +439,10 @@ readstdin(void) {
+</a> 	for(end = &amp;items; fgets(buf, sizeof buf, stdin); *end = item, end = &amp;item-&gt;next) {
+ 		if((p = strchr(buf, &#39;\n&#39;)))
+ 			*p = &#39;\0&#39;;
+<a href="#h0-7-3" id="h0-7-3" class="d">-		if(!(item = malloc(sizeof *item)))
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+		if(!(item = calloc(1, sizeof *item)))
+</a> 			eprintf(&quot;cannot malloc %u bytes\n&quot;, sizeof *item);
+ 		if(!(item-&gt;text = strdup(buf)))
+ 			eprintf(&quot;cannot strdup %u bytes\n&quot;, strlen(buf)+1);
+<a href="#h0-7-8" id="h0-7-8" class="d">-		item-&gt;next = item-&gt;left = item-&gt;right = NULL;
+</a> 		inputw = MAX(inputw, textw(dc, item-&gt;text));
+ 	}
+ }
+<a href="#h0-8" id="h0-8" class="h">@@ -530,13 +530,5 @@ setup(void) {
+</a> 	inputw = MIN(inputw, mw/3);
+ 	promptw = prompt ? textw(dc, prompt) : 0;
+ 	XMapRaised(dc-&gt;dpy, win);
+<a href="#h0-8-3" id="h0-8-3" class="d">-	text[0] = &#39;\0&#39;;
+</a> 	match();
+ }
+<a href="#h0-8-6" id="h0-8-6" class="d">-
+</a><a href="#h0-8-7" id="h0-8-7" class="d">-void
+</a><a href="#h0-8-8" id="h0-8-8" class="d">-usage(void) {
+</a><a href="#h0-8-9" id="h0-8-9" class="d">-	fputs(&quot;usage: dmenu [-b] [-i] [-l lines] [-m monitor] [-p prompt] [-fn font]\n&quot;
+</a><a href="#h0-8-10" id="h0-8-10" class="d">-	      &quot;             [-nb color] [-nf color] [-sb color] [-sf color] [-v]\n&quot;, stderr);
+</a><a href="#h0-8-11" id="h0-8-11" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h0-8-12" id="h0-8-12" class="d">-}
+</a><b>diff --git a/<a id="h1" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -100,16 +100,13 @@ initdc(void) {
+</a> 
+ 	if(!setlocale(LC_CTYPE, &quot;&quot;) || !XSupportsLocale())
+ 		weprintf(&quot;no locale support\n&quot;);
+<a href="#h1-0-3" id="h1-0-3" class="d">-	if(!(dc = malloc(sizeof *dc)))
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	if(!(dc = calloc(1, sizeof *dc)))
+</a> 		eprintf(&quot;cannot malloc %u bytes\n&quot;, sizeof *dc);
+ 	if(!(dc-&gt;dpy = XOpenDisplay(NULL)))
+ 		eprintf(&quot;cannot open display\n&quot;);
+ 
+ 	dc-&gt;gc = XCreateGC(dc-&gt;dpy, DefaultRootWindow(dc-&gt;dpy), 0, NULL);
+ 	XSetLineAttributes(dc-&gt;dpy, dc-&gt;gc, 1, LineSolid, CapButt, JoinMiter);
+<a href="#h1-0-11" id="h1-0-11" class="d">-	dc-&gt;font.xfont = NULL;
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	dc-&gt;font.set = NULL;
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-	dc-&gt;canvas = None;
+</a> 	return dc;
+ }
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -187,7 +184,7 @@ void
+</a> weprintf(const char *fmt, ...) {
+ 	va_list ap;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	fprintf(stderr, &quot;%s: warning: &quot;, progname);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	fprintf(stderr, &quot;%s: &quot;, progname);
+</a> 	va_start(ap, fmt);
+ 	vfprintf(stderr, fmt, ap);
+ 	va_end(ap);
+</pre>
+</div>
+</body>
+</html>

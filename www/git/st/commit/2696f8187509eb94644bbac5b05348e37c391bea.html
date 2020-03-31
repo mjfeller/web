@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Be careful about mar77i&#39;s patches. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2696f8187509eb94644bbac5b05348e37c391bea.html">2696f8187509eb94644bbac5b05348e37c391bea</a>
+<b>parent</b> <a href="../commit/78215c8ee0f4cb62655730260520f185ce97c620.html">78215c8ee0f4cb62655730260520f185ce97c620</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Mon, 10 Dec 2012 23:02:58 +0100
+
+Be careful about mar77i&#39;s patches.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 7 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -138,8 +138,8 @@ static Key key[] = {
+</a> 	{ XK_KP_Delete,     ControlMask,    &quot;\033[3;5~&quot;,    +1,    0,    0},
+ 	{ XK_KP_Delete,     ShiftMask,      &quot;\033[2K&quot;,      +1,    0,    0},
+ 	{ XK_KP_Delete,     ShiftMask,      &quot;\033[3;2~&quot;,    -1,    0,    0},
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ XK_KP_Delete,     XK_ANY_MOD,     &quot;\033[3~&quot;,      -1,    0,    0},
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ XK_KP_Delete,     XK_ANY_MOD,     &quot;\033[P&quot;,       +1,    0,    0},
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	{ XK_KP_Delete,     XK_ANY_MOD,     &quot;\033[P&quot;,       -1,    0,    0},
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	{ XK_KP_Delete,     XK_ANY_MOD,     &quot;\033[3~&quot;,      +1,    0,    0},
+</a> 	{ XK_KP_Multiply,   XK_ANY_MOD,     &quot;\033Oj&quot;,       +2,    0,    0},
+ 	{ XK_KP_Add,        XK_ANY_MOD,     &quot;\033Ok&quot;,       +2,    0,    0},
+ 	{ XK_KP_Enter,      XK_ANY_MOD,     &quot;\033OM&quot;,       +2,    0,    0},
+<a href="#h0-1" id="h0-1" class="h">@@ -194,8 +194,8 @@ static Key key[] = {
+</a> 	{ XK_Delete,        ControlMask,    &quot;\033[3;5~&quot;,    +1,    0,    0},
+ 	{ XK_Delete,        ShiftMask,      &quot;\033[2K&quot;,      +1,    0,    0},
+ 	{ XK_Delete,        ShiftMask,      &quot;\033[3;2~&quot;,    -1,    0,    0},
+<a href="#h0-1-3" id="h0-1-3" class="d">-	{ XK_Delete,        XK_ANY_MOD,     &quot;\033[3~&quot;,      -1,    0,    0},
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	{ XK_Delete,        XK_ANY_MOD,     &quot;\033[P&quot;,       +1,    0,    0},
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	{ XK_Delete,        XK_ANY_MOD,     &quot;\033[P&quot;,       -1,    0,    0},
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	{ XK_Delete,        XK_ANY_MOD,     &quot;\033[3~&quot;,      +1,    0,    0},
+</a> 	{ XK_Home,          ShiftMask,      &quot;\033[1;2H&quot;,     0,    0,    0},
+ 	{ XK_Home,          XK_ANY_MOD,     &quot;\033[H&quot;,        0,   -1,    0},
+ 	{ XK_Home,          XK_ANY_MOD,     &quot;\033[1~&quot;,       0,   +1,    0},
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2742,12 +2742,13 @@ kmap(KeySym k, uint state) {
+</a> 				continue;
+ 			if(term.numlock &amp;&amp; kp-&gt;appkey == 2)
+ 				continue;
+<a href="#h1-0-3" id="h1-0-3" class="d">-		} else if (kp-&gt;appkey &lt; 0 &amp;&amp; IS_SET(MODE_APPKEYPAD)) {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		} else if(kp-&gt;appkey &lt; 0 &amp;&amp; IS_SET(MODE_APPKEYPAD)) {
+</a> 			continue;
+ 		}
+ 
+ 		if((kp-&gt;appcursor &lt; 0 &amp;&amp; IS_SET(MODE_APPCURSOR)) ||
+<a href="#h1-0-9" id="h1-0-9" class="d">-				(kp-&gt;appcursor &gt; 0 &amp;&amp; !IS_SET(MODE_APPCURSOR))) {
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+				(kp-&gt;appcursor &gt; 0
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+				 &amp;&amp; !IS_SET(MODE_APPCURSOR))) {
+</a> 			continue;
+ 		}
+ 
+</pre>
+</div>
+</body>
+</html>

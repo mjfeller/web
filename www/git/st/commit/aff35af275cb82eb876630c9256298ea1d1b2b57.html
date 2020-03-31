@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Use as command arguments the remaining parameters - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/aff35af275cb82eb876630c9256298ea1d1b2b57.html">aff35af275cb82eb876630c9256298ea1d1b2b57</a>
+<b>parent</b> <a href="../commit/83e73c6242fc309a3859c12b996ab88d36c7e838.html">83e73c6242fc309a3859c12b996ab88d36c7e838</a>
+<b>Author:</b> noname@inventati.org &lt;<a href="mailto:noname@inventati.org">noname@inventati.org</a>&gt;
+<b>Date:</b>   Tue, 14 Apr 2015 09:53:24 +0200
+
+Use as command arguments the remaining parameters
+
+This change allows execute st as &#39;st mutt&#39; while it keeps the
+compability with xterm and urxt.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">17</td><td><span class="i">++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 10 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4008,7 +4008,8 @@ void
+</a> usage(void) {
+ 	die(&quot;%s &quot; VERSION &quot; (c) 2010-2015 st engineers\n&quot; \
+ 	&quot;usage: st [-a] [-v] [-c class] [-f font] [-g geometry] [-o file]\n&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;          [-i] [-t title] [-w windowid] [-e command ...]\n&quot;, argv0);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;          [-i] [-t title] [-w windowid] [-e command ...] [command ...]\n&quot;,
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	argv0);
+</a> }
+ 
+ int
+<a href="#h0-1" id="h0-1" class="h">@@ -4027,12 +4028,8 @@ main(int argc, char *argv[]) {
+</a> 		opt_class = EARGF(usage());
+ 		break;
+ 	case &#39;e&#39;:
+<a href="#h0-1-3" id="h0-1-3" class="d">-		/* eat all remaining arguments */
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		if(argc &gt; 1) {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-			opt_cmd = &amp;argv[1];
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-			if(argv[1] != NULL &amp;&amp; opt_title == NULL)
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-				opt_title = basename(xstrdup(argv[1]));
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-		}
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		if(argc &gt; 1)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			--argc, ++argv;
+</a> 		goto run;
+ 	case &#39;f&#39;:
+ 		opt_font = EARGF(usage());
+<a href="#h0-2" id="h0-2" class="h">@@ -4059,6 +4056,12 @@ main(int argc, char *argv[]) {
+</a> 	} ARGEND;
+ 
+ run:
+<a href="#h0-2-3" id="h0-2-3" class="i">+	if(argc &gt; 0) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		/* eat all remaining arguments */
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		opt_cmd = argv;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		if(!opt_title)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+			opt_title = basename(xstrdup(argv[0]));
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	}
+</a> 	setlocale(LC_CTYPE, &quot;&quot;);
+ 	XSetLocaleModifiers(&quot;&quot;);
+ 	tnew(MAX(cols, 1), MAX(rows, 1));
+</pre>
+</div>
+</body>
+</html>

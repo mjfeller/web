@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Simplifying the lastsel handling a bit. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/030eda81cc622ad0c3efe2ab1f1a657ee82e45cb.html">030eda81cc622ad0c3efe2ab1f1a657ee82e45cb</a>
+<b>parent</b> <a href="../commit/4ed0a2da67f742cfb75f85fc02f703e21a0206d6.html">4ed0a2da67f742cfb75f85fc02f703e21a0206d6</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sun, 26 Jan 2014 20:05:40 +0100
+
+Simplifying the lastsel handling a bit.
+
+Some checks and comments were removed to simplify the function.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">27</td><td><span class="i">+++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 18 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1059,9 +1059,10 @@ unmanage(int c) {
+</a> 		return;
+ 	}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if(!nclients) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if(!nclients)
+</a> 		return;
+<a href="#h0-0-6" id="h0-0-6" class="d">-	} else if(c == 0) {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	if(c == 0) {
+</a> 		/* First client. */
+ 		nclients--;
+ 		free(clients[0]);
+<a href="#h0-1" id="h0-1" class="h">@@ -1080,35 +1081,25 @@ unmanage(int c) {
+</a> 	}
+ 
+ 	if(nclients &lt;= 0) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-		sel = -1;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		lastsel = -1;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		lastsel = sel = -1;
+</a> 
+<a href="#h0-1-7" id="h0-1-7" class="d">-		if (closelastclient) {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+		if(closelastclient) {
+</a> 			running = False;
+<a href="#h0-1-10" id="h0-1-10" class="d">-		} else if (fillagain &amp;&amp; running) {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		} else if(fillagain &amp;&amp; running) {
+</a> 			spawn(NULL);
+ 		}
+ 	} else {
+<a href="#h0-1-15" id="h0-1-15" class="d">-		if(c &amp;&amp; lastsel &gt;= nclients) {
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+		if(lastsel &gt;= nclients) {
+</a> 			lastsel = nclients - 1;
+ 		} else if(lastsel &gt; c) {
+ 			lastsel--;
+ 		}
+ 
+ 		if(c == sel) {
+<a href="#h0-1-23" id="h0-1-23" class="d">-			/* Note that focus() will never set lastsel == sel,
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-			 * so if here lastsel == sel, it was decreased by above if() clause
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-			 * and was actually (sel + 1) before.
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-			 */
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-			if(lastsel &gt; 0) {
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-				focus(lastsel);
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-			} else {
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-				focus(0);
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-				lastsel = 1;
+</a><a href="#h0-1-32" id="h0-1-32" class="d">-			}
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+			focus(lastsel);
+</a> 		} else {
+ 			if(sel &gt; c)
+<a href="#h0-1-36" id="h0-1-36" class="d">-				sel -= 1;
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+				sel--;
+</a> 			if(sel &gt;= nclients)
+ 				sel = nclients - 1;
+ 
+</pre>
+</div>
+</body>
+</html>

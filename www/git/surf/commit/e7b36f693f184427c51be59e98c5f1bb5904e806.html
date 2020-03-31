@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding a surf-open.sh script for easier tabbed(1) integration. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e7b36f693f184427c51be59e98c5f1bb5904e806.html">e7b36f693f184427c51be59e98c5f1bb5904e806</a>
+<b>parent</b> <a href="../commit/d6bbef74fefaf4f5b9943a821867d99a7200f7ed.html">d6bbef74fefaf4f5b9943a821867d99a7200f7ed</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Fri, 16 Nov 2012 16:12:09 +0100
+
+Adding a surf-open.sh script for easier tabbed(1) integration.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">README</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">surf-open.sh</a></td><td> | </td><td class="num">32</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 49 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/README.html">README</a> b/<a href="../file/README.html">README</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -17,9 +17,22 @@ necessary as root):
+</a> 
+     make clean install
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a> Running surf
+ ------------
+ run
+<a href="#h0-0-7" id="h0-0-7" class="d">-	surf [URL]
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	surf [URI]
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+See the manpage for further options.
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+Running surf in tabbed
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+----------------------
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+For running surf in tabbed[0] there is a script included in the distribution,
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+which is run like this:
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	surf-open.sh [URI]
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+Further invocations of the script will run surf with the specified URI in this
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+instance of tabbed.
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+[0] http://tools.suckless.org/tabbed
+</a> 
+<b>diff --git a/<a id="h1" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -13,6 +13,8 @@ static time_t sessiontime   = 3600;
+</a> static char *cafile         = &quot;/etc/ssl/certs/ca-certificates.crt&quot;;
+ static char *strictssl      = FALSE; /* Refuse untrusted SSL connections */
+ static int   indicator_thickness = 2;
+<a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+/* Webkit features */
+</a> static Bool spatialbrowsing = TRUE;
+ static Bool hidebackground  = FALSE;
+ 
+<b>diff --git a/<a id="h2" href="../file/surf-open.sh.html">surf-open.sh</a> b/<a href="../file/surf-open.sh.html">surf-open.sh</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,32 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+#!/bin/sh
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+#
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+# See the LICENSE file for copyright and license details. 
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+#
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+xidfile=&quot;$HOME/tmp/tabbed-surf.xid&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+uri=&quot;&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+if [ &quot;$#&quot; -gt 0 ];
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+then
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	uri=&quot;$1&quot;
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+fi
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+runtabbed() {
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	tabbed -dn tabbed-surf -r 2 surf -e &#39;&#39; &quot;$uri&quot; &gt;&quot;$xidfile&quot; \
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+		2&gt;/dev/null &amp;
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+}
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+if [ ! -r &quot;$xidfile&quot; ];
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+then
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+	runtabbed
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+else
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	xid=$(cat &quot;$xidfile&quot;)
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+	xprop -id &quot;$xid&quot; 2&gt;&amp;1 &gt;/dev/null
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+	if [ $? -gt 0 ];
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	then
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+		runtabbed
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+	else
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+		surf -e &quot;$xid&quot; &quot;$uri&quot; 2&gt;&amp;1 &gt;/dev/null &amp;
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+	fi
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+fi
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+
+</a></pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixing some minor issues - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/51f6405b0d7a9ba34696cafbc08303b1e5b14cfa.html">51f6405b0d7a9ba34696cafbc08303b1e5b14cfa</a>
+<b>parent</b> <a href="../commit/6096f8a11312261f016d49b1cb2e4c2cdc7fdbc1.html">6096f8a11312261f016d49b1cb2e4c2cdc7fdbc1</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Fri,  5 Jan 2007 16:35:45 +0100
+
+fixing some minor issues
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">view.c</a></td><td> | </td><td class="num">23</td><td><span class="i">++++++++++++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>2 files changed, 14 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -17,8 +17,8 @@ LIBS = -L/usr/lib -lc -L${X11LIB} -lX11
+</a> # flags
+ CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+ LDFLAGS = ${LIBS}
+<a href="#h0-0-3" id="h0-0-3" class="d">-#CFLAGS = -g -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-#LDFLAGS = -g ${LIBS}
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+CFLAGS = -g -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+LDFLAGS = -g ${LIBS}
+</a> 
+ # Solaris
+ #CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+<b>diff --git a/<a id="h1" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -32,17 +32,17 @@ pop(Client *c) {
+</a> static void
+ swap(Client *c1, Client *c2) {
+ 	Client tmp = *c1;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	Client *cp = c1-&gt;prev;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	Client *cn = c1-&gt;next;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	Client *c1p = c1-&gt;prev;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	Client *c1n = c1-&gt;next;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	Client *c2p = c2-&gt;prev;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	Client *c2n = c2-&gt;next;
+</a> 
+ 	*c1 = *c2;
+<a href="#h1-0-11" id="h1-0-11" class="d">-	c1-&gt;prev = cp;
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	c1-&gt;next = cn;
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-	cp = c2-&gt;prev;
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-	cn = c2-&gt;next;
+</a> 	*c2 = tmp;
+<a href="#h1-0-16" id="h1-0-16" class="d">-	c2-&gt;prev = cp;
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-	c2-&gt;next = cn;
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	c1-&gt;prev = c1p;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	c1-&gt;next = c1n;
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+	c2-&gt;prev = c2p;
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	c2-&gt;next = c2n;
+</a> }
+ 
+ static void
+<a href="#h1-1" id="h1-1" class="h">@@ -192,10 +192,9 @@ focusprev(Arg *arg) {
+</a> 
+ void
+ incnmaster(Arg *arg) {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if(nmaster + arg-&gt;i &lt; 1 || (wah / (nmaster + arg-&gt;i) &lt; bh))
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	if((nmaster + arg-&gt;i &lt; 1) || (wah / (nmaster + arg-&gt;i) &lt; bh))
+</a> 		return;
+ 	nmaster += arg-&gt;i;
+<a href="#h1-1-7" id="h1-1-7" class="d">-
+</a> 	arrange();
+ }
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -305,7 +304,9 @@ zoom(Arg *arg) {
+</a> 		n++;
+ 
+ 	c = sel;
+<a href="#h1-2-3" id="h1-2-3" class="d">-	if(n &lt;= nmaster || (arrange == dofloat))
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	if(arrange == dofloat)
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		return;
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+	else if(n &lt;= nmaster)
+</a> 		pop(c);
+ 	else if(ismaster(sel)) {
+ 		if(!(c = topofstack()))
+</pre>
+</div>
+</body>
+</html>

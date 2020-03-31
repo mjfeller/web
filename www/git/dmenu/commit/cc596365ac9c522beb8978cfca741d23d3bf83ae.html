@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>unboolify dmenu - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cc596365ac9c522beb8978cfca741d23d3bf83ae.html">cc596365ac9c522beb8978cfca741d23d3bf83ae</a>
+<b>parent</b> <a href="../commit/c9e4e152e61b22186ba4f4ca58ae8c8d3d83e81e.html">c9e4e152e61b22186ba4f4ca58ae8c8d3d83e81e</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Sun,  8 Nov 2015 23:03:34 +0100
+
+unboolify dmenu
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>2 files changed, 7 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,7 +1,7 @@
+</a> /* See LICENSE file for copyright and license details. */
+ /* Default settings; can be overriden by command line. */
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static bool topbar = true;                  /* -b  option; if False, dmenu appears at bottom */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static int topbar = 1;                      /* -b  option; if 0, dmenu appears at bottom     */
+</a> /* -fn option overrides fonts[0]; default X11 font or font set */
+ static const char *fonts[] = {
+ 	&quot;monospace:size=10&quot;
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,7 +1,6 @@
+</a> /* See LICENSE file for copyright and license details. */
+ #include &lt;ctype.h&gt;
+ #include &lt;locale.h&gt;
+<a href="#h1-0-3" id="h1-0-3" class="d">-#include &lt;stdbool.h&gt;
+</a> #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+<a href="#h1-1" id="h1-1" class="h">@@ -32,7 +31,7 @@ enum { SchemeNorm, SchemeSel, SchemeOut, SchemeLast }; /* color schemes */
+</a> struct item {
+ 	char *text;
+ 	struct item *left, *right;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	bool out;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	int out;
+</a> };
+ 
+ static char text[BUFSIZ] = &quot;&quot;;
+<a href="#h1-2" id="h1-2" class="h">@@ -421,7 +420,7 @@ keypress(XKeyEvent *ev)
+</a> 			exit(0);
+ 		}
+ 		if (sel)
+<a href="#h1-2-3" id="h1-2-3" class="d">-			sel-&gt;out = true;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+			sel-&gt;out = 1;
+</a> 		break;
+ 	case XK_Right:
+ 		if (text[cursor] != &#39;\0&#39;) {
+<a href="#h1-3" id="h1-3" class="h">@@ -480,7 +479,7 @@ readstdin(void)
+</a> 			*p = &#39;\0&#39;;
+ 		if (!(items[i].text = strdup(buf)))
+ 			die(&quot;cannot strdup %u bytes:&quot;, strlen(buf) + 1);
+<a href="#h1-3-3" id="h1-3-3" class="d">-		items[i].out = false;
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		items[i].out = 0;
+</a> 		if (strlen(items[i].text) &gt; max)
+ 			max = strlen(maxstr = items[i].text);
+ 	}
+<a href="#h1-4" id="h1-4" class="h">@@ -617,8 +616,7 @@ usage(void)
+</a> int
+ main(int argc, char *argv[])
+ {
+<a href="#h1-4-3" id="h1-4-3" class="d">-	bool fast = false;
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-	int i;
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+	int i, fast = 0;
+</a> 
+ 	for (i = 1; i &lt; argc; i++)
+ 		/* these options take no arguments */
+<a href="#h1-5" id="h1-5" class="h">@@ -626,9 +624,9 @@ main(int argc, char *argv[])
+</a> 			puts(&quot;dmenu-&quot;VERSION);
+ 			exit(0);
+ 		} else if (!strcmp(argv[i], &quot;-b&quot;)) /* appears at the bottom of the screen */
+<a href="#h1-5-3" id="h1-5-3" class="d">-			topbar = false;
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+			topbar = 0;
+</a> 		else if (!strcmp(argv[i], &quot;-f&quot;))   /* grabs keyboard before reading stdin */
+<a href="#h1-5-6" id="h1-5-6" class="d">-			fast = true;
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+			fast = 1;
+</a> 		else if (!strcmp(argv[i], &quot;-i&quot;)) { /* case-insensitive item matching */
+ 			fstrncmp = strncasecmp;
+ 			fstrstr = cistrstr;
+</pre>
+</div>
+</body>
+</html>

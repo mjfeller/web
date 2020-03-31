@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>code cleanups - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0c4e90c9d4b8e02de61db4f48c49d2cf87d93fbe.html">0c4e90c9d4b8e02de61db4f48c49d2cf87d93fbe</a>
+<b>parent</b> <a href="../commit/b44c82f18476bcfdf9be7791aeb95fdf680c0c44.html">b44c82f18476bcfdf9be7791aeb95fdf680c0c44</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue, 27 Oct 2009 12:54:22 +0100
+
+code cleanups
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">11</td><td><span class="i">++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -112,7 +112,6 @@ static void killclient(const Arg *arg);
+</a> static void manage(Window win);
+ static void move(const Arg *arg);
+ static void propertynotify(const XEvent *e);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void reparentnotify(const XEvent *e);
+</a> static void resize(Client *c, int w, int h);
+ static void rotate(const Arg *arg);
+ static void run(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -140,7 +139,6 @@ static void (*handler[LASTEvent]) (const XEvent *) = {
+</a> 	[FocusIn] = focusin,
+ 	[KeyPress] = keypress,
+ 	[PropertyNotify] = propertynotify,
+<a href="#h0-1-3" id="h0-1-3" class="d">-	[ReparentNotify] = reparentnotify,
+</a> 	[UnmapNotify] = unmapnotify,
+ };
+ static int bh, wx, wy, ww, wh;
+<a href="#h0-2" id="h0-2" class="h">@@ -388,8 +386,8 @@ focus(Client *c) {
+</a> 	e.xclient.data.l[2] = XEMBED_FOCUS_CURRENT;
+ 	e.xclient.data.l[3] = 0;
+ 	e.xclient.data.l[4] = 0;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	XSendEvent(dpy, root, False, NoEventMask, &amp;e);
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	XStoreName(dpy, win, sel-&gt;name);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	XSendEvent(dpy, c-&gt;win, False, NoEventMask, &amp;e);
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	XStoreName(dpy, win, c-&gt;name);
+</a> 	sel = c;
+ 	drawbar();
+ }
+<a href="#h0-3" id="h0-3" class="h">@@ -616,10 +614,6 @@ propertynotify(const XEvent *e) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="d">-reparentnotify(const XEvent *e) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-}
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-void
+</a> resize(Client *c, int w, int h) {
+ 	XConfigureEvent ce;
+ 	XWindowChanges wc;
+<a href="#h0-4" id="h0-4" class="h">@@ -805,7 +799,6 @@ xerror(Display *dpy, XErrorEvent *ee) {
+</a> 	fprintf(stderr, &quot;tabbed: fatal error: request code=%d, error code=%d\n&quot;,
+ 			ee-&gt;request_code, ee-&gt;error_code);
+ 	return xerrorxlib(dpy, ee); /* may call exit */
+<a href="#h0-4-3" id="h0-4-3" class="d">-
+</a> }
+ 
+ int
+</pre>
+</div>
+</body>
+</html>

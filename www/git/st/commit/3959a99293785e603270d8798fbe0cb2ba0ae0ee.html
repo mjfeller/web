@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>add -w option to embed st. (thx nodus cursorius) - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3959a99293785e603270d8798fbe0cb2ba0ae0ee.html">3959a99293785e603270d8798fbe0cb2ba0ae0ee</a>
+<b>parent</b> <a href="../commit/4736edd469d07685f6ceeb4bfe438ba48335bd81.html">4736edd469d07685f6ceeb4bfe438ba48335bd81</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Wed,  8 Jun 2011 21:35:58 +0200
+
+add -w option to embed st. (thx nodus cursorius)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.1</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 14 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.1.html">st.1</a> b/<a href="../file/st.1.html">st.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -7,6 +7,8 @@ st \- simple terminal
+</a> .IR class ]
+ .RB [ \-t 
+ .IR title ]
+<a href="#h0-0-3" id="h0-0-3" class="i">+.RB [ \-w 
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+.IR windowid ]
+</a> .RB [ \-v ]
+ .RB [ \-e
+ .IR command ...]
+<a href="#h0-1" id="h0-1" class="h">@@ -21,6 +23,10 @@ defines the window title (default &#39;st&#39;).
+</a> .BI \-c &quot; class&quot;
+ defines the window class (default $TERM).
+ .TP
+<a href="#h0-1-3" id="h0-1-3" class="i">+.BI \-w &quot; windowid&quot;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+embeds st within the window identified by 
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+.I windowid
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+.TP
+</a> .B \-v
+ prints version information to stderr, then exits.
+ .TP
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -35,7 +35,7 @@
+</a> 
+ #define USAGE \
+ 	&quot;st-&quot; VERSION &quot;, (c) 2010-2011 st engineers\n&quot; \
+<a href="#h1-0-3" id="h1-0-3" class="d">-	&quot;usage: st [-t title] [-c class] [-v] [-e command...]\n&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;usage: st [-t title] [-c class] [-w windowid] [-v] [-e command...]\n&quot;
+</a> 
+ /* Arbitrary sizes */
+ #define ESC_TITLE_SIZ 256
+<a href="#h1-1" id="h1-1" class="h">@@ -260,6 +260,7 @@ static pid_t pid;
+</a> static Selection sel;
+ static char **opt_cmd  = NULL;
+ static char *opt_title = NULL;
+<a href="#h1-1-3" id="h1-1-3" class="i">+static char *opt_embed = NULL;
+</a> static char *opt_class = NULL;
+ 
+ int
+<a href="#h1-2" id="h1-2" class="h">@@ -1606,6 +1607,7 @@ void
+</a> xinit(void) {
+ 	XSetWindowAttributes attrs;
+ 	Cursor cursor;
+<a href="#h1-2-3" id="h1-2-3" class="i">+	Window parent;
+</a> 
+ 	if(!(xw.dpy = XOpenDisplay(NULL)))
+ 		die(&quot;Can&#39;t open display\n&quot;);
+<a href="#h1-3" id="h1-3" class="h">@@ -1636,7 +1638,8 @@ xinit(void) {
+</a> 		| ButtonMotionMask | ButtonPressMask | ButtonReleaseMask;
+ 	attrs.colormap = xw.cmap;
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-	xw.win = XCreateWindow(xw.dpy, XRootWindow(xw.dpy, xw.scr), 0, 0,
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	parent = opt_embed ? strtol(opt_embed, NULL, 0) : XRootWindow(xw.dpy, xw.scr);
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+	xw.win = XCreateWindow(xw.dpy, parent, 0, 0,
+</a> 			xw.w, xw.h, 0, XDefaultDepth(xw.dpy, xw.scr), InputOutput,
+ 			XDefaultVisual(xw.dpy, xw.scr),
+ 			CWBackPixel | CWBorderPixel | CWBitGravity | CWEventMask
+<a href="#h1-4" id="h1-4" class="h">@@ -1943,6 +1946,9 @@ main(int argc, char *argv[]) {
+</a> 		case &#39;c&#39;:
+ 			if(++i &lt; argc) opt_class = argv[i];
+ 			break;
+<a href="#h1-4-3" id="h1-4-3" class="i">+		case &#39;w&#39;:
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+			if(++i &lt; argc) opt_embed = argv[i];
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+			break;
+</a> 		case &#39;e&#39;: 
+ 			/* eat every remaining arguments */
+ 			if(++i &lt; argc) opt_cmd = &amp;argv[i];
+</pre>
+</div>
+</body>
+</html>

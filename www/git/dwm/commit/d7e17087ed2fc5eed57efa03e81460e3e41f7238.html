@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>new stuff (some warning elimination) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d7e17087ed2fc5eed57efa03e81460e3e41f7238.html">d7e17087ed2fc5eed57efa03e81460e3e41f7238</a>
+<b>parent</b> <a href="../commit/8b59083eb13c0712e04d9a5b6d7bf4af5913c442.html">8b59083eb13c0712e04d9a5b6d7bf4af5913c442</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Thu, 13 Jul 2006 01:55:54 +0200
+
+new stuff (some warning elimination)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">draw.c</a></td><td> | </td><td class="num">27</td><td><span class="i">+++++++++++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">kb.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">util.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">wm.c</a></td><td> | </td><td class="num">10</td><td><span class="i">++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">wm.h</a></td><td> | </td><td class="num">29</td><td><span class="i">++++++++++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>7 files changed, 44 insertions(+), 47 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -360,7 +360,7 @@ resize(Client *c)
+</a> }
+ 
+ static int
+<a href="#h0-0-3" id="h0-0-3" class="d">-dummy_error_handler(Display *dpy, XErrorEvent *error)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+dummy_error_handler(Display *dsply, XErrorEvent *err)
+</a> {
+ 	return 0;
+ }
+<a href="#h0-1" id="h0-1" class="h">@@ -425,12 +425,12 @@ draw_client(Client *c)
+</a> 		if(c-&gt;tags[i]) {
+ 			brush.x += brush.w;
+ 			brush.w = textw(&amp;brush.font, c-&gt;tags[i]) + brush.font.height;
+<a href="#h0-1-3" id="h0-1-3" class="d">-			draw(dpy, &amp;brush, True, c-&gt;tags[i]);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			draw(&amp;brush, True, c-&gt;tags[i]);
+</a> 		}
+ 	}
+ 	brush.x += brush.w;
+ 	brush.w = textw(&amp;brush.font, c-&gt;name) + brush.font.height;
+<a href="#h0-1-9" id="h0-1-9" class="d">-	draw(dpy, &amp;brush, True, c-&gt;name);
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	draw(&amp;brush, True, c-&gt;name);
+</a> 	XCopyArea(dpy, brush.drawable, c-&gt;title, brush.gc,
+ 			0, 0, c-&gt;tw, c-&gt;th, 0, 0);
+ 	XFlush(dpy);
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -14,9 +14,14 @@ VERSION = 0.0
+</a> LIBS = -L${PREFIX}/lib -L/usr/lib -lc -lm -L${X11LIB} -lX11
+ 
+ # Linux/BSD
+<a href="#h1-0-3" id="h1-0-3" class="d">-CFLAGS = -g -Wall -O2 -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+CFLAGS = -Os -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+</a> 	-DVERSION=\&quot;${VERSION}\&quot;
+<a href="#h1-0-6" id="h1-0-6" class="d">-LDFLAGS = -g ${LIBS}
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+LDFLAGS = ${LIBS}
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#CFLAGS  += -W -Wstrict-prototypes -Wpointer-arith -Wcast-align -Wcast-qual -Wshadow -Waggregate-return -Wnested-externs -Winline -Wwrite-strings -Wundef -Wsign-compare -Wmissing-prototypes -Wredundant-decls
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+#CFLAGS = -g -Wall -O2 -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+#	-DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+#LDFLAGS = -g ${LIBS}
+</a> 
+ # Solaris
+ #CFLAGS = -fast -xtarget=ultra ${INCLUDES} -DVERSION=\&quot;${VERSION}\&quot;
+<b>diff --git a/<a id="h2" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -11,7 +11,7 @@
+</a> #include &quot;wm.h&quot;
+ 
+ static void
+<a href="#h2-0-3" id="h2-0-3" class="d">-drawborder(Display *dpy, Brush *b)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+drawborder(Brush *b)
+</a> {
+ 	XPoint points[5];
+ 	XSetLineAttributes(dpy, b-&gt;gc, 1, LineSolid, CapButt, JoinMiter);
+<a href="#h2-1" id="h2-1" class="h">@@ -30,9 +30,10 @@ drawborder(Display *dpy, Brush *b)
+</a> }
+ 
+ void
+<a href="#h2-1-3" id="h2-1-3" class="d">-draw(Display *dpy, Brush *b, Bool border, const char *text)
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+draw(Brush *b, Bool border, const char *text)
+</a> {
+<a href="#h2-1-6" id="h2-1-6" class="d">-	unsigned int x, y, w, h, len;
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+	int x, y, w, h;
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+	unsigned int len;
+</a> 	static char buf[256];
+ 	XGCValues gcv;
+ 	XRectangle r = { b-&gt;x, b-&gt;y, b-&gt;w, b-&gt;h };
+<a href="#h2-2" id="h2-2" class="h">@@ -42,7 +43,7 @@ draw(Display *dpy, Brush *b, Bool border, const char *text)
+</a> 
+ 	w = 0;
+ 	if(border)
+<a href="#h2-2-3" id="h2-2-3" class="d">-		drawborder(dpy, b);
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+		drawborder(b);
+</a> 
+ 	if(!text)
+ 		return;
+<a href="#h2-3" id="h2-3" class="h">@@ -79,7 +80,7 @@ draw(Display *dpy, Brush *b, Bool border, const char *text)
+</a> }
+ 
+ static unsigned long
+<a href="#h2-3-3" id="h2-3-3" class="d">-xloadcolors(Display *dpy, Colormap cmap, const char *colstr)
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+xloadcolors(Colormap cmap, const char *colstr)
+</a> {
+ 	XColor color;
+ 	XAllocNamedColor(dpy, cmap, colstr, &amp;color, &amp;color);
+<a href="#h2-4" id="h2-4" class="h">@@ -87,13 +88,13 @@ xloadcolors(Display *dpy, Colormap cmap, const char *colstr)
+</a> }
+ 
+ void
+<a href="#h2-4-3" id="h2-4-3" class="d">-loadcolors(Display *dpy, int screen, Brush *b,
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+loadcolors(int scr, Brush *b,
+</a> 		const char *bg, const char *fg, const char *border)
+ {
+<a href="#h2-4-7" id="h2-4-7" class="d">-	Colormap cmap = DefaultColormap(dpy, screen);
+</a><a href="#h2-4-8" id="h2-4-8" class="d">-	b-&gt;bg = xloadcolors(dpy, cmap, bg);
+</a><a href="#h2-4-9" id="h2-4-9" class="d">-	b-&gt;fg = xloadcolors(dpy, cmap, fg);
+</a><a href="#h2-4-10" id="h2-4-10" class="d">-	b-&gt;border = xloadcolors(dpy, cmap, border);
+</a><a href="#h2-4-11" id="h2-4-11" class="i">+	Colormap cmap = DefaultColormap(dpy, scr);
+</a><a href="#h2-4-12" id="h2-4-12" class="i">+	b-&gt;bg = xloadcolors(cmap, bg);
+</a><a href="#h2-4-13" id="h2-4-13" class="i">+	b-&gt;fg = xloadcolors(cmap, fg);
+</a><a href="#h2-4-14" id="h2-4-14" class="i">+	b-&gt;border = xloadcolors(cmap, border);
+</a> }
+ 
+ unsigned int
+<a href="#h2-5" id="h2-5" class="h">@@ -120,13 +121,12 @@ texth(Fnt *font)
+</a> }
+ 
+ void
+<a href="#h2-5-3" id="h2-5-3" class="d">-loadfont(Display *dpy, Fnt *font, const char *fontstr)
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+loadfont(Fnt *font, const char *fontstr)
+</a> {
+ 	char **missing, *def;
+<a href="#h2-5-7" id="h2-5-7" class="d">-	int n;
+</a><a href="#h2-5-8" id="h2-5-8" class="i">+	int i, n;
+</a> 
+ 	missing = NULL;
+<a href="#h2-5-11" id="h2-5-11" class="d">-	def = &quot;?&quot;;
+</a> 	setlocale(LC_ALL, &quot;&quot;);
+ 	if(font-&gt;set)
+ 		XFreeFontSet(dpy, font-&gt;set);
+<a href="#h2-6" id="h2-6" class="h">@@ -144,7 +144,6 @@ loadfont(Display *dpy, Fnt *font, const char *fontstr)
+</a> 		XFontSetExtents *font_extents;
+ 		XFontStruct **xfonts;
+ 		char **font_names;
+<a href="#h2-6-3" id="h2-6-3" class="d">-		unsigned int i;
+</a> 
+ 		font-&gt;ascent = font-&gt;descent = 0;
+ 		font_extents = XExtentsOfFontSet(font-&gt;set);
+<b>diff --git a/<a id="h3" href="../file/kb.c.html">kb.c</a> b/<a href="../file/kb.c.html">kb.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -9,13 +9,13 @@
+</a> 
+ /********** CUSTOMIZE **********/
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-char *term[] = { 
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+const char *term[] = { 
+</a> 	&quot;aterm&quot;, &quot;-tr&quot;, &quot;+sb&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-fn&quot;,
+ 	&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;,NULL
+ };
+ 
+ static Key key[] = {
+<a href="#h3-0-10" id="h3-0-10" class="d">-	{ Mod1Mask, XK_Return, run, term },
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+	{ Mod1Mask, XK_Return, (void (*)(void *))spawn, term },
+</a> 	{ Mod1Mask, XK_k, sel, &quot;prev&quot; }, 
+ 	{ Mod1Mask, XK_j, sel, &quot;next&quot; }, 
+ 	{ Mod1Mask, XK_g, grid, NULL }, 
+<a href="#h3-1" id="h3-1" class="h">@@ -28,7 +28,7 @@ static Key key[] = {
+</a> /********** CUSTOMIZE **********/
+ 
+ void
+<a href="#h3-1-3" id="h3-1-3" class="d">-update_keys()
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+update_keys(void)
+</a> {
+ 	unsigned int i, len;
+ 	KeyCode code;
+<b>diff --git a/<a id="h4" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -14,7 +14,7 @@
+</a> #include &quot;wm.h&quot;
+ 
+ void
+<a href="#h4-0-3" id="h4-0-3" class="d">-error(char *errstr, ...) {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+error(const char *errstr, ...) {
+</a> 	va_list ap;
+ 	va_start(ap, errstr);
+ 	vfprintf(stderr, errstr, ap);
+<a href="#h4-1" id="h4-1" class="h">@@ -75,7 +75,7 @@ swap(void **p1, void **p2)
+</a> }
+ 
+ void
+<a href="#h4-1-3" id="h4-1-3" class="d">-spawn(Display *dpy, char *argv[])
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+spawn(char *argv[])
+</a> {
+ 	if(!argv || !argv[0])
+ 		return;
+<b>diff --git a/<a id="h5" href="../file/wm.c.html">wm.c</a> b/<a href="../file/wm.c.html">wm.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -174,12 +174,6 @@ cleanup()
+</a> }
+ 
+ void
+<a href="#h5-0-3" id="h5-0-3" class="d">-run(void *aux)
+</a><a href="#h5-0-4" id="h5-0-4" class="d">-{
+</a><a href="#h5-0-5" id="h5-0-5" class="d">-	spawn(dpy, aux);
+</a><a href="#h5-0-6" id="h5-0-6" class="d">-}
+</a><a href="#h5-0-7" id="h5-0-7" class="d">-
+</a><a href="#h5-0-8" id="h5-0-8" class="d">-void
+</a> quit(void *aux)
+ {
+ 	running = False;
+<a href="#h5-1" id="h5-1" class="h">@@ -250,8 +244,8 @@ main(int argc, char *argv[])
+</a> 	update_keys();
+ 
+ 	/* style */
+<a href="#h5-1-3" id="h5-1-3" class="d">-	loadcolors(dpy, screen, &amp;brush, BGCOLOR, FGCOLOR, BORDERCOLOR);
+</a><a href="#h5-1-4" id="h5-1-4" class="d">-	loadfont(dpy, &amp;brush.font, FONT);
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+	loadcolors(screen, &amp;brush, BGCOLOR, FGCOLOR, BORDERCOLOR);
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+	loadfont(&amp;brush.font, FONT);
+</a> 
+ 	th = texth(&amp;brush.font);
+ 
+<b>diff --git a/<a id="h6" href="../file/wm.h.html">wm.h</a> b/<a href="../file/wm.h.html">wm.h</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -87,15 +87,6 @@ extern char stext[1024], *tags[TLast];
+</a> extern Brush brush;
+ extern Client *clients, *stack;
+ 
+<a href="#h6-0-3" id="h6-0-3" class="d">-/* draw.c */
+</a><a href="#h6-0-4" id="h6-0-4" class="d">-extern void draw(Display *dpy, Brush *b, Bool border, const char *text);
+</a><a href="#h6-0-5" id="h6-0-5" class="d">-extern void loadcolors(Display *dpy, int screen, Brush *b,
+</a><a href="#h6-0-6" id="h6-0-6" class="d">-		const char *bg, const char *fg, const char *bo);
+</a><a href="#h6-0-7" id="h6-0-7" class="d">-extern void loadfont(Display *dpy, Fnt *font, const char *fontstr);
+</a><a href="#h6-0-8" id="h6-0-8" class="d">-extern unsigned int textnw(Fnt *font, char *text, unsigned int len);
+</a><a href="#h6-0-9" id="h6-0-9" class="d">-extern unsigned int textw(Fnt *font, char *text);
+</a><a href="#h6-0-10" id="h6-0-10" class="d">-extern unsigned int texth(Fnt *font);
+</a><a href="#h6-0-11" id="h6-0-11" class="d">-
+</a> /* client.c */
+ extern void manage(Window w, XWindowAttributes *wa);
+ extern void unmanage(Client *c);
+<a href="#h6-1" id="h6-1" class="h">@@ -115,11 +106,20 @@ extern void floating(void *aux);
+</a> extern void grid(void *aux);
+ extern void gravitate(Client *c, Bool invert);
+ 
+<a href="#h6-1-3" id="h6-1-3" class="i">+/* draw.c */
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+extern void draw(Brush *b, Bool border, const char *text);
+</a><a href="#h6-1-5" id="h6-1-5" class="i">+extern void loadcolors(int scr, Brush *b,
+</a><a href="#h6-1-6" id="h6-1-6" class="i">+		const char *bg, const char *fg, const char *bo);
+</a><a href="#h6-1-7" id="h6-1-7" class="i">+extern void loadfont(Fnt *font, const char *fontstr);
+</a><a href="#h6-1-8" id="h6-1-8" class="i">+extern unsigned int textnw(Fnt *font, char *text, unsigned int len);
+</a><a href="#h6-1-9" id="h6-1-9" class="i">+extern unsigned int textw(Fnt *font, char *text);
+</a><a href="#h6-1-10" id="h6-1-10" class="i">+extern unsigned int texth(Fnt *font);
+</a><a href="#h6-1-11" id="h6-1-11" class="i">+
+</a> /* event.c */
+ extern void discard_events(long even_mask);
+ 
+<a href="#h6-1-15" id="h6-1-15" class="d">-/* key.c */
+</a><a href="#h6-1-16" id="h6-1-16" class="d">-extern void update_keys();
+</a><a href="#h6-1-17" id="h6-1-17" class="i">+/* kb.c */
+</a><a href="#h6-1-18" id="h6-1-18" class="i">+extern void update_keys(void);
+</a> extern void keypress(XEvent *e);
+ 
+ /* mouse.c */
+<a href="#h6-2" id="h6-2" class="h">@@ -127,17 +127,16 @@ extern void mresize(Client *c);
+</a> extern void mmove(Client *c);
+ 
+ /* util.c */
+<a href="#h6-2-3" id="h6-2-3" class="d">-extern void error(char *errstr, ...);
+</a><a href="#h6-2-4" id="h6-2-4" class="i">+extern void error(const char *errstr, ...);
+</a> extern void *emallocz(unsigned int size);
+ extern void *emalloc(unsigned int size);
+ extern void *erealloc(void *ptr, unsigned int size);
+ extern char *estrdup(const char *str);
+<a href="#h6-2-9" id="h6-2-9" class="d">-extern void spawn(Display *dpy, char *argv[]);
+</a><a href="#h6-2-10" id="h6-2-10" class="i">+extern void spawn(char *argv[]);
+</a> extern void swap(void **p1, void **p2);
+ 
+ /* wm.c */
+<a href="#h6-2-14" id="h6-2-14" class="d">-extern int error_handler(Display *dpy, XErrorEvent *error);
+</a><a href="#h6-2-15" id="h6-2-15" class="i">+extern int error_handler(Display *dsply, XErrorEvent *e);
+</a> extern void send_message(Window w, Atom a, long value);
+ extern int win_proto(Window w);
+<a href="#h6-2-18" id="h6-2-18" class="d">-extern void run(void *aux);
+</a> extern void quit(void *aux);
+</pre>
+</div>
+</body>
+</html>

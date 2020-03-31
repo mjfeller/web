@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied dme&#39;s patch to prevent changing prevtags if nothing actually changed - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4adfdc9d95b2ec6603deab153697e2296e3c9c97.html">4adfdc9d95b2ec6603deab153697e2296e3c9c97</a>
+<b>parent</b> <a href="../commit/c619363d1580d5913b00d8b7d0415da5917b8060.html">c619363d1580d5913b00d8b7d0415da5917b8060</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 11 Feb 2008 20:48:22 +0000
+
+applied dme&#39;s patch to prevent changing prevtags if nothing actually changed
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">13</td><td><span class="i">++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1976,14 +1976,17 @@ xerrorstart(Display *dsply, XErrorEvent *ee) {
+</a> void
+ view(const char *arg) {
+ 	unsigned int i;
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	Bool tmp[LENGTH(tags)];
+</a> 	Monitor *m = &amp;monitors[monitorat()];
+ 
+<a href="#h0-0-7" id="h0-0-7" class="d">-	memcpy(m-&gt;prevtags, m-&gt;seltags, sizeof initags);
+</a> 	for(i = 0; i &lt; LENGTH(tags); i++)
+<a href="#h0-0-9" id="h0-0-9" class="d">-		m-&gt;seltags[i] = (NULL == arg);
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	m-&gt;seltags[idxoftag(arg)] = True;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	arrange();
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		tmp[i] = (NULL == arg);
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	tmp[idxoftag(arg)] = True;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	if(memcmp(m-&gt;seltags, tmp, sizeof initags) != 0) {
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		memcpy(m-&gt;prevtags, m-&gt;seltags, sizeof initags);
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		memcpy(m-&gt;seltags, tmp, sizeof initags);
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		arrange();
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	}
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

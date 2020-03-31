@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding a geometry flag to tabbed. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9b007101f20b0f6cb011111486c79c34078b7b5d.html">9b007101f20b0f6cb011111486c79c34078b7b5d</a>
+<b>parent</b> <a href="../commit/97ce0f717a69717ab28bc59072fef42d94b1fda8.html">97ce0f717a69717ab28bc59072fef42d94b1fda8</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Tue, 20 Aug 2013 18:44:00 +0200
+
+Adding a geometry flag to tabbed.
+
+Thanks for the hint Thorsten Glaser!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.1</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.c</a></td><td> | </td><td class="num">54</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 59 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.1.html">tabbed.1</a> b/<a href="../file/tabbed.1.html">tabbed.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,6 +8,8 @@ tabbed \- generic tabbed interface
+</a> .RB [ \-h ]
+ .RB [ \-s ]
+ .RB [ \-v ]
+<a href="#h0-0-3" id="h0-0-3" class="i">+.RB [ \-g
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+.IR geometry ]
+</a> .RB [ \-n
+ .IR name ]
+ .RB [ \-p
+<a href="#h0-1" id="h0-1" class="h">@@ -37,6 +39,12 @@ closed. Mutually exclusive with -c.
+</a> .B \-h
+ will print the usage of tabbed.
+ .TP
+<a href="#h0-1-3" id="h0-1-3" class="i">+.BI \-g &quot; geometry&quot;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+defines the X11 geometry string, which will fixate the height and width of st.
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+Them form is [=][&lt;width&gt;{xX}&lt;height&gt;][{+-}&lt;xoffset&gt;{+-}&lt;yoffset&gt;]. See
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+.BR XParseGeometry (3)
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+for further details.
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+.TP
+</a> .BI \-n &quot; name&quot;
+ will set the WM_CLASS attribute to
+ .I name.
+<b>diff --git a/<a id="h1" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -160,6 +160,7 @@ static int (*xerrorxlib)(Display *, XErrorEvent *);
+</a> static char winid[64];
+ static char **cmd = NULL;
+ static char *wmname = &quot;tabbed&quot;;
+<a href="#h1-0-3" id="h1-0-3" class="i">+static const char *geometry = NULL;
+</a> 
+ char *argv0;
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -866,6 +867,10 @@ setcmd(int argc, char *argv[], int replace) {
+</a> 
+ void
+ setup(void) {
+<a href="#h1-1-3" id="h1-1-3" class="i">+	int bitm, tx, ty, tw, th, dh, dw, isfixed;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	XClassHint class_hint;
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	XSizeHints *size_hint;
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+
+</a> 	/* clean up any zombies immediately */
+ 	sigchld(0);
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -889,6 +894,34 @@ setup(void) {
+</a> 	wy = 0;
+ 	ww = 800;
+ 	wh = 600;
+<a href="#h1-2-3" id="h1-2-3" class="i">+	isfixed = 0;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	if(geometry) {
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+		tx = ty = tw = th = 0;
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+		bitm = XParseGeometry(geometry, &amp;tx, &amp;ty, (unsigned *)&amp;tw,
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+				(unsigned *)&amp;th);
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+		if(bitm &amp; XValue)
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+			wx = tx;
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+		if(bitm &amp; YValue)
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+			wy = ty;
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+		if(bitm &amp; WidthValue)
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+			ww = tw;
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+		if(bitm &amp; HeightValue)
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+			wh = th;
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+		if(bitm &amp; XNegative &amp;&amp; wx == 0)
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+			wx = -1;
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+		if(bitm &amp; YNegative &amp;&amp; wy == 0)
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+			wy = -1;
+</a><a href="#h1-2-21" id="h1-2-21" class="i">+		if(bitm &amp; (HeightValue|WidthValue))
+</a><a href="#h1-2-22" id="h1-2-22" class="i">+			isfixed = 1;
+</a><a href="#h1-2-23" id="h1-2-23" class="i">+
+</a><a href="#h1-2-24" id="h1-2-24" class="i">+		dw = DisplayWidth(dpy, screen);
+</a><a href="#h1-2-25" id="h1-2-25" class="i">+		dh = DisplayHeight(dpy, screen);
+</a><a href="#h1-2-26" id="h1-2-26" class="i">+		if(wx &lt; 0)
+</a><a href="#h1-2-27" id="h1-2-27" class="i">+			wx = dw + wx - ww - 1;
+</a><a href="#h1-2-28" id="h1-2-28" class="i">+		if(wy &lt; 0)
+</a><a href="#h1-2-29" id="h1-2-29" class="i">+			wy = dh + wy - wh - 1;
+</a><a href="#h1-2-30" id="h1-2-30" class="i">+	}
+</a> 
+ 	dc.norm[ColBG] = getcolor(normbgcolor);
+ 	dc.norm[ColFG] = getcolor(normfgcolor);
+<a href="#h1-3" id="h1-3" class="h">@@ -908,11 +941,23 @@ setup(void) {
+</a> 			StructureNotifyMask|SubstructureRedirectMask);
+ 	xerrorxlib = XSetErrorHandler(xerror);
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-	XClassHint class_hint;
+</a> 	class_hint.res_name = wmname;
+ 	class_hint.res_class = &quot;tabbed&quot;;
+ 	XSetClassHint(dpy, win, &amp;class_hint);
+ 
+<a href="#h1-3-8" id="h1-3-8" class="i">+	size_hint = XAllocSizeHints();
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+	if(!isfixed) {
+</a><a href="#h1-3-10" id="h1-3-10" class="i">+		size_hint-&gt;flags = PSize;
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+		size_hint-&gt;height = wh;
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+		size_hint-&gt;width = ww;
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+	} else {
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+		size_hint-&gt;flags = PMaxSize | PMinSize;
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+		size_hint-&gt;min_width = size_hint-&gt;max_width = ww;
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+		size_hint-&gt;min_height = size_hint-&gt;max_height = wh;
+</a><a href="#h1-3-17" id="h1-3-17" class="i">+	}
+</a><a href="#h1-3-18" id="h1-3-18" class="i">+	XSetWMProperties(dpy, win, NULL, NULL, NULL, 0, size_hint, NULL, NULL);
+</a><a href="#h1-3-19" id="h1-3-19" class="i">+	XFree(size_hint);
+</a><a href="#h1-3-20" id="h1-3-20" class="i">+
+</a> 	XSetWMProtocols(dpy, win, &amp;wmatom[WMDelete], 1);
+ 
+ 	snprintf(winid, sizeof(winid), &quot;%lu&quot;, win);
+<a href="#h1-4" id="h1-4" class="h">@@ -1105,8 +1150,8 @@ char *argv0;
+</a> 
+ void
+ usage(void) {
+<a href="#h1-4-3" id="h1-4-3" class="d">-	die(&quot;usage: %s [-dfhsv] [-n name] [-p [s+/-]pos] [-r narg]&quot;
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-		&quot; command...\n&quot;, argv0);
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+	die(&quot;usage: %s [-dfhsv] [-g geometry] [-n name] [-p [s+/-]pos] &quot;
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+		&quot;[-r narg] command...\n&quot;, argv0);
+</a> }
+ 
+ int
+<a href="#h1-5" id="h1-5" class="h">@@ -1125,6 +1170,9 @@ main(int argc, char *argv[]) {
+</a> 	case &#39;f&#39;:
+ 		fillagain = True;
+ 		break;
+<a href="#h1-5-3" id="h1-5-3" class="i">+	case &#39;g&#39;:
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		geometry = EARGF(usage());
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+		break;
+</a> 	case &#39;n&#39;:
+ 		wmname = EARGF(usage());
+ 		break;
+</pre>
+</div>
+</body>
+</html>

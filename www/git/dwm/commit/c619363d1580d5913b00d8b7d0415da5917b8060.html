@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied dwm-4.8-snaptileds.diff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c619363d1580d5913b00d8b7d0415da5917b8060.html">c619363d1580d5913b00d8b7d0415da5917b8060</a>
+<b>parent</b> <a href="../commit/012710a3cee6a15e4b8284edb57d39332ddd60b4.html">012710a3cee6a15e4b8284edb57d39332ddd60b4</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 11 Feb 2008 20:43:41 +0000
+
+applied dwm-4.8-snaptileds.diff
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">23</td><td><span class="i">+++++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -368,23 +368,16 @@ buttonpress(XEvent *e) {
+</a> 		if(CLEANMASK(ev-&gt;state) != MODKEY)
+ 			return;
+ 		if(ev-&gt;button == Button1) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-			if((m-&gt;layout-&gt;arrange == floating) || c-&gt;isfloating)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-				restack();
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-			else
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-				togglefloating(NULL);
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+			restack();
+</a> 			movemouse(c);
+ 		}
+ 		else if(ev-&gt;button == Button2) {
+ 			if((floating != m-&gt;layout-&gt;arrange) &amp;&amp; c-&gt;isfloating)
+ 				togglefloating(NULL);
+<a href="#h0-0-13" id="h0-0-13" class="d">-			else
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-				zoom(NULL);
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+			zoom(NULL);
+</a> 		}
+ 		else if(ev-&gt;button == Button3 &amp;&amp; !c-&gt;isfixed) {
+<a href="#h0-0-18" id="h0-0-18" class="d">-			if((floating == m-&gt;layout-&gt;arrange) || c-&gt;isfloating)
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-				restack();
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-			else
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-				togglefloating(NULL);
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+			restack();
+</a> 			resizemouse(c);
+ 		}
+ 	}
+<a href="#h0-1" id="h0-1" class="h">@@ -1195,7 +1188,10 @@ movemouse(Client *c) {
+</a> 				ny = m-&gt;way;
+ 			else if(abs((m-&gt;way + m-&gt;wah) - (ny + c-&gt;h + 2 * c-&gt;border)) &lt; SNAP)
+ 				ny = m-&gt;way + m-&gt;wah - c-&gt;h - 2 * c-&gt;border;
+<a href="#h0-1-3" id="h0-1-3" class="d">-			resize(c, nx, ny, c-&gt;w, c-&gt;h, False);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			if((monitors[selmonitor].layout-&gt;arrange != floating) &amp;&amp; (abs(nx - c-&gt;x) &gt; SNAP || abs(ny - c-&gt;y) &gt; SNAP))
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+				togglefloating(NULL);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			if((monitors[selmonitor].layout-&gt;arrange == floating) || c-&gt;isfloating)
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+				resize(c, nx, ny, c-&gt;w, c-&gt;h, False);
+</a> 			memcpy(c-&gt;tags, monitors[monitorat()].seltags, sizeof initags);
+ 			break;
+ 		}
+<a href="#h0-2" id="h0-2" class="h">@@ -1358,7 +1354,10 @@ resizemouse(Client *c) {
+</a> 				nw = 1;
+ 			if((nh = ev.xmotion.y - ocy - 2 * c-&gt;border + 1) &lt;= 0)
+ 				nh = 1;
+<a href="#h0-2-3" id="h0-2-3" class="d">-			resize(c, c-&gt;x, c-&gt;y, nw, nh, True);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			if((monitors[selmonitor].layout-&gt;arrange != floating) &amp;&amp; (abs(nw - c-&gt;w) &gt; SNAP || abs(nh - c-&gt;h) &gt; SNAP))
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+				togglefloating(NULL);
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			if((monitors[selmonitor].layout-&gt;arrange == floating) || c-&gt;isfloating)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+				resize(c, c-&gt;x, c-&gt;y, nw, nh, True);
+</a> 			break;
+ 		}
+ 	}
+</pre>
+</div>
+</body>
+</html>

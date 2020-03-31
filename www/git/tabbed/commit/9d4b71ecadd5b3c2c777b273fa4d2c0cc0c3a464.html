@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>autofocus urgent tabs - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9d4b71ecadd5b3c2c777b273fa4d2c0cc0c3a464.html">9d4b71ecadd5b3c2c777b273fa4d2c0cc0c3a464</a>
+<b>parent</b> <a href="../commit/5d0c5be1028c67f3b499017c5c39019f4b1d8c10.html">5d0c5be1028c67f3b499017c5c39019f4b1d8c10</a>
+<b>Author:</b> Jonas Rabenstein &lt;<a href="mailto:jonas.rabenstein@studium.uni-erlangen.de">jonas.rabenstein@studium.uni-erlangen.de</a>&gt;
+<b>Date:</b>   Wed, 19 Aug 2015 21:11:16 +0200
+
+autofocus urgent tabs
+
+When tabbed becomes urgent because one of it tabs becomes urgent, it
+may be desireable to automatically focus that tab. As a notification may
+be lost, if another notification comes in before you focused tabbed, the
+switch is only done, if tabbed is not urgent already.
+Moreover, it may be anoying, if you just type into one tab, another tab
+gets urgent -therfore focused- and you type into the other tab, you may
+switch between autofocus and nofocus using Ctrl-Shift-u.
+Maybe it would also be usefull, if there would be an commandline
+parameter to toggle that option, but as -u is already used for
+urgent-tab-color, i did not implement that.
+
+Signed-off-by: Jonas Rabenstein &lt;jonas.rabenstein@studium.uni-erlangen.de&gt;
+Signed-off-by: Christoph Lohmann &lt;20h@r-36.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.1</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">tabbed.c</a></td><td> | </td><td class="num">23</td><td><span class="i">+++++++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>3 files changed, 24 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -12,6 +12,7 @@ static const char before[]      = &quot;&lt;&quot;;
+</a> static const char after[]       = &quot;&gt;&quot;;
+ static const int  tabwidth      = 200;
+ static const Bool foreground    = True;
+<a href="#h0-0-3" id="h0-0-3" class="i">+static       Bool urgentswitch  = False;
+</a> 
+ /*
+  * Where to place a new tab when it is opened. When npisrelative is True,
+<a href="#h0-1" id="h0-1" class="h">@@ -56,6 +57,7 @@ static Key keys[] = { \
+</a> 	{ MODKEY,                       XK_q,      killclient,     { 0 } },
+ 
+ 	{ MODKEY,                       XK_u,      focusurgent,    { .v = NULL } },
+<a href="#h0-1-3" id="h0-1-3" class="i">+	{ MODKEY|ShiftMask,             XK_u,      toggle,         { .v = (void*) &amp;urgentswitch } },
+</a> 
+ 	{ 0,                            XK_F11,    fullscreen,     { 0 } },
+ };
+<b>diff --git a/<a id="h1" href="../file/tabbed.1.html">tabbed.1</a> b/<a href="../file/tabbed.1.html">tabbed.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -124,6 +124,9 @@ move selected tab one to the left
+</a> .B Ctrl\-Shift\-k
+ move selected tab one to the right
+ .TP
+<a href="#h1-0-3" id="h1-0-3" class="i">+.B Ctrl\-Shift\-u
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+toggle autofocus of urgent tabs
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+.TP
+</a> .B Ctrl\-Tab
+ toggle between the selected and last selected tab
+ .TP
+<b>diff --git a/<a id="h2" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -129,6 +129,7 @@ static void setcmd(int argc, char *argv[], int);
+</a> static void sigchld(int unused);
+ static void spawn(const Arg *arg);
+ static int textnw(const char *text, unsigned int len);
+<a href="#h2-0-3" id="h2-0-3" class="i">+static void toggle(const Arg *arg);
+</a> static void unmanage(int c);
+ static void updatenumlockmask(void);
+ static void updatetitle(int c);
+<a href="#h2-1" id="h2-1" class="h">@@ -837,12 +838,21 @@ propertynotify(const XEvent *e) {
+</a> 			&amp;&amp; (c = getclient(ev-&gt;window)) &gt; -1
+ 			&amp;&amp; (wmh = XGetWMHints(dpy, clients[c]-&gt;win))) {
+ 		if(wmh-&gt;flags &amp; XUrgencyHint) {
+<a href="#h2-1-3" id="h2-1-3" class="i">+			XFree(wmh);
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+			wmh = XGetWMHints(dpy, win);
+</a> 			if(c != sel) {
+<a href="#h2-1-6" id="h2-1-6" class="d">-				clients[c]-&gt;urgent = True;
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-				drawbar();
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+				if(urgentswitch &amp;&amp; wmh &amp;&amp; !(wmh-&gt;flags &amp; XUrgencyHint)) {
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+					/* only switch, if tabbed was focused since last urgency hint
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+					 * if WMHints could not be received, default to no switch */
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+					focus(c);
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+				} else {
+</a><a href="#h2-1-13" id="h2-1-13" class="i">+					/* if no switch should be performed, mark tab as urgent */
+</a><a href="#h2-1-14" id="h2-1-14" class="i">+					clients[c]-&gt;urgent = True;
+</a><a href="#h2-1-15" id="h2-1-15" class="i">+					drawbar();
+</a><a href="#h2-1-16" id="h2-1-16" class="i">+				}
+</a> 			}
+<a href="#h2-1-18" id="h2-1-18" class="d">-			XFree(wmh);
+</a><a href="#h2-1-19" id="h2-1-19" class="d">-			if((wmh = XGetWMHints(dpy, win))) {
+</a><a href="#h2-1-20" id="h2-1-20" class="i">+			if(wmh &amp;&amp; !(wmh-&gt;flags &amp; XUrgencyHint)) {
+</a><a href="#h2-1-21" id="h2-1-21" class="i">+				/* update tabbed urgency hint if not set already */
+</a> 				wmh-&gt;flags |= XUrgencyHint;
+ 				XSetWMHints(dpy, win, wmh);
+ 			}
+<a href="#h2-2" id="h2-2" class="h">@@ -1094,6 +1104,11 @@ textnw(const char *text, unsigned int len) {
+</a> }
+ 
+ void
+<a href="#h2-2-3" id="h2-2-3" class="i">+toggle(const Arg *arg) {
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+    *(Bool*) arg-&gt;v = !*(Bool*) arg-&gt;v;
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+}
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+void
+</a> unmanage(int c) {
+ 	if(c &lt; 0 || c &gt;= nclients) {
+ 		drawbar();
+</pre>
+</div>
+</body>
+</html>

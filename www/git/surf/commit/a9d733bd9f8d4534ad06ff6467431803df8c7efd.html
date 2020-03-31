@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixing downloads based on Evan Gates&#39; patch. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a9d733bd9f8d4534ad06ff6467431803df8c7efd.html">a9d733bd9f8d4534ad06ff6467431803df8c7efd</a>
+<b>parent</b> <a href="../commit/1d019cf8af6ffa2cd0f6d0bd9b6344e4924bb510.html">1d019cf8af6ffa2cd0f6d0bd9b6344e4924bb510</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue, 27 Oct 2009 08:11:44 +0100
+
+fixing downloads based on Evan Gates&#39; patch.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">46</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">----------</span></td></tr>
+</table></pre><pre>2 files changed, 37 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -42,4 +42,5 @@ static Item items[] = {
+</a>     { &quot;Stop&quot;,           stop,      { 0 } },
+     { &quot;Paste URI&quot;,      clipboard, { .b = TRUE } },
+     { &quot;Copy URI&quot;,       clipboard, { .b = FALSE } },
+<a href="#h0-0-3" id="h0-0-3" class="i">+    { &quot;Download&quot;,       download,  { 0 } },
+</a> };
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -76,7 +76,7 @@ static gboolean decidewindow(WebKitWebView *v, WebKitWebFrame *f, WebKitNetworkR
+</a> static void destroyclient(Client *c);
+ static void destroywin(GtkWidget* w, Client *c);
+ static void die(char *str);
+<a href="#h1-0-3" id="h1-0-3" class="d">-static void download(WebKitDownload *o, GParamSpec *pspec, Client *c);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+static void download(Client *c, const Arg *arg);
+</a> static void drawindicator(Client *c);
+ static gboolean exposeindicator(GtkWidget *w, GdkEventExpose *e, Client *c);
+ static char *geturi(Client *c);
+<a href="#h1-1" id="h1-1" class="h">@@ -110,6 +110,7 @@ static void stop(Client *c, const Arg *arg);
+</a> static void titlechange(WebKitWebView *v, WebKitWebFrame* frame, const char* title, Client *c);
+ static void usage(void);
+ static void update(Client *c);
+<a href="#h1-1-3" id="h1-1-3" class="i">+static void updatedownload(WebKitDownload *o, GParamSpec *pspec, Client *c);
+</a> static void updatewinid(Client *c);
+ static void windowobjectcleared(GtkWidget *w, WebKitWebFrame *frame, JSContextRef js, JSObjectRef win, Client *c);
+ static void zoom(Client *c, const Arg *arg);
+<a href="#h1-2" id="h1-2" class="h">@@ -232,6 +233,15 @@ destroyclient(Client *c) {
+</a> }
+ 
+ gboolean
+<a href="#h1-2-3" id="h1-2-3" class="i">+mime_policy_cb(WebKitWebView *web_view, WebKitWebFrame *frame, WebKitNetworkRequest *request, gchar *mime_type,  WebKitWebPolicyDecision *policy_decision, gpointer user_data) {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	if(webkit_web_view_can_show_mime_type(web_view, mime_type))
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		webkit_web_policy_decision_use(policy_decision);
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+	else
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+		webkit_web_policy_decision_download(policy_decision);
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+	return TRUE;
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+}
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+gboolean
+</a> decidewindow(WebKitWebView *view, WebKitWebFrame *f, WebKitNetworkRequest *r, WebKitWebNavigationAction *n, WebKitWebPolicyDecision *p, Client *c) {
+ 	Arg arg;
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -285,14 +295,18 @@ exposeindicator(GtkWidget *w, GdkEventExpose *e, Client *c) {
+</a> }
+ 
+ void
+<a href="#h1-3-3" id="h1-3-3" class="d">-download(WebKitDownload *o, GParamSpec *pspec, Client *c) {
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-	WebKitDownloadStatus status;
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+download(Client *c, const Arg *arg) {
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+	char *uri;
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+	WebKitNetworkRequest *r;
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+	WebKitDownload       *dl;
+</a> 
+<a href="#h1-3-10" id="h1-3-10" class="d">-	status = webkit_download_get_status(c-&gt;download);
+</a><a href="#h1-3-11" id="h1-3-11" class="d">-	if(status == WEBKIT_DOWNLOAD_STATUS_STARTED || status == WEBKIT_DOWNLOAD_STATUS_CREATED) {
+</a><a href="#h1-3-12" id="h1-3-12" class="d">-		c-&gt;progress = (gint)(webkit_download_get_progress(c-&gt;download)*100);
+</a><a href="#h1-3-13" id="h1-3-13" class="d">-	}
+</a><a href="#h1-3-14" id="h1-3-14" class="d">-	update(c);
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+	if(arg-&gt;v)
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+		uri = (char *)arg-&gt;v;
+</a><a href="#h1-3-17" id="h1-3-17" class="i">+	else
+</a><a href="#h1-3-18" id="h1-3-18" class="i">+		uri = c-&gt;linkhover ? c-&gt;linkhover : geturi(c);
+</a><a href="#h1-3-19" id="h1-3-19" class="i">+	r = webkit_network_request_new(uri);
+</a><a href="#h1-3-20" id="h1-3-20" class="i">+	dl = webkit_download_new(r);
+</a><a href="#h1-3-21" id="h1-3-21" class="i">+	initdownload(c-&gt;view, dl, c);
+</a> }
+ 
+ const char *
+<a href="#h1-4" id="h1-4" class="h">@@ -322,6 +336,8 @@ initdownload(WebKitWebView *view, WebKitDownload *o, Client *c) {
+</a> 	stop(c, NULL);
+ 	c-&gt;download = o;
+ 	filename = webkit_download_get_suggested_filename(o);
+<a href="#h1-4-3" id="h1-4-3" class="i">+	if(!strcmp(&quot;&quot;, filename))
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		filename = &quot;index.html&quot;;
+</a> 	uri = g_strconcat(&quot;file://&quot;, dldir, &quot;/&quot;, filename, NULL);
+ 	webkit_download_set_destination_uri(c-&gt;download, uri);
+ 	c-&gt;progress = 0;
+<a href="#h1-5" id="h1-5" class="h">@@ -329,8 +345,8 @@ initdownload(WebKitWebView *view, WebKitDownload *o, Client *c) {
+</a> 	html = g_strdup_printf(&quot;Download &lt;b&gt;%s&lt;/b&gt;...&quot;, filename);
+ 	webkit_web_view_load_html_string(c-&gt;view, html,
+ 			webkit_download_get_uri(c-&gt;download));
+<a href="#h1-5-3" id="h1-5-3" class="d">-	g_signal_connect(c-&gt;download, &quot;notify::progress&quot;, G_CALLBACK(download), c);
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-	g_signal_connect(c-&gt;download, &quot;notify::status&quot;, G_CALLBACK(download), c);
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+	g_signal_connect(c-&gt;download, &quot;notify::progress&quot;, G_CALLBACK(updatedownload), c);
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+	g_signal_connect(c-&gt;download, &quot;notify::status&quot;, G_CALLBACK(updatedownload), c);
+</a> 	webkit_download_start(c-&gt;download);
+ 	
+ 	c-&gt;title = copystr(&amp;c-&gt;title, filename);
+<a href="#h1-6" id="h1-6" class="h">@@ -753,7 +769,17 @@ update(Client *c) {
+</a> 	drawindicator(c);
+ 	gtk_window_set_title(GTK_WINDOW(c-&gt;win), t);
+ 	g_free(t);
+<a href="#h1-6-3" id="h1-6-3" class="i">+}
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+void
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+updatedownload(WebKitDownload *o, GParamSpec *pspec, Client *c) {
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+	WebKitDownloadStatus status;
+</a> 
+<a href="#h1-6-9" id="h1-6-9" class="i">+	status = webkit_download_get_status(c-&gt;download);
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+	if(status == WEBKIT_DOWNLOAD_STATUS_STARTED || status == WEBKIT_DOWNLOAD_STATUS_CREATED) {
+</a><a href="#h1-6-11" id="h1-6-11" class="i">+		c-&gt;progress = (gint)(webkit_download_get_progress(c-&gt;download)*100);
+</a><a href="#h1-6-12" id="h1-6-12" class="i">+	}
+</a><a href="#h1-6-13" id="h1-6-13" class="i">+	update(c);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

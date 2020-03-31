@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>prepared 4.4.1 bugfix and minor feature enhancement release - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a92cf496c18189f9cbc7c1d7f8edcebbd1d7ff99.html">a92cf496c18189f9cbc7c1d7f8edcebbd1d7ff99</a>
+<b>parent</b> <a href="../commit/cc7970010bd78e700d790b12617a50c9f9fd45a8.html">cc7970010bd78e700d790b12617a50c9f9fd45a8</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 26 Aug 2007 12:53:40 +0200
+
+prepared 4.4.1 bugfix and minor feature enhancement release
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.1</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">screen.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">tile.c</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+</table></pre><pre>5 files changed, 5 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -229,6 +229,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h); /* some windows require this */
+ 	ban(c);
+ 	XMapWindow(dpy, c-&gt;win);
+<a href="#h0-0-3" id="h0-0-3" class="i">+	setclientstate(c, NormalState);
+</a> 	arrange();
+ }
+ 
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,5 +1,5 @@
+</a> # dwm version
+<a href="#h1-0-1" id="h1-0-1" class="d">-VERSION = 4.4
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+VERSION = 4.4.1
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h2" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -97,7 +97,7 @@ Close focused window.
+</a> Toggle between tiled and floating layout (affects all windows).
+ .TP
+ .B Mod1\-Shift\-space
+<a href="#h2-0-3" id="h2-0-3" class="d">-Toggle focused window between tiled and floating state (tiled layout only).
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+Toggle focused window between tiled and floating state.
+</a> .TP
+ .B Mod1\-[1..n]
+ View all windows with
+<b>diff --git a/<a id="h3" href="../file/screen.c.html">screen.c</a> b/<a href="../file/screen.c.html">screen.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -284,7 +284,7 @@ togglebar(const char *arg) {
+</a> 
+ void
+ togglefloating(const char *arg) {
+<a href="#h3-0-3" id="h3-0-3" class="d">-	if(!sel || isfloating())
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	if(!sel)
+</a> 		return;
+ 	sel-&gt;isfloating = !sel-&gt;isfloating;
+ 	if(sel-&gt;isfloating)
+<b>diff --git a/<a id="h4" href="../file/tile.c.html">tile.c</a> b/<a href="../file/tile.c.html">tile.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -46,7 +46,7 @@ tile(void) {
+</a> 
+ 	nx = wax;
+ 	ny = way;
+<a href="#h4-0-3" id="h4-0-3" class="d">-	for(i = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next)) {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	for(i = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next), i++) {
+</a> 		c-&gt;ismax = False;
+ 		if(i == 0) { /* master */
+ 			nw = mw - 2 * c-&gt;border;
+<a href="#h4-1" id="h4-1" class="h">@@ -66,7 +66,6 @@ tile(void) {
+</a> 		resize(c, nx, ny, nw, nh, False);
+ 		if(n &gt; 1 &amp;&amp; th != wah)
+ 			ny += nh + 2 * c-&gt;border;
+<a href="#h4-1-3" id="h4-1-3" class="d">-		i++;
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

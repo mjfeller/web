@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implemented closing tabs (still buggy) - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2be5c5a7c472ecfd0378aa3c3522ccdb9576a81c.html">2be5c5a7c472ecfd0378aa3c3522ccdb9576a81c</a>
+<b>parent</b> <a href="../commit/5fbda03ff703e9a4a82fc4e69ab6dab8c0618e21.html">5fbda03ff703e9a4a82fc4e69ab6dab8c0618e21</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue,  8 Sep 2009 12:50:08 +0200
+
+implemented closing tabs (still buggy)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">84</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 77 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -27,7 +27,9 @@
+</a> #define CLEANMASK(mask) (mask &amp; ~(numlockmask|LockMask))
+ #define TEXTW(x)        (textnw(x, strlen(x)) + dc.font.height)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-enum { ColFG, ColBG, ColLast };              /* color */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+enum { ColFG, ColBG, ColLast };                         /* color */
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+enum { NetSupported, NetWMName, NetLast };              /* EWMH atoms */
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+enum { WMProtocols, WMDelete, WMState, WMLast };        /* default atoms */
+</a> 
+ typedef union {
+ 	int i;
+<a href="#h0-1" id="h0-1" class="h">@@ -79,6 +81,7 @@ static void autostart(void);
+</a> static void buttonpress(XEvent *e);
+ static void cleanup(void);
+ static void configurenotify(XEvent *e);
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void destroynotify(XEvent *e);
+</a> static void die(const char *errstr, ...);
+ static void drawbar();
+ static void drawtext(const char *text, unsigned long col[ColLast]);
+<a href="#h0-2" id="h0-2" class="h">@@ -88,6 +91,7 @@ static unsigned long getcolor(const char *colstr);
+</a> static Client *getclient(Window w);
+ static Client *getfirsttab();
+ static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+<a href="#h0-2-3" id="h0-2-3" class="i">+static Bool isprotodel(Client *c);
+</a> static void initfont(const char *fontstr);
+ static void keypress(XEvent *e);
+ static void killclient(const Arg *arg);
+<a href="#h0-3" id="h0-3" class="h">@@ -100,6 +104,7 @@ static void rotate(const Arg *arg);
+</a> static void run(void);
+ static void setup(void);
+ static int textnw(const char *text, unsigned int len);
+<a href="#h0-3-3" id="h0-3-3" class="i">+static void unmanage(Client *c);
+</a> static void unmapnotify(XEvent *e);
+ static void updatenumlockmask(void);
+ static void updatetitle(Client *c);
+<a href="#h0-4" id="h0-4" class="h">@@ -109,6 +114,7 @@ static int xerror(Display *dpy, XErrorEvent *ee);
+</a> static int screen;
+ static void (*handler[LASTEvent]) (XEvent *) = {
+ 	[ConfigureNotify] = configurenotify,
+<a href="#h0-4-3" id="h0-4-3" class="i">+	[DestroyNotify] = destroynotify,
+</a> 	[PropertyNotify] = propertynotify,
+ 	[UnmapNotify] = unmapnotify,
+ 	[ButtonPress] = buttonpress,
+<a href="#h0-5" id="h0-5" class="h">@@ -117,6 +123,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> };
+ static Display *dpy;
+ static DC dc;
+<a href="#h0-5-3" id="h0-5-3" class="i">+static Atom wmatom[WMLast], netatom[NetLast];
+</a> static Window root, win;
+ static Bool running = True;
+ static unsigned int numlockmask = 0;
+<a href="#h0-6" id="h0-6" class="h">@@ -178,6 +185,15 @@ configurenotify(XEvent *e) {
+</a> }
+ 
+ void
+<a href="#h0-6-3" id="h0-6-3" class="i">+destroynotify(XEvent *e) {
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	Client *c;
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+	XDestroyWindowEvent *ev = &amp;e-&gt;xdestroywindow;
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+	if((c = getclient(ev-&gt;window)))
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+		unmanage(c);
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+}
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+void
+</a> die(const char *errstr, ...) {
+ 	va_list ap;
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -198,13 +214,13 @@ drawbar() {
+</a> 	if(n * 200 &gt; width) {
+ 		dc.w = TEXTW(after);
+ 		dc.x = width - dc.w;
+<a href="#h0-7-3" id="h0-7-3" class="d">-		drawtext(after, dc.norm);
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+		drawtext(after, dc.sel);
+</a> 		width -= dc.w;
+ 	}
+ 	dc.x = 0;
+ 	if(fc != clients) {
+ 		dc.w = TEXTW(before);
+<a href="#h0-7-10" id="h0-7-10" class="d">-		drawtext(before, dc.norm);
+</a><a href="#h0-7-11" id="h0-7-11" class="i">+		drawtext(before, dc.sel);
+</a> 		dc.x += dc.w;
+ 		width -= dc.w;
+ 	}
+<a href="#h0-8" id="h0-8" class="h">@@ -278,7 +294,7 @@ focus(Client *c) {
+</a> 		return;
+ 	XRaiseWindow(dpy, c-&gt;win);
+ 	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+<a href="#h0-8-3" id="h0-8-3" class="d">-	XSelectInput(dpy, c-&gt;win, PropertyChangeMask);
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+	XSelectInput(dpy, c-&gt;win, PropertyChangeMask|StructureNotifyMask);
+</a> 	sel = c;
+ 	drawbar();
+ }
+<a href="#h0-9" id="h0-9" class="h">@@ -383,6 +399,21 @@ initfont(const char *fontstr) {
+</a> 	dc.font.height = dc.font.ascent + dc.font.descent;
+ }
+ 
+<a href="#h0-9-3" id="h0-9-3" class="i">+Bool
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+isprotodel(Client *c) {
+</a><a href="#h0-9-5" id="h0-9-5" class="i">+	int i, n;
+</a><a href="#h0-9-6" id="h0-9-6" class="i">+	Atom *protocols;
+</a><a href="#h0-9-7" id="h0-9-7" class="i">+	Bool ret = False;
+</a><a href="#h0-9-8" id="h0-9-8" class="i">+
+</a><a href="#h0-9-9" id="h0-9-9" class="i">+	if(XGetWMProtocols(dpy, c-&gt;win, &amp;protocols, &amp;n)) {
+</a><a href="#h0-9-10" id="h0-9-10" class="i">+		for(i = 0; !ret &amp;&amp; i &lt; n; i++)
+</a><a href="#h0-9-11" id="h0-9-11" class="i">+			if(protocols[i] == wmatom[WMDelete])
+</a><a href="#h0-9-12" id="h0-9-12" class="i">+				ret = True;
+</a><a href="#h0-9-13" id="h0-9-13" class="i">+		XFree(protocols);
+</a><a href="#h0-9-14" id="h0-9-14" class="i">+	}
+</a><a href="#h0-9-15" id="h0-9-15" class="i">+	return ret;
+</a><a href="#h0-9-16" id="h0-9-16" class="i">+}
+</a><a href="#h0-9-17" id="h0-9-17" class="i">+
+</a> void
+ keypress(XEvent *e) {
+ 	unsigned int i;
+<a href="#h0-10" id="h0-10" class="h">@@ -400,7 +431,21 @@ keypress(XEvent *e) {
+</a> 
+ void
+ killclient(const Arg *arg) {
+<a href="#h0-10-3" id="h0-10-3" class="d">-	puts(&quot;close a window&quot;);
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+	XEvent ev;
+</a><a href="#h0-10-5" id="h0-10-5" class="i">+
+</a><a href="#h0-10-6" id="h0-10-6" class="i">+	if(!sel)
+</a><a href="#h0-10-7" id="h0-10-7" class="i">+		return;
+</a><a href="#h0-10-8" id="h0-10-8" class="i">+	if(isprotodel(sel)) {
+</a><a href="#h0-10-9" id="h0-10-9" class="i">+		ev.type = ClientMessage;
+</a><a href="#h0-10-10" id="h0-10-10" class="i">+		ev.xclient.window = sel-&gt;win;
+</a><a href="#h0-10-11" id="h0-10-11" class="i">+		ev.xclient.message_type = wmatom[WMProtocols];
+</a><a href="#h0-10-12" id="h0-10-12" class="i">+		ev.xclient.format = 32;
+</a><a href="#h0-10-13" id="h0-10-13" class="i">+		ev.xclient.data.l[0] = wmatom[WMDelete];
+</a><a href="#h0-10-14" id="h0-10-14" class="i">+		ev.xclient.data.l[1] = CurrentTime;
+</a><a href="#h0-10-15" id="h0-10-15" class="i">+		XSendEvent(dpy, sel-&gt;win, False, NoEventMask, &amp;ev);
+</a><a href="#h0-10-16" id="h0-10-16" class="i">+	}
+</a><a href="#h0-10-17" id="h0-10-17" class="i">+	else
+</a><a href="#h0-10-18" id="h0-10-18" class="i">+		XKillClient(dpy, sel-&gt;win);
+</a> }
+ 
+ void
+<a href="#h0-11" id="h0-11" class="h">@@ -600,7 +645,12 @@ setup(void) {
+</a> 	root = RootWindow(dpy, screen);
+ 	initfont(font);
+ 	bh = dc.h = dc.font.height + 2;
+<a href="#h0-11-3" id="h0-11-3" class="d">-
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+	/* init atoms */
+</a><a href="#h0-11-5" id="h0-11-5" class="i">+	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+</a><a href="#h0-11-6" id="h0-11-6" class="i">+	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+</a><a href="#h0-11-7" id="h0-11-7" class="i">+	wmatom[WMState] = XInternAtom(dpy, &quot;WM_STATE&quot;, False);
+</a><a href="#h0-11-8" id="h0-11-8" class="i">+	netatom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+</a><a href="#h0-11-9" id="h0-11-9" class="i">+	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+</a> 	/* init appearance */
+ 	wx = 0;
+ 	wy = 0;
+<a href="#h0-12" id="h0-12" class="h">@@ -636,7 +686,27 @@ textnw(const char *text, unsigned int len) {
+</a> 
+ void
+ unmapnotify(XEvent *e) {
+<a href="#h0-12-3" id="h0-12-3" class="d">-	running = False;
+</a><a href="#h0-12-4" id="h0-12-4" class="i">+	Client *c;
+</a><a href="#h0-12-5" id="h0-12-5" class="i">+	XUnmapEvent *ev = &amp;e-&gt;xunmap;
+</a><a href="#h0-12-6" id="h0-12-6" class="i">+
+</a><a href="#h0-12-7" id="h0-12-7" class="i">+	if((c = getclient(ev-&gt;window)))
+</a><a href="#h0-12-8" id="h0-12-8" class="i">+		unmanage(c);
+</a><a href="#h0-12-9" id="h0-12-9" class="i">+	else if(ev-&gt;window == win)
+</a><a href="#h0-12-10" id="h0-12-10" class="i">+		running = False;
+</a><a href="#h0-12-11" id="h0-12-11" class="i">+}
+</a><a href="#h0-12-12" id="h0-12-12" class="i">+
+</a><a href="#h0-12-13" id="h0-12-13" class="i">+void
+</a><a href="#h0-12-14" id="h0-12-14" class="i">+unmanage(Client *c) {
+</a><a href="#h0-12-15" id="h0-12-15" class="i">+	Client *pc;
+</a><a href="#h0-12-16" id="h0-12-16" class="i">+
+</a><a href="#h0-12-17" id="h0-12-17" class="i">+	for(pc = clients; pc &amp;&amp; pc-&gt;next &amp;&amp; pc-&gt;next != c; pc = pc-&gt;next);
+</a><a href="#h0-12-18" id="h0-12-18" class="i">+	if(pc)
+</a><a href="#h0-12-19" id="h0-12-19" class="i">+		pc-&gt;next = c-&gt;next;
+</a><a href="#h0-12-20" id="h0-12-20" class="i">+	else
+</a><a href="#h0-12-21" id="h0-12-21" class="i">+		pc = clients = pc-&gt;next;
+</a><a href="#h0-12-22" id="h0-12-22" class="i">+	free(c);
+</a><a href="#h0-12-23" id="h0-12-23" class="i">+	XSync(dpy, False);
+</a><a href="#h0-12-24" id="h0-12-24" class="i">+	focus(pc);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

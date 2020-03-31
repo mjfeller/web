@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removing autostart. using stdin instead. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ad9b0d6ea6264a861e6bde6bab58520cf28c13b8.html">ad9b0d6ea6264a861e6bde6bab58520cf28c13b8</a>
+<b>parent</b> <a href="../commit/9ed035a5c117b501d5f708a9fd677a6b85543475.html">9ed035a5c117b501d5f708a9fd677a6b85543475</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue,  8 Sep 2009 16:24:13 +0200
+
+removing autostart. using stdin instead.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">5</td><td><span class="i"></span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.c</a></td><td> | </td><td class="num">17</td><td><span class="i">++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>2 files changed, 2 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -27,8 +27,3 @@ Key keys[] = { \
+</a> 	{ MODKEY,                       XK_0,      move,           { .i = 10 } },
+ 	{ MODKEY,                       XK_q,      killclient,     { 0 } },
+ };
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-Autostart autostarts[] = { \
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	/* function         argument */
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	{ spawntab,       { .v = (char*[]){ EXEC, NULL} } },
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-};
+</a><b>diff --git a/<a id="h1" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -46,11 +46,6 @@ typedef struct {
+</a> } Key;
+ 
+ typedef struct {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	void (*func)(const Arg *);
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	const Arg arg;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-} Autostart;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-typedef struct {
+</a> 	int x, y, w, h;
+ 	unsigned long norm[ColLast];
+ 	unsigned long sel[ColLast];
+<a href="#h1-1" id="h1-1" class="h">@@ -78,7 +73,6 @@ typedef struct Listener {
+</a> } Listener;
+ 
+ /* function declarations */
+<a href="#h1-1-3" id="h1-1-3" class="d">-static void autostart(void);
+</a> static void buttonpress(XEvent *e);
+ static void cleanup(void);
+ static void configurenotify(XEvent *e);
+<a href="#h1-2" id="h1-2" class="h">@@ -136,14 +130,6 @@ static Bool badwindow = False;
+</a> #include &quot;config.h&quot;
+ 
+ void
+<a href="#h1-2-3" id="h1-2-3" class="d">-autostart() {
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-	int i;
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-	for(i = 0; i &lt; LENGTH(autostarts); i++)
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-		autostarts[i].func(&amp;(autostarts[i].arg));
+</a><a href="#h1-2-8" id="h1-2-8" class="d">-}
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-void
+</a> buttonpress(XEvent *e) {
+ 	int i;
+ 	Client *c;
+<a href="#h1-3" id="h1-3" class="h">@@ -685,6 +671,8 @@ setup(void) {
+</a> 	class_hint.res_name = &quot;tabbed&quot;;
+ 	class_hint.res_class = &quot;Tabbed&quot;;
+ 	XSetClassHint(dpy, win, &amp;class_hint);
+<a href="#h1-3-3" id="h1-3-3" class="i">+	listeners = emallocz(sizeof(Listener));
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	listeners-&gt;fd = STDIN_FILENO;
+</a> }
+ 
+ int
+<a href="#h1-4" id="h1-4" class="h">@@ -772,7 +760,6 @@ main(int argc, char *argv[]) {
+</a> 	if(!(dpy = XOpenDisplay(0)))
+ 		die(&quot;tabbed: cannot open display\n&quot;);
+ 	setup();
+<a href="#h1-4-3" id="h1-4-3" class="d">-	autostart();
+</a> 	run();
+ 	/*dummys*/
+ 	cleanup();
+</pre>
+</div>
+</body>
+</html>

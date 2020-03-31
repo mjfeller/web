@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>faster resizing. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4db3df312ada9d92564d5580fb4e67f7704efff8.html">4db3df312ada9d92564d5580fb4e67f7704efff8</a>
+<b>parent</b> <a href="../commit/e8c13ebe8001a7870a70b698d8b8fa80b7c90fd3.html">e8c13ebe8001a7870a70b698d8b8fa80b7c90fd3</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 26 Aug 2010 21:37:12 +0200
+
+faster resizing.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1001,23 +1001,21 @@ tputs(char *s, int len) {
+</a> void
+ tresize(int col, int row) {
+ 	int i;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	Line *line;
+</a> 	int minrow = MIN(row, term.row);
+ 	int mincol = MIN(col, term.col);
+ 
+ 	if(col &lt; 1 || row &lt; 1)
+ 		return;
+<a href="#h0-0-9" id="h0-0-9" class="d">-	/* alloc */
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	line = calloc(row, sizeof(Line));
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	for(i = 0 ; i &lt; row; i++)
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-		line[i] = calloc(col, sizeof(Glyph));
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-	/* copy */
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-	for(i = 0 ; i &lt; minrow; i++)
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-		memcpy(line[i], term.line[i], mincol * sizeof(Glyph));
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	/* free */
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	for(i = 0; i &lt; term.row; i++)
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	for(i = row; i &lt; term.row; i++)
+</a> 		free(term.line[i]);
+<a href="#h0-0-21" id="h0-0-21" class="d">-	free(term.line);
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	term.line = realloc(term.line, row * sizeof(Line));
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	for(i = 0; i &lt; minrow; i++) {
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+		term.line[i] = realloc(term.line[i], col * sizeof(Glyph));
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+		memset(term.line[i] + mincol, 0, (col - mincol) * sizeof(Glyph));
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	}
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	for(/* i == minrow */; i &lt; row; i++)
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		term.line[i] = calloc(col, sizeof(Glyph));
+</a> 	
+ 	LIMIT(term.c.x, 0, col-1);
+ 	LIMIT(term.c.y, 0, row-1);
+<a href="#h0-1" id="h0-1" class="h">@@ -1025,7 +1023,6 @@ tresize(int col, int row) {
+</a> 	LIMIT(term.bot, 0, row-1);
+ 	
+ 	term.bot = row-1;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	term.line = line;
+</a> 	term.col = col, term.row = row;
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

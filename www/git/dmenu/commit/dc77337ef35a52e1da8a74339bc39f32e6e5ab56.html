@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>add paste from clipboard - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/dc77337ef35a52e1da8a74339bc39f32e6e5ab56.html">dc77337ef35a52e1da8a74339bc39f32e6e5ab56</a>
+<b>parent</b> <a href="../commit/7b1493a63162875ba591883e480bd36a063cf222.html">7b1493a63162875ba591883e480bd36a063cf222</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Wed, 26 Oct 2011 13:28:15 +0100
+
+add paste from clipboard
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">6</td><td><span class="i">++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 4 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -52,7 +52,7 @@ static const char *selfgcolor  = &quot;#ffffff&quot;;
+</a> static unsigned int lines = 0;
+ static unsigned long normcol[ColLast];
+ static unsigned long selcol[ColLast];
+<a href="#h0-0-3" id="h0-0-3" class="d">-static Atom utf8;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static Atom clip, utf8;
+</a> static Bool topbar = True;
+ static DC *dc;
+ static Item *items = NULL;
+<a href="#h0-1" id="h0-1" class="h">@@ -275,7 +275,8 @@ keypress(XKeyEvent *ev) {
+</a> 				insert(NULL, nextrune(-1) - cursor);
+ 			break;
+ 		case XK_y: /* paste selection */
+<a href="#h0-1-3" id="h0-1-3" class="d">-			XConvertSelection(dc-&gt;dpy, XA_PRIMARY, utf8, utf8, win, CurrentTime);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			XConvertSelection(dc-&gt;dpy, (ev-&gt;state &amp; ShiftMask) ? clip : XA_PRIMARY,
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			                  utf8, utf8, win, CurrentTime);
+</a> 			return;
+ 		default:
+ 			return;
+<a href="#h0-2" id="h0-2" class="h">@@ -517,6 +518,7 @@ setup(void) {
+</a> 	selcol[ColBG]  = getcolor(dc, selbgcolor);
+ 	selcol[ColFG]  = getcolor(dc, selfgcolor);
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	clip = XInternAtom(dc-&gt;dpy, &quot;CLIPBOARD&quot;,   False);
+</a> 	utf8 = XInternAtom(dc-&gt;dpy, &quot;UTF8_STRING&quot;, False);
+ 
+ 	/* calculate menu geometry */
+</pre>
+</div>
+</body>
+</html>

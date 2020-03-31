@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>revival of mfact and setmfact - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a355782a7795c8c26a05e8bda1505ff46d5d0289.html">a355782a7795c8c26a05e8bda1505ff46d5d0289</a>
+<b>parent</b> <a href="../commit/20cd3360876f551c0f3b4c9c5a827a64b829e6ef.html">20cd3360876f551c0f3b4c9c5a827a64b829e6ef</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 24 Mar 2008 14:23:28 +0000
+
+revival of mfact and setmfact
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 31 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -20,7 +20,8 @@ Rule rules[] = {
+</a> 
+ /* geometries, s{x,y,w,h} and bh are already initualized here */
+ /*   func name  bx  by  bw  wx  wy  ww     wh  mx  my       mw  mh     tx  ty     tw  th  mox moy mow moh */
+<a href="#h0-0-3" id="h0-0-3" class="d">-DEFGEOM(single,  0,  0, sw,  0, bh, sw, sh-bh, wx, wy, 0.55*sw, wh, mx+mw, wy, ww-mw, wh,  wx, wy, ww, wh)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+double mfact = 0.55;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+DEFGEOM(single,  0,  0, sw,  0, bh, sw, sh-bh, wx, wy, mfact*sw, wh, mx+mw, wy, ww-mw, wh,  wx, wy, ww, wh)
+</a> DEFGEOM(dual,    0,  0,1280, 0, bh, ww, wh-bh, wx, wy, 1280,800-bh,  1280,  0, ww-mw, sh,  mx, my, mw, mh)
+ 
+ Geom geoms[] = {
+<a href="#h0-1" id="h0-1" class="h">@@ -51,6 +52,8 @@ Key keys[] = {
+</a> 	{ MODKEY,			XK_j,		focusnext,	NULL },
+ 	{ MODKEY,			XK_k,		focusprev,	NULL },
+ 	{ MODKEY,			XK_r,		reapply,	NULL },
+<a href="#h0-1-3" id="h0-1-3" class="i">+	{ MODKEY,			XK_h,		setmfact,	&quot;-0.05&quot; },
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	{ MODKEY,			XK_l,		setmfact,	&quot;+0.05&quot; },
+</a> 	{ MODKEY,			XK_Return,	zoom,		NULL },
+ 	{ MODKEY,			XK_Tab,		viewprevtag,	NULL },
+ 	{ MODKEY|ShiftMask,		XK_c,		killclient,	NULL },
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -69,6 +69,12 @@ Focus next window.
+</a> .B Mod1\-k
+ Focus previous window.
+ .TP
+<a href="#h1-0-3" id="h1-0-3" class="i">+.B Mod1\-h
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+Decrease master area size.
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+.TP
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+.B Mod1\-l
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+Increase master area size.
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+.TP
+</a> .B Mod1\-Return
+ Zooms/cycles focused window to/from master area (tiled layouts only).
+ .TP
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -178,6 +178,7 @@ void scan(void);
+</a> void setclientstate(Client *c, long state);
+ void setgeom(const char *arg);
+ void setlayout(const char *arg);
+<a href="#h2-0-3" id="h2-0-3" class="i">+void setmfact(const char *arg);
+</a> void setup(void);
+ void spawn(const char *arg);
+ void tag(const char *arg);
+<a href="#h2-1" id="h2-1" class="h">@@ -1463,6 +1464,26 @@ setlayout(const char *arg) {
+</a> }
+ 
+ void
+<a href="#h2-1-3" id="h2-1-3" class="i">+setmfact(const char *arg) {
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	double delta;
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+	if(!arg)
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+		return;
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+	delta = strtod(arg, NULL);
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+	if(arg[0] == &#39;-&#39; || arg[0] == &#39;+&#39;) {
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+		if(mfact + delta &lt; 0.1 || mfact + delta &gt; 0.9)
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+			return;
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+		mfact += delta;
+</a><a href="#h2-1-13" id="h2-1-13" class="i">+	}
+</a><a href="#h2-1-14" id="h2-1-14" class="i">+	else {
+</a><a href="#h2-1-15" id="h2-1-15" class="i">+		if(delta &lt; 0.1 || delta &gt; 0.9)
+</a><a href="#h2-1-16" id="h2-1-16" class="i">+			return;
+</a><a href="#h2-1-17" id="h2-1-17" class="i">+		mfact = delta;
+</a><a href="#h2-1-18" id="h2-1-18" class="i">+	}
+</a><a href="#h2-1-19" id="h2-1-19" class="i">+	arrange();
+</a><a href="#h2-1-20" id="h2-1-20" class="i">+}
+</a><a href="#h2-1-21" id="h2-1-21" class="i">+
+</a><a href="#h2-1-22" id="h2-1-22" class="i">+void
+</a> setup(void) {
+ 	unsigned int i, w;
+ 	XSetWindowAttributes wa;
+</pre>
+</div>
+</body>
+</html>

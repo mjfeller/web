@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Don&#39;t restrict snap in mousemove - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5b238c8dab945023b6a16a6c9f642b11137f2204.html">5b238c8dab945023b6a16a6c9f642b11137f2204</a>
+<b>parent</b> <a href="../commit/022d07605412bc5bd9726f74af9355c562ba4957.html">022d07605412bc5bd9726f74af9355c562ba4957</a>
+<b>Author:</b> Markus Teich &lt;<a href="mailto:markus.teich@stusta.mhn.de">markus.teich@stusta.mhn.de</a>&gt;
+<b>Date:</b>   Sat,  7 Jan 2017 17:21:30 +0100
+
+Don&#39;t restrict snap in mousemove
+
+This also fixes a bug where client windows only switch to floating mode when the
+mouse is dragged in one specific direction.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">25</td><td><span class="i">+++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1170,20 +1170,17 @@ movemouse(const Arg *arg)
+</a> 
+ 			nx = ocx + (ev.xmotion.x - x);
+ 			ny = ocy + (ev.xmotion.y - y);
+<a href="#h0-0-3" id="h0-0-3" class="d">-			if (nx &gt;= selmon-&gt;wx &amp;&amp; nx &lt;= selmon-&gt;wx + selmon-&gt;ww
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-			&amp;&amp; ny &gt;= selmon-&gt;wy &amp;&amp; ny &lt;= selmon-&gt;wy + selmon-&gt;wh) {
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-				if (abs(selmon-&gt;wx - nx) &lt; snap)
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-					nx = selmon-&gt;wx;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-				else if (abs((selmon-&gt;wx + selmon-&gt;ww) - (nx + WIDTH(c))) &lt; snap)
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-					nx = selmon-&gt;wx + selmon-&gt;ww - WIDTH(c);
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-				if (abs(selmon-&gt;wy - ny) &lt; snap)
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-					ny = selmon-&gt;wy;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-				else if (abs((selmon-&gt;wy + selmon-&gt;wh) - (ny + HEIGHT(c))) &lt; snap)
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-					ny = selmon-&gt;wy + selmon-&gt;wh - HEIGHT(c);
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-				if (!c-&gt;isfloating &amp;&amp; selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-				&amp;&amp; (abs(nx - c-&gt;x) &gt; snap || abs(ny - c-&gt;y) &gt; snap))
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-					togglefloating(NULL);
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-			}
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+			if (abs(selmon-&gt;wx - nx) &lt; snap)
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+				nx = selmon-&gt;wx;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+			else if (abs((selmon-&gt;wx + selmon-&gt;ww) - (nx + WIDTH(c))) &lt; snap)
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+				nx = selmon-&gt;wx + selmon-&gt;ww - WIDTH(c);
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+			if (abs(selmon-&gt;wy - ny) &lt; snap)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+				ny = selmon-&gt;wy;
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+			else if (abs((selmon-&gt;wy + selmon-&gt;wh) - (ny + HEIGHT(c))) &lt; snap)
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+				ny = selmon-&gt;wy + selmon-&gt;wh - HEIGHT(c);
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+			if (!c-&gt;isfloating &amp;&amp; selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+			&amp;&amp; (abs(nx - c-&gt;x) &gt; snap || abs(ny - c-&gt;y) &gt; snap))
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+				togglefloating(NULL);
+</a> 			if (!selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+ 				resize(c, nx, ny, c-&gt;w, c-&gt;h, 1);
+ 			break;
+</pre>
+</div>
+</body>
+</html>

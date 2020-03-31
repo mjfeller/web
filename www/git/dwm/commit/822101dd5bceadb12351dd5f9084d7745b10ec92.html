@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>merged tile.c again into dwm.c - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/822101dd5bceadb12351dd5f9084d7745b10ec92.html">822101dd5bceadb12351dd5f9084d7745b10ec92</a>
+<b>parent</b> <a href="../commit/6bdef73a4f0c2a96f8984ddc10b55f1d753ab5fe.html">6bdef73a4f0c2a96f8984ddc10b55f1d753ab5fe</a>
+<b>Author:</b> anselm@anselm1 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Mon, 19 May 2008 20:07:12 +0100
+
+merged tile.c again into dwm.c
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">4</td><td><span class="i">+</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">101</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h2">tile.c</a></td><td> | </td><td class="num">102</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 101 insertions(+), 106 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -25,12 +25,10 @@ Rule rules[] = {
+</a> double mfact           = 0.55;
+ Bool resizehints       = True;     /* False means respect size hints in tiled resizals */
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-#include &quot;tile.c&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-
+</a> Layout layouts[] = {
+ 	/* symbol     arrange  geom */
+ 	{ &quot;[]=&quot;,      tile,    updatetilegeom }, /* first entry is default */
+<a href="#h0-0-8" id="h0-0-8" class="d">-	{ &quot;&gt;&lt;&gt;&quot;,      NULL,                   }, /* no layout function means floating behavior */
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	{ &quot;&gt;&lt;&gt;&quot;,      NULL,    NULL           }, /* no layout function means floating behavior */
+</a> };
+ 
+ /* key definitions */
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -53,7 +53,6 @@
+</a> #define MOUSEMASK       (BUTTONMASK|PointerMotionMask)
+ 
+ /* enums */
+<a href="#h1-0-3" id="h1-0-3" class="d">-enum { BarTop, BarBot, BarOff, BarLast };               /* bar appearance */
+</a> enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+ enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
+ enum { NetSupported, NetWMName, NetLast };              /* EWMH atoms */
+<a href="#h1-1" id="h1-1" class="h">@@ -165,11 +164,14 @@ void restack(void);
+</a> void run(void);
+ void scan(void);
+ void setclientstate(Client *c, long state);
+<a href="#h1-1-3" id="h1-1-3" class="i">+void setmfact(const char *arg);
+</a> void setup(void);
+ void spawn(const char *arg);
+ void tag(const char *arg);
+ unsigned int textnw(const char *text, unsigned int len);
+ unsigned int textw(const char *text);
+<a href="#h1-1-9" id="h1-1-9" class="i">+void tile(void);
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+void tileresize(Client *c, int x, int y, int w, int h);
+</a> void togglebar(const char *arg);
+ void togglefloating(const char *arg);
+ void togglelayout(const char *arg);
+<a href="#h1-2" id="h1-2" class="h">@@ -181,6 +183,7 @@ void unmapnotify(XEvent *e);
+</a> void updatebar(void);
+ void updategeom(void);
+ void updatesizehints(Client *c);
+<a href="#h1-2-3" id="h1-2-3" class="i">+void updatetilegeom(void);
+</a> void updatetitle(Client *c);
+ void updatewmhints(Client *c);
+ void view(const char *arg);
+<a href="#h1-3" id="h1-3" class="h">@@ -194,6 +197,7 @@ void zoom(const char *arg);
+</a> char stext[256];
+ int screen, sx, sy, sw, sh;
+ int bx, by, bw, bh, blw, wx, wy, ww, wh;
+<a href="#h1-3-3" id="h1-3-3" class="i">+int mx, my, mw, mh, tx, ty, tw, th;
+</a> int seltags = 0;
+ int (*xerrorxlib)(Display *, XErrorEvent *);
+ unsigned int numlockmask = 0;
+<a href="#h1-4" id="h1-4" class="h">@@ -1333,6 +1337,24 @@ setclientstate(Client *c, long state) {
+</a> }
+ 
+ void
+<a href="#h1-4-3" id="h1-4-3" class="i">+setmfact(const char *arg) {
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+	double d;
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+	if(!arg || lt-&gt;arrange != tile)
+</a><a href="#h1-4-7" id="h1-4-7" class="i">+		return;
+</a><a href="#h1-4-8" id="h1-4-8" class="i">+	else {
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+		d = strtod(arg, NULL);
+</a><a href="#h1-4-10" id="h1-4-10" class="i">+		if(arg[0] == &#39;-&#39; || arg[0] == &#39;+&#39;)
+</a><a href="#h1-4-11" id="h1-4-11" class="i">+			d += mfact;
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+		if(d &lt; 0.1 || d &gt; 0.9)
+</a><a href="#h1-4-13" id="h1-4-13" class="i">+			return;
+</a><a href="#h1-4-14" id="h1-4-14" class="i">+		mfact = d;
+</a><a href="#h1-4-15" id="h1-4-15" class="i">+	}
+</a><a href="#h1-4-16" id="h1-4-16" class="i">+	updatetilegeom();
+</a><a href="#h1-4-17" id="h1-4-17" class="i">+	arrange();
+</a><a href="#h1-4-18" id="h1-4-18" class="i">+}
+</a><a href="#h1-4-19" id="h1-4-19" class="i">+
+</a><a href="#h1-4-20" id="h1-4-20" class="i">+void
+</a> setup(void) {
+ 	unsigned int i, w;
+ 	XSetWindowAttributes wa;
+<a href="#h1-5" id="h1-5" class="h">@@ -1467,6 +1489,53 @@ textw(const char *text) {
+</a> }
+ 
+ void
+<a href="#h1-5-3" id="h1-5-3" class="i">+tile(void) {
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	int x, y, h, w;
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+	unsigned int i, n;
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+	Client *c;
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+
+</a><a href="#h1-5-8" id="h1-5-8" class="i">+	for(n = 0, c = nextunfloating(clients); c; c = nextunfloating(c-&gt;next), n++);
+</a><a href="#h1-5-9" id="h1-5-9" class="i">+	if(n == 0)
+</a><a href="#h1-5-10" id="h1-5-10" class="i">+		return;
+</a><a href="#h1-5-11" id="h1-5-11" class="i">+
+</a><a href="#h1-5-12" id="h1-5-12" class="i">+	/* master */
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+	c = nextunfloating(clients);
+</a><a href="#h1-5-14" id="h1-5-14" class="i">+
+</a><a href="#h1-5-15" id="h1-5-15" class="i">+	if(n == 1)
+</a><a href="#h1-5-16" id="h1-5-16" class="i">+		tileresize(c, wx, wy, ww - 2 * c-&gt;bw, wh - 2 * c-&gt;bw);
+</a><a href="#h1-5-17" id="h1-5-17" class="i">+	else
+</a><a href="#h1-5-18" id="h1-5-18" class="i">+		tileresize(c, mx, my, mw - 2 * c-&gt;bw, mh - 2 * c-&gt;bw);
+</a><a href="#h1-5-19" id="h1-5-19" class="i">+
+</a><a href="#h1-5-20" id="h1-5-20" class="i">+	if(--n == 0)
+</a><a href="#h1-5-21" id="h1-5-21" class="i">+		return;
+</a><a href="#h1-5-22" id="h1-5-22" class="i">+
+</a><a href="#h1-5-23" id="h1-5-23" class="i">+	/* tile stack */
+</a><a href="#h1-5-24" id="h1-5-24" class="i">+	x = (tx &gt; c-&gt;x + c-&gt;w) ? c-&gt;x + c-&gt;w + 2 * c-&gt;bw : tw;
+</a><a href="#h1-5-25" id="h1-5-25" class="i">+	y = ty;
+</a><a href="#h1-5-26" id="h1-5-26" class="i">+	w = (tx &gt; c-&gt;x + c-&gt;w) ? wx + ww - x : tw;
+</a><a href="#h1-5-27" id="h1-5-27" class="i">+	h = th / n;
+</a><a href="#h1-5-28" id="h1-5-28" class="i">+	if(h &lt; bh)
+</a><a href="#h1-5-29" id="h1-5-29" class="i">+		h = th;
+</a><a href="#h1-5-30" id="h1-5-30" class="i">+
+</a><a href="#h1-5-31" id="h1-5-31" class="i">+	for(i = 0, c = nextunfloating(c-&gt;next); c; c = nextunfloating(c-&gt;next), i++) {
+</a><a href="#h1-5-32" id="h1-5-32" class="i">+		if(i + 1 == n) /* remainder */
+</a><a href="#h1-5-33" id="h1-5-33" class="i">+			tileresize(c, x, y, w - 2 * c-&gt;bw, (ty + th) - y - 2 * c-&gt;bw);
+</a><a href="#h1-5-34" id="h1-5-34" class="i">+		else
+</a><a href="#h1-5-35" id="h1-5-35" class="i">+			tileresize(c, x, y, w - 2 * c-&gt;bw, h - 2 * c-&gt;bw);
+</a><a href="#h1-5-36" id="h1-5-36" class="i">+		if(h != th)
+</a><a href="#h1-5-37" id="h1-5-37" class="i">+			y = c-&gt;y + c-&gt;h + 2 * c-&gt;bw;
+</a><a href="#h1-5-38" id="h1-5-38" class="i">+	}
+</a><a href="#h1-5-39" id="h1-5-39" class="i">+}
+</a><a href="#h1-5-40" id="h1-5-40" class="i">+
+</a><a href="#h1-5-41" id="h1-5-41" class="i">+void
+</a><a href="#h1-5-42" id="h1-5-42" class="i">+tileresize(Client *c, int x, int y, int w, int h) {
+</a><a href="#h1-5-43" id="h1-5-43" class="i">+	resize(c, x, y, w, h, resizehints);
+</a><a href="#h1-5-44" id="h1-5-44" class="i">+	if(resizehints &amp;&amp; ((c-&gt;h &lt; bh) || (c-&gt;h &gt; h) || (c-&gt;w &lt; bh) || (c-&gt;w &gt; w)))
+</a><a href="#h1-5-45" id="h1-5-45" class="i">+		/* client doesn&#39;t accept size constraints */
+</a><a href="#h1-5-46" id="h1-5-46" class="i">+		resize(c, x, y, w, h, False);
+</a><a href="#h1-5-47" id="h1-5-47" class="i">+}
+</a><a href="#h1-5-48" id="h1-5-48" class="i">+
+</a><a href="#h1-5-49" id="h1-5-49" class="i">+void
+</a> togglebar(const char *arg) {
+ 	showbar = !showbar;
+ 	updategeom();
+<a href="#h1-6" id="h1-6" class="h">@@ -1668,6 +1737,21 @@ updatesizehints(Client *c) {
+</a> }
+ 
+ void
+<a href="#h1-6-3" id="h1-6-3" class="i">+updatetilegeom(void) {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+	/* master area geometry */
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+	mx = wx;
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+	my = wy;
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+	mw = mfact * ww;
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+	mh = wh;
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+	/* tile area geometry */
+</a><a href="#h1-6-11" id="h1-6-11" class="i">+	tx = mx + mw;
+</a><a href="#h1-6-12" id="h1-6-12" class="i">+	ty = wy;
+</a><a href="#h1-6-13" id="h1-6-13" class="i">+	tw = ww - mw;
+</a><a href="#h1-6-14" id="h1-6-14" class="i">+	th = wh;
+</a><a href="#h1-6-15" id="h1-6-15" class="i">+}
+</a><a href="#h1-6-16" id="h1-6-16" class="i">+
+</a><a href="#h1-6-17" id="h1-6-17" class="i">+void
+</a> updatetitle(Client *c) {
+ 	if(!gettextprop(c-&gt;win, netatom[NetWMName], c-&gt;name, sizeof c-&gt;name))
+ 		gettextprop(c-&gt;win, wmatom[WMName], c-&gt;name, sizeof c-&gt;name);
+<a href="#h1-7" id="h1-7" class="h">@@ -1733,6 +1817,21 @@ xerrorstart(Display *dpy, XErrorEvent *ee) {
+</a> 	return -1;
+ }
+ 
+<a href="#h1-7-3" id="h1-7-3" class="i">+void
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+zoom(const char *arg) {
+</a><a href="#h1-7-5" id="h1-7-5" class="i">+	Client *c = sel;
+</a><a href="#h1-7-6" id="h1-7-6" class="i">+
+</a><a href="#h1-7-7" id="h1-7-7" class="i">+	if(c == nextunfloating(clients))
+</a><a href="#h1-7-8" id="h1-7-8" class="i">+		if(!c || !(c = nextunfloating(c-&gt;next)))
+</a><a href="#h1-7-9" id="h1-7-9" class="i">+			return;
+</a><a href="#h1-7-10" id="h1-7-10" class="i">+	if(lt-&gt;arrange == tile &amp;&amp; !sel-&gt;isfloating) {
+</a><a href="#h1-7-11" id="h1-7-11" class="i">+		detach(c);
+</a><a href="#h1-7-12" id="h1-7-12" class="i">+		attach(c);
+</a><a href="#h1-7-13" id="h1-7-13" class="i">+		focus(c);
+</a><a href="#h1-7-14" id="h1-7-14" class="i">+	}
+</a><a href="#h1-7-15" id="h1-7-15" class="i">+	arrange();
+</a><a href="#h1-7-16" id="h1-7-16" class="i">+}
+</a><a href="#h1-7-17" id="h1-7-17" class="i">+
+</a> int
+ main(int argc, char *argv[]) {
+ 	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+<b>diff --git a/<a id="h2" href="../file/tile.c.html">tile.c</a> b/<a href="../file/tile.c.html">tile.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,102 +0,0 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="d">-/* See LICENSE file for copyright and license details. */
+</a><a href="#h2-0-1" id="h2-0-1" class="d">-int bx, by, bw, bh, blw, mx, my, mw, mh, tx, ty, tw, th, wx, wy, ww, wh;
+</a><a href="#h2-0-2" id="h2-0-2" class="d">-
+</a><a href="#h2-0-3" id="h2-0-3" class="d">-void setmfact(const char *arg);
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-void tile(void);
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-void tileresize(Client *c, int x, int y, int w, int h);
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-void updatetilegeom(void);
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-void
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-setmfact(const char *arg) {
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-	double d;
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-	if(!arg || lt-&gt;arrange != tile)
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-		return;
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-	else {
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-		d = strtod(arg, NULL);
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-		if(arg[0] == &#39;-&#39; || arg[0] == &#39;+&#39;)
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-			d += mfact;
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-		if(d &lt; 0.1 || d &gt; 0.9)
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-			return;
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-		mfact = d;
+</a><a href="#h2-0-21" id="h2-0-21" class="d">-	}
+</a><a href="#h2-0-22" id="h2-0-22" class="d">-	updatetilegeom();
+</a><a href="#h2-0-23" id="h2-0-23" class="d">-	arrange();
+</a><a href="#h2-0-24" id="h2-0-24" class="d">-}
+</a><a href="#h2-0-25" id="h2-0-25" class="d">-
+</a><a href="#h2-0-26" id="h2-0-26" class="d">-void
+</a><a href="#h2-0-27" id="h2-0-27" class="d">-tile(void) {
+</a><a href="#h2-0-28" id="h2-0-28" class="d">-	int x, y, h, w;
+</a><a href="#h2-0-29" id="h2-0-29" class="d">-	unsigned int i, n;
+</a><a href="#h2-0-30" id="h2-0-30" class="d">-	Client *c;
+</a><a href="#h2-0-31" id="h2-0-31" class="d">-
+</a><a href="#h2-0-32" id="h2-0-32" class="d">-	for(n = 0, c = nextunfloating(clients); c; c = nextunfloating(c-&gt;next), n++);
+</a><a href="#h2-0-33" id="h2-0-33" class="d">-	if(n == 0)
+</a><a href="#h2-0-34" id="h2-0-34" class="d">-		return;
+</a><a href="#h2-0-35" id="h2-0-35" class="d">-
+</a><a href="#h2-0-36" id="h2-0-36" class="d">-	/* master */
+</a><a href="#h2-0-37" id="h2-0-37" class="d">-	c = nextunfloating(clients);
+</a><a href="#h2-0-38" id="h2-0-38" class="d">-
+</a><a href="#h2-0-39" id="h2-0-39" class="d">-	if(n == 1)
+</a><a href="#h2-0-40" id="h2-0-40" class="d">-		tileresize(c, wx, wy, ww - 2 * c-&gt;bw, wh - 2 * c-&gt;bw);
+</a><a href="#h2-0-41" id="h2-0-41" class="d">-	else
+</a><a href="#h2-0-42" id="h2-0-42" class="d">-		tileresize(c, mx, my, mw - 2 * c-&gt;bw, mh - 2 * c-&gt;bw);
+</a><a href="#h2-0-43" id="h2-0-43" class="d">-
+</a><a href="#h2-0-44" id="h2-0-44" class="d">-	if(--n == 0)
+</a><a href="#h2-0-45" id="h2-0-45" class="d">-		return;
+</a><a href="#h2-0-46" id="h2-0-46" class="d">-
+</a><a href="#h2-0-47" id="h2-0-47" class="d">-	/* tile stack */
+</a><a href="#h2-0-48" id="h2-0-48" class="d">-	x = (tx &gt; c-&gt;x + c-&gt;w) ? c-&gt;x + c-&gt;w + 2 * c-&gt;bw : tw;
+</a><a href="#h2-0-49" id="h2-0-49" class="d">-	y = ty;
+</a><a href="#h2-0-50" id="h2-0-50" class="d">-	w = (tx &gt; c-&gt;x + c-&gt;w) ? wx + ww - x : tw;
+</a><a href="#h2-0-51" id="h2-0-51" class="d">-	h = th / n;
+</a><a href="#h2-0-52" id="h2-0-52" class="d">-	if(h &lt; bh)
+</a><a href="#h2-0-53" id="h2-0-53" class="d">-		h = th;
+</a><a href="#h2-0-54" id="h2-0-54" class="d">-
+</a><a href="#h2-0-55" id="h2-0-55" class="d">-	for(i = 0, c = nextunfloating(c-&gt;next); c; c = nextunfloating(c-&gt;next), i++) {
+</a><a href="#h2-0-56" id="h2-0-56" class="d">-		if(i + 1 == n) /* remainder */
+</a><a href="#h2-0-57" id="h2-0-57" class="d">-			tileresize(c, x, y, w - 2 * c-&gt;bw, (ty + th) - y - 2 * c-&gt;bw);
+</a><a href="#h2-0-58" id="h2-0-58" class="d">-		else
+</a><a href="#h2-0-59" id="h2-0-59" class="d">-			tileresize(c, x, y, w - 2 * c-&gt;bw, h - 2 * c-&gt;bw);
+</a><a href="#h2-0-60" id="h2-0-60" class="d">-		if(h != th)
+</a><a href="#h2-0-61" id="h2-0-61" class="d">-			y = c-&gt;y + c-&gt;h + 2 * c-&gt;bw;
+</a><a href="#h2-0-62" id="h2-0-62" class="d">-	}
+</a><a href="#h2-0-63" id="h2-0-63" class="d">-}
+</a><a href="#h2-0-64" id="h2-0-64" class="d">-
+</a><a href="#h2-0-65" id="h2-0-65" class="d">-void
+</a><a href="#h2-0-66" id="h2-0-66" class="d">-tileresize(Client *c, int x, int y, int w, int h) {
+</a><a href="#h2-0-67" id="h2-0-67" class="d">-	resize(c, x, y, w, h, resizehints);
+</a><a href="#h2-0-68" id="h2-0-68" class="d">-	if(resizehints &amp;&amp; ((c-&gt;h &lt; bh) || (c-&gt;h &gt; h) || (c-&gt;w &lt; bh) || (c-&gt;w &gt; w)))
+</a><a href="#h2-0-69" id="h2-0-69" class="d">-		/* client doesn&#39;t accept size constraints */
+</a><a href="#h2-0-70" id="h2-0-70" class="d">-		resize(c, x, y, w, h, False);
+</a><a href="#h2-0-71" id="h2-0-71" class="d">-}
+</a><a href="#h2-0-72" id="h2-0-72" class="d">-
+</a><a href="#h2-0-73" id="h2-0-73" class="d">-void
+</a><a href="#h2-0-74" id="h2-0-74" class="d">-zoom(const char *arg) {
+</a><a href="#h2-0-75" id="h2-0-75" class="d">-	Client *c = sel;
+</a><a href="#h2-0-76" id="h2-0-76" class="d">-
+</a><a href="#h2-0-77" id="h2-0-77" class="d">-	if(c == nextunfloating(clients))
+</a><a href="#h2-0-78" id="h2-0-78" class="d">-		if(!c || !(c = nextunfloating(c-&gt;next)))
+</a><a href="#h2-0-79" id="h2-0-79" class="d">-			return;
+</a><a href="#h2-0-80" id="h2-0-80" class="d">-	if(lt-&gt;arrange == tile &amp;&amp; !sel-&gt;isfloating) {
+</a><a href="#h2-0-81" id="h2-0-81" class="d">-		detach(c);
+</a><a href="#h2-0-82" id="h2-0-82" class="d">-		attach(c);
+</a><a href="#h2-0-83" id="h2-0-83" class="d">-		focus(c);
+</a><a href="#h2-0-84" id="h2-0-84" class="d">-	}
+</a><a href="#h2-0-85" id="h2-0-85" class="d">-	arrange();
+</a><a href="#h2-0-86" id="h2-0-86" class="d">-}
+</a><a href="#h2-0-87" id="h2-0-87" class="d">-
+</a><a href="#h2-0-88" id="h2-0-88" class="d">-void
+</a><a href="#h2-0-89" id="h2-0-89" class="d">-updatetilegeom(void) {
+</a><a href="#h2-0-90" id="h2-0-90" class="d">-	/* master area geometry */
+</a><a href="#h2-0-91" id="h2-0-91" class="d">-	mx = wx;
+</a><a href="#h2-0-92" id="h2-0-92" class="d">-	my = wy;
+</a><a href="#h2-0-93" id="h2-0-93" class="d">-	mw = mfact * ww;
+</a><a href="#h2-0-94" id="h2-0-94" class="d">-	mh = wh;
+</a><a href="#h2-0-95" id="h2-0-95" class="d">-
+</a><a href="#h2-0-96" id="h2-0-96" class="d">-	/* tile area geometry */
+</a><a href="#h2-0-97" id="h2-0-97" class="d">-	tx = mx + mw;
+</a><a href="#h2-0-98" id="h2-0-98" class="d">-	ty = wy;
+</a><a href="#h2-0-99" id="h2-0-99" class="d">-	tw = ww - mw;
+</a><a href="#h2-0-100" id="h2-0-100" class="d">-	th = wh;
+</a><a href="#h2-0-101" id="h2-0-101" class="d">-}
+</a></pre>
+</div>
+</body>
+</html>

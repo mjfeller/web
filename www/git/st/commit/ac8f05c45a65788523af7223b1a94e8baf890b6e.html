@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add documentation to control codes - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ac8f05c45a65788523af7223b1a94e8baf890b6e.html">ac8f05c45a65788523af7223b1a94e8baf890b6e</a>
+<b>parent</b> <a href="../commit/02f3b37a2d354c74169f5ed038bb1cb6225d691a.html">02f3b37a2d354c74169f5ed038bb1cb6225d691a</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Sat,  6 Oct 2012 19:12:46 +0200
+
+Add documentation to control codes
+
+Add the documentation from the vt100 manual programmer:
+
+Control 	Octal      Action Taken
+Character	Code
+-------------------------------------------
+NUL		000	Ignored on input (not stored in input buffer;
+			see full duplex protocol).
+ENQ		005	Transmit answerback message.
+BEL		007	Sound bell tone from keyboard.
+BS		010	Move the cursor to the left one character position,
+			unless it is at the left margin,
+			in which case no action occurs.
+HT		011	Move the cursor to the next tab stop,
+			or to the right margin if no further tab stops
+			are present on the line.
+LF		012	This code causes a line feed or
+			a new line operation. (See new line mode).
+VT		013	Interpreted as LF.
+FF		014	Interpreted as LF.
+CR		015	Move cursor to the left margin on the current line.
+SO		016	Invoke G1 character set, as designated by SCS
+			control sequence.
+SI		017	Select G0 character set, as selected by ESC ( sequence.
+XON		021	Causes terminal to resume transmission.
+XOFF		023	Causes terminal to stop transmitted all codes
+			except XOFF and XON.
+CAN		030	If sent during a control sequence, the sequence is
+			immediately terminated and not executed. It also causes
+			the error character to be displayed.
+SUB		032	Interpreted as CAN.
+ESC		033	Invokes a control sequence.
+DEL		177	Ignored on input (not stored in input buffer).
+--------------------------------------------
+---
+ st.c |   28 +++++++++++++++++++---------
+ 1 file changed, 19 insertions(+), 9 deletions(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">28</td><td><span class="i">+++++++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 19 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1789,32 +1789,42 @@ tputc(char *c, int len) {
+</a> 		write(iofd, c, len);
+ 
+ 	switch(ascii) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	case &#39;\t&#39;:
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	case &#39;\t&#39;:	/* HT */
+</a> 		tputtab(1);
+ 		return;
+<a href="#h0-0-7" id="h0-0-7" class="d">-	case &#39;\b&#39;:
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	case &#39;\b&#39;:	/* BS */
+</a> 		tmoveto(term.c.x-1, term.c.y);
+ 		return;
+<a href="#h0-0-11" id="h0-0-11" class="d">-	case &#39;\r&#39;:
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	case &#39;\r&#39;:	/* CR */
+</a> 		tmoveto(0, term.c.y);
+ 		return;
+<a href="#h0-0-15" id="h0-0-15" class="d">-	case &#39;\f&#39;:
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	case &#39;\v&#39;:
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	case &#39;\n&#39;:
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	case &#39;\f&#39;:	/* LF */
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	case &#39;\v&#39;:	/* VT */
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	case &#39;\n&#39;:	/* LF */
+</a> 		/* go to first col if the mode is set */
+ 		tnewline(IS_SET(MODE_CRLF));
+ 		return;
+<a href="#h0-0-24" id="h0-0-24" class="d">-	case &#39;\a&#39;:
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	case &#39;\a&#39;:	/* BEL */
+</a> 		if(term.esc &amp; ESC_STR)
+ 			break;
+<a href="#h0-0-28" id="h0-0-28" class="d">-
+</a> 		if(!(xw.state &amp; WIN_FOCUSED))
+ 			xseturgency(1);
+ 		return;
+<a href="#h0-0-32" id="h0-0-32" class="d">-	case &#39;\033&#39;:
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+	case &#39;\033&#39;:	/* ESC */
+</a> 		csireset();
+ 		term.esc = ESC_START;
+ 		return;
+<a href="#h0-0-37" id="h0-0-37" class="i">+	case &#39;\016&#39;:	/* XXX: SO */
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+	case &#39;\017&#39;:	/* XXX: SI */
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+	case &#39;\032&#39;:	/* XXX: SUB */
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+	case &#39;\030&#39;:	/* XXX: CAN */
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	default:
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	/* case &#39;\005&#39;:	ENQ (IGNORED) */
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+	/* case &#39;\000&#39;:	NUL (IGNORED) */
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+	/* case &#39;\021&#39;:	XON (IGNORED) */
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+	/* case &#39;\023&#39;:	XOFF (IGNORED) */
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+	/* case 0177:	DEL (IGNORED) */
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+		break;
+</a> 	}
+ 
+ 	if(term.esc &amp; ESC_START) {
+</pre>
+</div>
+</body>
+</html>

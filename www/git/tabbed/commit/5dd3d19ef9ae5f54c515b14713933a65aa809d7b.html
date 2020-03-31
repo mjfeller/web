@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>support urgency wm hints - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5dd3d19ef9ae5f54c515b14713933a65aa809d7b.html">5dd3d19ef9ae5f54c515b14713933a65aa809d7b</a>
+<b>parent</b> <a href="../commit/030eda81cc622ad0c3efe2ab1f1a657ee82e45cb.html">030eda81cc622ad0c3efe2ab1f1a657ee82e45cb</a>
+<b>Author:</b> Markus Teich &lt;<a href="mailto:markus.teich@stusta.mhn.de">markus.teich@stusta.mhn.de</a>&gt;
+<b>Date:</b>   Wed, 14 May 2014 01:34:44 +0200
+
+support urgency wm hints
+
+Signed-off-by: Christoph Lohmann &lt;20h@r-36.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.c</a></td><td> | </td><td class="num">35</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 34 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,6 +6,8 @@ static const char* normbgcolor  = &quot;#222222&quot;;
+</a> static const char* normfgcolor  = &quot;#cccccc&quot;;
+ static const char* selbgcolor   = &quot;#555555&quot;;
+ static const char* selfgcolor   = &quot;#ffffff&quot;;
+<a href="#h0-0-3" id="h0-0-3" class="i">+static const char* urgbgcolor   = &quot;#111111&quot;;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static const char* urgfgcolor   = &quot;#cc0000&quot;;
+</a> static const char before[]      = &quot;&lt;&quot;;
+ static const char after[]       = &quot;&gt;&quot;;
+ static const int  tabwidth      = 200;
+<b>diff --git a/<a id="h1" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -66,6 +66,7 @@ typedef struct {
+</a> 	int x, y, w, h;
+ 	unsigned long norm[ColLast];
+ 	unsigned long sel[ColLast];
+<a href="#h1-0-3" id="h1-0-3" class="i">+	unsigned long urg[ColLast];
+</a> 	Drawable drawable;
+ 	GC gc;
+ 	struct {
+<a href="#h1-1" id="h1-1" class="h">@@ -81,7 +82,7 @@ typedef struct Client {
+</a> 	char name[256];
+ 	Window win;
+ 	int tabx;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	Bool mapped;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	Bool urgent;
+</a> 	Bool closed;
+ } Client;
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -351,7 +352,7 @@ drawbar(void) {
+</a> 				dc.w = width - (n - 1) * tabwidth;
+ 			}
+ 		} else {
+<a href="#h1-2-3" id="h1-2-3" class="d">-			col = dc.norm;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+			col = clients[c]-&gt;urgent ? dc.urg : dc.norm;
+</a> 		}
+ 		drawtext(clients[c]-&gt;name, col);
+ 		dc.x += dc.w;
+<a href="#h1-3" id="h1-3" class="h">@@ -427,6 +428,7 @@ void
+</a> focus(int c) {
+ 	char buf[BUFSIZ] = &quot;tabbed-&quot;VERSION&quot; ::&quot;;
+ 	size_t i, n;
+<a href="#h1-3-3" id="h1-3-3" class="i">+	XWMHints* wmh;
+</a> 
+ 	/* If c, sel and clients are -1, raise tabbed-win itself */
+ 	if(nclients == 0) {
+<a href="#h1-4" id="h1-4" class="h">@@ -454,6 +456,12 @@ focus(int c) {
+</a> 	if(sel != c) {
+ 		lastsel = sel;
+ 		sel = c;
+<a href="#h1-4-3" id="h1-4-3" class="i">+		if(clients[c]-&gt;urgent &amp;&amp; (wmh = XGetWMHints(dpy, clients[c]-&gt;win))) {
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+			wmh-&gt;flags &amp;= ~XUrgencyHint;
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+			XSetWMHints(dpy, clients[c]-&gt;win, wmh);
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+			clients[c]-&gt;urgent = False;
+</a><a href="#h1-4-7" id="h1-4-7" class="i">+			XFree(wmh);
+</a><a href="#h1-4-8" id="h1-4-8" class="i">+		}
+</a> 	}
+ 
+ 	drawbar();
+<a href="#h1-5" id="h1-5" class="h">@@ -797,6 +805,7 @@ movetab(const Arg *arg) {
+</a> void
+ propertynotify(const XEvent *e) {
+ 	const XPropertyEvent *ev = &amp;e-&gt;xproperty;
+<a href="#h1-5-3" id="h1-5-3" class="i">+	XWMHints *wmh;
+</a> 	int c;
+ 	char* selection = NULL;
+ 	Arg arg;
+<a href="#h1-6" id="h1-6" class="h">@@ -811,6 +820,21 @@ propertynotify(const XEvent *e) {
+</a> 			arg.v = cmd;
+ 			spawn(&amp;arg);
+ 		}
+<a href="#h1-6-3" id="h1-6-3" class="i">+	} else if(ev-&gt;state == PropertyNewValue &amp;&amp; ev-&gt;atom == XA_WM_HINTS
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+			&amp;&amp; (c = getclient(ev-&gt;window)) &gt; -1
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+			&amp;&amp; (wmh = XGetWMHints(dpy, clients[c]-&gt;win))) {
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+		if(wmh-&gt;flags &amp; XUrgencyHint) {
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+			if(c != sel) {
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+				clients[c]-&gt;urgent = True;
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+				drawbar();
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+			}
+</a><a href="#h1-6-11" id="h1-6-11" class="i">+			XFree(wmh);
+</a><a href="#h1-6-12" id="h1-6-12" class="i">+			if((wmh = XGetWMHints(dpy, win))) {
+</a><a href="#h1-6-13" id="h1-6-13" class="i">+				wmh-&gt;flags |= XUrgencyHint;
+</a><a href="#h1-6-14" id="h1-6-14" class="i">+				XSetWMHints(dpy, win, wmh);
+</a><a href="#h1-6-15" id="h1-6-15" class="i">+			}
+</a><a href="#h1-6-16" id="h1-6-16" class="i">+		}
+</a><a href="#h1-6-17" id="h1-6-17" class="i">+		XFree(wmh);
+</a> 	} else if(ev-&gt;state != PropertyDelete &amp;&amp; ev-&gt;atom == XA_WM_NAME
+ 			&amp;&amp; (c = getclient(ev-&gt;window)) &gt; -1) {
+ 		updatetitle(c);
+<a href="#h1-7" id="h1-7" class="h">@@ -910,6 +934,7 @@ setcmd(int argc, char *argv[], int replace) {
+</a> void
+ setup(void) {
+ 	int bitm, tx, ty, tw, th, dh, dw, isfixed;
+<a href="#h1-7-3" id="h1-7-3" class="i">+	XWMHints *wmh;
+</a> 	XClassHint class_hint;
+ 	XSizeHints *size_hint;
+ 
+<a href="#h1-8" id="h1-8" class="h">@@ -969,6 +994,8 @@ setup(void) {
+</a> 	dc.norm[ColFG] = getcolor(normfgcolor);
+ 	dc.sel[ColBG] = getcolor(selbgcolor);
+ 	dc.sel[ColFG] = getcolor(selfgcolor);
+<a href="#h1-8-3" id="h1-8-3" class="i">+	dc.urg[ColBG] = getcolor(urgbgcolor);
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	dc.urg[ColFG] = getcolor(urgfgcolor);
+</a> 	dc.drawable = XCreatePixmap(dpy, root, ww, wh,
+ 			DefaultDepth(dpy, screen));
+ 	dc.gc = XCreateGC(dpy, root, 0, 0);
+<a href="#h1-9" id="h1-9" class="h">@@ -997,8 +1024,10 @@ setup(void) {
+</a> 		size_hint-&gt;min_width = size_hint-&gt;max_width = ww;
+ 		size_hint-&gt;min_height = size_hint-&gt;max_height = wh;
+ 	}
+<a href="#h1-9-3" id="h1-9-3" class="d">-	XSetWMProperties(dpy, win, NULL, NULL, NULL, 0, size_hint, NULL, NULL);
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+	wmh = XAllocWMHints();
+</a><a href="#h1-9-5" id="h1-9-5" class="i">+	XSetWMProperties(dpy, win, NULL, NULL, NULL, 0, size_hint, wmh, NULL);
+</a> 	XFree(size_hint);
+<a href="#h1-9-7" id="h1-9-7" class="i">+	XFree(wmh);
+</a> 
+ 	XSetWMProtocols(dpy, win, &amp;wmatom[WMDelete], 1);
+ 
+</pre>
+</div>
+</body>
+</html>

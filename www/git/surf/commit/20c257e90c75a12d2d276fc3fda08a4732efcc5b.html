@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>opening new windows works now. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/20c257e90c75a12d2d276fc3fda08a4732efcc5b.html">20c257e90c75a12d2d276fc3fda08a4732efcc5b</a>
+<b>parent</b> <a href="../commit/58322c0b11dc9eccc71d70c260ac1005e19674bb.html">58322c0b11dc9eccc71d70c260ac1005e19674bb</a>
+<b>Author:</b> Enno Boland (Gottox) &lt;<a href="mailto:gottox@s01.de">gottox@s01.de</a>&gt;
+<b>Date:</b>   Sat,  6 Jun 2009 17:26:43 +0200
+
+opening new windows works now.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -45,7 +45,8 @@ static void progresschange(WebKitWebView *view, gint p, gpointer d);
+</a> static void loadcommit(WebKitWebView *view, WebKitWebFrame *f, gpointer d);
+ static void linkhover(WebKitWebView* page, const gchar* t, const gchar* l, gpointer d);
+ static void destroyclient(Client *c);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static gboolean newwindow(WebKitWebView *view, WebKitWebFrame *f,
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+WebKitWebView newwindow(WebKitWebView  *v, WebKitWebFrame *f, gpointer d);
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static gboolean decidewindow(WebKitWebView *view, WebKitWebFrame *f,
+</a> 		WebKitNetworkRequest *r, WebKitWebNavigationAction *n,
+ 		WebKitWebPolicyDecision *p, gpointer d);
+ static gboolean download(WebKitWebView *view, GObject *o, gpointer d);
+<a href="#h0-1" id="h0-1" class="h">@@ -123,16 +124,19 @@ download(WebKitWebView *view, GObject *o, gpointer d) {
+</a> }
+ 
+ gboolean
+<a href="#h0-1-3" id="h0-1-3" class="d">-newwindow(WebKitWebView *view, WebKitWebFrame *f,
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+decidewindow(WebKitWebView *view, WebKitWebFrame *f,
+</a> 		WebKitNetworkRequest *r, WebKitWebNavigationAction *n,
+ 		WebKitWebPolicyDecision *p, gpointer d) {
+ 	/* TODO */
+<a href="#h0-1-8" id="h0-1-8" class="d">-	puts(&quot;new&quot;);
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	Client *c = newclient();
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	webkit_web_view_load_request(c-&gt;view, r);
+</a> 	return TRUE;
+ }
+ 
+<a href="#h0-1-14" id="h0-1-14" class="i">+WebKitWebView newwindow(WebKitWebView  *v, WebKitWebFrame *f, gpointer d) {
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	/* TODO */
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	Client *c = newclient();
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	return *c-&gt;view;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+}
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+
+</a> void
+ linkhover(WebKitWebView* page, const gchar* t, const gchar* l, gpointer d) {
+ 	Client *c = (Client *)d;
+<a href="#h0-2" id="h0-2" class="h">@@ -316,7 +320,8 @@ newclient(void) {
+</a> 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;load-progress-changed&quot;, G_CALLBACK(progresschange), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;load-committed&quot;, G_CALLBACK(loadcommit), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;hovering-over-link&quot;, G_CALLBACK(linkhover), c);
+<a href="#h0-2-3" id="h0-2-3" class="d">-	g_signal_connect(G_OBJECT(c-&gt;view), &quot;new-window-policy-decision-requested&quot;, G_CALLBACK(newwindow), c);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	g_signal_connect(G_OBJECT(c-&gt;view), &quot;create-web-view&quot;, G_CALLBACK(newwindow), c);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	g_signal_connect(G_OBJECT(c-&gt;view), &quot;new-window-policy-decision-requested&quot;, G_CALLBACK(decidewindow), c);
+</a> 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;download-requested&quot;, G_CALLBACK(download), c);
+ 
+ 	/* urlbar */
+</pre>
+</div>
+</body>
+</html>

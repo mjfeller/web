@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>grab on the slock window instead on the root window - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8322f22871ee1da82546dfcdea484ef9db6d4942.html">8322f22871ee1da82546dfcdea484ef9db6d4942</a>
+<b>parent</b> <a href="../commit/d83a9a1d01fb70df9859ea231c8d7a2fb898c1e7.html">d83a9a1d01fb70df9859ea231c8d7a2fb898c1e7</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Fri,  2 Mar 2007 21:50:05 +0100
+
+grab on the slock window instead on the root window
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 3 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -86,15 +86,16 @@ main(int argc, char **argv) {
+</a> 	pmap = XCreateBitmapFromData(dpy, w, curs, 8, 8);
+ 	invisible = XCreatePixmapCursor(dpy, pmap, pmap, &amp;black, &amp;black, 0, 0);
+ 	XDefineCursor(dpy, w, invisible);
+<a href="#h0-0-3" id="h0-0-3" class="i">+	XMapRaised(dpy, w);
+</a> 	for(len = 1000; len; len--) {
+<a href="#h0-0-5" id="h0-0-5" class="d">-		if(XGrabPointer(dpy, root, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		if(XGrabPointer(dpy, w, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+</a> 			GrabModeAsync, GrabModeSync, None, invisible, CurrentTime) == GrabSuccess)
+ 			break;
+ 		usleep(1000);
+ 	}
+ 	if((running = running &amp;&amp; (len &gt; 0))) {
+ 		for(len = 1000; len; len--) {
+<a href="#h0-0-13" id="h0-0-13" class="d">-			if(XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+			if(XGrabKeyboard(dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+</a> 				== GrabSuccess)
+ 				break;
+ 			usleep(1000);
+<a href="#h0-1" id="h0-1" class="h">@@ -102,7 +103,6 @@ main(int argc, char **argv) {
+</a> 		running = (len &gt; 0);
+ 	}
+ 	len = 0;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	XMapRaised(dpy, w);
+</a> 	XSync(dpy, False);
+ 
+ 	/* main event loop */
+</pre>
+</div>
+</body>
+</html>

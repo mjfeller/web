@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>minor fix to view() - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bf76cefe47749f784d4ee3b7b71c1c86460e236b.html">bf76cefe47749f784d4ee3b7b71c1c86460e236b</a>
+<b>parent</b> <a href="../commit/9bb0f20515023aa5471c628d01a6e65e93040dc1.html">9bb0f20515023aa5471c628d01a6e65e93040dc1</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed,  2 Jul 2008 11:06:46 +0100
+
+minor fix to view()
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 6 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -94,6 +94,8 @@ struct Client {
+</a> 	Client *next;
+ 	Client *snext;
+ 	Window win;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	void *aux;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	void (*freeaux)(void *);
+</a> };
+ 
+ typedef struct {
+<a href="#h0-1" id="h0-1" class="h">@@ -1519,6 +1521,8 @@ unmanage(Client *c) {
+</a> 	detachstack(c);
+ 	if(sel == c)
+ 		focus(NULL);
+<a href="#h0-1-3" id="h0-1-3" class="i">+	if(c-&gt;aux &amp;&amp; c-&gt;freeaux)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		c-&gt;freeaux(c-&gt;aux);
+</a> 	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+ 	setclientstate(c, WithdrawnState);
+ 	free(c);
+<a href="#h0-2" id="h0-2" class="h">@@ -1642,6 +1646,8 @@ updatewmhints(Client *c) {
+</a> 
+ void
+ view(const Arg *arg) {
+<a href="#h0-2-3" id="h0-2-3" class="i">+	if(arg &amp;&amp; (arg-&gt;i &amp; TAGMASK) == tagset[seltags])
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		return;
+</a> 	seltags ^= 1; /* toggle sel tagset */
+ 	if(arg &amp;&amp; (arg-&gt;ui &amp; TAGMASK))
+ 		tagset[seltags] = arg-&gt;i &amp; TAGMASK;
+</pre>
+</div>
+</body>
+</html>

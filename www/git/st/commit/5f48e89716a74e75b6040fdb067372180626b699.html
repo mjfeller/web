@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Revert &quot;Remove unnecessary XFilterEvent call.&quot; - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5f48e89716a74e75b6040fdb067372180626b699.html">5f48e89716a74e75b6040fdb067372180626b699</a>
+<b>parent</b> <a href="../commit/bdd649a10289ade364f3deab3bbf6ee3169d67ca.html">bdd649a10289ade364f3deab3bbf6ee3169d67ca</a>
+<b>Author:</b> Weng Xuetian &lt;<a href="mailto:wengxt@gmail.com">wengxt@gmail.com</a>&gt;
+<b>Date:</b>   Thu,  2 Jul 2015 08:31:12 +0200
+
+Revert &quot;Remove unnecessary XFilterEvent call.&quot;
+
+This reverts commit d2937b05aed9cee8d6651cd806d31682a853c773.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 7 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3912,6 +3912,13 @@ run(void) {
+</a> 	/* Waiting for window mapping */
+ 	do {
+ 		XNextEvent(xw.dpy, &amp;ev);
+<a href="#h0-0-3" id="h0-0-3" class="i">+		/*
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		 * XFilterEvent is required to be called after you using XOpenIM,
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		 * this is not unnecessary.It does not only filter the key event,
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		 * but some clientmessage for input method as well.
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		 */
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		if(XFilterEvent(&amp;ev, None))
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+			continue;
+</a> 		if(ev.type == ConfigureNotify) {
+ 			w = ev.xconfigure.width;
+ 			h = ev.xconfigure.height;
+</pre>
+</div>
+</body>
+</html>

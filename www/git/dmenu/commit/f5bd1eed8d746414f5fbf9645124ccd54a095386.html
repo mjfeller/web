@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fast but inexact - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f5bd1eed8d746414f5fbf9645124ccd54a095386.html">f5bd1eed8d746414f5fbf9645124ccd54a095386</a>
+<b>parent</b> <a href="../commit/1654d6cd6269bc784ee99045edd89e4bda24149f.html">1654d6cd6269bc784ee99045edd89e4bda24149f</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Sun, 15 May 2011 13:02:33 +0100
+
+fast but inexact
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>1 file changed, 7 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -444,19 +444,22 @@ paste(void) {
+</a> 
+ void
+ readstdin(void) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	char buf[sizeof text], *p;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	size_t i, size = 0;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	char buf[sizeof text], *p, *maxstr = NULL;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	size_t i, max = 0, size = 0;
+</a> 
+ 	for(i = 0; fgets(buf, sizeof buf, stdin); items[++i].text = NULL) {
+<a href="#h0-0-9" id="h0-0-9" class="d">-		if(i+1 == size / sizeof *items || !items)
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		if(i+1 &gt;= size / sizeof *items)
+</a> 			if(!(items = realloc(items, (size += BUFSIZ))))
+ 				eprintf(&quot;cannot realloc %u bytes:&quot;, size);
+ 		if((p = strchr(buf, &#39;\n&#39;)))
+ 			*p = &#39;\0&#39;;
+ 		if(!(items[i].text = strdup(buf)))
+ 			eprintf(&quot;cannot strdup %u bytes:&quot;, strlen(buf)+1);
+<a href="#h0-0-17" id="h0-0-17" class="d">-		inputw = MAX(inputw, textw(dc, items[i].text));
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		if(strlen(items[i].text) &gt; max)
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+			max = strlen(maxstr = items[i].text);
+</a> 	}
+<a href="#h0-0-21" id="h0-0-21" class="i">+	if(maxstr)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		inputw = textw(dc, maxstr);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix truecolor escapes, when both bg and fg are set - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9df9a4723dedf4f5e12c954376c4931a6976b918.html">9df9a4723dedf4f5e12c954376c4931a6976b918</a>
+<b>parent</b> <a href="../commit/e8dba89164fe70647a413b8568b545ff2d887a78.html">e8dba89164fe70647a413b8568b545ff2d887a78</a>
+<b>Author:</b> Amadeusz Sławiński &lt;<a href="mailto:amade@asmblr.net">amade@asmblr.net</a>&gt;
+<b>Date:</b>   Fri,  3 Jan 2014 15:24:24 +0100
+
+Fix truecolor escapes, when both bg and fg are set
+
+for example
+echo -e &quot;\e[48;2;255;0;0m\e[38;2;0;0;255m test &quot;
+should render on red bg with blue fg
+
+also now elinks works correctly when using &#39;truecolor&#39; option
+in preferences
+
+Signed-off-by: Amadeusz Sławiński &lt;amade@asmblr.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3083,6 +3083,7 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 			base.fg = defaultunderline;
+ 	}
+ 	if(IS_TRUECOL(base.fg)) {
+<a href="#h0-0-3" id="h0-0-3" class="i">+		colfg.alpha = 0xffff;
+</a> 		colfg.red = TRUERED(base.fg);
+ 		colfg.green = TRUEGREEN(base.fg);
+ 		colfg.blue = TRUEBLUE(base.fg);
+<a href="#h0-1" id="h0-1" class="h">@@ -3093,6 +3094,7 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 	}
+ 
+ 	if(IS_TRUECOL(base.bg)) {
+<a href="#h0-1-3" id="h0-1-3" class="i">+		colbg.alpha = 0xffff;
+</a> 		colbg.green = TRUEGREEN(base.bg);
+ 		colbg.red = TRUERED(base.bg);
+ 		colbg.blue = TRUEBLUE(base.bg);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>dwm draws a small caret before the client title if it&#39;s a versatile client - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1a25414ace62ff2cd616b8465af4bbe531b3697b.html">1a25414ace62ff2cd616b8465af4bbe531b3697b</a>
+<b>parent</b> <a href="../commit/317137149804c759e14a9e7d4704ac89262bd4e6.html">317137149804c759e14a9e7d4704ac89262bd4e6</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Thu, 22 Feb 2007 10:52:57 +0100
+
+dwm draws a small caret before the client title if it&#39;s a versatile client
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">draw.c</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">11</td><td><span class="i">++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>2 files changed, 31 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -7,6 +7,24 @@
+</a> /* static */
+ 
+ static void
+<a href="#h0-0-3" id="h0-0-3" class="i">+drawcaret(unsigned long col[ColLast]) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	int x;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	XGCValues gcv;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	XPoint pt[3];
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	gcv.foreground = col[ColFG];
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	XChangeGC(dpy, dc.gc, GCForeground, &amp;gcv);
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	x = (dc.font.ascent + dc.font.descent) / 2;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	pt[0].x = dc.x + 1;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	pt[0].y = dc.y + 1 + x;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	pt[1].x = 0;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	pt[1].y = -x;
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	pt[2].x = x;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	pt[2].y = 0;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	XDrawLines(dpy, dc.drawable, dc.gc, pt, 3, CoordModePrevious);
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+}
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+static void
+</a> drawsquare(Bool filled, Bool empty, unsigned long col[ColLast]) {
+ 	int x;
+ 	XGCValues gcv;
+<a href="#h0-1" id="h0-1" class="h">@@ -79,7 +97,13 @@ drawstatus(void) {
+</a> 	drawtext(stext, dc.norm);
+ 	if((dc.w = dc.x - x) &gt; bh) {
+ 		dc.x = x;
+<a href="#h0-1-3" id="h0-1-3" class="d">-		drawtext(sel ? sel-&gt;name : NULL, sel ? dc.sel : dc.norm);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		if(sel) {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			drawtext(sel-&gt;name, dc.sel);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			if(sel-&gt;isversatile)
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+				drawcaret(dc.sel);
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+		}
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		else
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			drawtext(NULL, dc.norm);
+</a> 	}
+ 	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, sw, bh, 0, 0);
+ 	XSync(dpy, False);
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -19,11 +19,12 @@ Windows are grouped by tags. Each window can be tagged with one or multiple
+</a> tags. Selecting certain tags displays all windows with these tags.
+ .P
+ dwm contains a small status bar which displays all available tags, the layout,
+<a href="#h1-0-3" id="h1-0-3" class="d">-the title of the focused window, and the text read from standard input. The
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-selected tags are indicated with a different color. The tags of the focused
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-window are indicated with a filled square in the top left corner.  The tags
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-which are applied to one or more windows are indicated with an empty square in
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-the top left corner.
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+the title of the focused window, and the text read from standard input. If
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+the focused window is in versatile state, a small caret is printed before
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+its title. The selected tags are indicated with a different color. The tags
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+of the focused window are indicated with a filled square in the top left
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+corner.  The tags which are applied to one or more windows are indicated
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+with an empty square in the top left corner.
+</a> .P
+ dwm draws a small border around windows to indicate the focus state.
+ .SH OPTIONS
+</pre>
+</div>
+</body>
+</html>

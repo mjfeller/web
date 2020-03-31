@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Move config.h include from st.c to x.c - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/65976c1a29f2945c3cfb6af74cd6440cf193021d.html">65976c1a29f2945c3cfb6af74cd6440cf193021d</a>
+<b>parent</b> <a href="../commit/32d3b1d00f66eda4f5446f3b32cabed2c9a77a40.html">32d3b1d00f66eda4f5446f3b32cabed2c9a77a40</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 17 Oct 2017 15:21:04 -0500
+
+Move config.h include from st.c to x.c
+
+config.h includes references to KeySyms and other X stuff.  Until we
+come up with a cleaner way to separate configuration, it is simpler
+(leads to more code removal) to have this here.
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">73</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">47</td><td><span class="i">++++</span><span class="d">-------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.h</a></td><td> | </td><td class="num">50</td><td><span class="i">++++++++++++++</span><span class="d">------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">win.h</a></td><td> | </td><td class="num">3</td><td><span class="i"></span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">x.c</a></td><td> | </td><td class="num">37</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 91 insertions(+), 119 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -5,8 +5,8 @@
+</a>  *
+  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
+  */
+<a href="#h0-0-3" id="h0-0-3" class="d">-char font[] = &quot;Liberation Mono:pixelsize=12:antialias=true:autohint=true&quot;;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-int borderpx = 2;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static char *font = &quot;Liberation Mono:pixelsize=12:antialias=true:autohint=true&quot;;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+static int borderpx = 2;
+</a> 
+ /*
+  * What program is execed by st depends of these precedence rules:
+<a href="#h0-1" id="h0-1" class="h">@@ -16,54 +16,54 @@ int borderpx = 2;
+</a>  * 4: value of shell in /etc/passwd
+  * 5: value of shell in config.h
+  */
+<a href="#h0-1-3" id="h0-1-3" class="d">-static char shell[] = &quot;/bin/sh&quot;;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-static char *utmp = NULL;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-static char stty_args[] = &quot;stty raw pass8 nl -echo -iexten -cstopb 38400&quot;;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+char *shell = &quot;/bin/sh&quot;;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+char *utmp = NULL;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+char *stty_args = &quot;stty raw pass8 nl -echo -iexten -cstopb 38400&quot;;
+</a> 
+ /* identification sequence returned in DA and DECID */
+<a href="#h0-1-11" id="h0-1-11" class="d">-static char vtiden[] = &quot;\033[?6c&quot;;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+char *vtiden = &quot;\033[?6c&quot;;
+</a> 
+ /* Kerning / character bounding-box multipliers */
+<a href="#h0-1-15" id="h0-1-15" class="d">-float cwscale = 1.0;
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-float chscale = 1.0;
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+static float cwscale = 1.0;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+static float chscale = 1.0;
+</a> 
+ /*
+  * word delimiter string
+  *
+  * More advanced example: &quot; `&#39;\&quot;()[]{}&quot;
+  */
+<a href="#h0-1-25" id="h0-1-25" class="d">-static char worddelimiters[] = &quot; &quot;;
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+char *worddelimiters = &quot; &quot;;
+</a> 
+ /* selection timeouts (in milliseconds) */
+<a href="#h0-1-29" id="h0-1-29" class="d">-unsigned int doubleclicktimeout = 300;
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-unsigned int tripleclicktimeout = 600;
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+static unsigned int doubleclicktimeout = 300;
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+static unsigned int tripleclicktimeout = 600;
+</a> 
+ /* alt screens */
+ int allowaltscreen = 1;
+ 
+ /* frames per second st should at maximum draw to the screen */
+<a href="#h0-1-38" id="h0-1-38" class="d">-unsigned int xfps = 120;
+</a><a href="#h0-1-39" id="h0-1-39" class="d">-unsigned int actionfps = 30;
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+static unsigned int xfps = 120;
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+static unsigned int actionfps = 30;
+</a> 
+ /*
+  * blinking timeout (set to 0 to disable blinking) for the terminal blinking
+  * attribute.
+  */
+<a href="#h0-1-47" id="h0-1-47" class="d">-unsigned int blinktimeout = 800;
+</a><a href="#h0-1-48" id="h0-1-48" class="i">+static unsigned int blinktimeout = 800;
+</a> 
+ /*
+  * thickness of underline and bar cursors
+  */
+<a href="#h0-1-53" id="h0-1-53" class="d">-unsigned int cursorthickness = 2;
+</a><a href="#h0-1-54" id="h0-1-54" class="i">+static unsigned int cursorthickness = 2;
+</a> 
+ /*
+  * bell volume. It must be a value between -100 and 100. Use 0 for disabling
+  * it
+  */
+<a href="#h0-1-60" id="h0-1-60" class="d">-int bellvolume = 0;
+</a><a href="#h0-1-61" id="h0-1-61" class="i">+static int bellvolume = 0;
+</a> 
+ /* default TERM value */
+<a href="#h0-1-64" id="h0-1-64" class="d">-char termname[] = &quot;st-256color&quot;;
+</a><a href="#h0-1-65" id="h0-1-65" class="i">+char *termname = &quot;st-256color&quot;;
+</a> 
+ /*
+  * spaces per tab
+<a href="#h0-2" id="h0-2" class="h">@@ -80,10 +80,10 @@ char termname[] = &quot;st-256color&quot;;
+</a>  *
+  *	stty tabs
+  */
+<a href="#h0-2-3" id="h0-2-3" class="d">-static unsigned int tabspaces = 8;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+unsigned int tabspaces = 8;
+</a> 
+ /* Terminal colors (16 first used in escape sequence) */
+<a href="#h0-2-7" id="h0-2-7" class="d">-const char *colorname[] = {
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+static const char *colorname[] = {
+</a> 	/* 8 normal colors */
+ 	&quot;black&quot;,
+ 	&quot;red3&quot;,
+<a href="#h0-3" id="h0-3" class="h">@@ -118,8 +118,8 @@ const char *colorname[] = {
+</a>  */
+ unsigned int defaultfg = 7;
+ unsigned int defaultbg = 0;
+<a href="#h0-3-3" id="h0-3-3" class="d">-unsigned int defaultcs = 256;
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-unsigned int defaultrcs = 257;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+static unsigned int defaultcs = 256;
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+static unsigned int defaultrcs = 257;
+</a> 
+ /*
+  * Default shape of cursor
+<a href="#h0-4" id="h0-4" class="h">@@ -128,33 +128,33 @@ unsigned int defaultrcs = 257;
+</a>  * 6: Bar (&quot;|&quot;)
+  * 7: Snowman (&quot;☃&quot;)
+  */
+<a href="#h0-4-3" id="h0-4-3" class="d">-unsigned int cursorshape = 2;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+static unsigned int cursorshape = 2;
+</a> 
+ /*
+  * Default columns and rows numbers
+  */
+ 
+<a href="#h0-4-10" id="h0-4-10" class="d">-unsigned int cols = 80;
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-unsigned int rows = 24;
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+static unsigned int cols = 80;
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+static unsigned int rows = 24;
+</a> 
+ /*
+  * Default colour and shape of the mouse cursor
+  */
+<a href="#h0-4-18" id="h0-4-18" class="d">-unsigned int mouseshape = XC_xterm;
+</a><a href="#h0-4-19" id="h0-4-19" class="d">-unsigned int mousefg = 7;
+</a><a href="#h0-4-20" id="h0-4-20" class="d">-unsigned int mousebg = 0;
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+static unsigned int mouseshape = XC_xterm;
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+static unsigned int mousefg = 7;
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+static unsigned int mousebg = 0;
+</a> 
+ /*
+  * Color used to display font attributes when fontconfig selected a font which
+  * doesn&#39;t match the ones requested.
+  */
+<a href="#h0-4-29" id="h0-4-29" class="d">-unsigned int defaultattr = 11;
+</a><a href="#h0-4-30" id="h0-4-30" class="i">+static unsigned int defaultattr = 11;
+</a> 
+ /*
+  * Internal mouse shortcuts.
+  * Beware that overloading Button1 will disable the selection.
+  */
+<a href="#h0-4-36" id="h0-4-36" class="d">-MouseShortcut mshortcuts[] = {
+</a><a href="#h0-4-37" id="h0-4-37" class="i">+static MouseShortcut mshortcuts[] = {
+</a> 	/* button               mask            string */
+ 	{ Button4,              XK_ANY_MOD,     &quot;\031&quot; },
+ 	{ Button5,              XK_ANY_MOD,     &quot;\005&quot; },
+<a href="#h0-5" id="h0-5" class="h">@@ -164,7 +164,7 @@ MouseShortcut mshortcuts[] = {
+</a> #define MODKEY Mod1Mask
+ #define TERMMOD (ControlMask|ShiftMask)
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-Shortcut shortcuts[] = {
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+static Shortcut shortcuts[] = {
+</a> 	/* mask                 keysym          function        argument */
+ 	{ XK_ANY_MOD,           XK_Break,       sendbreak,      {.i =  0} },
+ 	{ ControlMask,          XK_Print,       toggleprinter,  {.i =  0} },
+<a href="#h0-6" id="h0-6" class="h">@@ -209,26 +209,26 @@ Shortcut shortcuts[] = {
+</a>  * If you want keys other than the X11 function keys (0xFD00 - 0xFFFF)
+  * to be mapped below, add them to this array.
+  */
+<a href="#h0-6-3" id="h0-6-3" class="d">-KeySym mappedkeys[] = { -1 };
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+static KeySym mappedkeys[] = { -1 };
+</a> 
+ /*
+  * State bits to ignore when matching key or button events.  By default,
+  * numlock (Mod2Mask) and keyboard layout (XK_SWITCH_MOD) are ignored.
+  */
+<a href="#h0-6-10" id="h0-6-10" class="d">-uint ignoremod = Mod2Mask|XK_SWITCH_MOD;
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+static uint ignoremod = Mod2Mask|XK_SWITCH_MOD;
+</a> 
+ /*
+  * Override mouse-select while mask is active (when MODE_MOUSE is set).
+  * Note that if you want to use ShiftMask with selmasks, set this to an other
+  * modifier, set to 0 to not use it.
+  */
+<a href="#h0-6-18" id="h0-6-18" class="d">-uint forceselmod = ShiftMask;
+</a><a href="#h0-6-19" id="h0-6-19" class="i">+static uint forceselmod = ShiftMask;
+</a> 
+ /*
+  * This is the huge key array which defines all compatibility to the Linux
+  * world. Please decide about changes wisely.
+  */
+<a href="#h0-6-25" id="h0-6-25" class="d">-Key key[] = {
+</a><a href="#h0-6-26" id="h0-6-26" class="i">+static Key key[] = {
+</a> 	/* keysym           mask            string      appkey appcursor crlf */
+ 	{ XK_KP_Home,       ShiftMask,      &quot;\033[2J&quot;,       0,   -1,    0},
+ 	{ XK_KP_Home,       ShiftMask,      &quot;\033[1;2H&quot;,     0,   +1,    0},
+<a href="#h0-7" id="h0-7" class="h">@@ -451,7 +451,7 @@ Key key[] = {
+</a>  * ButtonRelease and MotionNotify.
+  * If no match is found, regular selection is used.
+  */
+<a href="#h0-7-3" id="h0-7-3" class="d">-uint selmasks[] = {
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+static uint selmasks[] = {
+</a> 	[SEL_RECTANGULAR] = Mod1Mask,
+ };
+ 
+<a href="#h0-8" id="h0-8" class="h">@@ -459,8 +459,7 @@ uint selmasks[] = {
+</a>  * Printable characters in ASCII, used to estimate the advance width
+  * of single wide characters.
+  */
+<a href="#h0-8-3" id="h0-8-3" class="d">-char ascii_printable[] =
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+static char ascii_printable[] =
+</a> 	&quot; !\&quot;#$%&amp;&#39;()*+,-./0123456789:;&lt;=&gt;?&quot;
+ 	&quot;@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_&quot;
+ 	&quot;`abcdefghijklmnopqrstuvwxyz{|}~&quot;;
+<a href="#h0-8-8" id="h0-8-8" class="d">-
+</a><b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -109,19 +109,6 @@ typedef struct {
+</a> 	int narg;              /* nb of args */
+ } STREscape;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-/* function definitions used in config.h */
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-static void clipcopy(const Arg *);
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-static void clippaste(const Arg *);
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-static void numlock(const Arg *);
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-static void selpaste(const Arg *);
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-static void printsel(const Arg *);
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-static void printscreen(const Arg *) ;
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-static void iso14755(const Arg *);
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-static void toggleprinter(const Arg *);
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-static void sendbreak(const Arg *);
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-/* config.h for applying patches and the configuration. */
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-#include &quot;config.h&quot;
+</a> 
+ static void execsh(char **);
+ static void stty(char **);
+<a href="#h1-1" id="h1-1" class="h">@@ -199,14 +186,6 @@ static uchar utfmask[UTF_SIZ + 1] = {0xC0, 0x80, 0xE0, 0xF0, 0xF8};
+</a> static Rune utfmin[UTF_SIZ + 1] = {       0,    0,  0x80,  0x800,  0x10000};
+ static Rune utfmax[UTF_SIZ + 1] = {0x10FFFF, 0x7F, 0x7FF, 0xFFFF, 0x10FFFF};
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-/* config.h array lengths */
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-size_t colornamelen = LEN(colorname);
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-size_t mshortcutslen = LEN(mshortcuts);
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-size_t shortcutslen = LEN(shortcuts);
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-size_t selmaskslen = LEN(selmasks);
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-size_t keyslen = LEN(key);
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-size_t mappedkeyslen = LEN(mappedkeys);
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-
+</a> ssize_t
+ xwrite(int fd, const char *s, size_t len)
+ {
+<a href="#h1-2" id="h1-2" class="h">@@ -586,24 +565,6 @@ getsel(void)
+</a> }
+ 
+ void
+<a href="#h1-2-3" id="h1-2-3" class="d">-selpaste(const Arg *dummy)
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-{
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-	xselpaste();
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-}
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-
+</a><a href="#h1-2-8" id="h1-2-8" class="d">-void
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-clipcopy(const Arg *dummy)
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-{
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-	xclipcopy();
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-}
+</a><a href="#h1-2-13" id="h1-2-13" class="d">-
+</a><a href="#h1-2-14" id="h1-2-14" class="d">-void
+</a><a href="#h1-2-15" id="h1-2-15" class="d">-clippaste(const Arg *dummy)
+</a><a href="#h1-2-16" id="h1-2-16" class="d">-{
+</a><a href="#h1-2-17" id="h1-2-17" class="d">-	xclippaste();
+</a><a href="#h1-2-18" id="h1-2-18" class="d">-}
+</a><a href="#h1-2-19" id="h1-2-19" class="d">-
+</a><a href="#h1-2-20" id="h1-2-20" class="d">-void
+</a> selclear(void)
+ {
+ 	if (sel.ob.x == -1)
+<a href="#h1-3" id="h1-3" class="h">@@ -1572,7 +1533,7 @@ csihandle(void)
+</a> 		break;
+ 	case &#39;c&#39;: /* DA -- Device Attributes */
+ 		if (csiescseq.arg[0] == 0)
+<a href="#h1-3-3" id="h1-3-3" class="d">-			ttywrite(vtiden, sizeof(vtiden) - 1);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+			ttywrite(vtiden, strlen(vtiden));
+</a> 		break;
+ 	case &#39;C&#39;: /* CUF -- Cursor &lt;n&gt; Forward */
+ 	case &#39;a&#39;: /* HPR -- Cursor &lt;n&gt; Forward */
+<a href="#h1-4" id="h1-4" class="h">@@ -1791,7 +1752,7 @@ strhandle(void)
+</a> 				dec = base64dec(strescseq.args[2]);
+ 				if (dec) {
+ 					xsetsel(dec, CurrentTime);
+<a href="#h1-4-3" id="h1-4-3" class="d">-					clipcopy(NULL);
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+					xclipcopy();
+</a> 				} else {
+ 					fprintf(stderr, &quot;erresc: invalid base64\n&quot;);
+ 				}
+<a href="#h1-5" id="h1-5" class="h">@@ -2134,7 +2095,7 @@ tcontrolcode(uchar ascii)
+</a> 	case 0x99:   /* TODO: SGCI */
+ 		break;
+ 	case 0x9a:   /* DECID -- Identify Terminal */
+<a href="#h1-5-3" id="h1-5-3" class="d">-		ttywrite(vtiden, sizeof(vtiden) - 1);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		ttywrite(vtiden, strlen(vtiden));
+</a> 		break;
+ 	case 0x9b:   /* TODO: CSI */
+ 	case 0x9c:   /* TODO: ST */
+<a href="#h1-6" id="h1-6" class="h">@@ -2206,7 +2167,7 @@ eschandle(uchar ascii)
+</a> 		}
+ 		break;
+ 	case &#39;Z&#39;: /* DECID -- Identify Terminal */
+<a href="#h1-6-3" id="h1-6-3" class="d">-		ttywrite(vtiden, sizeof(vtiden) - 1);
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+		ttywrite(vtiden, strlen(vtiden));
+</a> 		break;
+ 	case &#39;c&#39;: /* RIS -- Reset to inital state */
+ 		treset();
+<b>diff --git a/<a id="h2" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -190,6 +190,13 @@ typedef struct {
+</a> void die(const char *, ...);
+ void redraw(void);
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+void iso14755(const Arg *);
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+void numlock(const Arg *);
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+void printscreen(const Arg *);
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+void printsel(const Arg *);
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+void sendbreak(const Arg *);
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+void toggleprinter(const Arg *);
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+
+</a> int tattrset(int);
+ void tnew(int, int);
+ void tresize(int, int);
+<a href="#h2-1" id="h2-1" class="h">@@ -225,42 +232,13 @@ extern pid_t pid;
+</a> extern int oldbutton;
+ 
+ /* config.h globals */
+<a href="#h2-1-3" id="h2-1-3" class="d">-extern char font[];
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-extern int borderpx;
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-extern float cwscale;
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-extern float chscale;
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-extern unsigned int doubleclicktimeout;
+</a><a href="#h2-1-8" id="h2-1-8" class="d">-extern unsigned int tripleclicktimeout;
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+extern char *shell;
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+extern char *utmp;
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+extern char *stty_args;
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+extern char *vtiden;
+</a><a href="#h2-1-13" id="h2-1-13" class="i">+extern char *worddelimiters;
+</a> extern int allowaltscreen;
+<a href="#h2-1-15" id="h2-1-15" class="d">-extern unsigned int xfps;
+</a><a href="#h2-1-16" id="h2-1-16" class="d">-extern unsigned int actionfps;
+</a><a href="#h2-1-17" id="h2-1-17" class="d">-extern unsigned int cursorthickness;
+</a><a href="#h2-1-18" id="h2-1-18" class="d">-extern int bellvolume;
+</a><a href="#h2-1-19" id="h2-1-19" class="d">-extern unsigned int blinktimeout;
+</a><a href="#h2-1-20" id="h2-1-20" class="d">-extern char termname[];
+</a><a href="#h2-1-21" id="h2-1-21" class="d">-extern const char *colorname[];
+</a><a href="#h2-1-22" id="h2-1-22" class="d">-extern size_t colornamelen;
+</a><a href="#h2-1-23" id="h2-1-23" class="i">+extern char *termname;
+</a><a href="#h2-1-24" id="h2-1-24" class="i">+extern unsigned int tabspaces;
+</a> extern unsigned int defaultfg;
+ extern unsigned int defaultbg;
+<a href="#h2-1-27" id="h2-1-27" class="d">-extern unsigned int defaultcs;
+</a><a href="#h2-1-28" id="h2-1-28" class="d">-extern unsigned int defaultrcs;
+</a><a href="#h2-1-29" id="h2-1-29" class="d">-extern unsigned int cursorshape;
+</a><a href="#h2-1-30" id="h2-1-30" class="d">-extern unsigned int cols;
+</a><a href="#h2-1-31" id="h2-1-31" class="d">-extern unsigned int rows;
+</a><a href="#h2-1-32" id="h2-1-32" class="d">-extern unsigned int mouseshape;
+</a><a href="#h2-1-33" id="h2-1-33" class="d">-extern unsigned int mousefg;
+</a><a href="#h2-1-34" id="h2-1-34" class="d">-extern unsigned int mousebg;
+</a><a href="#h2-1-35" id="h2-1-35" class="d">-extern unsigned int defaultattr;
+</a><a href="#h2-1-36" id="h2-1-36" class="d">-extern MouseShortcut mshortcuts[];
+</a><a href="#h2-1-37" id="h2-1-37" class="d">-extern size_t mshortcutslen;
+</a><a href="#h2-1-38" id="h2-1-38" class="d">-extern Shortcut shortcuts[];
+</a><a href="#h2-1-39" id="h2-1-39" class="d">-extern size_t shortcutslen;
+</a><a href="#h2-1-40" id="h2-1-40" class="d">-extern KeySym mappedkeys[];
+</a><a href="#h2-1-41" id="h2-1-41" class="d">-extern size_t mappedkeyslen;
+</a><a href="#h2-1-42" id="h2-1-42" class="d">-extern uint ignoremod;
+</a><a href="#h2-1-43" id="h2-1-43" class="d">-extern uint forceselmod;
+</a><a href="#h2-1-44" id="h2-1-44" class="d">-extern Key key[];
+</a><a href="#h2-1-45" id="h2-1-45" class="d">-extern size_t keyslen;
+</a><a href="#h2-1-46" id="h2-1-46" class="d">-extern uint selmasks[];
+</a><a href="#h2-1-47" id="h2-1-47" class="d">-extern size_t selmaskslen;
+</a><a href="#h2-1-48" id="h2-1-48" class="d">-extern char ascii_printable[];
+</a><b>diff --git a/<a id="h3" href="../file/win.h.html">win.h</a> b/<a href="../file/win.h.html">win.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -18,6 +18,3 @@ void xsettitle(char *);
+</a> void xsetpointermotion(int);
+ void xselpaste(void);
+ void xsetsel(char *, Time);
+<a href="#h3-0-3" id="h3-0-3" class="d">-void zoom(const Arg *);
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-void zoomabs(const Arg *);
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-void zoomreset(const Arg *);
+</a><b>diff --git a/<a id="h4" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -20,6 +20,25 @@ static char *argv0;
+</a> #include &quot;st.h&quot;
+ #include &quot;win.h&quot;
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+/* function definitions used in config.h */
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+static void clipcopy(const Arg *);
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+static void clippaste(const Arg *);
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+static void selpaste(const Arg *);
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+static void zoom(const Arg *);
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+static void zoomabs(const Arg *);
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+static void zoomreset(const Arg *);
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+/* config.h for applying patches and the configuration. */
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+#include &quot;config.h&quot;
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+/* config.h array lengths */
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+size_t colornamelen = LEN(colorname);
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+size_t mshortcutslen = LEN(mshortcuts);
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+size_t shortcutslen = LEN(shortcuts);
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+size_t selmaskslen = LEN(selmasks);
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+size_t keyslen = LEN(key);
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+size_t mappedkeyslen = LEN(mappedkeys);
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+
+</a> /* XEMBED messages */
+ #define XEMBED_FOCUS_IN  4
+ #define XEMBED_FOCUS_OUT 5
+<a href="#h4-1" id="h4-1" class="h">@@ -189,6 +208,24 @@ static char *opt_name  = NULL;
+</a> static char *opt_title = NULL;
+ 
+ void
+<a href="#h4-1-3" id="h4-1-3" class="i">+clipcopy(const Arg *dummy)
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+{
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+	xclipcopy();
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+}
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+void
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+clippaste(const Arg *dummy)
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+{
+</a><a href="#h4-1-11" id="h4-1-11" class="i">+	xclippaste();
+</a><a href="#h4-1-12" id="h4-1-12" class="i">+}
+</a><a href="#h4-1-13" id="h4-1-13" class="i">+
+</a><a href="#h4-1-14" id="h4-1-14" class="i">+void
+</a><a href="#h4-1-15" id="h4-1-15" class="i">+selpaste(const Arg *dummy)
+</a><a href="#h4-1-16" id="h4-1-16" class="i">+{
+</a><a href="#h4-1-17" id="h4-1-17" class="i">+	xselpaste();
+</a><a href="#h4-1-18" id="h4-1-18" class="i">+}
+</a><a href="#h4-1-19" id="h4-1-19" class="i">+
+</a><a href="#h4-1-20" id="h4-1-20" class="i">+void
+</a> zoom(const Arg *arg)
+ {
+ 	Arg larg;
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Makefile: bikesheddingly replace ${} with $() - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0b5748021877b2f214474b034d8bf0122ee88ed2.html">0b5748021877b2f214474b034d8bf0122ee88ed2</a>
+<b>parent</b> <a href="../commit/377bd37e212b1ec4c03a481245603c6560d0be22.html">377bd37e212b1ec4c03a481245603c6560d0be22</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Thu, 22 Mar 2018 11:18:56 +0100
+
+Makefile: bikesheddingly replace ${} with $()
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">72</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>2 files changed, 43 insertions(+), 43 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,71 +4,71 @@
+</a> include config.mk
+ 
+ SRC = drw.c dmenu.c stest.c util.c
+<a href="#h0-0-3" id="h0-0-3" class="d">-OBJ = ${SRC:.c=.o}
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+OBJ = $(SRC:.c=.o)
+</a> 
+ all: options dmenu stest
+ 
+ options:
+ 	@echo dmenu build options:
+<a href="#h0-0-10" id="h0-0-10" class="d">-	@echo &quot;CFLAGS   = ${CFLAGS}&quot;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	@echo &quot;LDFLAGS  = ${LDFLAGS}&quot;
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	@echo &quot;CC       = ${CC}&quot;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	@echo &quot;CFLAGS   = $(CFLAGS)&quot;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	@echo &quot;LDFLAGS  = $(LDFLAGS)&quot;
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	@echo &quot;CC       = $(CC)&quot;
+</a> 
+ .c.o:
+ 	@echo CC $&lt;
+<a href="#h0-0-19" id="h0-0-19" class="d">-	@${CC} -c ${CFLAGS} $&lt;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	@$(CC) -c $(CFLAGS) $&lt;
+</a> 
+ config.h:
+ 	@echo creating $@ from config.def.h
+ 	@cp config.def.h $@
+ 
+<a href="#h0-0-26" id="h0-0-26" class="d">-${OBJ}: arg.h config.h config.mk drw.h
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+$(OBJ): arg.h config.h config.mk drw.h
+</a> 
+ dmenu: dmenu.o drw.o util.o
+ 	@echo CC -o $@
+<a href="#h0-0-31" id="h0-0-31" class="d">-	@${CC} -o $@ dmenu.o drw.o util.o ${LDFLAGS}
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+	@$(CC) -o $@ dmenu.o drw.o util.o $(LDFLAGS)
+</a> 
+ stest: stest.o
+ 	@echo CC -o $@
+<a href="#h0-0-36" id="h0-0-36" class="d">-	@${CC} -o $@ stest.o ${LDFLAGS}
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+	@$(CC) -o $@ stest.o $(LDFLAGS)
+</a> 
+ clean:
+ 	@echo cleaning
+<a href="#h0-0-41" id="h0-0-41" class="d">-	@rm -f dmenu stest ${OBJ} dmenu-${VERSION}.tar.gz
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	@rm -f dmenu stest $(OBJ) dmenu-$(VERSION).tar.gz
+</a> 
+ dist: clean
+ 	@echo creating dist tarball
+<a href="#h0-0-46" id="h0-0-46" class="d">-	@mkdir -p dmenu-${VERSION}
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+	@mkdir -p dmenu-$(VERSION)
+</a> 	@cp LICENSE Makefile README arg.h config.def.h config.mk dmenu.1 \
+<a href="#h0-0-49" id="h0-0-49" class="d">-		drw.h util.h dmenu_path dmenu_run stest.1 ${SRC} \
+</a><a href="#h0-0-50" id="h0-0-50" class="d">-		dmenu-${VERSION}
+</a><a href="#h0-0-51" id="h0-0-51" class="d">-	@tar -cf dmenu-${VERSION}.tar dmenu-${VERSION}
+</a><a href="#h0-0-52" id="h0-0-52" class="d">-	@gzip dmenu-${VERSION}.tar
+</a><a href="#h0-0-53" id="h0-0-53" class="d">-	@rm -rf dmenu-${VERSION}
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+		drw.h util.h dmenu_path dmenu_run stest.1 $(SRC) \
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+		dmenu-$(VERSION)
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+	@tar -cf dmenu-$(VERSION).tar dmenu-$(VERSION)
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+	@gzip dmenu-$(VERSION).tar
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+	@rm -rf dmenu-$(VERSION)
+</a> 
+ install: all
+<a href="#h0-0-61" id="h0-0-61" class="d">-	@echo installing executables to ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-62" id="h0-0-62" class="d">-	@mkdir -p ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-63" id="h0-0-63" class="d">-	@cp -f dmenu dmenu_path dmenu_run stest ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-64" id="h0-0-64" class="d">-	@chmod 755 ${DESTDIR}${PREFIX}/bin/dmenu
+</a><a href="#h0-0-65" id="h0-0-65" class="d">-	@chmod 755 ${DESTDIR}${PREFIX}/bin/dmenu_path
+</a><a href="#h0-0-66" id="h0-0-66" class="d">-	@chmod 755 ${DESTDIR}${PREFIX}/bin/dmenu_run
+</a><a href="#h0-0-67" id="h0-0-67" class="d">-	@chmod 755 ${DESTDIR}${PREFIX}/bin/stest
+</a><a href="#h0-0-68" id="h0-0-68" class="d">-	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-0-69" id="h0-0-69" class="d">-	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-0-70" id="h0-0-70" class="d">-	@sed &quot;s/VERSION/${VERSION}/g&quot; &lt; dmenu.1 &gt; ${DESTDIR}${MANPREFIX}/man1/dmenu.1
+</a><a href="#h0-0-71" id="h0-0-71" class="d">-	@sed &quot;s/VERSION/${VERSION}/g&quot; &lt; stest.1 &gt; ${DESTDIR}${MANPREFIX}/man1/stest.1
+</a><a href="#h0-0-72" id="h0-0-72" class="d">-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/dmenu.1
+</a><a href="#h0-0-73" id="h0-0-73" class="d">-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/stest.1
+</a><a href="#h0-0-74" id="h0-0-74" class="i">+	@echo installing executables to $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+	@mkdir -p $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+	@cp -f dmenu dmenu_path dmenu_run stest $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+	@chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu
+</a><a href="#h0-0-78" id="h0-0-78" class="i">+	@chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_path
+</a><a href="#h0-0-79" id="h0-0-79" class="i">+	@chmod 755 $(DESTDIR)$(PREFIX)/bin/dmenu_run
+</a><a href="#h0-0-80" id="h0-0-80" class="i">+	@chmod 755 $(DESTDIR)$(PREFIX)/bin/stest
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+	@echo installing manual pages to $(DESTDIR)$(MANPREFIX)/man1
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
+</a><a href="#h0-0-83" id="h0-0-83" class="i">+	@sed &quot;s/VERSION/$(VERSION)/g&quot; &lt; dmenu.1 &gt; $(DESTDIR)$(MANPREFIX)/man1/dmenu.1
+</a><a href="#h0-0-84" id="h0-0-84" class="i">+	@sed &quot;s/VERSION/$(VERSION)/g&quot; &lt; stest.1 &gt; $(DESTDIR)$(MANPREFIX)/man1/stest.1
+</a><a href="#h0-0-85" id="h0-0-85" class="i">+	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/dmenu.1
+</a><a href="#h0-0-86" id="h0-0-86" class="i">+	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/stest.1
+</a> 
+ uninstall:
+<a href="#h0-0-89" id="h0-0-89" class="d">-	@echo removing executables from ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-90" id="h0-0-90" class="d">-	@rm -f ${DESTDIR}${PREFIX}/bin/dmenu
+</a><a href="#h0-0-91" id="h0-0-91" class="d">-	@rm -f ${DESTDIR}${PREFIX}/bin/dmenu_path
+</a><a href="#h0-0-92" id="h0-0-92" class="d">-	@rm -f ${DESTDIR}${PREFIX}/bin/dmenu_run
+</a><a href="#h0-0-93" id="h0-0-93" class="d">-	@rm -f ${DESTDIR}${PREFIX}/bin/stest
+</a><a href="#h0-0-94" id="h0-0-94" class="d">-	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-0-95" id="h0-0-95" class="d">-	@rm -f ${DESTDIR}${MANPREFIX}/man1/dmenu.1
+</a><a href="#h0-0-96" id="h0-0-96" class="d">-	@rm -f ${DESTDIR}${MANPREFIX}/man1/stest.1
+</a><a href="#h0-0-97" id="h0-0-97" class="i">+	@echo removing executables from $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-98" id="h0-0-98" class="i">+	@rm -f $(DESTDIR)$(PREFIX)/bin/dmenu
+</a><a href="#h0-0-99" id="h0-0-99" class="i">+	@rm -f $(DESTDIR)$(PREFIX)/bin/dmenu_path
+</a><a href="#h0-0-100" id="h0-0-100" class="i">+	@rm -f $(DESTDIR)$(PREFIX)/bin/dmenu_run
+</a><a href="#h0-0-101" id="h0-0-101" class="i">+	@rm -f $(DESTDIR)$(PREFIX)/bin/stest
+</a><a href="#h0-0-102" id="h0-0-102" class="i">+	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man1
+</a><a href="#h0-0-103" id="h0-0-103" class="i">+	@rm -f $(DESTDIR)$(MANPREFIX)/man1/dmenu.1
+</a><a href="#h0-0-104" id="h0-0-104" class="i">+	@rm -f $(DESTDIR)$(MANPREFIX)/man1/stest.1
+</a> 
+ .PHONY: all options clean dist install uninstall
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -3,7 +3,7 @@ VERSION = 4.8
+</a> 
+ # paths
+ PREFIX = /usr/local
+<a href="#h1-0-3" id="h1-0-3" class="d">-MANPREFIX = ${PREFIX}/share/man
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+MANPREFIX = $(PREFIX)/share/man
+</a> 
+ X11INC = /usr/X11R6/include
+ X11LIB = /usr/X11R6/lib
+<a href="#h1-1" id="h1-1" class="h">@@ -16,16 +16,16 @@ XINERAMAFLAGS = -DXINERAMA
+</a> FREETYPELIBS = -lfontconfig -lXft
+ FREETYPEINC = /usr/include/freetype2
+ # OpenBSD (uncomment)
+<a href="#h1-1-3" id="h1-1-3" class="d">-#FREETYPEINC = ${X11INC}/freetype2
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+#FREETYPEINC = $(X11INC)/freetype2
+</a> 
+ # includes and libs
+<a href="#h1-1-7" id="h1-1-7" class="d">-INCS = -I${X11INC} -I${FREETYPEINC}
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS} ${FREETYPELIBS}
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+INCS = -I$(X11INC) -I$(FREETYPEINC)
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+LIBS = -L$(X11LIB) -lX11 $(XINERAMALIBS) $(FREETYPELIBS)
+</a> 
+ # flags
+<a href="#h1-1-13" id="h1-1-13" class="d">-CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=700 -D_POSIX_C_SOURCE=200809L -DVERSION=\&quot;${VERSION}\&quot; ${XINERAMAFLAGS}
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-CFLAGS   = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-LDFLAGS  = -s ${LIBS}
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_XOPEN_SOURCE=700 -D_POSIX_C_SOURCE=200809L -DVERSION=\&quot;$(VERSION)\&quot; $(XINERAMAFLAGS)
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+CFLAGS   = -std=c99 -pedantic -Wall -Os $(INCS) $(CPPFLAGS)
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+LDFLAGS  = -s $(LIBS)
+</a> 
+ # compiler and linker
+ CC = cc
+</pre>
+</div>
+</body>
+</html>

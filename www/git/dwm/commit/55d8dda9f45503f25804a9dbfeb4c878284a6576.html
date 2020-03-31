@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>replaced static Layout *lt with static unsigned int sellayout... (will be adapted later when _DWM_CONFIG is serialized as root window property) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/55d8dda9f45503f25804a9dbfeb4c878284a6576.html">55d8dda9f45503f25804a9dbfeb4c878284a6576</a>
+<b>parent</b> <a href="../commit/86953bd68249662b5d7a9ae6741744ab8bf30aa1.html">86953bd68249662b5d7a9ae6741744ab8bf30aa1</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 17 Aug 2007 21:19:07 +0200
+
+replaced static Layout *lt with static unsigned int sellayout... (will be adapted later when _DWM_CONFIG is serialized as root window property)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">layout.c</a></td><td> | </td><td class="num">25</td><td><span class="i">++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/layout.c.html">layout.c</a> b/<a href="../file/layout.c.html">layout.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,7 +10,7 @@ typedef struct {
+</a> } Layout;
+ 
+ unsigned int blw = 0;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static Layout *lt = NULL;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static unsigned int sellayout = 0; /* default */
+</a> 
+ static void
+ floating(void) { /* default floating layout */
+<a href="#h0-1" id="h0-1" class="h">@@ -36,7 +36,7 @@ arrange(void) {
+</a> 			unban(c);
+ 		else
+ 			ban(c);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	lt-&gt;arrange();
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	layouts[sellayout].arrange();
+</a> 	focus(NULL);
+ 	restack();
+ }
+<a href="#h0-2" id="h0-2" class="h">@@ -76,25 +76,25 @@ focusprev(const char *arg) {
+</a> const char *
+ getsymbol(void)
+ {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	return lt-&gt;symbol;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	return layouts[sellayout].symbol;
+</a> }
+ 
+ Bool
+ isfloating(void) {
+<a href="#h0-2-9" id="h0-2-9" class="d">-	return lt-&gt;arrange == floating;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	return layouts[sellayout].arrange == floating;
+</a> }
+ 
+ Bool
+ isarrange(void (*func)())
+ {
+<a href="#h0-2-16" id="h0-2-16" class="d">-	return func == lt-&gt;arrange;
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+	return func == layouts[sellayout].arrange;
+</a> }
+ 
+ void
+ initlayouts(void) {
+ 	unsigned int i, w;
+ 
+<a href="#h0-2-24" id="h0-2-24" class="d">-	lt = &amp;layouts[0];
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+	/* TODO deserialize sellayout if present */
+</a> 	nlayouts = sizeof layouts / sizeof layouts[0];
+ 	for(blw = i = 0; i &lt; nlayouts; i++) {
+ 		w = textw(layouts[i].symbol);
+<a href="#h0-3" id="h0-3" class="h">@@ -118,9 +118,9 @@ restack(void) {
+</a> 	drawstatus();
+ 	if(!sel)
+ 		return;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(sel-&gt;isfloating || lt-&gt;arrange == floating)
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	if(sel-&gt;isfloating || isfloating())
+</a> 		XRaiseWindow(dpy, sel-&gt;win);
+<a href="#h0-3-6" id="h0-3-6" class="d">-	if(lt-&gt;arrange != floating) {
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	if(!isfloating()) {
+</a> 		wc.stack_mode = Below;
+ 		wc.sibling = barwin;
+ 		if(!sel-&gt;isfloating) {
+<a href="#h0-4" id="h0-4" class="h">@@ -143,15 +143,14 @@ setlayout(const char *arg) {
+</a> 	int i;
+ 
+ 	if(!arg) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-		lt++;
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		if(lt == layouts + nlayouts)
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-			lt = layouts;
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		if(++sellayout == nlayouts)
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+			sellayout = 0;;
+</a> 	}
+ 	else {
+ 		i = atoi(arg);
+ 		if(i &lt; 0 || i &gt;= nlayouts)
+ 			return;
+<a href="#h0-4-13" id="h0-4-13" class="d">-		lt = &amp;layouts[i];
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+		sellayout = i;
+</a> 	}
+ 	if(sel)
+ 		arrange();
+<a href="#h0-5" id="h0-5" class="h">@@ -173,7 +172,7 @@ void
+</a> togglemax(const char *arg) {
+ 	XEvent ev;
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-	if(!sel || (lt-&gt;arrange != floating &amp;&amp; !sel-&gt;isfloating) || sel-&gt;isfixed)
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	if(!sel || (!isfloating() &amp;&amp; !sel-&gt;isfloating) || sel-&gt;isfixed)
+</a> 		return;
+ 	if((sel-&gt;ismax = !sel-&gt;ismax)) {
+ 		sel-&gt;rx = sel-&gt;x;
+</pre>
+</div>
+</body>
+</html>

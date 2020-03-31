@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>some hotfix cleanup related to wild selmon-&gt; destruction - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cdb8e274531e5e82818d90e2cc4e3b46e7fe8eb6.html">cdb8e274531e5e82818d90e2cc4e3b46e7fe8eb6</a>
+<b>parent</b> <a href="../commit/5c4913e9838534e880a1334ddc76c80810019f62.html">5c4913e9838534e880a1334ddc76c80810019f62</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 24 Jun 2009 11:14:51 +0100
+
+some hotfix cleanup related to wild selmon-&gt; destruction
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">35</td><td><span class="i">+++++++++++</span><span class="d">------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 24 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,4 +1,4 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="d">-#define XINULATOR /* debug, simulates dual head */
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+//#define XINULATOR /* debug, simulates dual head */
+</a> /* See LICENSE file for copyright and license details.
+  *
+  * dynamic window manager is designed like any other X client as well. It is
+<a href="#h0-1" id="h0-1" class="h">@@ -1649,9 +1649,11 @@ updatebarpos(Monitor *m) {
+</a> 
+ void
+ updategeom(void) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	int i, n = 1;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	int i, di, n = 1, x, y;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	unsigned int dui;
+</a> 	Client *c;
+ 	Monitor *newmons = NULL, *m, *tm;
+<a href="#h0-1-8" id="h0-1-8" class="i">+	Window dummy;
+</a> 
+ #ifdef XINULATOR
+ 	n = 2;
+<a href="#h0-2" id="h0-2" class="h">@@ -1720,16 +1722,6 @@ updategeom(void) {
+</a> 		m-&gt;showbar = showbar;
+ 		m-&gt;topbar = topbar;
+ 		updatebarpos(m);
+<a href="#h0-2-3" id="h0-2-3" class="d">-		/* reassign all clients with same screen number */
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		for(tm = mons; tm; tm = tm-&gt;next)
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-			if(tm-&gt;screen_number == m-&gt;screen_number) {
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-				m-&gt;clients = tm-&gt;clients;
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-				m-&gt;sel = m-&gt;stack = tm-&gt;stack;
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-				tm-&gt;clients = NULL;
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-				tm-&gt;stack = NULL;
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-				for(c = m-&gt;clients; c; c = c-&gt;next)
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-					c-&gt;mon = m;
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-			}
+</a> 	}
+ 
+ 	/* reassign left over clients of disappeared monitors */
+<a href="#h0-3" id="h0-3" class="h">@@ -1744,18 +1736,13 @@ updategeom(void) {
+</a> 	}
+ 
+ 	/* select focused monitor */
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(!selmon) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		selmon = newmons;
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-		int di, x, y;
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-		unsigned int dui;
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-		Window dummy;
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-		if(XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x, &amp;y, &amp;di, &amp;di, &amp;dui)) 
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-			for(m = newmons; m; m = m-&gt;next)
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-				if(INRECT(x, y, m-&gt;wx, m-&gt;wy, m-&gt;ww, m-&gt;wh)) {
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-					selmon = m;
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-					break;
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-				}
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-	}
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+	selmon = newmons;
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+	if(XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x, &amp;y, &amp;di, &amp;di, &amp;dui)) 
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+		for(m = newmons; m; m = m-&gt;next)
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+			if(INRECT(x, y, m-&gt;wx, m-&gt;wy, m-&gt;ww, m-&gt;wh)) {
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+				selmon = m;
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+				break;
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+			}
+</a> 
+ 	/* final assignment of new monitors */
+ 	cleanupmons();
+</pre>
+</div>
+</body>
+</html>

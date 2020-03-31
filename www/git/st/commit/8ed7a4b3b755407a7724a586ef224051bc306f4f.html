@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Revert &quot;Make cursor follow text color&quot; - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8ed7a4b3b755407a7724a586ef224051bc306f4f.html">8ed7a4b3b755407a7724a586ef224051bc306f4f</a>
+<b>parent</b> <a href="../commit/732be223ee7ba5486713c63f944699fd6285af96.html">732be223ee7ba5486713c63f944699fd6285af96</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Tue, 17 Jul 2018 20:01:57 +0200
+
+Revert &quot;Make cursor follow text color&quot;
+
+This reverts commit b51bcd5553af3db394014efbd78acf7828fa48ff.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">x.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>2 files changed, 7 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -118,6 +118,8 @@ static const char *colorname[] = {
+</a>  */
+ unsigned int defaultfg = 7;
+ unsigned int defaultbg = 0;
+<a href="#h0-0-3" id="h0-0-3" class="i">+static unsigned int defaultcs = 256;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static unsigned int defaultrcs = 257;
+</a> 
+ /*
+  * Default shape of cursor
+<b>diff --git a/<a id="h1" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1419,15 +1419,13 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
+</a> 	g.mode &amp;= ATTR_BOLD|ATTR_ITALIC|ATTR_UNDERLINE|ATTR_STRUCK|ATTR_WIDE;
+ 
+ 	if (selected(cx, cy)) {
+<a href="#h1-0-3" id="h1-0-3" class="d">-		drawcol = dc.col[g.bg];
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		g.bg = defaultrcs;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+		g.fg = defaultfg;
+</a> 	} else {
+<a href="#h1-0-7" id="h1-0-7" class="d">-		g.mode |= ATTR_REVERSE;
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-		if (g.mode &amp; ATTR_BOLD &amp;&amp; BETWEEN(g.fg, 0, 7))
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-			drawcol = dc.col[g.fg + 8];
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-		else
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-			drawcol = dc.col[g.fg];
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+		g.bg = defaultcs;
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		g.fg = defaultbg;
+</a> 	}
+<a href="#h1-0-16" id="h1-0-16" class="i">+	drawcol = dc.col[g.bg];
+</a> 
+ 	if (IS_SET(MODE_REVERSE)) {
+ 		drawcol.color.red = ~drawcol.color.red;
+</pre>
+</div>
+</body>
+</html>

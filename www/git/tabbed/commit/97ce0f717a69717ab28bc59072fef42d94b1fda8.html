@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Don&#39;t set cmd[0] to the window ID - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/97ce0f717a69717ab28bc59072fef42d94b1fda8.html">97ce0f717a69717ab28bc59072fef42d94b1fda8</a>
+<b>parent</b> <a href="../commit/18eef19217a306c5b83193da8662b2b970ce4e47.html">18eef19217a306c5b83193da8662b2b970ce4e47</a>
+<b>Author:</b> Gregor Best &lt;<a href="mailto:gbe@ring0.de">gbe@ring0.de</a>&gt;
+<b>Date:</b>   Sun,  7 Jul 2013 20:41:24 +0200
+
+Don&#39;t set cmd[0] to the window ID
+
+Ahoy,
+
+the attached patch fixes a tiny issue with tabbed. When running it
+without a command and having it run spawn(), it tried to execute its
+window ID as a command. While most people probably don&#39;t have
+executables called 341123 or the like in their path, I think that is not
+exactly intended. The following patch fixes that:
+
+From c7ade36f8ef6429546ad89bc9ab479fa44c4790a Mon Sep 17 00:00:00 2001
+From: Gregor Best &lt;gbe@ring0.de&gt;
+Date: Sun, 7 Jul 2013 20:36:06 +0200
+Subject: [PATCH] Don&#39;t set cmd[0] to the window ID
+
+Starting tabbed without a command sets cmd[0] to the window ID of
+tabbed. This leads to funky errors such as &quot;execvp: &lt;ID&gt; failed: no such
+file or directory&quot; when running spawn().
+
+Signed-off-by: Gregor Best &lt;gbe@ring0.de&gt;
+Signed-off-by: Christoph Lohmann &lt;20h@r-36.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -856,6 +856,8 @@ setcmd(int argc, char *argv[], int replace) {
+</a> 	int i;
+ 
+ 	cmd = emallocz((argc+2) * sizeof(*cmd));
+<a href="#h0-0-3" id="h0-0-3" class="i">+	if (argc == 0)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		return;
+</a> 	for(i = 0; i &lt; argc; i++)
+ 		cmd[i] = argv[i];
+ 	cmd[(replace &gt; 0)? replace : argc] = winid;
+</pre>
+</div>
+</body>
+</html>

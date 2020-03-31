@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Gottox&#39; monitor.diff patch (thanks btw) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4076e2ff60fd20caaed18209e36ee82e49d26219.html">4076e2ff60fd20caaed18209e36ee82e49d26219</a>
+<b>parent</b> <a href="../commit/55edd2d6ecd66782852db665996c1fda824b5e8c.html">55edd2d6ecd66782852db665996c1fda824b5e8c</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 21 Feb 2008 14:33:59 +0000
+
+applied Gottox&#39; monitor.diff patch (thanks btw)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">147</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 80 insertions(+), 67 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -60,6 +60,7 @@ enum { NetSupported, NetWMName, NetLast };		/* EWMH atoms */
+</a> enum { WMProtocols, WMDelete, WMName, WMState, WMLast };/* default atoms */
+ 
+ /* typedefs */
+<a href="#h0-0-3" id="h0-0-3" class="i">+typedef struct Monitor Monitor;
+</a> typedef struct Client Client;
+ struct Client {
+ 	char name[256];
+<a href="#h0-1" id="h0-1" class="h">@@ -74,7 +75,7 @@ struct Client {
+</a> 	Client *prev;
+ 	Client *snext;
+ 	Window win;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	int monitor;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	Monitor *monitor;
+</a> };
+ 
+ typedef struct {
+<a href="#h0-2" id="h0-2" class="h">@@ -99,7 +100,6 @@ typedef struct {
+</a> 	const char *arg;
+ } Key;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-typedef struct Monitor Monitor;
+</a> typedef struct {
+ 	const char *symbol;
+ 	void (*arrange)(Monitor *);
+<a href="#h0-3" id="h0-3" class="h">@@ -165,17 +165,18 @@ void grabbuttons(Client *c, Bool focused);
+</a> void grabkeys(void);
+ unsigned int idxoftag(const char *tag);
+ void initfont(const char *fontstr);
+<a href="#h0-3-3" id="h0-3-3" class="d">-Bool isoccupied(unsigned int monitor, unsigned int t);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+Bool isoccupied(Monitor *monitor, unsigned int t);
+</a> Bool isprotodel(Client *c);
+<a href="#h0-3-6" id="h0-3-6" class="d">-Bool isurgent(unsigned int monitor, unsigned int t);
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-Bool isvisible(Client *c, int monitor);
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+Bool isurgent(Monitor *monitor, unsigned int t);
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+Bool isvisible(Client *c, Monitor *m);
+</a> void keypress(XEvent *e);
+ void killclient(const char *arg);
+ void manage(Window w, XWindowAttributes *wa);
+ void mappingnotify(XEvent *e);
+ void maprequest(XEvent *e);
+<a href="#h0-3-15" id="h0-3-15" class="i">+Monitor *monitorat(void);
+</a> void movemouse(Client *c);
+<a href="#h0-3-17" id="h0-3-17" class="d">-Client *nexttiled(Client *c, int monitor);
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+Client *nexttiled(Client *c, Monitor *monitor);
+</a> void propertynotify(XEvent *e);
+ void quit(const char *arg);
+ void reapply(const char *arg);
+<a href="#h0-4" id="h0-4" class="h">@@ -210,14 +211,13 @@ int xerror(Display *dpy, XErrorEvent *ee);
+</a> int xerrordummy(Display *dsply, XErrorEvent *ee);
+ int xerrorstart(Display *dsply, XErrorEvent *ee);
+ void zoom(const char *arg);
+<a href="#h0-4-3" id="h0-4-3" class="d">-int monitorat(void);
+</a> void movetomonitor(const char *arg);
+ void selectmonitor(const char *arg);
+ 
+ /* variables */
+ char stext[256];
+ int mcount = 1;
+<a href="#h0-4-10" id="h0-4-10" class="d">-int selmonitor = 0;
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+Monitor *selmonitor;
+</a> int screen;
+ int (*xerrorxlib)(Display *, XErrorEvent *);
+ unsigned int bh, bpos;
+<a href="#h0-5" id="h0-5" class="h">@@ -277,7 +277,7 @@ applyrules(Client *c) {
+</a> 		if(regs[i].propregex &amp;&amp; !regexec(regs[i].propregex, buf, 1, &amp;tmp, 0)) {
+ 			if (rules[i].monitor &gt;= 0 &amp;&amp; rules[i].monitor &lt; mcount) {
+ 				matched_monitor = True;
+<a href="#h0-5-3" id="h0-5-3" class="d">-				c-&gt;monitor = rules[i].monitor;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+				c-&gt;monitor = &amp;monitors[rules[i].monitor];
+</a> 			}
+ 
+ 			c-&gt;isfloating = rules[i].isfloating;
+<a href="#h0-6" id="h0-6" class="h">@@ -293,7 +293,7 @@ applyrules(Client *c) {
+</a> 	if(ch.res_name)
+ 		XFree(ch.res_name);
+ 	if(!matched_tag)
+<a href="#h0-6-3" id="h0-6-3" class="d">-		memcpy(c-&gt;tags, monitors[monitorat()].seltags, sizeof initags);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+		memcpy(c-&gt;tags, monitorat()-&gt;seltags, sizeof initags);
+</a> 	if (!matched_monitor)
+ 		c-&gt;monitor = monitorat();
+ }
+<a href="#h0-7" id="h0-7" class="h">@@ -308,9 +308,9 @@ arrange(void) {
+</a> 		else
+ 			ban(c);
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-	monitors[selmonitor].layout-&gt;arrange(&amp;monitors[selmonitor]);
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	selmonitor-&gt;layout-&gt;arrange(selmonitor);
+</a> 	focus(NULL);
+<a href="#h0-7-6" id="h0-7-6" class="d">-	restack(&amp;monitors[selmonitor]);
+</a><a href="#h0-7-7" id="h0-7-7" class="i">+	restack(selmonitor);
+</a> }
+ 
+ void
+<a href="#h0-8" id="h0-8" class="h">@@ -331,7 +331,7 @@ void
+</a> ban(Client *c) {
+ 	if(c-&gt;isbanned)
+ 		return;
+<a href="#h0-8-3" id="h0-8-3" class="d">-	XMoveWindow(dpy, c-&gt;win, c-&gt;x + 3 * monitors[c-&gt;monitor].sw, c-&gt;y);
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+	XMoveWindow(dpy, c-&gt;win, c-&gt;x + 3 * c-&gt;monitor-&gt;sw, c-&gt;y);
+</a> 	c-&gt;isbanned = True;
+ }
+ 
+<a href="#h0-9" id="h0-9" class="h">@@ -341,7 +341,7 @@ buttonpress(XEvent *e) {
+</a> 	Client *c;
+ 	XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+ 
+<a href="#h0-9-3" id="h0-9-3" class="d">-	Monitor *m = &amp;monitors[monitorat()];
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+	Monitor *m = monitorat();
+</a> 
+ 	if(ev-&gt;window == m-&gt;barwin) {
+ 		x = 0;
+<a href="#h0-10" id="h0-10" class="h">@@ -371,7 +371,7 @@ buttonpress(XEvent *e) {
+</a> 		if(CLEANMASK(ev-&gt;state) != MODKEY)
+ 			return;
+ 		if(ev-&gt;button == Button1) {
+<a href="#h0-10-3" id="h0-10-3" class="d">-			restack(&amp;monitors[c-&gt;monitor]);
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+			restack(c-&gt;monitor);
+</a> 			movemouse(c);
+ 		}
+ 		else if(ev-&gt;button == Button2) {
+<a href="#h0-11" id="h0-11" class="h">@@ -381,7 +381,7 @@ buttonpress(XEvent *e) {
+</a> 				zoom(NULL);
+ 		}
+ 		else if(ev-&gt;button == Button3 &amp;&amp; !c-&gt;isfixed) {
+<a href="#h0-11-3" id="h0-11-3" class="d">-			restack(&amp;monitors[c-&gt;monitor]);
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+			restack(c-&gt;monitor);
+</a> 			resizemouse(c);
+ 		}
+ 	}
+<a href="#h0-12" id="h0-12" class="h">@@ -475,7 +475,7 @@ configure(Client *c) {
+</a> void
+ configurenotify(XEvent *e) {
+ 	XConfigureEvent *ev = &amp;e-&gt;xconfigure;
+<a href="#h0-12-3" id="h0-12-3" class="d">-	Monitor *m = &amp;monitors[selmonitor];
+</a><a href="#h0-12-4" id="h0-12-4" class="i">+	Monitor *m = selmonitor;
+</a> 
+ 	if(ev-&gt;window == root &amp;&amp; (ev-&gt;width != m-&gt;sw || ev-&gt;height != m-&gt;sh)) {
+ 		/* TODO -- update Xinerama dimensions here */
+<a href="#h0-13" id="h0-13" class="h">@@ -496,7 +496,7 @@ configurerequest(XEvent *e) {
+</a> 	XWindowChanges wc;
+ 
+ 	if((c = getclient(ev-&gt;window))) {
+<a href="#h0-13-3" id="h0-13-3" class="d">-		Monitor *m = &amp;monitors[c-&gt;monitor];
+</a><a href="#h0-13-4" id="h0-13-4" class="i">+		Monitor *m = c-&gt;monitor;
+</a> 		if(ev-&gt;value_mask &amp; CWBorderWidth)
+ 			c-&gt;border = ev-&gt;border_width;
+ 		if(c-&gt;isfixed || c-&gt;isfloating || (floating == m-&gt;layout-&gt;arrange)) {
+<a href="#h0-14" id="h0-14" class="h">@@ -568,25 +568,25 @@ drawbar(Monitor *m) {
+</a> 	Client *c;
+ 
+ 	dc.x = 0;
+<a href="#h0-14-3" id="h0-14-3" class="d">-	for(c = stack; c &amp;&amp; !isvisible(c, m-&gt;id); c = c-&gt;snext);
+</a><a href="#h0-14-4" id="h0-14-4" class="i">+	for(c = stack; c &amp;&amp; !isvisible(c, m); c = c-&gt;snext);
+</a> 	for(j = 0; j &lt; LENGTH(tags); j++) {
+ 		dc.w = textw(tags[j]);
+ 		if(m-&gt;seltags[j]) {
+<a href="#h0-14-8" id="h0-14-8" class="d">-			drawtext(m, tags[j], dc.sel, isurgent(m-&gt;id, j));
+</a><a href="#h0-14-9" id="h0-14-9" class="d">-			drawsquare(m, c &amp;&amp; c-&gt;tags[j] &amp;&amp; c-&gt;monitor == m-&gt;id,
+</a><a href="#h0-14-10" id="h0-14-10" class="d">-					isoccupied(m-&gt;id, j), isurgent(m-&gt;id, j), dc.sel);
+</a><a href="#h0-14-11" id="h0-14-11" class="i">+			drawtext(m, tags[j], dc.sel, isurgent(m, j));
+</a><a href="#h0-14-12" id="h0-14-12" class="i">+			drawsquare(m, c &amp;&amp; c-&gt;tags[j] &amp;&amp; c-&gt;monitor == m,
+</a><a href="#h0-14-13" id="h0-14-13" class="i">+					isoccupied(m, j), isurgent(m, j), dc.sel);
+</a> 		}
+ 		else {
+<a href="#h0-14-16" id="h0-14-16" class="d">-			drawtext(m, tags[j], dc.norm, isurgent(m-&gt;id, j));
+</a><a href="#h0-14-17" id="h0-14-17" class="d">-			drawsquare(m, c &amp;&amp; c-&gt;tags[j] &amp;&amp; c-&gt;monitor == m-&gt;id,
+</a><a href="#h0-14-18" id="h0-14-18" class="d">-					isoccupied(m-&gt;id, j), isurgent(m-&gt;id, j), dc.norm);
+</a><a href="#h0-14-19" id="h0-14-19" class="i">+			drawtext(m, tags[j], dc.norm, isurgent(m, j));
+</a><a href="#h0-14-20" id="h0-14-20" class="i">+			drawsquare(m, c &amp;&amp; c-&gt;tags[j] &amp;&amp; c-&gt;monitor == m,
+</a><a href="#h0-14-21" id="h0-14-21" class="i">+					isoccupied(m, j), isurgent(m, j), dc.norm);
+</a> 		}
+ 		dc.x += dc.w;
+ 	}
+ 	dc.w = blw;
+ 	drawtext(m, m-&gt;layout-&gt;symbol, dc.norm, False);
+ 	x = dc.x + dc.w;
+<a href="#h0-14-28" id="h0-14-28" class="d">-	if(m-&gt;id == selmonitor) {
+</a><a href="#h0-14-29" id="h0-14-29" class="i">+	if(m == selmonitor) {
+</a> 		dc.w = textw(stext);
+ 		dc.x = m-&gt;sw - dc.w;
+ 		if(dc.x &lt; x) {
+<a href="#h0-15" id="h0-15" class="h">@@ -693,7 +693,7 @@ enternotify(XEvent *e) {
+</a> 		focus(c);
+ 	else {
+ 		selmonitor = monitorat();
+<a href="#h0-15-3" id="h0-15-3" class="d">-		fprintf(stderr, &quot;updating selmonitor %d\n&quot;, selmonitor);
+</a><a href="#h0-15-4" id="h0-15-4" class="i">+		fprintf(stderr, &quot;updating selmonitor %d\n&quot;, selmonitor - monitors);
+</a> 		focus(NULL);
+ 	}
+ }
+<a href="#h0-16" id="h0-16" class="h">@@ -723,17 +723,14 @@ floating(Monitor *m) { /* default floating layout */
+</a> 
+ 	domwfact = dozoom = False;
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h0-16-3" id="h0-16-3" class="d">-		if(isvisible(c, m-&gt;id))
+</a><a href="#h0-16-4" id="h0-16-4" class="i">+		if(isvisible(c, m))
+</a> 			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+ }
+ 
+ void
+ focus(Client *c) {
+<a href="#h0-16-10" id="h0-16-10" class="d">-	Monitor *m;
+</a><a href="#h0-16-11" id="h0-16-11" class="d">-
+</a> 	if(c)
+ 		selmonitor = c-&gt;monitor;
+<a href="#h0-16-14" id="h0-16-14" class="d">-	m = &amp;monitors[selmonitor];
+</a> 	if(!c || (c &amp;&amp; !isvisible(c, selmonitor)))
+ 		for(c = stack; c &amp;&amp; !isvisible(c, c-&gt;monitor); c = c-&gt;snext);
+ 	if(sel &amp;&amp; sel != c) {
+<a href="#h0-17" id="h0-17" class="h">@@ -753,7 +750,7 @@ focus(Client *c) {
+</a> 	}
+ 	else
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+<a href="#h0-17-3" id="h0-17-3" class="d">-	drawbar(&amp;monitors[selmonitor]);
+</a><a href="#h0-17-4" id="h0-17-4" class="i">+	drawbar(selmonitor);
+</a> }
+ 
+ void
+<a href="#h0-18" id="h0-18" class="h">@@ -775,7 +772,7 @@ focusnext(const char *arg) {
+</a> 		for(c = clients; c &amp;&amp; !isvisible(c, selmonitor); c = c-&gt;next);
+ 	if(c) {
+ 		focus(c);
+<a href="#h0-18-3" id="h0-18-3" class="d">-		restack(&amp;monitors[c-&gt;monitor]);
+</a><a href="#h0-18-4" id="h0-18-4" class="i">+		restack(c-&gt;monitor);
+</a> 	}
+ }
+ 
+<a href="#h0-19" id="h0-19" class="h">@@ -792,7 +789,7 @@ focusprev(const char *arg) {
+</a> 	}
+ 	if(c) {
+ 		focus(c);
+<a href="#h0-19-3" id="h0-19-3" class="d">-		restack(&amp;monitors[c-&gt;monitor]);
+</a><a href="#h0-19-4" id="h0-19-4" class="i">+		restack(c-&gt;monitor);
+</a> 	}
+ }
+ 
+<a href="#h0-20" id="h0-20" class="h">@@ -985,7 +982,7 @@ initfont(const char *fontstr) {
+</a> }
+ 
+ Bool
+<a href="#h0-20-3" id="h0-20-3" class="d">-isoccupied(unsigned int monitor, unsigned int t) {
+</a><a href="#h0-20-4" id="h0-20-4" class="i">+isoccupied(Monitor *monitor, unsigned int t) {
+</a> 	Client *c;
+ 
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h0-21" id="h0-21" class="h">@@ -1010,7 +1007,7 @@ isprotodel(Client *c) {
+</a> }
+ 
+ Bool
+<a href="#h0-21-3" id="h0-21-3" class="d">-isurgent(unsigned int monitor, unsigned int t) {
+</a><a href="#h0-21-4" id="h0-21-4" class="i">+isurgent(Monitor *monitor, unsigned int t) {
+</a> 	Client *c;
+ 
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h0-22" id="h0-22" class="h">@@ -1020,13 +1017,13 @@ isurgent(unsigned int monitor, unsigned int t) {
+</a> }
+ 
+ Bool
+<a href="#h0-22-3" id="h0-22-3" class="d">-isvisible(Client *c, int monitor) {
+</a><a href="#h0-22-4" id="h0-22-4" class="i">+isvisible(Client *c, Monitor *m) {
+</a> 	unsigned int i;
+ 
+<a href="#h0-22-7" id="h0-22-7" class="d">-	if(c-&gt;monitor != monitor)
+</a><a href="#h0-22-8" id="h0-22-8" class="i">+	if(c-&gt;monitor != m)
+</a> 		return False;
+ 	for(i = 0; i &lt; LENGTH(tags); i++)
+<a href="#h0-22-11" id="h0-22-11" class="d">-		if(c-&gt;tags[i] &amp;&amp; monitors[c-&gt;monitor].seltags[i])
+</a><a href="#h0-22-12" id="h0-22-12" class="i">+		if(c-&gt;tags[i] &amp;&amp; c-&gt;monitor-&gt;seltags[i])
+</a> 			return True;
+ 	return False;
+ }
+<a href="#h0-23" id="h0-23" class="h">@@ -1081,7 +1078,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 
+ 	applyrules(c);
+ 
+<a href="#h0-23-3" id="h0-23-3" class="d">-	m = &amp;monitors[c-&gt;monitor];
+</a><a href="#h0-23-4" id="h0-23-4" class="i">+	m = selmonitor;
+</a> 
+ 	c-&gt;x = wa-&gt;x + m-&gt;sx;
+ 	c-&gt;y = wa-&gt;y + m-&gt;sy;
+<a href="#h0-24" id="h0-24" class="h">@@ -1150,7 +1147,7 @@ maprequest(XEvent *e) {
+</a> 		manage(ev-&gt;window, &amp;wa);
+ }
+ 
+<a href="#h0-24-3" id="h0-24-3" class="d">-int
+</a><a href="#h0-24-4" id="h0-24-4" class="i">+Monitor *
+</a> monitorat() {
+ 	int i, x, y;
+ 	Window win;
+<a href="#h0-25" id="h0-25" class="h">@@ -1160,10 +1157,10 @@ monitorat() {
+</a> 	for(i = 0; i &lt; mcount; i++) {
+ 		if((x &gt;= monitors[i].sx &amp;&amp; x &lt; monitors[i].sx + monitors[i].sw)
+ 		&amp;&amp; (y &gt;= monitors[i].sy &amp;&amp; y &lt; monitors[i].sy + monitors[i].sh)) {
+<a href="#h0-25-3" id="h0-25-3" class="d">-			return i;
+</a><a href="#h0-25-4" id="h0-25-4" class="i">+			return &amp;monitors[i];
+</a> 		}
+ 	}
+<a href="#h0-25-7" id="h0-25-7" class="d">-	return 0;
+</a><a href="#h0-25-8" id="h0-25-8" class="i">+	return NULL;
+</a> }
+ 
+ void
+<a href="#h0-26" id="h0-26" class="h">@@ -1176,7 +1173,7 @@ movemouse(Client *c) {
+</a> 
+ 	ocx = nx = c-&gt;x;
+ 	ocy = ny = c-&gt;y;
+<a href="#h0-26-3" id="h0-26-3" class="d">-	m = &amp;monitors[c-&gt;monitor];
+</a><a href="#h0-26-4" id="h0-26-4" class="i">+	m = c-&gt;monitor;
+</a> 	if(XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+ 			None, cursor[CurMove], CurrentTime) != GrabSuccess)
+ 		return;
+<a href="#h0-27" id="h0-27" class="h">@@ -1214,7 +1211,7 @@ movemouse(Client *c) {
+</a> }
+ 
+ Client *
+<a href="#h0-27-3" id="h0-27-3" class="d">-nexttiled(Client *c, int monitor) {
+</a><a href="#h0-27-4" id="h0-27-4" class="i">+nexttiled(Client *c, Monitor *monitor) {
+</a> 	for(; c &amp;&amp; (c-&gt;isfloating || !isvisible(c, monitor)); c = c-&gt;next);
+ 	return c;
+ }
+<a href="#h0-28" id="h0-28" class="h">@@ -1240,13 +1237,13 @@ propertynotify(XEvent *e) {
+</a> 			break;
+ 		case XA_WM_HINTS:
+ 			updatewmhints(c);
+<a href="#h0-28-3" id="h0-28-3" class="d">-			drawbar(&amp;monitors[c-&gt;monitor]);
+</a><a href="#h0-28-4" id="h0-28-4" class="i">+			drawbar(c-&gt;monitor);
+</a> 			break;
+ 		}
+ 		if(ev-&gt;atom == XA_WM_NAME || ev-&gt;atom == netatom[NetWMName]) {
+ 			updatetitle(c);
+ 			if(c == sel)
+<a href="#h0-28-10" id="h0-28-10" class="d">-				drawbar(&amp;monitors[c-&gt;monitor]);
+</a><a href="#h0-28-11" id="h0-28-11" class="i">+				drawbar(c-&gt;monitor);
+</a> 		}
+ 	}
+ }
+<a href="#h0-29" id="h0-29" class="h">@@ -1273,7 +1270,7 @@ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> 	Monitor *m;
+ 	XWindowChanges wc;
+ 
+<a href="#h0-29-3" id="h0-29-3" class="d">-	m = &amp;monitors[c-&gt;monitor];
+</a><a href="#h0-29-4" id="h0-29-4" class="i">+	m = c-&gt;monitor;
+</a> 
+ 	if(sizehints) {
+ 		/* set minimum possible */
+<a href="#h0-30" id="h0-30" class="h">@@ -1344,7 +1341,7 @@ resizemouse(Client *c) {
+</a> 
+ 	ocx = c-&gt;x;
+ 	ocy = c-&gt;y;
+<a href="#h0-30-3" id="h0-30-3" class="d">-	m = &amp;monitors[c-&gt;monitor];
+</a><a href="#h0-30-4" id="h0-30-4" class="i">+	m = c-&gt;monitor;
+</a> 	if(XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+ 			None, cursor[CurResize], CurrentTime) != GrabSuccess)
+ 		return;
+<a href="#h0-31" id="h0-31" class="h">@@ -1396,7 +1393,7 @@ restack(Monitor *m) {
+</a> 			XConfigureWindow(dpy, sel-&gt;win, CWSibling | CWStackMode, &amp;wc);
+ 			wc.sibling = sel-&gt;win;
+ 		}
+<a href="#h0-31-3" id="h0-31-3" class="d">-		for(c = nexttiled(clients, m-&gt;id); c; c = nexttiled(c-&gt;next, m-&gt;id)) {
+</a><a href="#h0-31-4" id="h0-31-4" class="i">+		for(c = nexttiled(clients, m); c; c = nexttiled(c-&gt;next, m)) {
+</a> 			if(c == sel)
+ 				continue;
+ 			XConfigureWindow(dpy, c-&gt;win, CWSibling | CWStackMode, &amp;wc);
+<a href="#h0-32" id="h0-32" class="h">@@ -1457,7 +1454,7 @@ run(void) {
+</a> 					}
+ 				break;
+ 			}
+<a href="#h0-32-3" id="h0-32-3" class="d">-			drawbar(&amp;monitors[selmonitor]);
+</a><a href="#h0-32-4" id="h0-32-4" class="i">+			drawbar(selmonitor);
+</a> 		}
+ 		while(XPending(dpy)) {
+ 			XNextEvent(dpy, &amp;ev);
+<a href="#h0-33" id="h0-33" class="h">@@ -1505,7 +1502,7 @@ setclientstate(Client *c, long state) {
+</a> void
+ setlayout(const char *arg) {
+ 	unsigned int i;
+<a href="#h0-33-3" id="h0-33-3" class="d">-	Monitor *m = &amp;monitors[monitorat()];
+</a><a href="#h0-33-4" id="h0-33-4" class="i">+	Monitor *m = monitorat();
+</a> 
+ 	if(!arg) {
+ 		m-&gt;layout++;
+<a href="#h0-34" id="h0-34" class="h">@@ -1530,7 +1527,7 @@ void
+</a> setmwfact(const char *arg) {
+ 	double delta;
+ 
+<a href="#h0-34-3" id="h0-34-3" class="d">-	Monitor *m = &amp;monitors[monitorat()];
+</a><a href="#h0-34-4" id="h0-34-4" class="i">+	Monitor *m = monitorat();
+</a> 
+ 	if(!domwfact)
+ 		return;
+<a href="#h0-35" id="h0-35" class="h">@@ -1574,7 +1571,7 @@ setup(void) {
+</a> 	mcount = 1;
+ 	if((isxinerama = XineramaIsActive(dpy)))
+ 		info = XineramaQueryScreens(dpy, &amp;mcount);
+<a href="#h0-35-3" id="h0-35-3" class="d">-	monitors = emallocz(mcount * sizeof(Monitor));
+</a><a href="#h0-35-4" id="h0-35-4" class="i">+	selmonitor = monitors = emallocz(mcount * sizeof(Monitor));
+</a> 
+ 	screen = DefaultScreen(dpy);
+ 	root = RootWindow(dpy, screen);
+<a href="#h0-36" id="h0-36" class="h">@@ -1665,7 +1662,7 @@ setup(void) {
+</a> 	compileregs();
+ 
+ 	selmonitor = monitorat();
+<a href="#h0-36-3" id="h0-36-3" class="d">-	fprintf(stderr, &quot;selmonitor == %d\n&quot;, selmonitor);
+</a><a href="#h0-36-4" id="h0-36-4" class="i">+	fprintf(stderr, &quot;selmonitor == %d\n&quot;, selmonitor - monitors);
+</a> }
+ 
+ void
+<a href="#h0-37" id="h0-37" class="h">@@ -1729,7 +1726,7 @@ tile(Monitor *m) {
+</a> 
+ 	nx = ny = nw = 0; /* gcc stupidity requires this */
+ 
+<a href="#h0-37-3" id="h0-37-3" class="d">-	for(n = 0, c = nexttiled(clients, m-&gt;id); c; c = nexttiled(c-&gt;next, m-&gt;id))
+</a><a href="#h0-37-4" id="h0-37-4" class="i">+	for(n = 0, c = nexttiled(clients, m); c; c = nexttiled(c-&gt;next, m))
+</a> 		n++;
+ 
+ 	/* window geoms */
+<a href="#h0-38" id="h0-38" class="h">@@ -1738,7 +1735,7 @@ tile(Monitor *m) {
+</a> 	if(n &gt; 1 &amp;&amp; th &lt; bh)
+ 		th = m-&gt;wah;
+ 
+<a href="#h0-38-3" id="h0-38-3" class="d">-	for(i = 0, c = mc = nexttiled(clients, m-&gt;id); c; c = nexttiled(c-&gt;next, m-&gt;id)) {
+</a><a href="#h0-38-4" id="h0-38-4" class="i">+	for(i = 0, c = mc = nexttiled(clients, m); c; c = nexttiled(c-&gt;next, m)) {
+</a> 		if(i == 0) { /* master */
+ 			nx = m-&gt;wax;
+ 			ny = m-&gt;way;
+<a href="#h0-39" id="h0-39" class="h">@@ -1772,7 +1769,7 @@ togglebar(const char *arg) {
+</a> 		bpos = (BARPOS == BarOff) ? BarTop : BARPOS;
+ 	else
+ 		bpos = BarOff;
+<a href="#h0-39-3" id="h0-39-3" class="d">-	updatebarpos(&amp;monitors[monitorat()]);
+</a><a href="#h0-39-4" id="h0-39-4" class="i">+	updatebarpos(monitorat());
+</a> 	arrange();
+ }
+ 
+<a href="#h0-40" id="h0-40" class="h">@@ -1804,7 +1801,7 @@ void
+</a> toggleview(const char *arg) {
+ 	unsigned int i, j;
+ 
+<a href="#h0-40-3" id="h0-40-3" class="d">-	Monitor *m = &amp;monitors[monitorat()];
+</a><a href="#h0-40-4" id="h0-40-4" class="i">+	Monitor *m = monitorat();
+</a> 
+ 	i = idxoftag(arg);
+ 	m-&gt;seltags[i] = !m-&gt;seltags[i];
+<a href="#h0-41" id="h0-41" class="h">@@ -1984,7 +1981,7 @@ void
+</a> view(const char *arg) {
+ 	unsigned int i;
+ 	Bool tmp[LENGTH(tags)];
+<a href="#h0-41-3" id="h0-41-3" class="d">-	Monitor *m = &amp;monitors[monitorat()];
+</a><a href="#h0-41-4" id="h0-41-4" class="i">+	Monitor *m = monitorat();
+</a> 
+ 	for(i = 0; i &lt; LENGTH(tags); i++)
+ 		tmp[i] = (NULL == arg);
+<a href="#h0-42" id="h0-42" class="h">@@ -2000,7 +1997,7 @@ void
+</a> viewprevtag(const char *arg) {
+ 	static Bool tmp[LENGTH(tags)];
+ 
+<a href="#h0-42-3" id="h0-42-3" class="d">-	Monitor *m = &amp;monitors[monitorat()];
+</a><a href="#h0-42-4" id="h0-42-4" class="i">+	Monitor *m = monitorat();
+</a> 
+ 	memcpy(tmp, m-&gt;seltags, sizeof initags);
+ 	memcpy(m-&gt;seltags, m-&gt;prevtags, sizeof initags);
+<a href="#h0-43" id="h0-43" class="h">@@ -2025,19 +2022,35 @@ zoom(const char *arg) {
+</a> 
+ void
+ movetomonitor(const char *arg) {
+<a href="#h0-43-3" id="h0-43-3" class="d">-	if (sel) {
+</a><a href="#h0-43-4" id="h0-43-4" class="d">-		sel-&gt;monitor = arg ? atoi(arg) : (sel-&gt;monitor+1) % mcount;
+</a><a href="#h0-43-5" id="h0-43-5" class="i">+	int i;
+</a> 
+<a href="#h0-43-7" id="h0-43-7" class="d">-		memcpy(sel-&gt;tags, monitors[sel-&gt;monitor].seltags, sizeof initags);
+</a><a href="#h0-43-8" id="h0-43-8" class="d">-		resize(sel, monitors[sel-&gt;monitor].wax, monitors[sel-&gt;monitor].way, sel-&gt;w, sel-&gt;h, True);
+</a><a href="#h0-43-9" id="h0-43-9" class="d">-		arrange();
+</a><a href="#h0-43-10" id="h0-43-10" class="i">+	if (sel)
+</a><a href="#h0-43-11" id="h0-43-11" class="i">+		return;
+</a><a href="#h0-43-12" id="h0-43-12" class="i">+	if(arg)
+</a><a href="#h0-43-13" id="h0-43-13" class="i">+		i = atoi(arg);
+</a><a href="#h0-43-14" id="h0-43-14" class="i">+	else {
+</a><a href="#h0-43-15" id="h0-43-15" class="i">+		for(i = 0; &amp;monitors[i] != sel-&gt;monitor &amp;&amp; i &lt; mcount; i++);
+</a><a href="#h0-43-16" id="h0-43-16" class="i">+		i++;
+</a> 	}
+<a href="#h0-43-18" id="h0-43-18" class="i">+	sel-&gt;monitor = &amp;monitors[i % mcount];
+</a><a href="#h0-43-19" id="h0-43-19" class="i">+
+</a><a href="#h0-43-20" id="h0-43-20" class="i">+	memcpy(sel-&gt;tags, sel-&gt;monitor-&gt;seltags, sizeof initags);
+</a><a href="#h0-43-21" id="h0-43-21" class="i">+	resize(sel, sel-&gt;monitor-&gt;wax, sel-&gt;monitor-&gt;way, sel-&gt;w, sel-&gt;h, True);
+</a><a href="#h0-43-22" id="h0-43-22" class="i">+	arrange();
+</a> }
+ 
+ void
+ selectmonitor(const char *arg) {
+<a href="#h0-43-27" id="h0-43-27" class="d">-	Monitor *m = &amp;monitors[arg ? atoi(arg) : (monitorat()+1) % mcount];
+</a><a href="#h0-43-28" id="h0-43-28" class="i">+	int i;
+</a><a href="#h0-43-29" id="h0-43-29" class="i">+	Monitor *m;
+</a> 
+<a href="#h0-43-31" id="h0-43-31" class="i">+	if(arg)
+</a><a href="#h0-43-32" id="h0-43-32" class="i">+		i = atoi(arg);
+</a><a href="#h0-43-33" id="h0-43-33" class="i">+	else {
+</a><a href="#h0-43-34" id="h0-43-34" class="i">+		for(i = 0; &amp;monitors[i] != sel-&gt;monitor &amp;&amp; i &lt; mcount; i++);
+</a><a href="#h0-43-35" id="h0-43-35" class="i">+		i++;
+</a><a href="#h0-43-36" id="h0-43-36" class="i">+	}
+</a><a href="#h0-43-37" id="h0-43-37" class="i">+	m = &amp;monitors[i % mcount];
+</a> 	XWarpPointer(dpy, None, root, 0, 0, 0, 0, m-&gt;wax+m-&gt;waw/2, m-&gt;way+m-&gt;wah/2);
+ 	focus(NULL);
+ }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>keep master ratio on resizecol -&gt; arrange - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6fc8a6304163fb63551e54acc62e6e9b7e96c820.html">6fc8a6304163fb63551e54acc62e6e9b7e96c820</a>
+<b>parent</b> <a href="../commit/2583a7c0d18749c391a7149f2f1ffb3efd91ba8d.html">2583a7c0d18749c391a7149f2f1ffb3efd91ba8d</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Thu,  5 Oct 2006 12:59:35 +0200
+
+keep master ratio on resizecol -&gt; arrange
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">main.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">view.c</a></td><td> | </td><td class="num">24</td><td><span class="i">++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>5 files changed, 20 insertions(+), 24 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -37,8 +37,8 @@ static Key key[] = { \
+</a> 	{ MODKEY,			XK_k,		focusprev,	{ 0 } }, \
+ 	{ MODKEY,			XK_Return,	zoom,		{ 0 } }, \
+ 	{ MODKEY,			XK_b,		togglestackpos,	{ 0 } }, \
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ MODKEY,			XK_g,		resizecol,	{ .i = 20 } }, \
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ MODKEY,			XK_s,		resizecol,	{ .i = -20 } }, \
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	{ MODKEY,			XK_g,		resizecol,	{ .i = 1 } }, \
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	{ MODKEY,			XK_s,		resizecol,	{ .i = -1 } }, \
+</a> 	{ MODKEY|ShiftMask,		XK_1,		tag,		{ .i = 0 } }, \
+ 	{ MODKEY|ShiftMask,		XK_2,		tag,		{ .i = 1 } }, \
+ 	{ MODKEY|ShiftMask,		XK_3,		tag,		{ .i = 2 } }, \
+<b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -31,8 +31,8 @@ static Key key[] = { \
+</a> 	{ MODKEY|ShiftMask,		XK_Tab,		focusprev,	{ 0 } }, \
+ 	{ MODKEY,			XK_Return,	zoom,		{ 0 } }, \
+ 	{ MODKEY,			XK_b,		togglestackpos,	{ 0 } }, \
+<a href="#h1-0-3" id="h1-0-3" class="d">-	{ MODKEY,			XK_g,		resizecol,	{ .i = 20 } }, \
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	{ MODKEY,			XK_s,		resizecol,	{ .i = -20 } }, \
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	{ MODKEY,			XK_g,		resizecol,	{ .i = 1 } }, \
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	{ MODKEY,			XK_s,		resizecol,	{ .i = -1 } }, \
+</a> 	{ MODKEY|ShiftMask,		XK_1,		tag,		{ .i = 0 } }, \
+ 	{ MODKEY|ShiftMask,		XK_2,		tag,		{ .i = 1 } }, \
+ 	{ MODKEY|ShiftMask,		XK_3,		tag,		{ .i = 2 } }, \
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -101,8 +101,8 @@ struct Client {
+</a> extern const char *tags[];			/* all tags */
+ extern char stext[1024];			/* status text */
+ extern int bx, by, bw, bh, bmw;			/* bar geometry, bar mode label width */
+<a href="#h2-0-3" id="h2-0-3" class="d">-extern int master, screen, sx, sy, sw, sh;	/* screen geometry, master dimension*/
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-extern unsigned int ntags, numlockmask;		/* number of tags, dynamic lock mask */
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+extern int screen, sx, sy, sw, sh;		/* screen geometry */
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+extern unsigned int master, ntags, numlockmask;	/* master percent, number of tags, dynamic lock mask */
+</a> extern void (*handler[LASTEvent])(XEvent *);	/* event handler */
+ extern void (*arrange)(Arg *);			/* arrange function, indicates mode  */
+ extern Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h2-1" id="h2-1" class="h">@@ -168,7 +168,7 @@ extern void dotile(Arg *arg);			/* arranges all windows, arg is ignored */
+</a> extern void focusnext(Arg *arg);		/* focuses next visible client, arg is ignored  */
+ extern void focusprev(Arg *arg);		/* focuses previous visible client, arg is ignored */
+ extern Bool isvisible(Client *c);		/* returns True if client is visible */
+<a href="#h2-1-3" id="h2-1-3" class="d">-extern void resizecol(Arg *arg);		/* resizes the master dimension with arg&#39;s index value */
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+extern void resizecol(Arg *arg);		/* resizes the master percent with arg&#39;s index value */
+</a> extern void restack(void);			/* restores z layers of all clients */
+ extern void togglestackpos(Arg *arg);		/* toggles stack position */
+ extern void togglemode(Arg *arg);		/* toggles global arrange function (dotile/dofloat) */
+<b>diff --git a/<a id="h3" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -19,8 +19,8 @@
+</a> 
+ char stext[1024];
+ Bool *seltag;
+<a href="#h3-0-3" id="h3-0-3" class="d">-int bx, by, bw, bh, bmw, master, screen, sx, sy, sw, sh;
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-unsigned int ntags, numlockmask;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+int bx, by, bw, bh, bmw, masterd, screen, sx, sy, sw, sh;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+unsigned int master, ntags, numlockmask;
+</a> Atom wmatom[WMLast], netatom[NetLast];
+ Bool running = True;
+ Bool issel = True;
+<a href="#h3-1" id="h3-1" class="h">@@ -136,7 +136,7 @@ setup(void) {
+</a> 	sx = sy = 0;
+ 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+<a href="#h3-1-3" id="h3-1-3" class="d">-	master = ((stackpos == StackBottom ? sh - bh : sw) * MASTER) / 100;
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+	master = MASTER;
+</a> 
+ 	bx = by = 0;
+ 	bw = sw;
+<b>diff --git a/<a id="h4" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -4,8 +4,6 @@
+</a>  */
+ #include &quot;dwm.h&quot;
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-#define MINDIM			100
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-
+</a> /* static */
+ 
+ static Client *
+<a href="#h4-1" id="h4-1" class="h">@@ -106,6 +104,7 @@ dofloat(Arg *arg) {
+</a> void
+ dotile(Arg *arg) {
+ 	int i, n, stackw, stackh, tw, th;
+<a href="#h4-1-3" id="h4-1-3" class="i">+	unsigned int md = ((stackpos == StackBottom ? sh - bh : sw) * master) / 100;
+</a> 	Client *c;
+ 
+ 	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+<a href="#h4-2" id="h4-2" class="h">@@ -113,10 +112,10 @@ dotile(Arg *arg) {
+</a> 
+ 	if(stackpos == StackBottom) {
+ 		stackw = sw;
+<a href="#h4-2-3" id="h4-2-3" class="d">-		stackh = sh - bh - master;
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+		stackh = sh - bh - md;
+</a> 	}
+ 	else {
+<a href="#h4-2-7" id="h4-2-7" class="d">-		stackw = sw - master;
+</a><a href="#h4-2-8" id="h4-2-8" class="i">+		stackw = sw - md;
+</a> 		stackh = sh - bh;
+ 	}
+ 
+<a href="#h4-3" id="h4-3" class="h">@@ -145,18 +144,18 @@ dotile(Arg *arg) {
+</a> 				switch(stackpos) {
+ 				case StackLeft:
+ 				case StackRight:
+<a href="#h4-3-3" id="h4-3-3" class="d">-					c-&gt;w = master - 2 * BORDERPX;
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+					c-&gt;w = md - 2 * BORDERPX;
+</a> 					c-&gt;h = sh - bh - 2 * BORDERPX;
+ 					break;
+ 				case StackBottom:
+ 					c-&gt;w = sw - 2 * BORDERPX;
+<a href="#h4-3-9" id="h4-3-9" class="d">-					c-&gt;h = master - 2 * BORDERPX;
+</a><a href="#h4-3-10" id="h4-3-10" class="i">+					c-&gt;h = md - 2 * BORDERPX;
+</a> 					break;
+ 				}
+ 			}
+ 			else {  /* tile window */
+ 				if(stackpos == StackRight)
+<a href="#h4-3-16" id="h4-3-16" class="d">-					c-&gt;x += master;
+</a><a href="#h4-3-17" id="h4-3-17" class="i">+					c-&gt;x += md;
+</a> 				if(th &gt; bh) {
+ 					switch(stackpos) {
+ 					case StackLeft:
+<a href="#h4-4" id="h4-4" class="h">@@ -166,7 +165,7 @@ dotile(Arg *arg) {
+</a> 							c-&gt;h = sh - c-&gt;y - 2 * BORDERPX;
+ 						break;
+ 					case StackBottom:
+<a href="#h4-4-3" id="h4-4-3" class="d">-						c-&gt;y = sy + master + (i - 1) * th + bh;
+</a><a href="#h4-4-4" id="h4-4-4" class="i">+						c-&gt;y = sy + md + (i - 1) * th + bh;
+</a> 						if(i + 1 == n)
+ 							c-&gt;h = sh - c-&gt;y - 2 * BORDERPX;
+ 						break;
+<a href="#h4-5" id="h4-5" class="h">@@ -176,7 +175,7 @@ dotile(Arg *arg) {
+</a> 				}
+ 				else { /* fallback if th &lt; bh */
+ 					if(stackpos == StackBottom)
+<a href="#h4-5-3" id="h4-5-3" class="d">-						c-&gt;y += master;
+</a><a href="#h4-5-4" id="h4-5-4" class="i">+						c-&gt;y += md;
+</a> 					c-&gt;w = stackw - 2 * BORDERPX;
+ 					c-&gt;h = stackh - 2 * BORDERPX;
+ 				}
+<a href="#h4-6" id="h4-6" class="h">@@ -238,7 +237,6 @@ isvisible(Client *c) {
+</a> 
+ void
+ resizecol(Arg *arg) {
+<a href="#h4-6-3" id="h4-6-3" class="d">-	int s;
+</a> 	unsigned int n;
+ 	Client *c;
+ 
+<a href="#h4-7" id="h4-7" class="h">@@ -248,14 +246,13 @@ resizecol(Arg *arg) {
+</a> 	if(!sel || sel-&gt;isfloat || n &lt; 2 || (arrange == dofloat))
+ 		return;
+ 
+<a href="#h4-7-3" id="h4-7-3" class="d">-	s = stackpos == StackBottom ? sh - bh : sw;
+</a> 	if(sel == getnext(clients)) {
+<a href="#h4-7-5" id="h4-7-5" class="d">-		if(master + arg-&gt;i &gt; s - MINDIM || master + arg-&gt;i &lt; MINDIM)
+</a><a href="#h4-7-6" id="h4-7-6" class="i">+		if(master + arg-&gt;i &gt; 95 || master + arg-&gt;i &lt; 5)
+</a> 			return;
+ 		master += arg-&gt;i;
+ 	}
+ 	else {
+<a href="#h4-7-11" id="h4-7-11" class="d">-		if(master - arg-&gt;i &gt; s - MINDIM || master - arg-&gt;i &lt; MINDIM)
+</a><a href="#h4-7-12" id="h4-7-12" class="i">+		if(master - arg-&gt;i &gt; 95 || master - arg-&gt;i &lt; 5)
+</a> 			return;
+ 		master -= arg-&gt;i;
+ 	}
+<a href="#h4-8" id="h4-8" class="h">@@ -321,7 +318,6 @@ togglestackpos(Arg *arg) {
+</a> 		stackpos = STACKPOS;
+ 	else
+ 		stackpos = StackBottom;
+<a href="#h4-8-3" id="h4-8-3" class="d">-	master = ((stackpos == StackBottom ? sh - bh : sw) * MASTER) / 100;
+</a> 	arrange(NULL);
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

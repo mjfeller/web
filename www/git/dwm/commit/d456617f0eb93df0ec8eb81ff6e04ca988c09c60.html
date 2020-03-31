@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>basic draw.c structure - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d456617f0eb93df0ec8eb81ff6e04ca988c09c60.html">d456617f0eb93df0ec8eb81ff6e04ca988c09c60</a>
+<b>parent</b> <a href="../commit/61fe833a062b0e027ec48ed7c7adeb2ed63089d3.html">61fe833a062b0e027ec48ed7c7adeb2ed63089d3</a>
+<b>Author:</b> anselm@garbe.us &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Sun, 18 Nov 2012 12:04:29 +0100
+
+basic draw.c structure
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">draw.c</a></td><td> | </td><td class="num">139</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">draw.h</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>3 files changed, 149 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = dwm.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+SRC = draw.c dwm.c
+</a> OBJ = ${SRC:.c=.o}
+ 
+ all: options dwm
+<b>diff --git a/<a id="h1" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,139 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+#include &lt;X11/Xlib.h&gt;
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#include &quot;draw.h&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+Draw *
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+draw_create(Display *dpy, Window win, unsigned int w, unsigned int h) {
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	Draw *draw = (Draw *)calloc(1, sizeof(Draw));
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	draw-&gt;w = w;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	draw-&gt;h = h;
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	/* TODO: drawable creation */
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	/* TODO: gc allocation */
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	return draw;
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+}
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+void
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+draw_resize(Draw *draw, unsigned int w, unsigned int h) {
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	if(!draw)
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+		return;
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+	draw-&gt;w = w;
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	draw-&gt;h = h;
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+	/* TODO: resize drawable */
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+}
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+void
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+draw_free(Draw *draw) {
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+	/* TODO: deallocate DDCs */
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	/* TODO: deallocate drawable */
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+	free(draw);
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+}
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+DDC *
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+dc_create(Draw *draw) {
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+	DDC *dc = (DDC *)calloc(1, sizeof(DDC));
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	dc-&gt;draw = draw;
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	dc-&gt;next = draw-&gt;dc;
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	draw-&gt;dc = dc;
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+	return dc;
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+}
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+void
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+dc_free(DDC *dc) {
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+	DDC **tdc;
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+	if(!dc)
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+		return;
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+	/* remove from dc list */
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+	for(tdc = &amp;dc-&gt;draw-&gt;dc; *tdc &amp;&amp; *tdc != dc; tdc = &amp;(*tdc)-&gt;next);
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+	*tdc = dc-&gt;next;
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+	/* TODO: deallocate any resources of this dc, if needed */
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+	free(dc);
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+}
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+Fnt *
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+font_create(const char *fontname) {
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+	Fnt *font = (Fnt *)calloc(1, sizeof(Fnt));
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+	/* TODO: allocate actual font */
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+	return font;
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+}
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+void
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+font_free(Fnt *font) {
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+	if(!font)
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+		return;
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+	/* TODO: deallocate any font resources */
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+	free(font);
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+}
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+Col *
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+col_create(const char *colname) {
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+	Col *col = (Col *)calloc(1, sizeof(Col));
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+	/* TODO: allocate color */
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+	return col;
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+}
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+void
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+col_free(Col *col) {
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+	if(!col)
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+		return;
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+	/* TODO: deallocate any color resource */
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+	free(col);
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+}
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+void
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+dc_setfont(DDC *dc, Fnt *font) {
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+	if(!dc || !font)
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+		return;
+</a><a href="#h1-0-88" id="h1-0-88" class="i">+	dc-&gt;font = font;
+</a><a href="#h1-0-89" id="h1-0-89" class="i">+}
+</a><a href="#h1-0-90" id="h1-0-90" class="i">+
+</a><a href="#h1-0-91" id="h1-0-91" class="i">+void
+</a><a href="#h1-0-92" id="h1-0-92" class="i">+dc_setfg(DDC *dc, Col *col) {
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+	if(!dc || !col) 
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+		return;
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+	dc-&gt;fg = col;
+</a><a href="#h1-0-96" id="h1-0-96" class="i">+}
+</a><a href="#h1-0-97" id="h1-0-97" class="i">+
+</a><a href="#h1-0-98" id="h1-0-98" class="i">+void
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+dc_setbg(DDC *dc, Col *col) {
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+	if(!dc || !col)
+</a><a href="#h1-0-101" id="h1-0-101" class="i">+		return;
+</a><a href="#h1-0-102" id="h1-0-102" class="i">+	dc-&gt;bg = col;
+</a><a href="#h1-0-103" id="h1-0-103" class="i">+}
+</a><a href="#h1-0-104" id="h1-0-104" class="i">+
+</a><a href="#h1-0-105" id="h1-0-105" class="i">+void
+</a><a href="#h1-0-106" id="h1-0-106" class="i">+dc_setfill(DDC *dc, Bool fill) {
+</a><a href="#h1-0-107" id="h1-0-107" class="i">+	if(!dc)
+</a><a href="#h1-0-108" id="h1-0-108" class="i">+		return;
+</a><a href="#h1-0-109" id="h1-0-109" class="i">+	dc-&gt;fill = fill;
+</a><a href="#h1-0-110" id="h1-0-110" class="i">+}
+</a><a href="#h1-0-111" id="h1-0-111" class="i">+
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+void
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+dc_drawrect(DDC *dc, int x, int y, unsigned int w, unsigned int h) {
+</a><a href="#h1-0-114" id="h1-0-114" class="i">+	if(!dc)
+</a><a href="#h1-0-115" id="h1-0-115" class="i">+		return;
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+	/* TODO: draw the rectangle */
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+}
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+void
+</a><a href="#h1-0-120" id="h1-0-120" class="i">+dc_drawtext(DDC *dc, int x, int y, const char *text) {
+</a><a href="#h1-0-121" id="h1-0-121" class="i">+	if(!dc)
+</a><a href="#h1-0-122" id="h1-0-122" class="i">+		return;
+</a><a href="#h1-0-123" id="h1-0-123" class="i">+	/* TODO: draw the text */
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+}
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+void
+</a><a href="#h1-0-127" id="h1-0-127" class="i">+dc_map(DDC *dc, int x, int y, unsigned int w, unsigned int h) {
+</a><a href="#h1-0-128" id="h1-0-128" class="i">+	if(!dc)
+</a><a href="#h1-0-129" id="h1-0-129" class="i">+		return;
+</a><a href="#h1-0-130" id="h1-0-130" class="i">+	/* TODO: map the dc contents in the region */
+</a><a href="#h1-0-131" id="h1-0-131" class="i">+}
+</a><a href="#h1-0-132" id="h1-0-132" class="i">+
+</a><a href="#h1-0-133" id="h1-0-133" class="i">+void
+</a><a href="#h1-0-134" id="h1-0-134" class="i">+dc_getextents(DDC *dc, const char *text, TextExtents *extents) {
+</a><a href="#h1-0-135" id="h1-0-135" class="i">+	if(!dc || !extents)
+</a><a href="#h1-0-136" id="h1-0-136" class="i">+		return;
+</a><a href="#h1-0-137" id="h1-0-137" class="i">+	/* TODO: get extents */
+</a><a href="#h1-0-138" id="h1-0-138" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/draw.h.html">draw.h</a> b/<a href="../file/draw.h.html">draw.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,13 +1,16 @@
+</a> /* See LICENSE file for copyright and license details. */
+ 
+<a href="#h2-0-2" id="h2-0-2" class="i">+typedef struct _DDC DDC;
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+
+</a> /* X11 types - begin */
+<a href="#h2-0-5" id="h2-0-5" class="i">+typedef struct _XDraw Draw;
+</a> struct _XDraw {
+ 	unsigned int w, h;
+ 	Display *dpy;
+ 	Drawable drawable;
+ 	GC gc;
+<a href="#h2-0-11" id="h2-0-11" class="i">+	DDC *dc;
+</a> };
+<a href="#h2-0-13" id="h2-0-13" class="d">-typedef struct _XDraw Draw;
+</a> 
+ struct _XCol {
+ 	unsigned long rgb;
+<a href="#h2-1" id="h2-1" class="h">@@ -24,13 +27,14 @@ struct _XFont {
+</a> typedef struct _XFont Fnt;
+ /* X11 types - end */
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-typedef struct {
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+struct _DDC {
+</a> 	Draw *draw;
+ 	Col *fg;
+ 	Col *bg;
+ 	Fnt *font;
+ 	Bool fill;
+<a href="#h2-1-10" id="h2-1-10" class="d">-} DDC;
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+	DDC *next;
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+};
+</a> 
+ typedef struct {
+ 	unsigned int w;
+<a href="#h2-2" id="h2-2" class="h">@@ -60,8 +64,8 @@ void col_free(Col *col);
+</a> 
+ /* Drawing context manipulation */
+ void dc_setfont(DDC *dc, Fnt *font);
+<a href="#h2-2-3" id="h2-2-3" class="d">-void dc_setfg(DDC *dc, Col col);
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-void dc_setbg(DDC *dc, Col col);
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+void dc_setfg(DDC *dc, Col *col);
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+void dc_setbg(DDC *dc, Col *col);
+</a> void dc_setfill(DDC *dc, Bool fill);
+ 
+ /* Drawing functions */
+</pre>
+</div>
+</body>
+</html>

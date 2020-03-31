@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fast grab patch (thanks Rob) - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e0e6b071c63f960c398b43b2fbf0dec66a9b3ab6.html">e0e6b071c63f960c398b43b2fbf0dec66a9b3ab6</a>
+<b>parent</b> <a href="../commit/cd3b4915c3358b93f8dbff531bff82c0cd833c0b.html">cd3b4915c3358b93f8dbff531bff82c0cd833c0b</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Sun,  8 May 2011 15:15:24 +0100
+
+fast grab patch (thanks Rob)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.1</a></td><td> | </td><td class="num">22</td><td><span class="i">+++++++++++++</span><span class="d">---------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 27 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.1.html">dmenu.1</a> b/<a href="../file/dmenu.1.html">dmenu.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,6 +4,7 @@ dmenu \- dynamic menu
+</a> .SH SYNOPSIS
+ .B dmenu
+ .RB [ \-b ]
+<a href="#h0-0-3" id="h0-0-3" class="i">+.RB [ \-f ]
+</a> .RB [ \-i ]
+ .RB [ \-l
+ .IR lines ]
+<a href="#h0-1" id="h0-1" class="h">@@ -32,9 +33,9 @@ is a dynamic menu for X, originally designed for
+</a> .BR dwm (1).
+ It manages huge numbers of user-defined menu items efficiently.
+ .P
+<a href="#h0-1-3" id="h0-1-3" class="d">-dmenu reads a list of newline-separated items from standard input and creates a
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-menu.  When the user selects an item or enters any text and presses Return,
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-their choice is printed to standard output and dmenu terminates.
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+dmenu reads a list of newline-separated items from stdin and creates a menu.
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+When the user selects an item or enters any text and presses Return, their
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+choice is printed to stdout and dmenu terminates.
+</a> .P
+ .B dmenu_run
+ is a dmenu script used by dwm which lists programs in the user&#39;s PATH and
+<a href="#h0-2" id="h0-2" class="h">@@ -47,6 +48,10 @@ is a program used by dmenu_run to find and cache a list of executables.
+</a> .B \-b
+ dmenu appears at the bottom of the screen.
+ .TP
+<a href="#h0-2-3" id="h0-2-3" class="i">+.B \-f
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+dmenu grabs the keyboard before reading stdin.  This is faster, but may lock up
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+X if stdin is from a terminal.
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+.TP
+</a> .B \-i
+ dmenu matches menu items case insensitively.
+ .TP
+<a href="#h0-3" id="h0-3" class="h">@@ -66,7 +71,7 @@ defines the font or font set used.
+</a> defines the normal background color.
+ .IR #RGB ,
+ .IR #RRGGBB ,
+<a href="#h0-3-3" id="h0-3-3" class="d">-and color names are supported.
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+and X color names are supported.
+</a> .TP
+ .BI \-nf &quot; color&quot;
+ defines the normal foreground color.
+<a href="#h0-4" id="h0-4" class="h">@@ -78,7 +83,7 @@ defines the selected background color.
+</a> defines the selected foreground color.
+ .TP
+ .B \-v
+<a href="#h0-4-3" id="h0-4-3" class="d">-prints version information to standard output, then exits.
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+prints version information to stdout, then exits.
+</a> .SH USAGE
+ dmenu is completely controlled by the keyboard.  Besides standard Unix line
+ editing and item selection (Up/Down/Left/Right, PageUp/PageDown, Home/End), the
+<a href="#h0-5" id="h0-5" class="h">@@ -88,12 +93,11 @@ following keys are recognized:
+</a> Copy the selected item to the input field.
+ .TP
+ .B Return (Control\-j)
+<a href="#h0-5-3" id="h0-5-3" class="d">-Confirm selection.  Prints the selected item to standard output and exits,
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-returning success.
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+Confirm selection.  Prints the selected item to stdout and exits, returning
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+success.
+</a> .TP
+ .B Shift\-Return (Control\-Shift\-j)
+<a href="#h0-5-9" id="h0-5-9" class="d">-Confirm input.  Prints the input text to standard output and exits, returning
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-success.
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+Confirm input.  Prints the input text to stdout and exits, returning success.
+</a> .TP
+ .B Escape (Control\-c)
+ Exit without selecting an item, returning failure.
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -64,6 +64,7 @@ static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
+</a> 
+ int
+ main(int argc, char *argv[]) {
+<a href="#h1-0-3" id="h1-0-3" class="i">+	Bool fast = False;
+</a> 	int i;
+ 
+ 	progname = &quot;dmenu&quot;;
+<a href="#h1-1" id="h1-1" class="h">@@ -77,6 +78,8 @@ main(int argc, char *argv[]) {
+</a> 			topbar = False;
+ 		else if(!strcmp(argv[i], &quot;-i&quot;))
+ 			fstrncmp = strncasecmp;
+<a href="#h1-1-3" id="h1-1-3" class="i">+		else if(!strcmp(argv[i], &quot;-f&quot;))
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+			fast = True;
+</a> 		else if(i == argc-1)
+ 			goto usage;
+ 		/* double flags */
+<a href="#h1-2" id="h1-2" class="h">@@ -101,13 +104,21 @@ main(int argc, char *argv[]) {
+</a> 
+ 	dc = initdc();
+ 	initfont(dc, font);
+<a href="#h1-2-3" id="h1-2-3" class="d">-	readstdin();
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-	setup();
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+	if(fast) {
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+		setup();
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+		readstdin();
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+	}
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+	else {
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+		readstdin();
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+		setup();
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+	}
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+	match();
+</a> 	run();
+ 	return EXIT_FAILURE;
+ 
+ usage:
+<a href="#h1-2-19" id="h1-2-19" class="d">-	fputs(&quot;usage: dmenu [-b] [-i] [-l lines] [-m monitor] [-p prompt] [-fn font]\n&quot;
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+	fputs(&quot;usage: dmenu [-b] [-f] [-i] [-l lines] [-m monitor] [-p prompt] [-fn font]\n&quot;
+</a> 	      &quot;             [-nb color] [-nf color] [-sb color] [-sf color] [-v]\n&quot;, stderr);
+ 	return EXIT_FAILURE;
+ }
+<a href="#h1-3" id="h1-3" class="h">@@ -530,5 +541,4 @@ setup(void) {
+</a> 	inputw = MIN(inputw, mw/3);
+ 	promptw = prompt ? textw(dc, prompt) : 0;
+ 	XMapRaised(dc-&gt;dpy, win);
+<a href="#h1-3-3" id="h1-3-3" class="d">-	match();
+</a> }
+</pre>
+</div>
+</body>
+</html>

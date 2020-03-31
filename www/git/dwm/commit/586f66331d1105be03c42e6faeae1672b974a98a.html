@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added bar event timer - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/586f66331d1105be03c42e6faeae1672b974a98a.html">586f66331d1105be03c42e6faeae1672b974a98a</a>
+<b>parent</b> <a href="../commit/33996500763b04119a6867dfa4040a4236c21a41.html">33996500763b04119a6867dfa4040a4236c21a41</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Tue, 11 Jul 2006 18:15:11 +0200
+
+added bar event timer
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bar.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">client.c</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">cmd.c</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">config.h</a></td><td> | </td><td class="num">12</td><td><span class="i">++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">key.c</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">util.c</a></td><td> | </td><td class="num">25</td><td><span class="i">++++++++</span><span class="d">-----------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">util.h</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">wm.c</a></td><td> | </td><td class="num">33</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">wm.h</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>9 files changed, 87 insertions(+), 51 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bar.c.html">bar.c</a> b/<a href="../file/bar.c.html">bar.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -5,12 +5,22 @@
+</a> 
+ #include &quot;wm.h&quot;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+static const char *status[] = {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;sh&quot;, &quot;-c&quot;, &quot;echo -n `date` `uptime | sed &#39;s/.*://; s/,//g&#39;`&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		&quot; `acpi | awk &#39;{print $4}&#39; | sed &#39;s/,//&#39;`&quot;, 0 \
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+};
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a> void
+ draw_bar()
+ {
+<a href="#h0-0-11" id="h0-0-11" class="i">+	static char buf[1024];
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	buf[0] = 0;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	pipe_spawn(buf, sizeof(buf), dpy, (char **)status);
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+
+</a> 	brush.rect = barrect;
+ 	brush.rect.x = brush.rect.y = 0;
+<a href="#h0-0-18" id="h0-0-18" class="d">-	draw(dpy, &amp;brush, False, 0);
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	draw(dpy, &amp;brush, False, buf);
+</a> 
+ 	XCopyArea(dpy, brush.drawable, barwin, brush.gc, 0, 0, barrect.width,
+ 			barrect.height, 0, 0);
+<b>diff --git a/<a id="h1" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -122,6 +122,8 @@ unmanage(Client *c)
+</a> 	XSetErrorHandler(error_handler);
+ 	XUngrabServer(dpy);
+ 	flush_events(EnterWindowMask);
+<a href="#h1-0-3" id="h1-0-3" class="i">+	if(stack)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		focus(stack);
+</a> }
+ 
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -135,3 +137,10 @@ getclient(Window w)
+</a> 	return NULL;
+ }
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+void
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+draw_client(Client *c)
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+{
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/cmd.c.html">cmd.c</a> b/<a href="../file/cmd.c.html">cmd.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,22 +5,22 @@
+</a> 
+ #include &quot;wm.h&quot;
+ #include &lt;stdio.h&gt;
+<a href="#h2-0-3" id="h2-0-3" class="i">+#include &lt;string.h&gt;
+</a> 
+ void
+<a href="#h2-0-6" id="h2-0-6" class="d">-run(char *arg)
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+run(void *aux)
+</a> {
+<a href="#h2-0-9" id="h2-0-9" class="d">-	spawn(dpy, arg);
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	spawn(dpy, aux);
+</a> }
+ 
+ void
+<a href="#h2-0-14" id="h2-0-14" class="d">-quit(char *arg)
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+quit(void *aux)
+</a> {
+<a href="#h2-0-17" id="h2-0-17" class="d">-	fputs(&quot;quit\n&quot;, stderr);
+</a> 	running = False;
+ }
+ 
+ void
+<a href="#h2-0-22" id="h2-0-22" class="d">-kill(char *arg)
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+kill(void *aux)
+</a> {
+ 	Client *c = stack;
+ 
+<b>diff --git a/<a id="h3" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -3,16 +3,8 @@
+</a>  * See LICENSE file for license details.
+  */
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-#define FONT		&quot;-*-terminus-medium-*-*-*-14-*-*-*-*-*-iso10646-*&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+#define FONT		&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;
+</a> #define BGCOLOR		&quot;#000000&quot;
+ #define FGCOLOR		&quot;#ffaa00&quot;
+ #define BORDERCOLOR	&quot;#000000&quot;
+<a href="#h3-0-8" id="h3-0-8" class="d">-#define STATUSCMD	&quot;echo -n `date` `uptime | sed &#39;s/.*://; s/,//g&#39;`&quot; \
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-					&quot; `acpi | awk &#39;{print $4}&#39; | sed &#39;s/,//&#39;`&quot;
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-#define PLCMD		&quot;`ls -lL /bin /sbin /usr/bin /usr/local/bin 2&gt;/dev/null | awk &#39;NF&gt;2 &amp;&amp; $1 ~ /^[^d].*x/ {print $NF}&#39; | sort | uniq | gridmenu`&quot;
+</a><a href="#h3-0-11" id="h3-0-11" class="d">-
+</a><a href="#h3-0-12" id="h3-0-12" class="d">-#define KEYS		\
+</a><a href="#h3-0-13" id="h3-0-13" class="d">-	{ Mod1Mask, XK_Return, run, &quot;xterm -u8 -bg black -fg white -fn &#39;-*-terminus-medium-*-*-*-14-*-*-*-*-*-iso10646-*&#39;&quot; }, \
+</a><a href="#h3-0-14" id="h3-0-14" class="d">-	{ Mod1Mask, XK_p, run, PLCMD }, \
+</a><a href="#h3-0-15" id="h3-0-15" class="d">-	{ Mod1Mask | ShiftMask, XK_q, quit, NULL},
+</a><a href="#h3-0-16" id="h3-0-16" class="d">-
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+#define STATUSDELAY 1 /* milliseconds */
+</a><b>diff --git a/<a id="h4" href="../file/key.c.html">key.c</a> b/<a href="../file/key.c.html">key.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -7,8 +7,20 @@
+</a> 
+ #include &lt;X11/keysym.h&gt;
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+static const char *term[] = { 
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	&quot;xterm&quot;, &quot;-u8&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-fn&quot;,
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+	&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;, 0 
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+};
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+static const char *proglist[] = {
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+		&quot;sh&quot;, &quot;-c&quot;, &quot;exec `ls -lL /bin /sbin /usr/bin /usr/local/bin 2&gt;/dev/null | awk &#39;NF&gt;2 &amp;&amp; $1 ~ /^[^d].*x/ {print $NF}&#39; | sort | uniq | gridmenu`&quot;, 0
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+};
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+
+</a> static Key key[] = {
+<a href="#h4-0-13" id="h4-0-13" class="d">-	KEYS
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	{ Mod1Mask, XK_Return, run, term },
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+	{ Mod1Mask, XK_p, run, proglist }, 
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+	{ Mod1Mask | ShiftMask, XK_c, kill, NULL}, 
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+	{ Mod1Mask | ShiftMask, XK_q, quit, NULL},
+</a> };
+ 
+ void
+<a href="#h4-1" id="h4-1" class="h">@@ -37,7 +49,7 @@ keypress(XEvent *e)
+</a> 	for(i = 0; i &lt; len; i++)
+ 		if((keysym == key[i].keysym) &amp;&amp; (key[i].mod == ev-&gt;state)) {
+ 			if(key[i].func)
+<a href="#h4-1-3" id="h4-1-3" class="d">-				key[i].func(key[i].arg);
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+				key[i].func(key[i].aux);
+</a> 			return;
+ 		}
+ }
+<b>diff --git a/<a id="h5" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -14,8 +14,6 @@
+</a> 
+ #include &quot;util.h&quot;
+ 
+<a href="#h5-0-3" id="h5-0-3" class="d">-static char *shell = NULL;
+</a><a href="#h5-0-4" id="h5-0-4" class="d">-
+</a> void
+ error(char *errstr, ...) {
+ 	va_list ap;
+<a href="#h5-1" id="h5-1" class="h">@@ -85,21 +83,17 @@ swap(void **p1, void **p2)
+</a> }
+ 
+ void
+<a href="#h5-1-3" id="h5-1-3" class="d">-spawn(Display *dpy, const char *cmd)
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+spawn(Display *dpy, char *argv[])
+</a> {
+<a href="#h5-1-6" id="h5-1-6" class="d">-	if(!shell &amp;&amp; !(shell = getenv(&quot;SHELL&quot;)))
+</a><a href="#h5-1-7" id="h5-1-7" class="d">-		shell = &quot;/bin/sh&quot;;
+</a><a href="#h5-1-8" id="h5-1-8" class="d">-
+</a><a href="#h5-1-9" id="h5-1-9" class="d">-	if(!cmd)
+</a><a href="#h5-1-10" id="h5-1-10" class="i">+	if(!argv || !argv[0])
+</a> 		return;
+ 	if(fork() == 0) {
+ 		if(fork() == 0) {
+ 			if(dpy)
+ 				close(ConnectionNumber(dpy));
+ 			setsid();
+<a href="#h5-1-17" id="h5-1-17" class="d">-			fprintf(stderr, &quot;gridwm: execlp %s %s -c %s&quot;, shell, shell, cmd);
+</a><a href="#h5-1-18" id="h5-1-18" class="d">-			execlp(shell, shell, &quot;-c&quot;, cmd, NULL);
+</a><a href="#h5-1-19" id="h5-1-19" class="d">-			fprintf(stderr, &quot;gridwm: execlp %s&quot;, cmd);
+</a><a href="#h5-1-20" id="h5-1-20" class="i">+			execvp(argv[0], argv);
+</a><a href="#h5-1-21" id="h5-1-21" class="i">+			fprintf(stderr, &quot;gridwm: execvp %s&quot;, argv[0]);
+</a> 			perror(&quot; failed&quot;);
+ 		}
+ 		exit (0);
+<a href="#h5-2" id="h5-2" class="h">@@ -108,15 +102,12 @@ spawn(Display *dpy, const char *cmd)
+</a> }
+ 
+ void
+<a href="#h5-2-3" id="h5-2-3" class="d">-pipe_spawn(char *buf, unsigned int len, Display *dpy, const char *cmd)
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+pipe_spawn(char *buf, unsigned int len, Display *dpy, char *argv[])
+</a> {
+ 	unsigned int l, n;
+ 	int pfd[2];
+ 
+<a href="#h5-2-9" id="h5-2-9" class="d">-	if(!shell &amp;&amp; !(shell = getenv(&quot;SHELL&quot;)))
+</a><a href="#h5-2-10" id="h5-2-10" class="d">-		shell = &quot;/bin/sh&quot;;
+</a><a href="#h5-2-11" id="h5-2-11" class="d">-
+</a><a href="#h5-2-12" id="h5-2-12" class="d">-	if(!cmd)
+</a><a href="#h5-2-13" id="h5-2-13" class="i">+	if(!argv || !argv[0])
+</a> 		return;
+ 
+ 	if(pipe(pfd) == -1) {
+<a href="#h5-3" id="h5-3" class="h">@@ -131,8 +122,8 @@ pipe_spawn(char *buf, unsigned int len, Display *dpy, const char *cmd)
+</a> 		dup2(pfd[1], STDOUT_FILENO);
+ 		close(pfd[0]);
+ 		close(pfd[1]);
+<a href="#h5-3-3" id="h5-3-3" class="d">-		execlp(shell, shell, &quot;-c&quot;, cmd, NULL);
+</a><a href="#h5-3-4" id="h5-3-4" class="d">-		fprintf(stderr, &quot;gridwm: execlp %s&quot;, cmd);
+</a><a href="#h5-3-5" id="h5-3-5" class="i">+		execvp(argv[0], argv);
+</a><a href="#h5-3-6" id="h5-3-6" class="i">+		fprintf(stderr, &quot;gridwm: execvp %s&quot;, argv[0]);
+</a> 		perror(&quot; failed&quot;);
+ 	}
+ 	else {
+<b>diff --git a/<a id="h6" href="../file/util.h.html">util.h</a> b/<a href="../file/util.h.html">util.h</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -9,12 +9,16 @@ extern void *emallocz(unsigned int size);
+</a> extern void *emalloc(unsigned int size);
+ extern void *erealloc(void *ptr, unsigned int size);
+ extern char *estrdup(const char *str);
+<a href="#h6-0-3" id="h6-0-3" class="d">-#define eassert(a) do { \
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+#define eassert(a) \
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+	do { \
+</a> 		if(!(a)) \
+ 			failed_assert(#a, __FILE__, __LINE__); \
+ 	} while (0)
+ extern void failed_assert(char *a, char *file, int line);
+<a href="#h6-0-10" id="h6-0-10" class="d">-void pipe_spawn(char *buf, unsigned int len, Display *dpy, const char *cmd);
+</a><a href="#h6-0-11" id="h6-0-11" class="d">-extern void spawn(Display *dpy, const char *cmd);
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+extern void pipe_spawn(char *buf, unsigned int len, Display *dpy, char *argv[]);
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+extern void spawn(Display *dpy, char *argv[]);
+</a> extern void swap(void **p1, void **p2);
+<a href="#h6-0-15" id="h6-0-15" class="d">-unsigned char *getselection(unsigned long offset, unsigned long *len, unsigned long *remain);
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+extern unsigned char *getselection(unsigned long offset, unsigned long *len,
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+		unsigned long *remain);
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+extern unsigned int tokenize(char **result, unsigned int reslen,
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+		char *str, char delim);
+</a><b>diff --git a/<a id="h7" href="../file/wm.c.html">wm.c</a> b/<a href="../file/wm.c.html">wm.c</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -3,10 +3,15 @@
+</a>  * See LICENSE file for license details.
+  */
+ 
+<a href="#h7-0-3" id="h7-0-3" class="i">+#include &lt;errno.h&gt;
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+
+</a> #include &lt;stdarg.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+ 
+<a href="#h7-0-9" id="h7-0-9" class="i">+#include &lt;sys/types.h&gt;
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+#include &lt;sys/time.h&gt;
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+
+</a> #include &lt;X11/cursorfont.h&gt;
+ #include &lt;X11/Xatom.h&gt;
+ #include &lt;X11/Xproto.h&gt;
+<a href="#h7-1" id="h7-1" class="h">@@ -160,12 +165,9 @@ startup_error_handler(Display *dpy, XErrorEvent *error)
+</a> static void
+ cleanup()
+ {
+<a href="#h7-1-3" id="h7-1-3" class="d">-	/*
+</a><a href="#h7-1-4" id="h7-1-4" class="d">-	Client *c;
+</a><a href="#h7-1-5" id="h7-1-5" class="d">-	for(c=client; c; c=c-&gt;next)
+</a><a href="#h7-1-6" id="h7-1-6" class="d">-		reparent_client(c, root, c-&gt;sel-&gt;rect.x, c-&gt;sel-&gt;rect.y);
+</a><a href="#h7-1-7" id="h7-1-7" class="i">+	while(clients)
+</a><a href="#h7-1-8" id="h7-1-8" class="i">+		unmanage(clients);
+</a> 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+<a href="#h7-1-10" id="h7-1-10" class="d">-	*/
+</a> }
+ 
+ int
+<a href="#h7-2" id="h7-2" class="h">@@ -176,6 +178,11 @@ main(int argc, char *argv[])
+</a> 	unsigned int mask;
+ 	Window w;
+ 	XEvent ev;
+<a href="#h7-2-3" id="h7-2-3" class="i">+	fd_set fds;
+</a><a href="#h7-2-4" id="h7-2-4" class="i">+	struct timeval t, timeout = {
+</a><a href="#h7-2-5" id="h7-2-5" class="i">+		.tv_usec = 0,
+</a><a href="#h7-2-6" id="h7-2-6" class="i">+		.tv_sec = STATUSDELAY,
+</a><a href="#h7-2-7" id="h7-2-7" class="i">+	};
+</a> 
+ 	/* command line args */
+ 	for(i = 1; (i &lt; argc) &amp;&amp; (argv[i][0] == &#39;-&#39;); i++) {
+<a href="#h7-3" id="h7-3" class="h">@@ -264,9 +271,19 @@ main(int argc, char *argv[])
+</a> 	scan_wins();
+ 
+ 	while(running) {
+<a href="#h7-3-3" id="h7-3-3" class="d">-		XNextEvent(dpy, &amp;ev);
+</a><a href="#h7-3-4" id="h7-3-4" class="d">-		if(handler[ev.type])
+</a><a href="#h7-3-5" id="h7-3-5" class="d">-			(handler[ev.type]) (&amp;ev); /* call handler */
+</a><a href="#h7-3-6" id="h7-3-6" class="i">+		if(XPending(dpy) &gt; 0) {
+</a><a href="#h7-3-7" id="h7-3-7" class="i">+			XNextEvent(dpy, &amp;ev);
+</a><a href="#h7-3-8" id="h7-3-8" class="i">+			if(handler[ev.type])
+</a><a href="#h7-3-9" id="h7-3-9" class="i">+				(handler[ev.type]) (&amp;ev); /* call handler */
+</a><a href="#h7-3-10" id="h7-3-10" class="i">+			continue;
+</a><a href="#h7-3-11" id="h7-3-11" class="i">+		}
+</a><a href="#h7-3-12" id="h7-3-12" class="i">+		FD_ZERO(&amp;fds);
+</a><a href="#h7-3-13" id="h7-3-13" class="i">+		FD_SET(ConnectionNumber(dpy), &amp;fds);
+</a><a href="#h7-3-14" id="h7-3-14" class="i">+		t = timeout;
+</a><a href="#h7-3-15" id="h7-3-15" class="i">+		if(select(ConnectionNumber(dpy) + 1, &amp;fds, NULL, NULL, &amp;t) &gt; 0)
+</a><a href="#h7-3-16" id="h7-3-16" class="i">+			continue;
+</a><a href="#h7-3-17" id="h7-3-17" class="i">+		else if(errno != EINTR)
+</a><a href="#h7-3-18" id="h7-3-18" class="i">+			draw_bar();
+</a> 	}
+ 
+ 	cleanup();
+<b>diff --git a/<a id="h8" href="../file/wm.h.html">wm.h</a> b/<a href="../file/wm.h.html">wm.h</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -42,8 +42,8 @@ struct Client {
+</a> struct Key {
+ 	unsigned long mod;
+ 	KeySym keysym;
+<a href="#h8-0-3" id="h8-0-3" class="d">-	void (*func)(char *arg);
+</a><a href="#h8-0-4" id="h8-0-4" class="d">-	char *arg;
+</a><a href="#h8-0-5" id="h8-0-5" class="i">+	void (*func)(void *aux);
+</a><a href="#h8-0-6" id="h8-0-6" class="i">+	void *aux;
+</a> };
+ 
+ extern Display *dpy;
+<a href="#h8-1" id="h8-1" class="h">@@ -64,8 +64,9 @@ extern Client *clients, *stack;
+</a> extern void draw_bar();
+ 
+ /* cmd.c */
+<a href="#h8-1-3" id="h8-1-3" class="d">-extern void run(char *arg);
+</a><a href="#h8-1-4" id="h8-1-4" class="d">-extern void quit(char *arg);
+</a><a href="#h8-1-5" id="h8-1-5" class="i">+extern void run(void *aux);
+</a><a href="#h8-1-6" id="h8-1-6" class="i">+extern void quit(void *aux);
+</a><a href="#h8-1-7" id="h8-1-7" class="i">+extern void kill(void *aux);
+</a> 
+ /* client.c */
+ extern void manage(Window w, XWindowAttributes *wa);
+</pre>
+</div>
+</body>
+</html>

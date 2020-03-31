@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Selection snapping is now considering wrapping. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/911ba5674bc4eb53a2ed548856a50032c39ca7f2.html">911ba5674bc4eb53a2ed548856a50032c39ca7f2</a>
+<b>parent</b> <a href="../commit/a53017c8b47f511cf0462ac910cf9223a31ceb2f.html">a53017c8b47f511cf0462ac910cf9223a31ceb2f</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sun, 28 Apr 2013 18:14:15 +0200
+
+Selection snapping is now considering wrapping.
+
+Thanks Alexander Rezinsky &lt;alexrez@gmail.com&gt; for mentioning this!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">42</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 39 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -681,13 +681,49 @@ void
+</a> selsnap(int mode, int *x, int *y, int direction) {
+ 	switch(mode) {
+ 	case SNAP_WORD:
+<a href="#h0-0-3" id="h0-0-3" class="d">-		while(*x &gt; 0 &amp;&amp; *x &lt; term.col-1
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-				&amp;&amp; term.line[*y][*x + direction].c[0] != &#39; &#39;) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		for(;;) {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			if(direction &lt; 0 &amp;&amp; *x &lt;= 0) {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+				if(*y &gt; 0 &amp;&amp; term.line[*y - 1][term.col-1].mode
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+						&amp; ATTR_WRAP) {
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+					*y -= 1;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+					*x = term.col-1;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+				} else {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+					break;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+				}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+			}
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+			if(direction &gt; 0 &amp;&amp; *x &gt;= term.col-1) {
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+				if(*y &lt; term.row-1 &amp;&amp; term.line[*y][*x].mode
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+						&amp; ATTR_WRAP) {
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+					*y += 1;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+					*x = 0;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+				} else {
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+					break;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+				}
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+			}
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+			if(term.line[*y][*x + direction].c[0] == &#39; &#39;)
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+				break;
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+
+</a> 			*x += direction;
+ 		}
+ 		break;
+ 	case SNAP_LINE:
+ 		*x = (direction &lt; 0) ? 0 : term.col - 1;
+<a href="#h0-0-33" id="h0-0-33" class="i">+		if(direction &lt; 0 &amp;&amp; *y &gt; 0) {
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+			for(; *y &gt; 0; *y += direction) {
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+				if(!(term.line[*y-1][term.col-1].mode
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+						&amp; ATTR_WRAP)) {
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+					break;
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+				}
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+			}
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+		} else if(direction &gt; 0 &amp;&amp; *y &lt; term.row-1) {
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+			for(; *y &lt; term.row; *y += direction) {
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+				if(!(term.line[*y][term.col-1].mode
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+						&amp; ATTR_WRAP)) {
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+					break;
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+				}
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+			}
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+		}
+</a> 		break;
+ 	default:
+ 		break;
+<a href="#h0-1" id="h0-1" class="h">@@ -820,7 +856,7 @@ bpress(XEvent *e) {
+</a> 			sel.snap = 0;
+ 		}
+ 		selsnap(sel.snap, &amp;sel.bx, &amp;sel.by, -1);
+<a href="#h0-1-3" id="h0-1-3" class="d">-		selsnap(sel.snap, &amp;sel.ex, &amp;sel.ey, 1);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		selsnap(sel.snap, &amp;sel.ex, &amp;sel.ey, +1);
+</a> 		sel.b.x = sel.bx;
+ 		sel.b.y = sel.by;
+ 		sel.e.x = sel.ex;
+</pre>
+</div>
+</body>
+</html>

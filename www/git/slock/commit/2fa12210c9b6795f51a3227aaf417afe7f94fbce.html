@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>adding black cursor - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2fa12210c9b6795f51a3227aaf417afe7f94fbce.html">2fa12210c9b6795f51a3227aaf417afe7f94fbce</a>
+<b>parent</b> <a href="../commit/15a098bb27c75612fb91aac7344ad47949517fa5.html">15a098bb27c75612fb91aac7344ad47949517fa5</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Wed, 11 Oct 2006 17:04:04 +0200
+
+adding black cursor
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">13</td><td><span class="i">++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 10 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,21 +8,24 @@
+</a> #include &lt;string.h&gt;
+ #include &lt;unistd.h&gt;
+ #include &lt;sys/types.h&gt;
+<a href="#h0-0-3" id="h0-0-3" class="d">-#include &lt;X11/cursorfont.h&gt;
+</a> #include &lt;X11/keysym.h&gt;
+ #include &lt;X11/Xlib.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+ 
+ int
+ main(int argc, char **argv) {
+<a href="#h0-0-10" id="h0-0-10" class="i">+	char curs[] = {0, 0, 0, 0, 0, 0, 0, 0};
+</a> 	char buf[32], passwd[256];
+ 	int num, prev_nitem, screen;
+ 	struct spwd *sp;
+ 	unsigned int i, len;
+ 	Bool running = True;
+<a href="#h0-0-16" id="h0-0-16" class="d">-	KeySym ksym;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	Cursor invisible;
+</a> 	Display *dpy;
+<a href="#h0-0-19" id="h0-0-19" class="i">+	KeySym ksym;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	Pixmap pmap;
+</a> 	Window w;
+<a href="#h0-0-22" id="h0-0-22" class="i">+	XColor black, dummy;
+</a> 	XEvent ev;
+ 	XSetWindowAttributes wa;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -54,7 +57,10 @@ main(int argc, char **argv) {
+</a> 			0, DefaultDepth(dpy, screen), CopyFromParent,
+ 			DefaultVisual(dpy, screen), CWOverrideRedirect | CWBackPixel, &amp;wa);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	XDefineCursor(dpy, w, XCreateFontCursor(dpy, XC_coffee_mug));
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	XAllocNamedColor(dpy, DefaultColormap(dpy, screen), &quot;black&quot;, &amp;black, &amp;dummy);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	pmap = XCreateBitmapFromData(dpy, w, curs, 8, 8);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	invisible = XCreatePixmapCursor(dpy, pmap, pmap, &amp;black, &amp;black, 0, 0);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	XDefineCursor(dpy, w, invisible);
+</a> 	XMapRaised(dpy, w);
+ 	XSync(dpy, False);
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -103,6 +109,7 @@ main(int argc, char **argv) {
+</a> 				break;
+ 			}
+ 		}
+<a href="#h0-2-3" id="h0-2-3" class="i">+	XFreePixmap(dpy, pmap);
+</a> 	XDestroyWindow(dpy, w);
+ 	XCloseDisplay(dpy);
+ 	return 0;
+</pre>
+</div>
+</body>
+</html>

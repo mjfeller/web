@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Also clears ESC_START on interrupt characters during sequences. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5e917ab2874de556de12ce43e9a97300c9c722a2.html">5e917ab2874de556de12ce43e9a97300c9c722a2</a>
+<b>parent</b> <a href="../commit/99fb365aa30e6d9f8fa035f4d2adbc3145fafb00.html">99fb365aa30e6d9f8fa035f4d2adbc3145fafb00</a>
+<b>Author:</b> Colona &lt;<a href="mailto:colona@ycc.fr">colona@ycc.fr</a>&gt;
+<b>Date:</b>   Wed,  7 May 2014 10:05:27 +0200
+
+Also clears ESC_START on interrupt characters during sequences.
+
+Otherwise, the rest of the input is interpreted as a new escape
+sequence.
+For the ESC character, ESC_START is re-set in tcontrolcode.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 1 insertion(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2446,7 +2446,7 @@ tputc(char *c, int len) {
+</a> 		   (ascii == &#39;\a&#39; || ascii == 030 ||
+ 		    ascii == 032  || ascii == 033 ||
+ 		    ISCONTROLC1(unicodep))) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-			term.esc &amp;= ~ESC_STR;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			term.esc &amp;= ~(ESC_START|ESC_STR);
+</a> 			term.esc |= ESC_STR_END;
+ 		} else if(strescseq.len + len &lt; sizeof(strescseq.buf) - 1) {
+ 			memmove(&amp;strescseq.buf[strescseq.len], c, len);
+</pre>
+</div>
+</body>
+</html>

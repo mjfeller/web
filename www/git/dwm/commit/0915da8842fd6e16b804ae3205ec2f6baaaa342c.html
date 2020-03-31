@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>no, reodering floating clients definately breaks the manage() policy which attaches all clients zoomed (otherwise higher-weight clients couldn&#39;t be attached zoomed, which sucks) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0915da8842fd6e16b804ae3205ec2f6baaaa342c.html">0915da8842fd6e16b804ae3205ec2f6baaaa342c</a>
+<b>parent</b> <a href="../commit/0d0e8bde134b999dd22c891d227d886ca6c9ba2c.html">0d0e8bde134b999dd22c891d227d886ca6c9ba2c</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Wed,  6 Sep 2006 09:13:31 +0200
+
+no, reodering floating clients definately breaks the manage() policy which attaches all clients zoomed (otherwise higher-weight clients couldn&#39;t be attached zoomed, which sucks)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">2</td><td><span class="i"></span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tag.c</a></td><td> | </td><td class="num">9</td><td><span class="i">+++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">view.c</a></td><td> | </td><td class="num">23</td><td><span class="i">+++++++++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>3 files changed, 18 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -247,8 +247,6 @@ manage(Window w, XWindowAttributes *wa)
+</a> 		c-&gt;isfloat = trans
+ 			|| (c-&gt;maxw &amp;&amp; c-&gt;minw &amp;&amp;
+ 				c-&gt;maxw == c-&gt;minw &amp;&amp; c-&gt;maxh == c-&gt;minh);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if(c-&gt;isfloat)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		c-&gt;weight = ntags;
+</a> 
+ 	if(clients)
+ 		clients-&gt;prev = c;
+<b>diff --git a/<a id="h1" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -106,8 +106,7 @@ settags(Client *c)
+</a> 	if(!matched)
+ 		for(i = 0; i &lt; ntags; i++)
+ 			c-&gt;tags[i] = seltag[i];
+<a href="#h1-0-3" id="h1-0-3" class="d">-	if(!c-&gt;isfloat)
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-		for(c-&gt;weight = 0; c-&gt;weight &lt; ntags &amp;&amp; !c-&gt;tags[c-&gt;weight]; c-&gt;weight++);
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	for(c-&gt;weight = 0; c-&gt;weight &lt; ntags &amp;&amp; !c-&gt;tags[c-&gt;weight]; c-&gt;weight++);
+</a> }
+ 
+ void
+<a href="#h1-1" id="h1-1" class="h">@@ -121,8 +120,7 @@ tag(Arg *arg)
+</a> 	for(i = 0; i &lt; ntags; i++)
+ 		sel-&gt;tags[i] = False;
+ 	sel-&gt;tags[arg-&gt;i] = True;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if(!sel-&gt;isfloat)
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-		sel-&gt;weight = arg-&gt;i;
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	sel-&gt;weight = arg-&gt;i;
+</a> 	arrange(NULL);
+ }
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -138,7 +136,6 @@ toggletag(Arg *arg)
+</a> 	for(i = 0; i &lt; ntags &amp;&amp; !sel-&gt;tags[i]; i++);
+ 	if(i == ntags)
+ 		sel-&gt;tags[arg-&gt;i] = True;
+<a href="#h1-2-3" id="h1-2-3" class="d">-	if(!sel-&gt;isfloat)
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-		sel-&gt;weight = (i == ntags) ? arg-&gt;i : i;
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	sel-&gt;weight = (i == ntags) ? arg-&gt;i : i;
+</a> 	arrange(NULL);
+ }
+<b>diff --git a/<a id="h2" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -38,6 +38,13 @@ reorder()
+</a> 	clients = newclients;
+ }
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+static Client *
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+nexttiled(Client *c)
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+{
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	for(c = getnext(c-&gt;next); c &amp;&amp; c-&gt;isfloat; c = getnext(c-&gt;next));
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	return c;
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+}
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+
+</a> /* extern */
+ 
+ void (*arrange)(Arg *) = DEFMODE;
+<a href="#h2-1" id="h2-1" class="h">@@ -82,8 +89,8 @@ dotile(Arg *arg)
+</a> 	maximized = False;
+ 
+ 	w = sw - mw;
+<a href="#h2-1-3" id="h2-1-3" class="d">-	for(n = 0, c = clients; c &amp;&amp; !c-&gt;isfloat; c = c-&gt;next)
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-		if(isvisible(c))
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	for(n = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+		if(isvisible(c) &amp;&amp; !c-&gt;isfloat)
+</a> 			n++;
+ 
+ 	if(n &gt; 1)
+<a href="#h2-2" id="h2-2" class="h">@@ -186,8 +193,8 @@ resizecol(Arg *arg)
+</a> 	unsigned int n;
+ 	Client *c;
+ 
+<a href="#h2-2-3" id="h2-2-3" class="d">-	for(n = 0, c = clients; c &amp;&amp; !c-&gt;isfloat; c = c-&gt;next)
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-		if(isvisible(c))
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+	for(n = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+		if(isvisible(c) &amp;&amp; !c-&gt;isfloat)
+</a> 			n++;
+ 	if(!sel || sel-&gt;isfloat || n &lt; 2 || (arrange != dotile) || maximized)
+ 		return;
+<a href="#h2-3" id="h2-3" class="h">@@ -311,14 +318,14 @@ zoom(Arg *arg)
+</a> 	unsigned int n;
+ 	Client *c;
+ 
+<a href="#h2-3-3" id="h2-3-3" class="d">-	for(n = 0, c = clients; c &amp;&amp; !c-&gt;isfloat; c = c-&gt;next)
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-		if(isvisible(c))
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+	for(n = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+		if(isvisible(c) &amp;&amp; !c-&gt;isfloat)
+</a> 			n++;
+ 	if(!sel || sel-&gt;isfloat || n &lt; 2 || (arrange != dotile) || maximized)
+ 		return;
+ 
+<a href="#h2-3-11" id="h2-3-11" class="d">-	if((c = sel) == getnext(clients))
+</a><a href="#h2-3-12" id="h2-3-12" class="d">-		if(!(c = getnext(c-&gt;next)) || c-&gt;isfloat)
+</a><a href="#h2-3-13" id="h2-3-13" class="i">+	if((c = sel) == nexttiled(clients))
+</a><a href="#h2-3-14" id="h2-3-14" class="i">+		if(!(c = nexttiled(c)))
+</a> 			return;
+ 	detach(c);
+ 	c-&gt;next = clients;
+</pre>
+</div>
+</body>
+</html>

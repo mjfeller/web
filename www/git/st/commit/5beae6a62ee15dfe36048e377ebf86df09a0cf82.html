@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>macro cleanup. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5beae6a62ee15dfe36048e377ebf86df09a0cf82.html">5beae6a62ee15dfe36048e377ebf86df09a0cf82</a>
+<b>parent</b> <a href="../commit/0107293a446725551ceb756affe50b4853046f05.html">0107293a446725551ceb756affe50b4853046f05</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 10 May 2011 22:55:35 +0200
+
+macro cleanup.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">20</td><td><span class="i">+++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -53,7 +53,9 @@
+</a> #define LIMIT(x, a, b)    (x) = (x) &lt; (a) ? (a) : (x) &gt; (b) ? (b) : (x)
+ #define ATTRCMP(a, b) ((a).mode != (b).mode || (a).fg != (b).fg || (a).bg != (b).bg)
+ #define IS_SET(flag) (term.mode &amp; (flag))
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define TIMEDIFFERENCE(t1, t2) ((t1.tv_sec-t2.tv_sec)*1000 + (t1.tv_usec-t2.tv_usec)/1000)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define TIMEDIFF(t1, t2) ((t1.tv_sec-t2.tv_sec)*1000 + (t1.tv_usec-t2.tv_usec)/1000)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#define X2COL(x) (((x) - BORDER)/xw.cw)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#define Y2ROW(y) (((y) - BORDER)/xw.ch)
+</a> 
+ /* Attribute, Cursor, Character state, Terminal mode, Screen draw mode */
+ enum { ATTR_NULL=0 , ATTR_REVERSE=1 , ATTR_UNDERLINE=2, ATTR_BOLD=4, ATTR_GFX=8 };
+<a href="#h0-1" id="h0-1" class="h">@@ -401,8 +403,8 @@ getbuttoninfo(XEvent *e, int *b, int *x, int *y) {
+</a> 	if(b)
+ 		*b = e-&gt;xbutton.button;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	*x = (e-&gt;xbutton.x - BORDER)/xw.cw;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	*y = (e-&gt;xbutton.y - BORDER)/xw.ch;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	*x = X2COL(e-&gt;xbutton.x);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	*y = Y2ROW(e-&gt;xbutton.y);
+</a> 	sel.b.x = sel.by &lt; sel.ey ? sel.bx : sel.ex;
+ 	sel.b.y = MIN(sel.by, sel.ey);
+ 	sel.e.x = sel.by &lt; sel.ey ? sel.ex : sel.bx;
+<a href="#h0-2" id="h0-2" class="h">@@ -411,8 +413,8 @@ getbuttoninfo(XEvent *e, int *b, int *x, int *y) {
+</a> 
+ void
+ mousereport(XEvent *e) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	int x = (e-&gt;xbutton.x - BORDER)/xw.cw;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	int y = (e-&gt;xbutton.y - BORDER)/xw.ch;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	int x = X2COL(e-&gt;xbutton.x);
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	int y = Y2ROW(e-&gt;xbutton.y);
+</a> 	int button = e-&gt;xbutton.button;
+ 	int state = e-&gt;xbutton.state;
+ 	char buf[] = { &#39;\033&#39;, &#39;[&#39;, &#39;M&#39;, 0, 32+x+1, 32+y+1 };
+<a href="#h0-3" id="h0-3" class="h">@@ -440,8 +442,8 @@ void
+</a> bpress(XEvent *e) {
+ 	mousereport(e);
+ 	sel.mode = 1;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	sel.ex = sel.bx = (e-&gt;xbutton.x - BORDER)/xw.cw;
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	sel.ey = sel.by = (e-&gt;xbutton.y - BORDER)/xw.ch;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	sel.ex = sel.bx = X2COL(e-&gt;xbutton.x);
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	sel.ey = sel.by = Y2ROW(e-&gt;xbutton.y);
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -563,13 +565,13 @@ brelease(XEvent *e) {
+</a> 			struct timeval now;
+ 			gettimeofday(&amp;now, NULL);
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-			if(TIMEDIFFERENCE(now, sel.tclick2) &lt;= TRIPLECLICK_TIMEOUT) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+			if(TIMEDIFF(now, sel.tclick2) &lt;= TRIPLECLICK_TIMEOUT) {
+</a> 				/* triple click on the line */
+ 				sel.b.x = sel.bx = 0;
+ 				sel.e.x = sel.ex = term.col;
+ 				sel.b.y = sel.e.y = sel.ey;
+ 				selcopy();
+<a href="#h0-4-10" id="h0-4-10" class="d">-			} else if(TIMEDIFFERENCE(now, sel.tclick1) &lt;= DOUBLECLICK_TIMEOUT) {
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+			} else if(TIMEDIFF(now, sel.tclick1) &lt;= DOUBLECLICK_TIMEOUT) {
+</a> 				/* double click to select word */
+ 				sel.bx = sel.ex;
+ 				while(term.line[sel.ey][sel.bx-1].state &amp; GLYPH_SET &amp;&amp;
+</pre>
+</div>
+</body>
+</html>

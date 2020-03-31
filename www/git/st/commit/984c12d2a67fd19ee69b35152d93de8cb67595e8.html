@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add 8 bit version of DCS, APC, PM, OSC - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/984c12d2a67fd19ee69b35152d93de8cb67595e8.html">984c12d2a67fd19ee69b35152d93de8cb67595e8</a>
+<b>parent</b> <a href="../commit/da78629cf5fa234204f002ff2c2b597a2bf7e76f.html">da78629cf5fa234204f002ff2c2b597a2bf7e76f</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Fri, 20 Jun 2014 09:51:18 +0200
+
+Add 8 bit version of DCS, APC, PM, OSC
+
+DCS, APC, PM, OSC version for 7 bits environments already was implemented
+in st.  This patch adds the 8 bit version of it.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 32 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -405,6 +405,7 @@ static void ttyread(void);
+</a> static void ttyresize(void);
+ static void ttysend(char *, size_t);
+ static void ttywrite(const char *, size_t);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void tstrsequence(uchar c);
+</a> 
+ static void xdraws(char *, Glyph, int, int, int, int);
+ static void xhints(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -2348,6 +2349,30 @@ tdeftran(char ascii) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="i">+tstrsequence(uchar c) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if (c &amp; 0x80) {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		switch (c) {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+		case 0x90:   /* DCS -- Device Control String */
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+			c = &#39;P&#39;;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+			break;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		case 0x9f:   /* APC -- Application Program Command */
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			c = &#39;_&#39;;
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+			break;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		case 0x9e:   /* PM -- Privacy Message */
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+			c = &#39;^&#39;;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+			break;
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+		case 0x9d:   /* OSC -- Operating System Command */
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+			c = &#39;]&#39;;
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+			break;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		}
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	}
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	strreset();
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	strescseq.type = c;
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	term.esc |= ESC_STR;
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	return;
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+}
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+void
+</a> tcontrolcode(uchar ascii) {
+ 	static char question[UTF_SIZ] = &quot;?&quot;;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -2411,7 +2436,6 @@ tcontrolcode(uchar ascii) {
+</a> 	case 0x8d:   /* TODO: RI */
+ 	case 0x8e:   /* TODO: SS2 */
+ 	case 0x8f:   /* TODO: SS3 */
+<a href="#h0-2-3" id="h0-2-3" class="d">-	case 0x90:   /* TODO: DCS */
+</a> 	case 0x98:   /* TODO: SOS */
+ 		break;
+ 	case 0x9a:   /* DECID -- Identify Terminal */
+<a href="#h0-3" id="h0-3" class="h">@@ -2419,10 +2443,13 @@ tcontrolcode(uchar ascii) {
+</a> 		break;
+ 	case 0x9b:   /* TODO: CSI */
+ 	case 0x9c:   /* TODO: ST */
+<a href="#h0-3-3" id="h0-3-3" class="d">-	case 0x9d:   /* TODO: OSC */
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	case 0x9e:   /* TODO: PM */
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	case 0x9f:   /* TODO: APC */
+</a> 		break;
+<a href="#h0-3-7" id="h0-3-7" class="i">+	case 0x90:   /* DCS -- Device Control String */
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	case 0x9f:   /* APC -- Application Program Command */
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+	case 0x9e:   /* PM -- Privacy Message */
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+	case 0x9d:   /* OSC -- Operating System Command */
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+		tstrsequence(ascii);
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+		return;
+</a> 	}
+ 	/* only CAN, SUB, \a and C1 chars interrupt a sequence */
+ 	term.esc &amp;= ~(ESC_STR_END|ESC_STR);
+<a href="#h0-4" id="h0-4" class="h">@@ -2538,9 +2565,7 @@ tputc(char *c, int len) {
+</a> 			case &#39;^&#39;: /* PM -- Privacy Message */
+ 			case &#39;]&#39;: /* OSC -- Operating System Command */
+ 			case &#39;k&#39;: /* old title set compatibility */
+<a href="#h0-4-3" id="h0-4-3" class="d">-				strreset();
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-				strescseq.type = ascii;
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-				term.esc |= ESC_STR;
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+				tstrsequence(ascii);
+</a> 				return;
+ 			case &#39;(&#39;: /* set primary charset G0 */
+ 			case &#39;)&#39;: /* set secondary charset G1 */
+</pre>
+</div>
+</body>
+</html>

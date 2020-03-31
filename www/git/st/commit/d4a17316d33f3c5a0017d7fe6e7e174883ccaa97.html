@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Don&#39;t set dirty all lines because tswapcreen do it - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d4a17316d33f3c5a0017d7fe6e7e174883ccaa97.html">d4a17316d33f3c5a0017d7fe6e7e174883ccaa97</a>
+<b>parent</b> <a href="../commit/20c4f122543b67c0cdcefd151eb38b3bee599c10.html">20c4f122543b67c0cdcefd151eb38b3bee599c10</a>
+<b>Author:</b> noname &lt;<a href="mailto:noname@inventati.org">noname@inventati.org</a>&gt;
+<b>Date:</b>   Mon, 28 Apr 2014 02:16:21 +0400
+
+Don&#39;t set dirty all lines because tswapcreen do it
+
+Signed-off-by: Roberto E. Vargas Caballero &lt;k0ga@shike2.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 1 insertion(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2700,14 +2700,12 @@ tresize(int col, int row) {
+</a> 
+ 	/* resize each row to new width, zero-pad if needed */
+ 	for(i = 0; i &lt; minrow; i++) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-		term.dirty[i] = 1;
+</a> 		term.line[i] = xrealloc(term.line[i], col * sizeof(Glyph));
+ 		term.alt[i]  = xrealloc(term.alt[i],  col * sizeof(Glyph));
+ 	}
+ 
+ 	/* allocate any new rows */
+ 	for(/* i == minrow */; i &lt; row; i++) {
+<a href="#h0-0-10" id="h0-0-10" class="d">-		term.dirty[i] = 1;
+</a> 		term.line[i] = xmalloc(col * sizeof(Glyph));
+ 		term.alt[i] = xmalloc(col * sizeof(Glyph));
+ 	}
+<a href="#h0-1" id="h0-1" class="h">@@ -2727,7 +2725,7 @@ tresize(int col, int row) {
+</a> 	tsetscroll(0, row-1);
+ 	/* make use of the LIMIT in tmoveto */
+ 	tmoveto(term.c.x, term.c.y);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	/* Clearing both screens */
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	/* Clearing both screens (it makes dirty all lines) */
+</a> 	orig = term.line;
+ 	c = term.c;
+ 	do {
+</pre>
+</div>
+</body>
+</html>

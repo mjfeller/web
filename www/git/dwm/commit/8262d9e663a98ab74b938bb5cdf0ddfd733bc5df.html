@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>make ewmh dialog windows float - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8262d9e663a98ab74b938bb5cdf0ddfd733bc5df.html">8262d9e663a98ab74b938bb5cdf0ddfd733bc5df</a>
+<b>parent</b> <a href="../commit/90af1ced3c634683ec4c0e51c5f1e69461a9192a.html">90af1ced3c634683ec4c0e51c5f1e69461a9192a</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Wed,  2 Nov 2011 12:01:28 +0000
+
+make ewmh dialog windows float
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">28</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 27 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -58,7 +58,8 @@
+</a> enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+ enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
+ enum { NetSupported, NetWMName, NetWMState,
+<a href="#h0-0-3" id="h0-0-3" class="d">-       NetWMFullscreen, NetActiveWindow, NetLast };     /* EWMH atoms */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+       NetWMFullscreen, NetActiveWindow, NetWMWindowType,
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+       NetWMWindowTypeDialog, NetLast };     /* EWMH atoms */
+</a> enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
+ enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
+        ClkClientWin, ClkRootWin, ClkLast };             /* clicks */
+<a href="#h0-1" id="h0-1" class="h">@@ -237,6 +238,7 @@ static void updatebars(void);
+</a> static void updatenumlockmask(void);
+ static void updatesizehints(Client *c);
+ static void updatestatus(void);
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void updatewindowtype(Client *c);
+</a> static void updatetitle(Client *c);
+ static void updatewmhints(Client *c);
+ static void view(const Arg *arg);
+<a href="#h0-2" id="h0-2" class="h">@@ -1152,6 +1154,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	XConfigureWindow(dpy, w, CWBorderWidth, &amp;wc);
+ 	XSetWindowBorder(dpy, w, dc.norm[ColBorder]);
+ 	configure(c); /* propagates border_width, if size doesn&#39;t change */
+<a href="#h0-2-3" id="h0-2-3" class="i">+	updatewindowtype(c);
+</a> 	updatesizehints(c);
+ 	updatewmhints(c);
+ 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+<a href="#h0-3" id="h0-3" class="h">@@ -1308,6 +1311,8 @@ propertynotify(XEvent *e) {
+</a> 			if(c == c-&gt;mon-&gt;sel)
+ 				drawbar(c-&gt;mon);
+ 		}
+<a href="#h0-3-3" id="h0-3-3" class="i">+		if(ev-&gt;atom == netatom[NetWMWindowType])
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			updatewindowtype(c);
+</a> 	}
+ }
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -1562,6 +1567,8 @@ setup(void) {
+</a> 	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+ 	netatom[NetWMState] = XInternAtom(dpy, &quot;_NET_WM_STATE&quot;, False);
+ 	netatom[NetWMFullscreen] = XInternAtom(dpy, &quot;_NET_WM_STATE_FULLSCREEN&quot;, False);
+<a href="#h0-4-3" id="h0-4-3" class="i">+	netatom[NetWMWindowType] = XInternAtom(dpy, &quot;_NET_WM_WINDOW_TYPE&quot;, False);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	netatom[NetWMWindowTypeDialog] = XInternAtom(dpy, &quot;_NET_WM_WINDOW_TYPE_DIALOG&quot;, False);
+</a> 	/* init cursors */
+ 	cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
+ 	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
+<a href="#h0-5" id="h0-5" class="h">@@ -1967,6 +1974,25 @@ updatestatus(void) {
+</a> }
+ 
+ void
+<a href="#h0-5-3" id="h0-5-3" class="i">+updatewindowtype(Client *c)
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+{
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+	Atom wtype, real;
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+	int format;
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	unsigned long n, extra;
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+	unsigned char *p = NULL;
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+	if(XGetWindowProperty(dpy, c-&gt;win, netatom[NetWMWindowType], 0L,
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+	                      sizeof(Atom), False, XA_ATOM, &amp;real, &amp;format,
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+	                      &amp;n, &amp;extra, (unsigned char **)&amp;p) == Success &amp;&amp; p) {
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+		wtype = *(Atom *)p;
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+		XFree(p);
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+		if(wtype == netatom[NetWMWindowTypeDialog])
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+			c-&gt;isfloating = True;
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+	}
+</a><a href="#h0-5-19" id="h0-5-19" class="i">+}
+</a><a href="#h0-5-20" id="h0-5-20" class="i">+
+</a><a href="#h0-5-21" id="h0-5-21" class="i">+void
+</a> updatewmhints(Client *c) {
+ 	XWMHints *wmh;
+ 
+</pre>
+</div>
+</body>
+</html>

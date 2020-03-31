@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Readding the spawn compatibility to use it in config.h. Thanks to Chris Hall. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ce9b82147dbd347816f25d16d64748cbcb8f549b.html">ce9b82147dbd347816f25d16d64748cbcb8f549b</a>
+<b>parent</b> <a href="../commit/4c1101a4f6b8a584d335f28594fcc449886642f4.html">4c1101a4f6b8a584d335f28594fcc449886642f4</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Mon, 20 Aug 2012 09:02:56 +0200
+
+Readding the spawn compatibility to use it in config.h. Thanks to Chris Hall.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 7 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -784,8 +784,13 @@ spawn(const Arg *arg) {
+</a> 		if(dpy)
+ 			close(ConnectionNumber(dpy));
+ 		setsid();
+<a href="#h0-0-3" id="h0-0-3" class="d">-		execvp(cmd[0], cmd);
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		fprintf(stderr, &quot;tabbed: execvp %s&quot;, cmd[0]);
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		if(arg &amp;&amp; arg-&gt;v) {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			execvp(((char **)arg-&gt;v)[0], (char **)argv-&gt;v);
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+			fprintf(stderr, &quot;tabbed: execvp %s&quot;, ((char **)arg-&gt;v)[0]);
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		} else {
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+			execvp(cmd[0], cmd);
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+			fprintf(stderr, &quot;tabbed: execvp %s&quot;, cmd[0]);
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		}
+</a> 		perror(&quot; failed&quot;);
+ 		exit(0);
+ 	}
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>some minor fix if xinerama is disabled, still some odd behavior in there - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/25c1eb28f955adf241226596335f5d73b28620a0.html">25c1eb28f955adf241226596335f5d73b28620a0</a>
+<b>parent</b> <a href="../commit/d719cc9a0e4bc75b555993f1526b24a5f82222a8.html">d719cc9a0e4bc75b555993f1526b24a5f82222a8</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed,  1 Jul 2009 17:08:10 +0100
+
+some minor fix if xinerama is disabled, still some odd behavior in there
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 5 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -11,8 +11,8 @@ X11INC = /usr/X11R6/include
+</a> X11LIB = /usr/X11R6/lib
+ 
+ # Xinerama, un-comment if you want it
+<a href="#h0-0-3" id="h0-0-3" class="d">-XINERAMALIBS = -L${X11LIB} -lXinerama
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-XINERAMAFLAGS = -DXINERAMA
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#XINERAMALIBS = -L${X11LIB} -lXinerama
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#XINERAMAFLAGS = -DXINERAMA
+</a> 
+ # includes and libs
+ INCS = -I. -I/usr/include -I${X11INC}
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -179,7 +179,6 @@ static long getstate(Window w);
+</a> static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+ static void grabbuttons(Client *c, Bool focused);
+ static void grabkeys(void);
+<a href="#h1-0-3" id="h1-0-3" class="d">-static Monitor *idxtomon(unsigned int n);
+</a> static void initfont(const char *fontstr);
+ static Bool isprotodel(Client *c);
+ static void keypress(XEvent *e);
+<a href="#h1-1" id="h1-1" class="h">@@ -233,6 +232,7 @@ static int xerrorstart(Display *dpy, XErrorEvent *ee);
+</a> static void zoom(const Arg *arg);
+ #ifdef XINERAMA
+ static void focusmon(const Arg *arg);
+<a href="#h1-1-3" id="h1-1-3" class="i">+static Monitor *idxtomon(unsigned int n);
+</a> static void tagmon(const Arg *arg);
+ #endif /* XINERAMA */
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -943,6 +943,7 @@ grabkeys(void) {
+</a> 	}
+ }
+ 
+<a href="#h1-2-3" id="h1-2-3" class="i">+#ifdef XINERAMA
+</a> Monitor *
+ idxtomon(unsigned int n) {
+ 	unsigned int i;
+<a href="#h1-3" id="h1-3" class="h">@@ -951,6 +952,7 @@ idxtomon(unsigned int n) {
+</a> 	for(m = mons, i = 0; m &amp;&amp; i != n; m = m-&gt;next, i++);
+ 	return m;
+ }
+<a href="#h1-3-3" id="h1-3-3" class="i">+#endif /* XINERAMA */
+</a> 
+ void
+ initfont(const char *fontstr) {
+</pre>
+</div>
+</body>
+</html>

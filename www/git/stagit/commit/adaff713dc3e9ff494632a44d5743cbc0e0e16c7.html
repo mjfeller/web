@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Makefile improvements - stagit - static site generate for git repositories
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="stagit Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>stagit</h1><span class="desc">static site generate for git repositories
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/adaff713dc3e9ff494632a44d5743cbc0e0e16c7.html">adaff713dc3e9ff494632a44d5743cbc0e0e16c7</a>
+<b>parent</b> <a href="../commit/d6937c195f3459194d5ab056397981e1ade54871.html">d6937c195f3459194d5ab056397981e1ade54871</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Sun,  1 Dec 2019 18:26:04 +0100
+
+Makefile improvements
+
+- remove double -c in .c.o target.
+- remove config.mk abstraction.
+- change LIBS and INCS to LIBGIT_INC and LIBGIT_LIB.
+- use system cflags and ldflags, but allow the same override rules for porters.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">27</td><td><span class="i">++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">30</td><td><span class="i"></span><span class="d">------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 20 insertions(+), 37 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,8 +1,21 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="d">-include config.mk
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+.POSIX:
+</a> 
+ NAME = stagit
+ VERSION = 0.9.2
+ 
+<a href="#h0-0-6" id="h0-0-6" class="i">+# paths
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+PREFIX = /usr/local
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+MANPREFIX = ${PREFIX}/man
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+DOCPREFIX = ${PREFIX}/share/doc/${NAME}
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+LIBGIT_INC = -I/usr/local/include
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+LIBGIT_LIB = -L/usr/local/lib -lgit2
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+# use system flags.
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+STAGIT_CFLAGS = ${LIBGIT_INC} ${CFLAGS}
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+STAGIT_LDFLAGS = ${LIBGIT_LIB} ${LDFLAGS}
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+STAGIT_CPPFLAGS = -D_XOPEN_SOURCE=700 -D_DEFAULT_SOURCE -D_BSD_SOURCE
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a> SRC = \
+ 	stagit.c\
+ 	stagit-index.c
+<a href="#h0-1" id="h0-1" class="h">@@ -31,16 +44,16 @@ OBJ = ${SRC:.c=.o} ${COMPATOBJ}
+</a> all: ${BIN}
+ 
+ .o:
+<a href="#h0-1-3" id="h0-1-3" class="d">-	${CC} ${LDFLAGS} -o $@ ${LIBS}
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	${CC} -o $@ ${LDFLAGS}
+</a> 
+ .c.o:
+<a href="#h0-1-7" id="h0-1-7" class="d">-	${CC} -c ${CFLAGS} ${CPPFLAGS} -o $@ -c $&lt;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	${CC} -o $@ -c $&lt; ${STAGIT_CFLAGS} ${STAGIT_CPPFLAGS}
+</a> 
+ dist:
+ 	rm -rf ${NAME}-${VERSION}
+ 	mkdir -p ${NAME}-${VERSION}
+ 	cp -f ${MAN1} ${HDR} ${SRC} ${COMPATSRC} ${DOC} \
+<a href="#h0-1-14" id="h0-1-14" class="d">-		Makefile config.mk favicon.png logo.png style.css \
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+		Makefile favicon.png logo.png style.css \
+</a> 		example_create.sh example_post-receive.sh \
+ 		${NAME}-${VERSION}
+ 	# make tarball
+<a href="#h0-2" id="h0-2" class="h">@@ -48,13 +61,13 @@ dist:
+</a> 		gzip -c &gt; ${NAME}-${VERSION}.tar.gz
+ 	rm -rf ${NAME}-${VERSION}
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-${OBJ}: config.mk ${HDR}
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+${OBJ}: ${HDR}
+</a> 
+ stagit: stagit.o ${COMPATOBJ}
+<a href="#h0-2-7" id="h0-2-7" class="d">-	${CC} -o $@ stagit.o ${COMPATOBJ} ${LDFLAGS}
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	${CC} -o $@ stagit.o ${COMPATOBJ} ${STAGIT_LDFLAGS}
+</a> 
+ stagit-index: stagit-index.o ${COMPATOBJ}
+<a href="#h0-2-11" id="h0-2-11" class="d">-	${CC} -o $@ stagit-index.o ${COMPATOBJ} ${LDFLAGS}
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	${CC} -o $@ stagit-index.o ${COMPATOBJ} ${STAGIT_LDFLAGS}
+</a> 
+ clean:
+ 	rm -f ${BIN} ${OBJ} ${NAME}-${VERSION}.tar.gz
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,30 +0,0 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="d">-# customize below to fit your system
+</a><a href="#h1-0-1" id="h1-0-1" class="d">-
+</a><a href="#h1-0-2" id="h1-0-2" class="d">-# paths
+</a><a href="#h1-0-3" id="h1-0-3" class="d">-PREFIX = /usr/local
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-MANPREFIX = ${PREFIX}/man
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-DOCPREFIX = ${PREFIX}/share/doc/stagit
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-# compiler and linker
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-#CC = cc
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-GITINC = /usr/local/include
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-GITLIB = /usr/local/lib
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-# includes and libs
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-INCS = -I${GITINC}
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-LIBS = -L${GITLIB} -lgit2
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-# debug
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-#CFLAGS = -fstack-protector-all -O0 -g -std=c99 -Wall -Wextra -pedantic ${INCS}
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-#LDFLAGS = ${LIBS}
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-# optimized
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-CFLAGS = -O2 -std=c99 ${INCS}
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-LDFLAGS = -s ${LIBS}
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-# optimized static
+</a><a href="#h1-0-26" id="h1-0-26" class="d">-#CFLAGS = -static -O2 -std=c99 ${INCS}
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-#LDFLAGS = -static -s ${LIBS}
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-
+</a><a href="#h1-0-29" id="h1-0-29" class="d">-CPPFLAGS = -D_XOPEN_SOURCE=700 -D_DEFAULT_SOURCE -D_BSD_SOURCE ${INCS}
+</a></pre>
+</div>
+</body>
+</html>

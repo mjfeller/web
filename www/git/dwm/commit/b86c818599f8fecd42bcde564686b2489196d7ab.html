@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Gottox&#39; ClkTagBar patch - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b86c818599f8fecd42bcde564686b2489196d7ab.html">b86c818599f8fecd42bcde564686b2489196d7ab</a>
+<b>parent</b> <a href="../commit/c2a916bf3021d9e16419eccbd553d967404ad6e4.html">c2a916bf3021d9e16419eccbd553d967404ad6e4</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 20 Jun 2008 16:52:07 +0100
+
+applied Gottox&#39; ClkTagBar patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">19</td><td><span class="i">++++</span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">20</td><td><span class="i">+++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>2 files changed, 15 insertions(+), 24 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -84,12 +84,6 @@ static Key keys[] = {
+</a> };
+ 
+ /* button definitions */
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define TAGBUTTONS(TAG) \
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ TAG,                  0,              Button1,        view,           {.ui = 1 &lt;&lt; TAG} }, \
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	{ TAG,                  0,              Button3,        toggleview,     {.ui = 1 &lt;&lt; TAG} }, \
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	{ TAG,                  MODKEY,         Button1,        tag,            {.ui = 1 &lt;&lt; TAG} }, \
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	{ TAG,                  MODKEY,         Button3,        toggletag,      {.ui = 1 &lt;&lt; TAG} },
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-
+</a> /* click can be a tag number (starting at 0),
+  * ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
+ static Button buttons[] = {
+<a href="#h0-1" id="h0-1" class="h">@@ -101,14 +95,9 @@ static Button buttons[] = {
+</a> 	{ ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} },
+ 	{ ClkClientWin,         MODKEY,         Button2,        togglefloating, {0} },
+ 	{ ClkClientWin,         MODKEY,         Button3,        resizemouse,    {0} },
+<a href="#h0-1-3" id="h0-1-3" class="d">-	TAGBUTTONS(0)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	TAGBUTTONS(1)
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	TAGBUTTONS(2)
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	TAGBUTTONS(3)
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	TAGBUTTONS(4)
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	TAGBUTTONS(5)
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	TAGBUTTONS(6)
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	TAGBUTTONS(7)
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-	TAGBUTTONS(8)
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	{ ClkTagBar,            0,              Button1,        view,           {0} }, \
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	{ ClkTagBar,            0,              Button3,        toggleview,     {0} }, \
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	{ ClkTagBar,            MODKEY,         Button1,        tag,            {0} }, \
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	{ ClkTagBar,            MODKEY,         Button3,        toggletag,      {0} },
+</a> };
+ 
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -60,7 +60,7 @@ enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+</a> enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
+ enum { NetSupported, NetWMName, NetLast };              /* EWMH atoms */
+ enum { WMProtocols, WMDelete, WMName, WMState, WMLast };/* default atoms */
+<a href="#h1-0-3" id="h1-0-3" class="d">-enum { ClkLtSymbol = 64, ClkStatusText, ClkWinTitle,
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
+</a>        ClkClientWin, ClkRootWin, ClkLast };             /* clicks */
+ 
+ /* typedefs */
+<a href="#h1-1" id="h1-1" class="h">@@ -304,17 +304,18 @@ attachstack(Client *c) {
+</a> void
+ buttonpress(XEvent *e) {
+ 	uint i, x, click;
+<a href="#h1-1-3" id="h1-1-3" class="i">+	Arg arg = {0};
+</a> 	Client *c;
+ 	XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+ 
+ 	click = ClkRootWin;
+ 	if(ev-&gt;window == barwin) {
+<a href="#h1-1-9" id="h1-1-9" class="d">-		i = x = 0;
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-		do
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+		for(i = x = 0; ev-&gt;x &gt;= x &amp;&amp; ++i &lt; LENGTH(tags); i++)
+</a> 			x += TEXTW(tags[i]);
+<a href="#h1-1-13" id="h1-1-13" class="d">-		while(ev-&gt;x &gt;= x &amp;&amp; ++i &lt; LENGTH(tags));
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-		if(i &lt; LENGTH(tags))
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-			click = i;
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+		if(i &lt; LENGTH(tags)) {
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+			click = ClkTagBar;
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+			arg.ui = 1 &lt;&lt; i;
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+		}
+</a> 		else if(ev-&gt;x &lt; x + blw)
+ 			click = ClkLtSymbol;
+ 		else if(ev-&gt;x &gt; wx + ww - TEXTW(stext))
+<a href="#h1-2" id="h1-2" class="h">@@ -330,7 +331,7 @@ buttonpress(XEvent *e) {
+</a> 	for(i = 0; i &lt; LENGTH(buttons); i++)
+ 		if(click == buttons[i].click &amp;&amp; buttons[i].func &amp;&amp; buttons[i].button == ev-&gt;button
+ 		   &amp;&amp; CLEANMASK(buttons[i].mask) == CLEANMASK(ev-&gt;state))
+<a href="#h1-2-3" id="h1-2-3" class="d">-			buttons[i].func(&amp;buttons[i].arg);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+			buttons[i].func(click == ClkTagBar ? &amp;arg : &amp;buttons[i].arg);
+</a> }
+ 
+ void
+<a href="#h1-3" id="h1-3" class="h">@@ -1295,8 +1296,9 @@ setclientstate(Client *c, long state) {
+</a> 
+ void
+ setlayout(const Arg *arg) {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	sellt ^= 1;
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-	if(arg &amp;&amp; arg-&gt;v &amp;&amp; arg-&gt;v != lt[sellt])
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+	if(!arg || !arg-&gt;v || arg-&gt;v != lt[sellt])
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+		sellt ^= 1;
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+	if(arg &amp;&amp; arg-&gt;v)
+</a> 		lt[sellt] = (Layout *)arg-&gt;v;
+ 	if(sel)
+ 		arrange();
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>disallow zoom on maximized clients - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b79b5facb104a653314577bb7f15824396b9e94b.html">b79b5facb104a653314577bb7f15824396b9e94b</a>
+<b>parent</b> <a href="../commit/c53f0fca912e05cddcfbf79d99678b16d183c67d.html">c53f0fca912e05cddcfbf79d99678b16d183c67d</a>
+<b>Author:</b> Anselm R.Garbe &lt;<a href="mailto:arg@10ksloc.org">arg@10ksloc.org</a>&gt;
+<b>Date:</b>   Thu, 10 Aug 2006 10:16:12 +0200
+
+disallow zoom on maximized clients
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">7</td><td><span class="i"></span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">4</td><td><span class="i"></span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">event.c</a></td><td> | </td><td class="num">17</td><td><span class="i">++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>4 files changed, 8 insertions(+), 21 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -197,13 +197,6 @@ killclient(Arg *arg)
+</a> }
+ 
+ void
+<a href="#h0-0-3" id="h0-0-3" class="d">-lower(Client *c)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-{
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	XLowerWindow(dpy, c-&gt;title);
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	XLowerWindow(dpy, c-&gt;win);
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-}
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-void
+</a> manage(Window w, XWindowAttributes *wa)
+ {
+ 	Client *c;
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -96,10 +96,6 @@ Moves current
+</a> .B window
+ while dragging.
+ .TP
+<a href="#h1-0-3" id="h1-0-3" class="d">-.B Mod1-Button2
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-Lowers current
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-.B window.
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-.TP
+</a> .B Mod1-Button3
+ Resizes current
+ .B window
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -91,7 +91,6 @@ extern Client *getctitle(Window w);
+</a> extern void gravitate(Client *c, Bool invert);
+ extern void higher(Client *c);
+ extern void killclient(Arg *arg);
+<a href="#h2-0-3" id="h2-0-3" class="d">-extern void lower(Client *c);
+</a> extern void manage(Window w, XWindowAttributes *wa);
+ extern void resize(Client *c, Bool sizehints, Corner sticky);
+ extern void setsize(Client *c);
+<b>diff --git a/<a id="h3" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -127,15 +127,14 @@ buttonpress(XEvent *e)
+</a> 		default:
+ 			break;
+ 		case Button1:
+<a href="#h3-0-3" id="h3-0-3" class="d">-			if(!c-&gt;ismax &amp;&amp; (arrange == dofloat || c-&gt;isfloat)) {
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-				higher(c);
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-				movemouse(c);
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+			if(!c-&gt;ismax) {
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+				if(arrange == dofloat || c-&gt;isfloat) {
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+					higher(c);
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+					movemouse(c);
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+				}
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+				else
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+					zoom(NULL);
+</a> 			}
+<a href="#h3-0-14" id="h3-0-14" class="d">-			else
+</a><a href="#h3-0-15" id="h3-0-15" class="d">-				zoom(NULL);
+</a><a href="#h3-0-16" id="h3-0-16" class="d">-			break;
+</a><a href="#h3-0-17" id="h3-0-17" class="d">-		case Button2:
+</a><a href="#h3-0-18" id="h3-0-18" class="d">-			lower(c);
+</a> 			break;
+ 		case Button3:
+ 			if(!c-&gt;ismax &amp;&amp; (arrange == dofloat || c-&gt;isfloat)) {
+<a href="#h3-1" id="h3-1" class="h">@@ -225,7 +224,7 @@ enternotify(XEvent *e)
+</a> 	Client *c;
+ 	XCrossingEvent *ev = &amp;e-&gt;xcrossing;
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-	if(ev-&gt;detail == NotifyInferior)
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+	if(ev-&gt;mode != NotifyNormal || ev-&gt;detail == NotifyInferior)
+</a> 		return;
+ 
+ 	if((c = getclient(ev-&gt;window)) || (c = getctitle(ev-&gt;window)))
+</pre>
+</div>
+</body>
+</html>

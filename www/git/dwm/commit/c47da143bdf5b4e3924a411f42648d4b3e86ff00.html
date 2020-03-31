@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implemented tagging a client - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c47da143bdf5b4e3924a411f42648d4b3e86ff00.html">c47da143bdf5b4e3924a411f42648d4b3e86ff00</a>
+<b>parent</b> <a href="../commit/b72588746f3d1548283ca98f90961b4f8c2e2800.html">b72588746f3d1548283ca98f90961b4f8c2e2800</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Thu, 13 Jul 2006 17:09:35 +0200
+
+implemented tagging a client
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">170</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dev.c</a></td><td> | </td><td class="num">27</td><td><span class="i">++++++++++++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++++++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">main.c</a></td><td> | </td><td class="num">11</td><td><span class="i">++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">util.c</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+</table></pre><pre>5 files changed, 156 insertions(+), 85 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -11,44 +11,76 @@
+</a> 
+ #include &quot;dwm.h&quot;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void (*arrange)(void *) = floating;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void (*arrange)(Arg *) = floating;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+static Client *
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+next(Client *c)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+{
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	for(c = c-&gt;next; c &amp;&amp; !c-&gt;tags[tsel]; c = c-&gt;next);
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	return c;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+}
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+static Client *
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+prev(Client *c)
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+{
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	for(c = c-&gt;prev; c &amp;&amp; !c-&gt;tags[tsel]; c = c-&gt;prev);
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	return c;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+}
+</a> 
+ void
+<a href="#h0-0-21" id="h0-0-21" class="d">-max(void *aux)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+max(Arg *arg)
+</a> {
+<a href="#h0-0-24" id="h0-0-24" class="d">-	if(!stack)
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	if(!csel)
+</a> 		return;
+<a href="#h0-0-27" id="h0-0-27" class="d">-	stack-&gt;x = sx;
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-	stack-&gt;y = sy;
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-	stack-&gt;w = sw - 2 * stack-&gt;border;
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-	stack-&gt;h = sh - 2 * stack-&gt;border;
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-	craise(stack);
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-	resize(stack);
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+	csel-&gt;x = sx;
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+	csel-&gt;y = sy;
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+	csel-&gt;w = sw - 2 * csel-&gt;border;
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+	csel-&gt;h = sh - 2 * csel-&gt;border;
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+	craise(csel);
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+	resize(csel);
+</a> 	discard_events(EnterWindowMask);
+ }
+ 
+ void
+<a href="#h0-0-43" id="h0-0-43" class="d">-floating(void *aux)
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+tag(Arg *arg)
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+{
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+	if(!csel)
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+		return;
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+	if(arg-&gt;i == tsel)
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+		return;
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+	if(csel-&gt;tags[arg-&gt;i])
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+		csel-&gt;tags[arg-&gt;i] = NULL; /* toggle tag */
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+	else
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+		csel-&gt;tags[arg-&gt;i] = tags[arg-&gt;i];
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+	arrange(NULL);
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+}
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+void
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+floating(Arg *arg)
+</a> {
+ 	Client *c;
+ 
+ 	arrange = floating;
+<a href="#h0-0-65" id="h0-0-65" class="d">-	for(c = stack; c; c = c-&gt;snext)
+</a><a href="#h0-0-66" id="h0-0-66" class="i">+	if(!csel)
+</a><a href="#h0-0-67" id="h0-0-67" class="i">+		return;
+</a><a href="#h0-0-68" id="h0-0-68" class="i">+	for(c = csel; c; c = next(c))
+</a> 		resize(c);
+ 	discard_events(EnterWindowMask);
+ }
+ 
+ void
+<a href="#h0-0-74" id="h0-0-74" class="d">-tiling(void *aux)
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+tiling(Arg *arg)
+</a> {
+ 	Client *c;
+ 	int n, cols, rows, gw, gh, i, j;
+     float rt, fd;
+ 
+ 	arrange = tiling;
+<a href="#h0-0-82" id="h0-0-82" class="d">-	if(!clients)
+</a><a href="#h0-0-83" id="h0-0-83" class="i">+	if(!csel)
+</a> 		return;
+<a href="#h0-0-85" id="h0-0-85" class="d">-	for(n = 0, c = clients; c; c = c-&gt;next, n++);
+</a><a href="#h0-0-86" id="h0-0-86" class="i">+	for(n = 0, c = csel; c; c = next(c), n++);
+</a> 	rt = sqrt(n);
+ 	if(modff(rt, &amp;fd) &lt; 0.5)
+ 		rows = floor(rt);
+<a href="#h0-1" id="h0-1" class="h">@@ -62,7 +94,7 @@ tiling(void *aux)
+</a> 	gw = (sw - 2)  / cols;
+ 	gh = (sh - 2) / rows;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	for(i = j = 0, c = clients; c; c = c-&gt;next) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	for(i = j = 0, c = csel; c; c = next(c)) {
+</a> 		c-&gt;x = i * gw;
+ 		c-&gt;y = j * gh;
+ 		c-&gt;w = gw;
+<a href="#h0-2" id="h0-2" class="h">@@ -77,28 +109,44 @@ tiling(void *aux)
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="d">-sel(void *aux)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+prevc(Arg *arg)
+</a> {
+<a href="#h0-2-6" id="h0-2-6" class="d">-	const char *arg = aux;
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-	Client *c = NULL;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	Client *c;
+</a> 
+<a href="#h0-2-10" id="h0-2-10" class="d">-	if(!arg || !stack)
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	if(!csel)
+</a> 		return;
+<a href="#h0-2-13" id="h0-2-13" class="d">-	if(!strncmp(arg, &quot;next&quot;, 5))
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-		c = stack-&gt;snext ? stack-&gt;snext : stack;
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-	else if(!strncmp(arg, &quot;prev&quot;, 5))
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-		for(c = stack; c &amp;&amp; c-&gt;snext; c = c-&gt;snext);
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-	if(!c)
+</a><a href="#h0-2-18" id="h0-2-18" class="d">-		c = stack;
+</a><a href="#h0-2-19" id="h0-2-19" class="d">-	craise(c);
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-	XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w / 2, c-&gt;h / 2);
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-	focus(c);
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+	if(!(c = prev(csel)))
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+		c = prev(cend);
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+	if(c) {
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+		craise(c);
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+		XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w / 2, c-&gt;h / 2);
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+		focus(c);
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+	}
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+}
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+void
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+nextc(Arg *arg)
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+{
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+	Client *c;
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+   
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+	if(!csel)
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+		return;
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+
+</a><a href="#h0-2-40" id="h0-2-40" class="i">+	if(!(c = next(csel)))
+</a><a href="#h0-2-41" id="h0-2-41" class="i">+		c = next(cstart);
+</a><a href="#h0-2-42" id="h0-2-42" class="i">+
+</a><a href="#h0-2-43" id="h0-2-43" class="i">+	if(c) {
+</a><a href="#h0-2-44" id="h0-2-44" class="i">+		craise(c);
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+		XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w / 2, c-&gt;h / 2);
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+		focus(c);
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+	}
+</a> }
+ 
+ void
+<a href="#h0-2-51" id="h0-2-51" class="d">-ckill(void *aux)
+</a><a href="#h0-2-52" id="h0-2-52" class="i">+ckill(Arg *arg)
+</a> {
+<a href="#h0-2-54" id="h0-2-54" class="d">-	Client *c = stack;
+</a><a href="#h0-2-55" id="h0-2-55" class="i">+	Client *c = csel;
+</a> 
+ 	if(!c)
+ 		return;
+<a href="#h0-3" id="h0-3" class="h">@@ -208,19 +256,12 @@ lower(Client *c)
+</a> void
+ focus(Client *c)
+ {
+<a href="#h0-3-3" id="h0-3-3" class="d">-	Client **l, *old;
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	old = stack;
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-	for(l = &amp;stack; *l &amp;&amp; *l != c; l = &amp;(*l)-&gt;snext);
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-	if(*l)
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-		*l = c-&gt;snext;
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-	c-&gt;snext = stack;
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-	stack = c;
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-	if(old &amp;&amp; old != c) {
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-		XSetWindowBorder(dpy, old-&gt;win, dc.bg);
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-		XMapWindow(dpy, old-&gt;title);
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-		draw_client(old);
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+	if(csel &amp;&amp; csel != c) {
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+		XSetWindowBorder(dpy, csel-&gt;win, dc.bg);
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+		XMapWindow(dpy, csel-&gt;title);
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+		draw_client(csel);
+</a> 	}
+<a href="#h0-3-20" id="h0-3-20" class="i">+	csel = c;
+</a> 	XUnmapWindow(dpy, c-&gt;title);
+ 	XSetWindowBorder(dpy, c-&gt;win, dc.fg);
+ 	draw_client(c);
+<a href="#h0-4" id="h0-4" class="h">@@ -232,7 +273,7 @@ focus(Client *c)
+</a> void
+ manage(Window w, XWindowAttributes *wa)
+ {
+<a href="#h0-4-3" id="h0-4-3" class="d">-	Client *c, **l;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	Client *c;
+</a> 	XSetWindowAttributes twa;
+ 
+ 	c = emallocz(sizeof(Client));
+<a href="#h0-5" id="h0-5" class="h">@@ -258,9 +299,15 @@ manage(Window w, XWindowAttributes *wa)
+</a> 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;twa);
+ 
+ 	update_name(c);
+<a href="#h0-5-3" id="h0-5-3" class="d">-	for(l=&amp;clients; *l; l=&amp;(*l)-&gt;next);
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	c-&gt;next = *l; /* *l == nil */
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-	*l = c;
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	if(!cstart)
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+		cstart = cend = c;
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+	else {
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+		cend-&gt;next = c;
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+		c-&gt;prev = cend;
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+		cend = c;
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+	}
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+
+</a> 	XSetWindowBorderWidth(dpy, c-&gt;win, 1);
+ 	XMapRaised(dpy, c-&gt;win);
+ 	XMapRaised(dpy, c-&gt;title);
+<a href="#h0-6" id="h0-6" class="h">@@ -373,33 +420,42 @@ dummy_error_handler(Display *dsply, XErrorEvent *err)
+</a> void
+ unmanage(Client *c)
+ {
+<a href="#h0-6-3" id="h0-6-3" class="d">-	Client **l;
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-
+</a> 	XGrabServer(dpy);
+ 	XSetErrorHandler(dummy_error_handler);
+ 
+ 	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+ 	XDestroyWindow(dpy, c-&gt;title);
+ 
+<a href="#h0-6-11" id="h0-6-11" class="d">-	for(l=&amp;clients; *l &amp;&amp; *l != c; l=&amp;(*l)-&gt;next);
+</a><a href="#h0-6-12" id="h0-6-12" class="d">-	*l = c-&gt;next;
+</a><a href="#h0-6-13" id="h0-6-13" class="d">-	for(l=&amp;stack; *l &amp;&amp; *l != c; l=&amp;(*l)-&gt;snext);
+</a><a href="#h0-6-14" id="h0-6-14" class="d">-	*l = c-&gt;snext;
+</a><a href="#h0-6-15" id="h0-6-15" class="i">+	if(c-&gt;prev) {
+</a><a href="#h0-6-16" id="h0-6-16" class="i">+		c-&gt;prev-&gt;next = c-&gt;next;
+</a><a href="#h0-6-17" id="h0-6-17" class="i">+		if(csel == c)
+</a><a href="#h0-6-18" id="h0-6-18" class="i">+			csel = c-&gt;prev;
+</a><a href="#h0-6-19" id="h0-6-19" class="i">+	}
+</a><a href="#h0-6-20" id="h0-6-20" class="i">+	if(c-&gt;next) {
+</a><a href="#h0-6-21" id="h0-6-21" class="i">+		c-&gt;next-&gt;prev = c-&gt;prev;
+</a><a href="#h0-6-22" id="h0-6-22" class="i">+		if(csel == c)
+</a><a href="#h0-6-23" id="h0-6-23" class="i">+			csel = c-&gt;next;
+</a><a href="#h0-6-24" id="h0-6-24" class="i">+	}
+</a><a href="#h0-6-25" id="h0-6-25" class="i">+	if(cstart == c)
+</a><a href="#h0-6-26" id="h0-6-26" class="i">+		cstart = c-&gt;next;
+</a><a href="#h0-6-27" id="h0-6-27" class="i">+	if(cend == c)
+</a><a href="#h0-6-28" id="h0-6-28" class="i">+		cend = c-&gt;prev;
+</a><a href="#h0-6-29" id="h0-6-29" class="i">+
+</a> 	free(c);
+ 
+ 	XFlush(dpy);
+ 	XSetErrorHandler(error_handler);
+ 	XUngrabServer(dpy);
+ 	arrange(NULL);
+<a href="#h0-6-36" id="h0-6-36" class="d">-	if(stack)
+</a><a href="#h0-6-37" id="h0-6-37" class="d">-		focus(stack);
+</a><a href="#h0-6-38" id="h0-6-38" class="i">+	if(csel)
+</a><a href="#h0-6-39" id="h0-6-39" class="i">+		focus(csel);
+</a> }
+ 
+ Client *
+ gettitle(Window w)
+ {
+ 	Client *c;
+<a href="#h0-6-46" id="h0-6-46" class="d">-	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h0-6-47" id="h0-6-47" class="i">+	for(c = cstart; c; c = c-&gt;next)
+</a> 		if(c-&gt;title == w)
+ 			return c;
+ 	return NULL;
+<a href="#h0-7" id="h0-7" class="h">@@ -409,7 +465,7 @@ Client *
+</a> getclient(Window w)
+ {
+ 	Client *c;
+<a href="#h0-7-3" id="h0-7-3" class="d">-	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	for(c = cstart; c; c = c-&gt;next)
+</a> 		if(c-&gt;win == w)
+ 			return c;
+ 	return NULL;
+<a href="#h0-8" id="h0-8" class="h">@@ -419,7 +475,7 @@ void
+</a> draw_client(Client *c)
+ {
+ 	int i;
+<a href="#h0-8-3" id="h0-8-3" class="d">-	if(c == stack)
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+	if(c == csel)
+</a> 		return;
+ 
+ 	dc.x = dc.y = 0;
+<b>diff --git a/<a id="h1" href="../file/dev.c.html">dev.c</a> b/<a href="../file/dev.c.html">dev.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -20,16 +20,21 @@ const char *browse[] = { &quot;firefox&quot;, NULL };
+</a> const char *xlock[] = { &quot;xlock&quot;, NULL };
+ 
+ static Key key[] = {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	{ Mod1Mask, XK_Return, (void (*)(void *))spawn, term },
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	{ Mod1Mask, XK_w, (void (*)(void *))spawn, browse },
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	{ Mod1Mask, XK_l, (void (*)(void *))spawn, xlock },
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-	{ Mod1Mask, XK_k, sel, &quot;prev&quot; }, 
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-	{ Mod1Mask, XK_j, sel, &quot;next&quot; }, 
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	{ Mod1Mask, XK_t, tiling, NULL }, 
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-	{ Mod1Mask, XK_f, floating, NULL }, 
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-	{ Mod1Mask, XK_m, max, NULL }, 
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-	{ Mod1Mask | ShiftMask, XK_c, ckill, NULL }, 
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	{ Mod1Mask | ShiftMask, XK_q, quit, NULL },
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	{ Mod1Mask, XK_Return, spawn, { .argv = term } },
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	{ Mod1Mask, XK_w, spawn, { .argv = browse } },
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	{ Mod1Mask, XK_l, spawn, { .argv = xlock } },
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	{ Mod1Mask, XK_k, prevc, { 0 } },
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	{ Mod1Mask, XK_j, nextc, { 0 } }, 
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	{ Mod1Mask, XK_t, tiling, { 0 } }, 
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	{ Mod1Mask, XK_f, floating, { 0 } }, 
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+	{ Mod1Mask, XK_m, max, { 0 } }, 
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	{ Mod1Mask, XK_0, tag, { .i = Tscratch } }, 
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+	{ Mod1Mask, XK_1, tag, { .i = Tdev } }, 
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+	{ Mod1Mask, XK_2, tag, { .i = Tirc } }, 
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+	{ Mod1Mask, XK_3, tag, { .i = Twww } }, 
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+	{ Mod1Mask, XK_4, tag, { .i = Twork } }, 
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+	{ Mod1Mask | ShiftMask, XK_c, ckill, { 0 } }, 
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+	{ Mod1Mask | ShiftMask, XK_q, quit, { 0 } },
+</a> };
+ 
+ /********** CUSTOMIZE **********/
+<a href="#h1-1" id="h1-1" class="h">@@ -60,7 +65,7 @@ keypress(XEvent *e)
+</a> 	for(i = 0; i &lt; len; i++)
+ 		if((keysym == key[i].keysym) &amp;&amp; (key[i].mod == ev-&gt;state)) {
+ 			if(key[i].func)
+<a href="#h1-1-3" id="h1-1-3" class="d">-				key[i].func(key[i].aux);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+				key[i].func(&amp;key[i].arg);
+</a> 			return;
+ 		}
+ }
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -22,6 +22,12 @@ typedef struct DC DC;
+</a> typedef struct Client Client;
+ typedef struct Fnt Fnt;
+ typedef struct Key Key;
+<a href="#h2-0-3" id="h2-0-3" class="i">+typedef union Arg Arg;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+union Arg {
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	const char **argv;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	int i;
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+};
+</a> 
+ /* atoms */
+ enum { WMProtocols, WMDelete, WMLast };
+<a href="#h2-1" id="h2-1" class="h">@@ -62,14 +68,14 @@ struct Client {
+</a> 	Window trans;
+ 	Window title;
+ 	Client *next;
+<a href="#h2-1-3" id="h2-1-3" class="d">-	Client *snext;
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	Client *prev;
+</a> };
+ 
+ struct Key {
+ 	unsigned long mod;
+ 	KeySym keysym;
+<a href="#h2-1-10" id="h2-1-10" class="d">-	void (*func)(void *aux);
+</a><a href="#h2-1-11" id="h2-1-11" class="d">-	void *aux;
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+	void (*func)(Arg *arg);
+</a><a href="#h2-1-13" id="h2-1-13" class="i">+	Arg arg;
+</a> };
+ 
+ extern Display *dpy;
+<a href="#h2-2" id="h2-2" class="h">@@ -83,7 +89,7 @@ extern int tsel, screen, sx, sy, sw, sh, th;
+</a> extern char stext[1024], *tags[TLast];
+ 
+ extern DC dc;
+<a href="#h2-2-3" id="h2-2-3" class="d">-extern Client *clients, *stack;
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+extern Client *cstart, *cend, *csel;
+</a> 
+ /* client.c */
+ extern void manage(Window w, XWindowAttributes *wa);
+<a href="#h2-3" id="h2-3" class="h">@@ -97,11 +103,13 @@ extern void update_size(Client *c);
+</a> extern Client *gettitle(Window w);
+ extern void craise(Client *c);
+ extern void lower(Client *c);
+<a href="#h2-3-3" id="h2-3-3" class="d">-extern void ckill(void *aux);
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-extern void sel(void *aux);
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-extern void max(void *aux);
+</a><a href="#h2-3-6" id="h2-3-6" class="d">-extern void floating(void *aux);
+</a><a href="#h2-3-7" id="h2-3-7" class="d">-extern void tiling(void *aux);
+</a><a href="#h2-3-8" id="h2-3-8" class="i">+extern void ckill(Arg *arg);
+</a><a href="#h2-3-9" id="h2-3-9" class="i">+extern void nextc(Arg *arg);
+</a><a href="#h2-3-10" id="h2-3-10" class="i">+extern void prevc(Arg *arg);
+</a><a href="#h2-3-11" id="h2-3-11" class="i">+extern void max(Arg *arg);
+</a><a href="#h2-3-12" id="h2-3-12" class="i">+extern void floating(Arg *arg);
+</a><a href="#h2-3-13" id="h2-3-13" class="i">+extern void tiling(Arg *arg);
+</a><a href="#h2-3-14" id="h2-3-14" class="i">+void tag(Arg *arg);
+</a> extern void gravitate(Client *c, Bool invert);
+ 
+ /* draw.c */
+<a href="#h2-4" id="h2-4" class="h">@@ -125,7 +133,7 @@ extern void mmove(Client *c);
+</a> extern int error_handler(Display *dsply, XErrorEvent *e);
+ extern void send_message(Window w, Atom a, long value);
+ extern int win_proto(Window w);
+<a href="#h2-4-3" id="h2-4-3" class="d">-extern void quit(void *aux);
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+extern void quit(Arg *arg);
+</a> 
+ /* util.c */
+ extern void error(const char *errstr, ...);
+<a href="#h2-5" id="h2-5" class="h">@@ -133,5 +141,5 @@ extern void *emallocz(unsigned int size);
+</a> extern void *emalloc(unsigned int size);
+ extern void *erealloc(void *ptr, unsigned int size);
+ extern char *estrdup(const char *str);
+<a href="#h2-5-3" id="h2-5-3" class="d">-extern void spawn(char *argv[]);
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+extern void spawn(Arg *arg);
+</a> extern void swap(void **p1, void **p2);
+<b>diff --git a/<a id="h3" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -38,8 +38,9 @@ int tsel = Tdev; /* default tag */
+</a> int screen, sx, sy, sw, sh, th;
+ 
+ DC dc = {0};
+<a href="#h3-0-3" id="h3-0-3" class="d">-Client *clients = NULL;
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-Client *stack = NULL;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+Client *cstart = NULL;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+Client *cend = NULL;
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+Client *csel = NULL;
+</a> 
+ static Bool other_wm_running;
+ static const char version[] =
+<a href="#h3-1" id="h3-1" class="h">@@ -168,13 +169,13 @@ startup_error_handler(Display *dpy, XErrorEvent *error)
+</a> static void
+ cleanup()
+ {
+<a href="#h3-1-3" id="h3-1-3" class="d">-	while(clients)
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-		unmanage(clients);
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	while(csel)
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+		unmanage(csel);
+</a> 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+ }
+ 
+ void
+<a href="#h3-1-11" id="h3-1-11" class="d">-quit(void *aux)
+</a><a href="#h3-1-12" id="h3-1-12" class="i">+quit(Arg *arg)
+</a> {
+ 	running = False;
+ }
+<b>diff --git a/<a id="h4" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -75,8 +75,9 @@ swap(void **p1, void **p2)
+</a> }
+ 
+ void
+<a href="#h4-0-3" id="h4-0-3" class="d">-spawn(char *argv[])
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+spawn(Arg *arg)
+</a> {
+<a href="#h4-0-6" id="h4-0-6" class="i">+	char **argv = (char **)arg-&gt;argv;
+</a> 	if(!argv || !argv[0])
+ 		return;
+ 	if(fork() == 0) {
+</pre>
+</div>
+</body>
+</html>

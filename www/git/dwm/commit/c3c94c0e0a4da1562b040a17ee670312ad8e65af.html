@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>improved selection policy - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c3c94c0e0a4da1562b040a17ee670312ad8e65af.html">c3c94c0e0a4da1562b040a17ee670312ad8e65af</a>
+<b>parent</b> <a href="../commit/9d739090750ffb3b3a64e86e2331215b8901c360.html">9d739090750ffb3b3a64e86e2331215b8901c360</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Tue, 29 Aug 2006 15:28:29 +0200
+
+improved selection policy
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">view.c</a></td><td> | </td><td class="num">44</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>1 file changed, 24 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,31 +3,39 @@
+</a>  * See LICENSE file for license details.
+  */
+ #include &quot;dwm.h&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+#include &lt;stdio.h&gt;
+</a> 
+ /* static */
+ 
+<a href="#h0-0-7" id="h0-0-7" class="i">+static Client *
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+minclient()
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+{
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	Client *c, *min;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	for(min = c = clients; c; c = c-&gt;next)
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		if(c-&gt;weight &lt; min-&gt;weight)
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+			min = c;
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	return min;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+}
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a> static void
+ reorder()
+ {
+<a href="#h0-0-22" id="h0-0-22" class="d">-	Client *c, *orig, *p;
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	Client *c, *newclients, *tail;
+</a> 
+<a href="#h0-0-25" id="h0-0-25" class="d">-	orig = clients;
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-	clients = NULL;
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-	while((c = orig)) {
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-		orig = orig-&gt;next;
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+	newclients = tail = NULL;
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	while((c = minclient())) {
+</a> 		detach(c);
+<a href="#h0-0-33" id="h0-0-33" class="d">-
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-		for(p = clients; p &amp;&amp; p-&gt;next &amp;&amp; p-&gt;weight &lt;= c-&gt;weight; p = p-&gt;next);
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-		c-&gt;prev = p;
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-		if(p) {
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-			if((c-&gt;next = p-&gt;next))
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-				c-&gt;next-&gt;prev = c;
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-			p-&gt;next = c;
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+		if(tail) {
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+			c-&gt;prev = tail;
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+			tail-&gt;next = c;
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+			tail = c;
+</a> 		}
+ 		else
+<a href="#h0-0-46" id="h0-0-46" class="d">-			clients = c;
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+			tail = newclients = c;
+</a> 	}
+<a href="#h0-0-49" id="h0-0-49" class="i">+	clients = newclients;
+</a> }
+ 
+ /* extern */
+<a href="#h0-1" id="h0-1" class="h">@@ -59,9 +67,7 @@ dofloat(Arg *arg)
+</a> 		else
+ 			ban(c);
+ 	}
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(!sel || !isvisible(sel))
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		sel = getnext(clients);
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	if(sel)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	if((sel = getnext(clients)))
+</a> 		focus(sel);
+ 	else
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+<a href="#h0-2" id="h0-2" class="h">@@ -124,9 +130,7 @@ dotile(Arg *arg)
+</a> 		else
+ 			ban(c);
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(!sel || !isvisible(sel))
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		sel = getnext(clients);
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	if(sel)
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	if((sel = getnext(clients)))
+</a> 		focus(sel);
+ 	else
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+</pre>
+</div>
+</body>
+</html>

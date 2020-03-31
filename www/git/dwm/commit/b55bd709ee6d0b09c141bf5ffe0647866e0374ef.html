@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>new color stuff/new rendering stuff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b55bd709ee6d0b09c141bf5ffe0647866e0374ef.html">b55bd709ee6d0b09c141bf5ffe0647866e0374ef</a>
+<b>parent</b> <a href="../commit/9833610356f7ce033589680fddf87000e5788774.html">9833610356f7ce033589680fddf87000e5788774</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Fri, 25 Aug 2006 12:59:45 +0200
+
+new color stuff/new rendering stuff
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">11</td><td><span class="i">++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">draw.c</a></td><td> | </td><td class="num">49</td><td><span class="i">+++++++++++++++++++</span><span class="d">------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dwm.h</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">main.c</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>6 files changed, 70 insertions(+), 58 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,50 +4,59 @@
+</a>  */
+ 
+ #define TAGS \
+<a href="#h0-0-3" id="h0-0-3" class="d">-const char *tags[] = { &quot;work&quot;, &quot;net&quot;, &quot;fnord&quot;, NULL };
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+const char *tags[] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, NULL };
+</a> 
+ #define DEFMODE			dotile /* dofloat */
+<a href="#h0-0-7" id="h0-0-7" class="d">-#define FONT			&quot;-*-terminus-medium-*-*-*-12-*-*-*-*-*-iso10646-*&quot;
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-#define BGCOLOR			&quot;#666699&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-#define FGCOLOR			&quot;#eeeeee&quot;
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-#define BORDERCOLOR		&quot;#9999CC&quot;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+#define FONT			&quot;fixed&quot;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+#define SELBGCOLOR		&quot;#666699&quot;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+#define SELFGCOLOR		&quot;#eeeeee&quot;
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+#define NORMBGCOLOR		&quot;#333366&quot;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+#define NORMFGCOLOR		&quot;#cccccc&quot;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+#define STATUSBGCOLOR		&quot;#dddddd&quot;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+#define STATUSFGCOLOR		&quot;#222222&quot;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+
+</a> #define MODKEY			Mod1Mask
+ #define MASTERW			60 /* percent */
+ 
+ #define KEYS \
+ static Key key[] = { \
+ 	/* modifier			key		function	arguments */ \
+<a href="#h0-0-26" id="h0-0-26" class="d">-	{ MODKEY|ShiftMask,		XK_Return,	spawn, \
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-		{ .cmd = &quot;exec uxterm -bg &#39;#e0e0e0&#39; -fg &#39;#000000&#39; -cr &#39;#000000&#39; +sb -fn &#39;&quot;FONT&quot;&#39;&quot; } }, \
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-	{ MODKEY,			XK_p,		spawn, \
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-		{ .cmd = &quot;exec `ls -lL /usr/bin /usr/X11R6/bin /usr/local/bin 2&gt;/dev/null | &quot; \
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-			&quot;awk &#39;NF&gt;2 &amp;&amp; $1 ~ /^[^d].*x/ {print $NF}&#39; | sort -u | dmenu`&quot; } }, \
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-	{ MODKEY,			XK_j,		focusnext,	{ 0 } }, \
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-	{ MODKEY,			XK_k,		focusprev,	{ 0 } }, \
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+	{ MODKEY|ShiftMask,		XK_Return,	spawn,		{ .cmd = &quot;exec xterm&quot; } }, \
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+	{ MODKEY,			XK_Tab,		focusnext,	{ 0 } }, \
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+	{ MODKEY|ShiftMask,		XK_Tab,		focusprev,	{ 0 } }, \
+</a> 	{ MODKEY,			XK_Return,	zoom,		{ 0 } }, \
+ 	{ MODKEY,			XK_m,		togglemax,	{ 0 } }, \
+ 	{ MODKEY|ShiftMask,		XK_1,		tag,		{ .i = 0 } }, \
+ 	{ MODKEY|ShiftMask,		XK_2,		tag,		{ .i = 1 } }, \
+ 	{ MODKEY|ShiftMask,		XK_3,		tag,		{ .i = 2 } }, \
+<a href="#h0-0-41" id="h0-0-41" class="i">+	{ MODKEY|ShiftMask,		XK_4,		tag,		{ .i = 3 } }, \
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	{ MODKEY|ShiftMask,		XK_5,		tag,		{ .i = 4 } }, \
+</a> 	{ MODKEY|ControlMask|ShiftMask,	XK_1,		toggletag,	{ .i = 0 } }, \
+ 	{ MODKEY|ControlMask|ShiftMask,	XK_2,		toggletag,	{ .i = 1 } }, \
+ 	{ MODKEY|ControlMask|ShiftMask,	XK_3,		toggletag,	{ .i = 2 } }, \
+<a href="#h0-0-46" id="h0-0-46" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_4,		toggletag,	{ .i = 3 } }, \
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_5,		toggletag,	{ .i = 4 } }, \
+</a> 	{ MODKEY|ShiftMask,		XK_c,		killclient,	{ 0 } }, \
+ 	{ MODKEY,			XK_space,	togglemode,	{ 0 } }, \
+ 	{ MODKEY,			XK_1,		view,		{ .i = 0 } }, \
+ 	{ MODKEY,			XK_2,		view,		{ .i = 1 } }, \
+ 	{ MODKEY,			XK_3,		view,		{ .i = 2 } }, \
+<a href="#h0-0-53" id="h0-0-53" class="i">+	{ MODKEY,			XK_4,		view,		{ .i = 3 } }, \
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+	{ MODKEY,			XK_5,		view,		{ .i = 4 } }, \
+</a> 	{ MODKEY|ControlMask,		XK_1,		toggleview,	{ .i = 0 } }, \
+ 	{ MODKEY|ControlMask,		XK_2,		toggleview,	{ .i = 1 } }, \
+ 	{ MODKEY|ControlMask,		XK_3,		toggleview,	{ .i = 2 } }, \
+<a href="#h0-0-58" id="h0-0-58" class="i">+	{ MODKEY|ControlMask,		XK_4,		toggleview,	{ .i = 3 } }, \
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+	{ MODKEY|ControlMask,		XK_5,		toggleview,	{ .i = 4 } }, \
+</a> 	{ MODKEY|ShiftMask,		XK_q,		quit,		{ 0 } }, \
+ };
+ 
+<a href="#h0-0-63" id="h0-0-63" class="i">+/* Query class:instance:title for regex matching info with following command:
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+ * xprop | awk -F &#39;&quot;&#39; &#39;/^WM_CLASS/ { printf(&quot;%s:%s:&quot;,$4,$2) }; /^WM_NAME/{ printf(&quot;%s\n&quot;,$2) }&#39; */
+</a> #define RULES \
+ static Rule rule[] = { \
+ 	/* class:instance:title regex	tags regex	isfloat */ \
+<a href="#h0-0-68" id="h0-0-68" class="d">-	{ &quot;Firefox.*&quot;,			&quot;net&quot;,		False }, \
+</a><a href="#h0-0-69" id="h0-0-69" class="i">+	{ &quot;Firefox.*&quot;,			&quot;2&quot;,		False }, \
+</a> 	{ &quot;Gimp.*&quot;,			NULL,		True}, \
+<a href="#h0-0-71" id="h0-0-71" class="d">-	{ &quot;MPlayer.*&quot;,			NULL,		True}, \
+</a><a href="#h0-0-72" id="h0-0-72" class="d">-	{ &quot;Acroread.*&quot;,			NULL,		True}, \
+</a> };
+<b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -7,10 +7,15 @@
+</a> const char *tags[] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, NULL };
+ 
+ #define DEFMODE			dotile /* dofloat */
+<a href="#h1-0-3" id="h1-0-3" class="i">+
+</a> #define FONT			&quot;fixed&quot;
+<a href="#h1-0-5" id="h1-0-5" class="d">-#define BGCOLOR			&quot;#666699&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-#define FGCOLOR			&quot;#eeeeee&quot;
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-#define BORDERCOLOR		&quot;#9999CC&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#define SELBGCOLOR		&quot;#666699&quot;
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+#define SELFGCOLOR		&quot;#eeeeee&quot;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+#define NORMBGCOLOR		&quot;#333366&quot;
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+#define NORMFGCOLOR		&quot;#cccccc&quot;
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+#define STATUSBGCOLOR		&quot;#dddddd&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+#define STATUSFGCOLOR		&quot;#222222&quot;
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+
+</a> #define MODKEY			Mod1Mask
+ #define MASTERW			60 /* percent */
+ 
+<b>diff --git a/<a id="h2" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -22,29 +22,16 @@ textnw(const char *text, unsigned int len)
+</a> }
+ 
+ static void
+<a href="#h2-0-3" id="h2-0-3" class="d">-drawtext(const char *text, Bool invert, Bool highlight)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+drawtext(const char *text, unsigned long col[ColLast], Bool highlight)
+</a> {
+ 	int x, y, w, h;
+ 	static char buf[256];
+ 	unsigned int len, olen;
+ 	XGCValues gcv;
+<a href="#h2-0-10" id="h2-0-10" class="d">-	XPoint points[5];
+</a> 	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+ 
+<a href="#h2-0-13" id="h2-0-13" class="d">-	XSetForeground(dpy, dc.gc, invert ? dc.fg : dc.bg);
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	XSetForeground(dpy, dc.gc, col[ColBG]);
+</a> 	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+<a href="#h2-0-16" id="h2-0-16" class="d">-	points[0].x = dc.x;
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-	points[0].y = dc.y;
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-	points[1].x = dc.w - 1;
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-	points[1].y = 0;
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-	points[2].x = 0;
+</a><a href="#h2-0-21" id="h2-0-21" class="d">-	points[2].y = dc.h - 1;
+</a><a href="#h2-0-22" id="h2-0-22" class="d">-	points[3].x = -(dc.w - 1);
+</a><a href="#h2-0-23" id="h2-0-23" class="d">-	points[3].y = 0;
+</a><a href="#h2-0-24" id="h2-0-24" class="d">-	points[4].x = 0;
+</a><a href="#h2-0-25" id="h2-0-25" class="d">-	points[4].y = -(dc.h - 1);
+</a><a href="#h2-0-26" id="h2-0-26" class="d">-	XSetForeground(dpy, dc.gc, dc.border);
+</a><a href="#h2-0-27" id="h2-0-27" class="d">-	XDrawLines(dpy, dc.drawable, dc.gc, points, 5, CoordModePrevious);
+</a> 
+ 	if(!text)
+ 		return;
+<a href="#h2-1" id="h2-1" class="h">@@ -74,15 +61,14 @@ drawtext(const char *text, Bool invert, Bool highlight)
+</a> 
+ 	if(w &gt; dc.w)
+ 		return; /* too long */
+<a href="#h2-1-3" id="h2-1-3" class="d">-	gcv.foreground = invert ? dc.bg : dc.fg;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	gcv.background = invert ? dc.fg : dc.bg;
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	gcv.foreground = col[ColFG];
+</a> 	if(dc.font.set) {
+<a href="#h2-1-7" id="h2-1-7" class="d">-		XChangeGC(dpy, dc.gc, GCForeground | GCBackground, &amp;gcv);
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+		XChangeGC(dpy, dc.gc, GCForeground, &amp;gcv);
+</a> 		XmbDrawString(dpy, dc.drawable, dc.font.set, dc.gc, x, y, buf, len);
+ 	}
+ 	else {
+ 		gcv.font = dc.font.xfont-&gt;fid;
+<a href="#h2-1-13" id="h2-1-13" class="d">-		XChangeGC(dpy, dc.gc, GCForeground | GCBackground | GCFont, &amp;gcv);
+</a><a href="#h2-1-14" id="h2-1-14" class="i">+		XChangeGC(dpy, dc.gc, GCForeground | GCFont, &amp;gcv);
+</a> 		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+ 	}
+ 	if(highlight) {
+<a href="#h2-2" id="h2-2" class="h">@@ -108,21 +94,25 @@ drawall()
+</a> void
+ drawstatus()
+ {
+<a href="#h2-2-3" id="h2-2-3" class="i">+	static const char *mode[] = { &quot;~&quot;, &quot;=&quot; };
+</a> 	int i, x;
+<a href="#h2-2-5" id="h2-2-5" class="d">-	Bool istile = arrange == dotile;
+</a> 
+ 	dc.x = dc.y = 0;
+ 	dc.w = bw;
+<a href="#h2-2-9" id="h2-2-9" class="d">-	drawtext(NULL, !istile, False);
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+	if(!modew)
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+		modew = textw(mode[0]) &gt; textw(mode[1]) ? textw(mode[0]) : textw(mode[1]);
+</a><a href="#h2-2-13" id="h2-2-13" class="i">+	drawtext(mode[arrange == dotile ? 1 : 0], dc.status, False);
+</a> 
+ 	dc.w = 0;
+<a href="#h2-2-16" id="h2-2-16" class="i">+	dc.x = modew;
+</a> 	for(i = 0; i &lt; ntags; i++) {
+ 		dc.x += dc.w;
+ 		dc.w = textw(tags[i]);
+<a href="#h2-2-20" id="h2-2-20" class="d">-		if(istile)
+</a><a href="#h2-2-21" id="h2-2-21" class="d">-			drawtext(tags[i], seltag[i], sel &amp;&amp; sel-&gt;tags[i]);
+</a><a href="#h2-2-22" id="h2-2-22" class="i">+		if(seltag[i])
+</a><a href="#h2-2-23" id="h2-2-23" class="i">+			drawtext(tags[i], dc.sel, sel &amp;&amp; sel-&gt;tags[i]);
+</a> 		else
+<a href="#h2-2-25" id="h2-2-25" class="d">-			drawtext(tags[i], !seltag[i], sel &amp;&amp; sel-&gt;tags[i]);
+</a><a href="#h2-2-26" id="h2-2-26" class="i">+			drawtext(tags[i], dc.norm, sel &amp;&amp; sel-&gt;tags[i]);
+</a> 	}
+ 	x = dc.x + dc.w;
+ 	dc.w = textw(stext);
+<a href="#h2-3" id="h2-3" class="h">@@ -131,11 +121,11 @@ drawstatus()
+</a> 		dc.x = x;
+ 		dc.w = bw - x;
+ 	}
+<a href="#h2-3-3" id="h2-3-3" class="d">-	drawtext(stext, !istile, False);
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+	drawtext(stext, dc.status, False);
+</a> 
+ 	if(sel &amp;&amp; ((dc.w = dc.x - x) &gt; bh)) {
+ 		dc.x = x;
+<a href="#h2-3-8" id="h2-3-8" class="d">-		drawtext(sel-&gt;name, istile, False);
+</a><a href="#h2-3-9" id="h2-3-9" class="i">+		drawtext(sel-&gt;name, dc.sel, False);
+</a> 	}
+ 	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, bw, bh, 0, 0);
+ 	XSync(dpy, False);
+<a href="#h2-4" id="h2-4" class="h">@@ -145,20 +135,19 @@ void
+</a> drawtitle(Client *c)
+ {
+ 	int i;
+<a href="#h2-4-3" id="h2-4-3" class="d">-	Bool istile = arrange == dotile;
+</a> 
+ 	if(c == sel &amp;&amp; issel) {
+ 		drawstatus();
+ 		XUnmapWindow(dpy, c-&gt;twin);
+<a href="#h2-4-8" id="h2-4-8" class="d">-		XSetWindowBorder(dpy, c-&gt;win, dc.fg);
+</a><a href="#h2-4-9" id="h2-4-9" class="i">+		XSetWindowBorder(dpy, c-&gt;win, dc.sel[ColBG]);
+</a> 		return;
+ 	}
+ 
+<a href="#h2-4-13" id="h2-4-13" class="d">-	XSetWindowBorder(dpy, c-&gt;win, dc.bg);
+</a><a href="#h2-4-14" id="h2-4-14" class="i">+	XSetWindowBorder(dpy, c-&gt;win, dc.norm[ColBG]);
+</a> 	XMapWindow(dpy, c-&gt;twin);
+ 	dc.x = dc.y = 0;
+ 	dc.w = c-&gt;tw;
+<a href="#h2-4-18" id="h2-4-18" class="d">-	drawtext(c-&gt;name, !istile, False);
+</a><a href="#h2-4-19" id="h2-4-19" class="i">+	drawtext(c-&gt;name, dc.norm, False);
+</a> 	XCopyArea(dpy, dc.drawable, c-&gt;twin, dc.gc, 0, 0, c-&gt;tw, c-&gt;th, 0, 0);
+ 	XSync(dpy, False);
+ }
+<b>diff --git a/<a id="h3" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -23,6 +23,9 @@ enum { WMProtocols, WMDelete, WMLast };
+</a> /* cursor */
+ enum { CurNormal, CurResize, CurMove, CurLast };
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+/* color */
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+enum { ColFG, ColBG, ColLast };
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+
+</a> /* window corners */
+ typedef enum { TopLeft, TopRight, BotLeft, BotRight } Corner;
+ 
+<a href="#h3-1" id="h3-1" class="h">@@ -36,9 +39,9 @@ typedef struct {
+</a> 
+ typedef struct { /* draw context */
+ 	int x, y, w, h;
+<a href="#h3-1-3" id="h3-1-3" class="d">-	unsigned long bg;
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-	unsigned long fg;
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-	unsigned long border;
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+	unsigned long norm[ColLast];
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+	unsigned long sel[ColLast];
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+	unsigned long status[ColLast];
+</a> 	Drawable drawable;
+ 	Fnt font;
+ 	GC gc;
+<a href="#h3-2" id="h3-2" class="h">@@ -66,7 +69,7 @@ struct Client {
+</a> extern const char *tags[];
+ extern char stext[1024];
+ extern int screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+<a href="#h3-2-3" id="h3-2-3" class="d">-extern unsigned int ntags, numlockmask;
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+extern unsigned int ntags, numlockmask, modew;
+</a> extern void (*handler[LASTEvent])(XEvent *);
+ extern void (*arrange)(Arg *);
+ extern Atom wmatom[WMLast], netatom[NetLast];
+<b>diff --git a/<a id="h4" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -105,7 +105,9 @@ buttonpress(XEvent *e)
+</a> 	XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+ 
+ 	if(barwin == ev-&gt;window) {
+<a href="#h4-0-3" id="h4-0-3" class="d">-		x = 0;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+		if(ev-&gt;x &lt; modew)
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+			return;
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+		x = modew;
+</a> 		for(a.i = 0; a.i &lt; ntags; a.i++) {
+ 			x += textw(tags[a.i]);
+ 			if(ev-&gt;x &lt; x) {
+<b>diff --git a/<a id="h5" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -20,7 +20,7 @@
+</a> char stext[1024];
+ Bool *seltag;
+ int screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+<a href="#h5-0-3" id="h5-0-3" class="d">-unsigned int ntags, numlockmask;
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+unsigned int ntags, numlockmask, modew;
+</a> Atom wmatom[WMLast], netatom[NetLast];
+ Bool running = True;
+ Bool issel = True;
+<a href="#h5-1" id="h5-1" class="h">@@ -121,11 +121,15 @@ setup()
+</a> 	seltag[0] = True;
+ 
+ 	/* style */
+<a href="#h5-1-3" id="h5-1-3" class="d">-	dc.bg = getcolor(BGCOLOR);
+</a><a href="#h5-1-4" id="h5-1-4" class="d">-	dc.fg = getcolor(FGCOLOR);
+</a><a href="#h5-1-5" id="h5-1-5" class="d">-	dc.border = getcolor(BORDERCOLOR);
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+	dc.norm[ColBG] = getcolor(NORMBGCOLOR);
+</a><a href="#h5-1-7" id="h5-1-7" class="i">+	dc.norm[ColFG] = getcolor(NORMFGCOLOR);
+</a><a href="#h5-1-8" id="h5-1-8" class="i">+	dc.sel[ColBG] = getcolor(SELBGCOLOR);
+</a><a href="#h5-1-9" id="h5-1-9" class="i">+	dc.sel[ColFG] = getcolor(SELFGCOLOR);
+</a><a href="#h5-1-10" id="h5-1-10" class="i">+	dc.status[ColBG] = getcolor(STATUSBGCOLOR);
+</a><a href="#h5-1-11" id="h5-1-11" class="i">+	dc.status[ColFG] = getcolor(STATUSFGCOLOR);
+</a> 	setfont(FONT);
+ 
+<a href="#h5-1-14" id="h5-1-14" class="i">+	modew = 0;
+</a> 	sx = sy = 0;
+ 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+<a href="#h5-2" id="h5-2" class="h">@@ -133,7 +137,7 @@ setup()
+</a> 
+ 	bx = by = 0;
+ 	bw = sw;
+<a href="#h5-2-3" id="h5-2-3" class="d">-	dc.h = bh = dc.font.height + 4;
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+	dc.h = bh = dc.font.height + 2;
+</a> 	wa.override_redirect = 1;
+ 	wa.background_pixmap = ParentRelative;
+ 	wa.event_mask = ButtonPressMask | ExposureMask;
+</pre>
+</div>
+</body>
+</html>

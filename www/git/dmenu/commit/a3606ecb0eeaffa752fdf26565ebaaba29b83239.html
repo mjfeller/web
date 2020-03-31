@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>updated manpage, added paste, cleaned up, new libdraw - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a3606ecb0eeaffa752fdf26565ebaaba29b83239.html">a3606ecb0eeaffa752fdf26565ebaaba29b83239</a>
+<b>parent</b> <a href="../commit/7d5fe17391fefd978eab281a6cbebe2aa601e9ce.html">7d5fe17391fefd978eab281a6cbebe2aa601e9ce</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Sat, 31 Jul 2010 14:56:27 +0100
+
+updated manpage, added paste, cleaned up, new libdraw
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">README</a></td><td> | </td><td class="num">6</td><td><span class="i">++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dmenu.1</a></td><td> | </td><td class="num">94</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dmenu.c</a></td><td> | </td><td class="num">488</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------------</span></td></tr>
+</table></pre><pre>4 files changed, 271 insertions(+), 319 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,7 +6,7 @@ include config.mk
+</a> SRC = dmenu.c
+ OBJ = ${SRC:.c=.o}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-all: options dinput dmenu
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+all: options dmenu
+</a> 
+ options:
+ 	@echo dmenu build options:
+<b>diff --git a/<a id="h1" href="../file/README.html">README</a> b/<a href="../file/README.html">README</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -8,13 +8,11 @@ Requirements
+</a> In order to build dmenu you need the Xlib header files.
+ You also need libdraw, available from http://hg.suckless.org/libdraw
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-Pasting the X selection to dmenu requires the sselp utility at runtime.
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-
+</a> 
+ Installation
+ ------------
+<a href="#h1-0-8" id="h1-0-8" class="d">-Edit config.mk to match your local setup (dmenu is installed into
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-the /usr/local namespace by default).
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+Edit config.mk to match your local setup (dmenu is installed into the
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+/usr/local namespace by default).
+</a> 
+ Afterwards enter the following command to build and install dmenu (if
+ necessary as root):
+<b>diff --git a/<a id="h2" href="../file/dmenu.1.html">dmenu.1</a> b/<a href="../file/dmenu.1.html">dmenu.1</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -3,99 +3,103 @@
+</a> dmenu \- dynamic menu
+ .SH SYNOPSIS
+ .B dmenu
+<a href="#h2-0-3" id="h2-0-3" class="d">-.RB [ \-i ]
+</a> .RB [ \-b ]
+<a href="#h2-0-5" id="h2-0-5" class="d">-.RB [ \-e &quot; &lt;xid&gt;]&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+.RB [ \-i ]
+</a> .RB [ \-l &quot; &lt;lines&gt;]&quot;
+<a href="#h2-0-8" id="h2-0-8" class="i">+.RB [ \-p &quot; &lt;prompt&gt;]&quot;
+</a> .RB [ \-fn &quot; &lt;font&gt;]&quot;
+ .RB [ \-nb &quot; &lt;color&gt;]&quot;
+ .RB [ \-nf &quot; &lt;color&gt;]&quot;
+<a href="#h2-0-12" id="h2-0-12" class="d">-.RB [ \-p &quot; &lt;prompt&gt;]&quot;
+</a> .RB [ \-sb &quot; &lt;color&gt;]&quot;
+ .RB [ \-sf &quot; &lt;color&gt;]&quot;
+ .RB [ \-v ]
+ 
+ .B dmenu_run
+<a href="#h2-0-18" id="h2-0-18" class="d">-[&lt;options...&gt;]
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+.RB [ \-b ]
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+.RB [ \-i ]
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+.RB [ \-l &quot; &lt;lines&gt;]&quot;
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+.RB [ \-p &quot; &lt;prompt&gt;]&quot;
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+.RB [ \-fn &quot; &lt;font&gt;]&quot;
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+.RB [ \-nb &quot; &lt;color&gt;]&quot;
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+.RB [ \-nf &quot; &lt;color&gt;]&quot;
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+.RB [ \-sb &quot; &lt;color&gt;]&quot;
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+.RB [ \-sf &quot; &lt;color&gt;]&quot;
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+.RB [ \-v ]
+</a> 
+ .B dmenu_path
+ .SH DESCRIPTION
+ .SS Overview
+<a href="#h2-0-33" id="h2-0-33" class="d">-dmenu is a generic menu for X, originally designed for
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+.B dmenu
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+is a generic menu for X, originally designed for
+</a> .BR dwm (1).
+<a href="#h2-0-37" id="h2-0-37" class="d">-It manages huge amounts (up to 10.000 and more) of user defined menu items
+</a><a href="#h2-0-38" id="h2-0-38" class="d">-efficiently.
+</a><a href="#h2-0-39" id="h2-0-39" class="d">-
+</a><a href="#h2-0-40" id="h2-0-40" class="d">-dmenu_run is a dmenu script used by dwm which lists executables in the user&#39;s PATH
+</a><a href="#h2-0-41" id="h2-0-41" class="d">-and executes the selected item.
+</a><a href="#h2-0-42" id="h2-0-42" class="d">-
+</a><a href="#h2-0-43" id="h2-0-43" class="d">-dmenu_path is a script used by dmenu_run to find and cache a list of executables.
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+It manages huge amounts (10000 and more) of user defined menu items efficiently.
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+.P
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+.B dmenu_run
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+is a dmenu script which lists programs in the user&#39;s PATH and executes
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+the selected item.
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+.P
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+.B dmenu_path
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+is a script used by
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+.I dmenu_run
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+to find and cache a list of programs.
+</a> .SS Options
+ .TP
+<a href="#h2-0-56" id="h2-0-56" class="d">-.B \-i
+</a><a href="#h2-0-57" id="h2-0-57" class="d">-makes dmenu match menu entries case insensitively.
+</a><a href="#h2-0-58" id="h2-0-58" class="d">-.TP
+</a> .B \-b
+<a href="#h2-0-60" id="h2-0-60" class="d">-defines that dmenu appears at the bottom.
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+dmenu appears at the bottom of the screen.
+</a> .TP
+<a href="#h2-0-63" id="h2-0-63" class="d">-.B \-e &lt;xid&gt;
+</a><a href="#h2-0-64" id="h2-0-64" class="d">-reparents dmenu to the window specified by xid.
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+.B \-i
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+dmenu matches menu entries case insensitively.
+</a> .TP
+ .B \-l &lt;lines&gt;
+<a href="#h2-0-69" id="h2-0-69" class="d">-activates vertical list mode.
+</a><a href="#h2-0-70" id="h2-0-70" class="d">-The given number of lines will be displayed. Window height will be adjusted.
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+dmenu lists items vertically, with the given number of lines.
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+.TP
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+.B \-p &lt;prompt&gt;
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+sets the prompt to be displayed to the left of the input area.
+</a> .TP
+ .B \-fn &lt;font&gt;
+<a href="#h2-0-77" id="h2-0-77" class="d">-defines the font.
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+sets the font.
+</a> .TP
+ .B \-nb &lt;color&gt;
+<a href="#h2-0-81" id="h2-0-81" class="d">-defines the normal background color (#RGB, #RRGGBB, and color names are supported).
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+sets the background color (#RGB, #RRGGBB, and color names are supported).
+</a> .TP
+ .B \-nf &lt;color&gt;
+<a href="#h2-0-85" id="h2-0-85" class="d">-defines the normal foreground color (#RGB, #RRGGBB, and color names are supported).
+</a><a href="#h2-0-86" id="h2-0-86" class="d">-.TP
+</a><a href="#h2-0-87" id="h2-0-87" class="d">-.B \-p &lt;prompt&gt;
+</a><a href="#h2-0-88" id="h2-0-88" class="d">-defines a prompt to be displayed before the input area.
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+sets the foreground color (#RGB, #RRGGBB, and color names are supported).
+</a> .TP
+ .B \-sb &lt;color&gt;
+<a href="#h2-0-92" id="h2-0-92" class="d">-defines the selected background color (#RGB, #RRGGBB, and color names are supported).
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+sets the background color of selected items (#RGB, #RRGGBB, and color names are
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+supported).
+</a> .TP
+ .B \-sf &lt;color&gt;
+<a href="#h2-0-97" id="h2-0-97" class="d">-defines the selected foreground color (#RGB, #RRGGBB, and color names are supported).
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+sets the foreground color of selected items (#RGB, #RRGGBB, and color names are
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+supported).
+</a> .TP
+ .B \-v
+ prints version information to standard output, then exits.
+ .SH USAGE
+ dmenu reads a list of newline-separated items from standard input and creates a
+<a href="#h2-0-105" id="h2-0-105" class="d">-menu.  When the user selects an item or enters any text and presses Return, his/her
+</a><a href="#h2-0-106" id="h2-0-106" class="d">-choice is printed to standard output and dmenu terminates.
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+menu.  When the user selects an item or enters any text and presses Return,
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+their choice is printed to standard output and dmenu terminates.
+</a> .P
+<a href="#h2-0-110" id="h2-0-110" class="d">-dmenu is completely controlled by the keyboard. Besides standard Unix line editing,
+</a><a href="#h2-0-111" id="h2-0-111" class="d">-and item selection (Up/Down or Left/Right, PageUp/PageDown, Home/End), the following
+</a><a href="#h2-0-112" id="h2-0-112" class="d">-keys are recognized:
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+dmenu is completely controlled by the keyboard.  Besides standard Unix line
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+editing and item selection (Up/Down/Left/Right, PageUp/PageDown, Home/End), the
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+following keys are recognized:
+</a> .TP
+ .B Tab (Control\-i)
+ Copy the selected item to the input field.
+ .TP
+ .B Return (Control\-j)
+<a href="#h2-0-121" id="h2-0-121" class="d">-Confirm selection and quit (print the selected item to standard output). Returns
+</a><a href="#h2-0-122" id="h2-0-122" class="d">-.B 0
+</a><a href="#h2-0-123" id="h2-0-123" class="d">-on termination.
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+Confirm selection.  Prints the selected item to standard output and exits,
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+returning success.
+</a> .TP
+ .B Shift\-Return (Control\-Shift\-j)
+<a href="#h2-0-128" id="h2-0-128" class="d">-Confirm input and quit (print the text in the input field to standard output).
+</a><a href="#h2-0-129" id="h2-0-129" class="d">-Returns
+</a><a href="#h2-0-130" id="h2-0-130" class="d">-.B 0
+</a><a href="#h2-0-131" id="h2-0-131" class="d">-on termination.
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+Confirm input.  Prints the input text to standard output and exits, returning
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+success.
+</a> .TP
+ .B Escape (Control\-c)
+<a href="#h2-0-136" id="h2-0-136" class="d">-Quit without selecting an item. Returns
+</a><a href="#h2-0-137" id="h2-0-137" class="d">-.B 1
+</a><a href="#h2-0-138" id="h2-0-138" class="d">-on termination.
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+Quit without selecting an item, returning failure.
+</a> .TP
+ .B Control\-y
+<a href="#h2-0-142" id="h2-0-142" class="d">-Pastes the X selection into the input field. This requires
+</a><a href="#h2-0-143" id="h2-0-143" class="d">-.BR sselp (1).
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+Paste the current X selection into the input field.
+</a> .SH SEE ALSO
+ .BR dwm (1),
+ .BR wmii (1).
+<b>diff --git a/<a id="h3" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -6,6 +6,7 @@
+</a> #include &lt;string.h&gt;
+ #include &lt;unistd.h&gt;
+ #include &lt;X11/keysym.h&gt;
+<a href="#h3-0-3" id="h3-0-3" class="i">+#include &lt;X11/Xatom.h&gt;
+</a> #include &lt;X11/Xlib.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+ #ifdef XINERAMA
+<a href="#h3-1" id="h3-1" class="h">@@ -14,78 +15,72 @@
+</a> #include &lt;draw.h&gt;
+ #include &quot;config.h&quot;
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-#define INRECT(x,y,rx,ry,rw,rh) ((rx) &lt; (x) &amp;&amp; (x) &lt; (rx)+(rw) &amp;&amp; (ry) &lt; (y) &amp;&amp; (y) &lt; (ry)+(rh))
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+#define INRECT(x,y,rx,ry,rw,rh) ((x) &gt;= (rx) &amp;&amp; (x) &lt; (rx)+(rw) &amp;&amp; (y) &gt;= (ry) &amp;&amp; (y) &lt; (ry)+(rh))
+</a> #define MIN(a,b)                ((a) &lt; (b) ? (a) : (b))
+ #define MAX(a,b)                ((a) &gt; (b) ? (a) : (b))
+<a href="#h3-1-7" id="h3-1-7" class="d">-#define IS_UTF8_1ST_CHAR(c)     (((c) &amp; 0xc0) == 0xc0 || ((c) &amp; 0x80) == 0x00)
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+#define UTF8_CODEPOINT(c)       (((c) &amp; 0xc0) != 0x80)
+</a> 
+ typedef struct Item Item;
+ struct Item {
+ 	char *text;
+<a href="#h3-1-13" id="h3-1-13" class="d">-	Item *next;         /* traverses all items */
+</a><a href="#h3-1-14" id="h3-1-14" class="d">-	Item *left, *right; /* traverses items matching current search pattern */
+</a><a href="#h3-1-15" id="h3-1-15" class="i">+	Item *next;          /* traverses all items */
+</a><a href="#h3-1-16" id="h3-1-16" class="i">+	Item *left, *right;  /* traverses matching items */
+</a> };
+ 
+<a href="#h3-1-19" id="h3-1-19" class="d">-static void appenditem(Item *i, Item **list, Item **last);
+</a><a href="#h3-1-20" id="h3-1-20" class="i">+static void appenditem(Item *item, Item **list, Item **last);
+</a> static void calcoffsetsh(void);
+ static void calcoffsetsv(void);
+ static char *cistrstr(const char *s, const char *sub);
+<a href="#h3-1-24" id="h3-1-24" class="d">-static void cleanup(void);
+</a><a href="#h3-1-25" id="h3-1-25" class="d">-static void drawitem(const char *s, unsigned long col[ColLast]);
+</a> static void drawmenu(void);
+ static void drawmenuh(void);
+ static void drawmenuv(void);
+ static void grabkeyboard(void);
+<a href="#h3-1-30" id="h3-1-30" class="i">+static void insert(const char *s, ssize_t n);
+</a> static void keypress(XKeyEvent *e);
+ static void match(void);
+<a href="#h3-1-33" id="h3-1-33" class="i">+static void paste(Atom atom);
+</a> static void readstdin(void);
+ static void run(void);
+ static void setup(void);
+<a href="#h3-1-37" id="h3-1-37" class="i">+static void usage(void);
+</a> 
+<a href="#h3-1-39" id="h3-1-39" class="d">-static char **argp = NULL;
+</a><a href="#h3-1-40" id="h3-1-40" class="d">-static char *maxname = NULL;
+</a> static char *prompt;
+ static char text[4096];
+<a href="#h3-1-43" id="h3-1-43" class="d">-static int promptw;
+</a> static int screen;
+<a href="#h3-1-45" id="h3-1-45" class="d">-static size_t cur = 0;
+</a><a href="#h3-1-46" id="h3-1-46" class="d">-static unsigned int cmdw = 0;
+</a><a href="#h3-1-47" id="h3-1-47" class="i">+static size_t cursor = 0;
+</a><a href="#h3-1-48" id="h3-1-48" class="i">+static unsigned int inputw = 0;
+</a> static unsigned int lines = 0;
+<a href="#h3-1-50" id="h3-1-50" class="d">-static unsigned int numlockmask;
+</a> static unsigned int mw, mh;
+<a href="#h3-1-52" id="h3-1-52" class="i">+static unsigned int promptw = 0;
+</a> static unsigned long normcol[ColLast];
+ static unsigned long selcol[ColLast];
+<a href="#h3-1-55" id="h3-1-55" class="i">+static Atom utf8;
+</a> static Bool topbar = True;
+ static DC dc;
+<a href="#h3-1-58" id="h3-1-58" class="d">-static Display *dpy;
+</a><a href="#h3-1-59" id="h3-1-59" class="d">-static Item *allitems = NULL;  /* first of all items */
+</a><a href="#h3-1-60" id="h3-1-60" class="d">-static Item *item = NULL;      /* first of pattern matching items */
+</a><a href="#h3-1-61" id="h3-1-61" class="d">-static Item *sel = NULL;
+</a><a href="#h3-1-62" id="h3-1-62" class="d">-static Item *next = NULL;
+</a><a href="#h3-1-63" id="h3-1-63" class="d">-static Item *prev = NULL;
+</a><a href="#h3-1-64" id="h3-1-64" class="d">-static Item *curr = NULL;
+</a><a href="#h3-1-65" id="h3-1-65" class="d">-static Window win, root;
+</a><a href="#h3-1-66" id="h3-1-66" class="i">+static Item *allitems, *matches;
+</a><a href="#h3-1-67" id="h3-1-67" class="i">+static Item *curr, *prev, *next, *sel;
+</a><a href="#h3-1-68" id="h3-1-68" class="i">+static Window root, win;
+</a> 
+ static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
+ static char *(*fstrstr)(const char *, const char *) = strstr;
+ static void (*calcoffsets)(void) = calcoffsetsh;
+ 
+ void
+<a href="#h3-1-75" id="h3-1-75" class="d">-appenditem(Item *i, Item **list, Item **last) {
+</a><a href="#h3-1-76" id="h3-1-76" class="i">+appenditem(Item *item, Item **list, Item **last) {
+</a> 	if(!(*last))
+<a href="#h3-1-78" id="h3-1-78" class="d">-		*list = i;
+</a><a href="#h3-1-79" id="h3-1-79" class="i">+		*list = item;
+</a> 	else
+<a href="#h3-1-81" id="h3-1-81" class="d">-		(*last)-&gt;right = i;
+</a><a href="#h3-1-82" id="h3-1-82" class="d">-	i-&gt;left = *last;
+</a><a href="#h3-1-83" id="h3-1-83" class="d">-	i-&gt;right = NULL;
+</a><a href="#h3-1-84" id="h3-1-84" class="d">-	*last = i;
+</a><a href="#h3-1-85" id="h3-1-85" class="i">+		(*last)-&gt;right = item;
+</a><a href="#h3-1-86" id="h3-1-86" class="i">+	item-&gt;left = *last;
+</a><a href="#h3-1-87" id="h3-1-87" class="i">+	item-&gt;right = NULL;
+</a><a href="#h3-1-88" id="h3-1-88" class="i">+	*last = item;
+</a> }
+ 
+ void
+ calcoffsetsh(void) {
+ 	unsigned int w, x;
+ 
+<a href="#h3-1-95" id="h3-1-95" class="d">-	w = promptw + cmdw + textw(&amp;dc, &quot;&lt;&quot;) + textw(&amp;dc, &quot;&gt;&quot;);
+</a><a href="#h3-1-96" id="h3-1-96" class="i">+	w = promptw + inputw + textw(&amp;dc, &quot;&lt;&quot;) + textw(&amp;dc, &quot;&gt;&quot;);
+</a> 	for(x = w, next = curr; next; next = next-&gt;right)
+ 		if((x += MIN(textw(&amp;dc, next-&gt;text), mw / 3)) &gt; mw)
+ 			break;
+<a href="#h3-2" id="h3-2" class="h">@@ -129,33 +124,6 @@ cistrstr(const char *s, const char *sub) {
+</a> }
+ 
+ void
+<a href="#h3-2-3" id="h3-2-3" class="d">-cleanup(void) {
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-	Item *itm;
+</a><a href="#h3-2-5" id="h3-2-5" class="d">-
+</a><a href="#h3-2-6" id="h3-2-6" class="d">-	while(allitems) {
+</a><a href="#h3-2-7" id="h3-2-7" class="d">-		itm = allitems-&gt;next;
+</a><a href="#h3-2-8" id="h3-2-8" class="d">-		free(allitems-&gt;text);
+</a><a href="#h3-2-9" id="h3-2-9" class="d">-		free(allitems);
+</a><a href="#h3-2-10" id="h3-2-10" class="d">-		allitems = itm;
+</a><a href="#h3-2-11" id="h3-2-11" class="d">-	}
+</a><a href="#h3-2-12" id="h3-2-12" class="d">-	cleanupdraw(&amp;dc);
+</a><a href="#h3-2-13" id="h3-2-13" class="d">-	XDestroyWindow(dpy, win);
+</a><a href="#h3-2-14" id="h3-2-14" class="d">-	XUngrabKeyboard(dpy, CurrentTime);
+</a><a href="#h3-2-15" id="h3-2-15" class="d">-	XCloseDisplay(dpy);
+</a><a href="#h3-2-16" id="h3-2-16" class="d">-}
+</a><a href="#h3-2-17" id="h3-2-17" class="d">-
+</a><a href="#h3-2-18" id="h3-2-18" class="d">-void
+</a><a href="#h3-2-19" id="h3-2-19" class="d">-drawitem(const char *s, unsigned long col[ColLast]) {
+</a><a href="#h3-2-20" id="h3-2-20" class="d">-	const char *p;
+</a><a href="#h3-2-21" id="h3-2-21" class="d">-	unsigned int w = textnw(&amp;dc, text, strlen(text));
+</a><a href="#h3-2-22" id="h3-2-22" class="d">-
+</a><a href="#h3-2-23" id="h3-2-23" class="d">-	drawbox(&amp;dc, col);
+</a><a href="#h3-2-24" id="h3-2-24" class="d">-	drawtext(&amp;dc, s, col);
+</a><a href="#h3-2-25" id="h3-2-25" class="d">-	for(p = fstrstr(s, text); *text &amp;&amp; (p = fstrstr(p, text)); p++)
+</a><a href="#h3-2-26" id="h3-2-26" class="d">-		drawline(&amp;dc, textnw(&amp;dc, s, p-s) + dc.h/2 - 1, dc.h-2, w, 1, col);
+</a><a href="#h3-2-27" id="h3-2-27" class="d">-}
+</a><a href="#h3-2-28" id="h3-2-28" class="d">-
+</a><a href="#h3-2-29" id="h3-2-29" class="d">-void
+</a> drawmenu(void) {
+ 	dc.x = 0;
+ 	dc.y = 0;
+<a href="#h3-3" id="h3-3" class="h">@@ -172,82 +140,89 @@ drawmenu(void) {
+</a> 		dc.x += dc.w;
+ 	}
+ 	dc.w = mw - dc.x;
+<a href="#h3-3-3" id="h3-3-3" class="d">-	/* print command */
+</a><a href="#h3-3-4" id="h3-3-4" class="d">-	if(cmdw &amp;&amp; item &amp;&amp; lines == 0)
+</a><a href="#h3-3-5" id="h3-3-5" class="d">-		dc.w = cmdw;
+</a><a href="#h3-3-6" id="h3-3-6" class="i">+	/* print input area */
+</a><a href="#h3-3-7" id="h3-3-7" class="i">+	if(matches &amp;&amp; lines == 0 &amp;&amp; textw(&amp;dc, text) &lt;= inputw)
+</a><a href="#h3-3-8" id="h3-3-8" class="i">+		dc.w = inputw;
+</a> 	drawtext(&amp;dc, text, normcol);
+<a href="#h3-3-10" id="h3-3-10" class="d">-	drawline(&amp;dc, textnw(&amp;dc, text, cur) + dc.h/2 - 2, 2, 1, dc.h-4, normcol);
+</a><a href="#h3-3-11" id="h3-3-11" class="i">+	drawline(&amp;dc, textnw(&amp;dc, text, cursor) + dc.h/2 - 2, 2, 1, dc.h-4, normcol);
+</a> 	if(lines &gt; 0)
+ 		drawmenuv();
+<a href="#h3-3-14" id="h3-3-14" class="d">-	else if(curr)
+</a><a href="#h3-3-15" id="h3-3-15" class="i">+	else if(curr &amp;&amp; (dc.w == inputw || curr-&gt;next))
+</a> 		drawmenuh();
+ 	commitdraw(&amp;dc, win);
+ }
+ 
+ void
+ drawmenuh(void) {
+<a href="#h3-3-22" id="h3-3-22" class="d">-	Item *i;
+</a><a href="#h3-3-23" id="h3-3-23" class="i">+	Item *item;
+</a> 
+<a href="#h3-3-25" id="h3-3-25" class="d">-	dc.x += cmdw;
+</a><a href="#h3-3-26" id="h3-3-26" class="i">+	dc.x += inputw;
+</a> 	dc.w = textw(&amp;dc, &quot;&lt;&quot;);
+<a href="#h3-3-28" id="h3-3-28" class="d">-	drawtext(&amp;dc, curr-&gt;left ? &quot;&lt;&quot; : NULL, normcol);
+</a><a href="#h3-3-29" id="h3-3-29" class="i">+	if(curr-&gt;left)
+</a><a href="#h3-3-30" id="h3-3-30" class="i">+		drawtext(&amp;dc, &quot;&lt;&quot;, normcol);
+</a> 	dc.x += dc.w;
+<a href="#h3-3-32" id="h3-3-32" class="d">-	for(i = curr; i != next; i = i-&gt;right) {
+</a><a href="#h3-3-33" id="h3-3-33" class="d">-		dc.w = MIN(textw(&amp;dc, i-&gt;text), mw / 3);
+</a><a href="#h3-3-34" id="h3-3-34" class="d">-		drawitem(i-&gt;text, (sel == i) ? selcol : normcol);
+</a><a href="#h3-3-35" id="h3-3-35" class="i">+	for(item = curr; item != next; item = item-&gt;right) {
+</a><a href="#h3-3-36" id="h3-3-36" class="i">+		dc.w = MIN(textw(&amp;dc, item-&gt;text), mw / 3);
+</a><a href="#h3-3-37" id="h3-3-37" class="i">+		if(item == sel)
+</a><a href="#h3-3-38" id="h3-3-38" class="i">+			drawbox(&amp;dc, selcol);
+</a><a href="#h3-3-39" id="h3-3-39" class="i">+		drawtext(&amp;dc, item-&gt;text, (item == sel) ? selcol : normcol);
+</a> 		dc.x += dc.w;
+ 	}
+ 	dc.w = textw(&amp;dc, &quot;&gt;&quot;);
+ 	dc.x = mw - dc.w;
+<a href="#h3-3-44" id="h3-3-44" class="d">-	drawtext(&amp;dc, next ? &quot;&gt;&quot; : NULL, normcol);
+</a><a href="#h3-3-45" id="h3-3-45" class="i">+	if(next)
+</a><a href="#h3-3-46" id="h3-3-46" class="i">+		drawtext(&amp;dc, &quot;&gt;&quot;, normcol);
+</a> }
+ 
+ void
+ drawmenuv(void) {
+<a href="#h3-3-51" id="h3-3-51" class="d">-	Item *i;
+</a><a href="#h3-3-52" id="h3-3-52" class="i">+	Item *item;
+</a> 	XWindowAttributes wa;
+ 
+ 	dc.y = topbar ? dc.h : 0;
+ 	dc.w = mw - dc.x;
+<a href="#h3-3-57" id="h3-3-57" class="d">-	for(i = curr; i != next; i = i-&gt;right) {
+</a><a href="#h3-3-58" id="h3-3-58" class="d">-		drawitem(i-&gt;text, (sel == i) ? selcol : normcol);
+</a><a href="#h3-3-59" id="h3-3-59" class="i">+	for(item = curr; item != next; item = item-&gt;right) {
+</a><a href="#h3-3-60" id="h3-3-60" class="i">+		if(item == sel)
+</a><a href="#h3-3-61" id="h3-3-61" class="i">+			drawbox(&amp;dc, selcol);
+</a><a href="#h3-3-62" id="h3-3-62" class="i">+		drawtext(&amp;dc, item-&gt;text, (item == sel) ? selcol : normcol);
+</a> 		dc.y += dc.h;
+ 	}
+<a href="#h3-3-65" id="h3-3-65" class="d">-	if(!XGetWindowAttributes(dpy, win, &amp;wa))
+</a><a href="#h3-3-66" id="h3-3-66" class="d">-		eprint(&quot;cannot get window attributes&quot;);
+</a><a href="#h3-3-67" id="h3-3-67" class="d">-	XMoveResizeWindow(dpy, win, wa.x, wa.y + (topbar ? 0 : wa.height - mh), mw, mh);
+</a><a href="#h3-3-68" id="h3-3-68" class="i">+	if(!XGetWindowAttributes(dc.dpy, win, &amp;wa))
+</a><a href="#h3-3-69" id="h3-3-69" class="i">+		eprintf(&quot;cannot get window attributes\n&quot;);
+</a><a href="#h3-3-70" id="h3-3-70" class="i">+	if(wa.height != mh)
+</a><a href="#h3-3-71" id="h3-3-71" class="i">+		XMoveResizeWindow(dc.dpy, win, wa.x, wa.y + (topbar ? 0 : wa.height - mh), mw, mh);
+</a> }
+ 
+ void
+ grabkeyboard(void) {
+<a href="#h3-3-76" id="h3-3-76" class="d">-	unsigned int n;
+</a><a href="#h3-3-77" id="h3-3-77" class="i">+	int i;
+</a> 
+<a href="#h3-3-79" id="h3-3-79" class="d">-	for(n = 0; n &lt; 1000; n++) {
+</a><a href="#h3-3-80" id="h3-3-80" class="d">-		if(!XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime))
+</a><a href="#h3-3-81" id="h3-3-81" class="i">+	for(i = 0; i &lt; 1000; i++) {
+</a><a href="#h3-3-82" id="h3-3-82" class="i">+		if(!XGrabKeyboard(dc.dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime))
+</a> 			return;
+ 		usleep(1000);
+ 	}
+<a href="#h3-3-86" id="h3-3-86" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h3-3-87" id="h3-3-87" class="i">+	eprintf(&quot;cannot grab keyboard\n&quot;);
+</a><a href="#h3-3-88" id="h3-3-88" class="i">+}
+</a><a href="#h3-3-89" id="h3-3-89" class="i">+
+</a><a href="#h3-3-90" id="h3-3-90" class="i">+void
+</a><a href="#h3-3-91" id="h3-3-91" class="i">+insert(const char *s, ssize_t n) {
+</a><a href="#h3-3-92" id="h3-3-92" class="i">+	memmove(text + cursor + n, text + cursor, sizeof text - cursor - n);
+</a><a href="#h3-3-93" id="h3-3-93" class="i">+	if(n &gt; 0)
+</a><a href="#h3-3-94" id="h3-3-94" class="i">+		memcpy(text + cursor, s, n);
+</a><a href="#h3-3-95" id="h3-3-95" class="i">+	cursor += n;
+</a><a href="#h3-3-96" id="h3-3-96" class="i">+	match();
+</a> }
+ 
+ void
+ keypress(XKeyEvent *e) {
+ 	char buf[sizeof text];
+<a href="#h3-3-102" id="h3-3-102" class="d">-	int num;
+</a><a href="#h3-3-103" id="h3-3-103" class="d">-	unsigned int i, len;
+</a><a href="#h3-3-104" id="h3-3-104" class="i">+	int n;
+</a><a href="#h3-3-105" id="h3-3-105" class="i">+	size_t len;
+</a> 	KeySym ksym;
+ 
+ 	len = strlen(text);
+<a href="#h3-3-109" id="h3-3-109" class="d">-	num = XLookupString(e, buf, sizeof buf, &amp;ksym, NULL);
+</a><a href="#h3-3-110" id="h3-3-110" class="d">-	if(ksym == XK_KP_Enter)
+</a><a href="#h3-3-111" id="h3-3-111" class="d">-		ksym = XK_Return;
+</a><a href="#h3-3-112" id="h3-3-112" class="d">-	else if(ksym &gt;= XK_KP_0 &amp;&amp; ksym &lt;= XK_KP_9)
+</a><a href="#h3-3-113" id="h3-3-113" class="d">-		ksym = (ksym - XK_KP_0) + XK_0;
+</a><a href="#h3-3-114" id="h3-3-114" class="d">-	else if(IsFunctionKey(ksym) || IsKeypadKey(ksym)
+</a><a href="#h3-3-115" id="h3-3-115" class="d">-	|| IsMiscFunctionKey(ksym) || IsPFKey(ksym)
+</a><a href="#h3-3-116" id="h3-3-116" class="d">-	|| IsPrivateKeypadKey(ksym))
+</a><a href="#h3-3-117" id="h3-3-117" class="d">-		return;
+</a><a href="#h3-3-118" id="h3-3-118" class="d">-	/* first check if a control mask is omitted */
+</a><a href="#h3-3-119" id="h3-3-119" class="i">+	XLookupString(e, buf, sizeof buf, &amp;ksym, NULL);
+</a> 	if(e-&gt;state &amp; ControlMask) {
+ 		switch(tolower(ksym)) {
+ 		default:
+<a href="#h3-4" id="h3-4" class="h">@@ -277,8 +252,8 @@ keypress(XKeyEvent *e) {
+</a> 		case XK_m:
+ 			ksym = XK_Return;
+ 			break;
+<a href="#h3-4-3" id="h3-4-3" class="d">-		case XK_k:
+</a><a href="#h3-4-4" id="h3-4-4" class="d">-			text[cur] = &#39;\0&#39;;
+</a><a href="#h3-4-5" id="h3-4-5" class="i">+		case XK_k:  /* delete right */
+</a><a href="#h3-4-6" id="h3-4-6" class="i">+			text[cursor] = &#39;\0&#39;;
+</a> 			break;
+ 		case XK_n:
+ 			ksym = XK_Down;
+<a href="#h3-5" id="h3-5" class="h">@@ -286,66 +261,44 @@ keypress(XKeyEvent *e) {
+</a> 		case XK_p:
+ 			ksym = XK_Up;
+ 			break;
+<a href="#h3-5-3" id="h3-5-3" class="d">-		case XK_u:
+</a><a href="#h3-5-4" id="h3-5-4" class="d">-			memmove(text, text + cur, sizeof text - cur + 1);
+</a><a href="#h3-5-5" id="h3-5-5" class="d">-			cur = 0;
+</a><a href="#h3-5-6" id="h3-5-6" class="d">-			match();
+</a><a href="#h3-5-7" id="h3-5-7" class="i">+		case XK_u:  /* delete left */
+</a><a href="#h3-5-8" id="h3-5-8" class="i">+			insert(NULL, -cursor);
+</a> 			break;
+<a href="#h3-5-10" id="h3-5-10" class="d">-		case XK_w:
+</a><a href="#h3-5-11" id="h3-5-11" class="d">-			if(cur == 0)
+</a><a href="#h3-5-12" id="h3-5-12" class="i">+		case XK_w:  /* delete word */
+</a><a href="#h3-5-13" id="h3-5-13" class="i">+			if(cursor == 0)
+</a> 				return;
+<a href="#h3-5-15" id="h3-5-15" class="d">-			i = cur;
+</a><a href="#h3-5-16" id="h3-5-16" class="d">-			while(i-- &gt; 0 &amp;&amp; text[i] == &#39; &#39;);
+</a><a href="#h3-5-17" id="h3-5-17" class="d">-			while(i-- &gt; 0 &amp;&amp; text[i] != &#39; &#39;);
+</a><a href="#h3-5-18" id="h3-5-18" class="d">-			memmove(text + i + 1, text + cur, sizeof text - cur + 1);
+</a><a href="#h3-5-19" id="h3-5-19" class="d">-			cur = i + 1;
+</a><a href="#h3-5-20" id="h3-5-20" class="d">-			match();
+</a><a href="#h3-5-21" id="h3-5-21" class="d">-			break;
+</a><a href="#h3-5-22" id="h3-5-22" class="d">-		case XK_y:
+</a><a href="#h3-5-23" id="h3-5-23" class="d">-			{
+</a><a href="#h3-5-24" id="h3-5-24" class="d">-				FILE *fp;
+</a><a href="#h3-5-25" id="h3-5-25" class="d">-				char *s;
+</a><a href="#h3-5-26" id="h3-5-26" class="d">-				if(!(fp = fopen(&quot;sselp&quot;, &quot;r&quot;)))
+</a><a href="#h3-5-27" id="h3-5-27" class="d">-					eprint(&quot;cannot popen sselp\n&quot;);
+</a><a href="#h3-5-28" id="h3-5-28" class="d">-				s = fgets(buf, sizeof buf, fp);
+</a><a href="#h3-5-29" id="h3-5-29" class="d">-				fclose(fp);
+</a><a href="#h3-5-30" id="h3-5-30" class="d">-				if(!s)
+</a><a href="#h3-5-31" id="h3-5-31" class="d">-					return;
+</a><a href="#h3-5-32" id="h3-5-32" class="d">-			}
+</a><a href="#h3-5-33" id="h3-5-33" class="d">-			num = strlen(buf);
+</a><a href="#h3-5-34" id="h3-5-34" class="d">-			if(num &amp;&amp; buf[num-1] == &#39;\n&#39;)
+</a><a href="#h3-5-35" id="h3-5-35" class="d">-				buf[--num] = &#39;\0&#39;;
+</a><a href="#h3-5-36" id="h3-5-36" class="i">+			n = 0;
+</a><a href="#h3-5-37" id="h3-5-37" class="i">+			while(cursor - n++ &gt; 0 &amp;&amp; text[cursor - n] == &#39; &#39;);
+</a><a href="#h3-5-38" id="h3-5-38" class="i">+			while(cursor - n++ &gt; 0 &amp;&amp; text[cursor - n] != &#39; &#39;);
+</a><a href="#h3-5-39" id="h3-5-39" class="i">+			insert(NULL, -(--n));
+</a> 			break;
+<a href="#h3-5-41" id="h3-5-41" class="i">+		case XK_y:  /* paste selection */
+</a><a href="#h3-5-42" id="h3-5-42" class="i">+			XConvertSelection(dc.dpy, XA_PRIMARY, utf8, None, win, CurrentTime);
+</a><a href="#h3-5-43" id="h3-5-43" class="i">+			/* causes SelectionNotify event */
+</a><a href="#h3-5-44" id="h3-5-44" class="i">+			return;
+</a> 		}
+ 	}
+ 	switch(ksym) {
+ 	default:
+<a href="#h3-5-49" id="h3-5-49" class="d">-		num = MIN(num, sizeof text);
+</a><a href="#h3-5-50" id="h3-5-50" class="d">-		if(num &amp;&amp; !iscntrl((int) buf[0])) {
+</a><a href="#h3-5-51" id="h3-5-51" class="d">-			memmove(text + cur + num, text + cur, sizeof text - cur - num);
+</a><a href="#h3-5-52" id="h3-5-52" class="d">-			memcpy(text + cur, buf, num);
+</a><a href="#h3-5-53" id="h3-5-53" class="d">-			cur += num;
+</a><a href="#h3-5-54" id="h3-5-54" class="d">-			match();
+</a><a href="#h3-5-55" id="h3-5-55" class="d">-		}
+</a><a href="#h3-5-56" id="h3-5-56" class="i">+		if(!iscntrl((int)*buf))
+</a><a href="#h3-5-57" id="h3-5-57" class="i">+			insert(buf, MIN(strlen(buf), sizeof text - cursor));
+</a> 		break;
+ 	case XK_BackSpace:
+<a href="#h3-5-60" id="h3-5-60" class="d">-		if(cur == 0)
+</a><a href="#h3-5-61" id="h3-5-61" class="i">+		if(cursor == 0)
+</a> 			return;
+<a href="#h3-5-63" id="h3-5-63" class="d">-		for(i = 1; len - i &gt; 0 &amp;&amp; !IS_UTF8_1ST_CHAR(text[cur - i]); i++);
+</a><a href="#h3-5-64" id="h3-5-64" class="d">-		memmove(text + cur - i, text + cur, sizeof text - cur + i);
+</a><a href="#h3-5-65" id="h3-5-65" class="d">-		cur -= i;
+</a><a href="#h3-5-66" id="h3-5-66" class="d">-		match();
+</a><a href="#h3-5-67" id="h3-5-67" class="i">+		for(n = 1; cursor - n &gt; 0 &amp;&amp; !UTF8_CODEPOINT(text[cursor - n]); n++);
+</a><a href="#h3-5-68" id="h3-5-68" class="i">+		insert(NULL, -n);
+</a> 		break;
+ 	case XK_Delete:
+<a href="#h3-5-71" id="h3-5-71" class="d">-		if(cur == len)
+</a><a href="#h3-5-72" id="h3-5-72" class="i">+		if(cursor == len)
+</a> 			return;
+<a href="#h3-5-74" id="h3-5-74" class="d">-		for(i = 1; cur + i &lt; len &amp;&amp; !IS_UTF8_1ST_CHAR(text[cur + i]); i++);
+</a><a href="#h3-5-75" id="h3-5-75" class="d">-		memmove(text + cur, text + cur + i, sizeof text - cur);
+</a><a href="#h3-5-76" id="h3-5-76" class="d">-		match();
+</a><a href="#h3-5-77" id="h3-5-77" class="i">+		for(n = 1; cursor + n &lt; len &amp;&amp; !UTF8_CODEPOINT(text[cursor + n]); n++);
+</a><a href="#h3-5-78" id="h3-5-78" class="i">+		cursor += n;
+</a><a href="#h3-5-79" id="h3-5-79" class="i">+		insert(NULL, -n);
+</a> 		break;
+ 	case XK_End:
+<a href="#h3-5-82" id="h3-5-82" class="d">-		if(cur &lt; len) {
+</a><a href="#h3-5-83" id="h3-5-83" class="d">-			cur = len;
+</a><a href="#h3-5-84" id="h3-5-84" class="i">+		if(cursor &lt; len) {
+</a><a href="#h3-5-85" id="h3-5-85" class="i">+			cursor = len;
+</a> 			break;
+ 		}
+ 		while(next) {
+<a href="#h3-6" id="h3-6" class="h">@@ -358,19 +311,19 @@ keypress(XKeyEvent *e) {
+</a> 	case XK_Escape:
+ 		exit(EXIT_FAILURE);
+ 	case XK_Home:
+<a href="#h3-6-3" id="h3-6-3" class="d">-		if(sel == item) {
+</a><a href="#h3-6-4" id="h3-6-4" class="d">-			cur = 0;
+</a><a href="#h3-6-5" id="h3-6-5" class="i">+		if(sel == matches) {
+</a><a href="#h3-6-6" id="h3-6-6" class="i">+			cursor = 0;
+</a> 			break;
+ 		}
+<a href="#h3-6-9" id="h3-6-9" class="d">-		sel = curr = item;
+</a><a href="#h3-6-10" id="h3-6-10" class="i">+		sel = curr = matches;
+</a> 		calcoffsets();
+ 		break;
+ 	case XK_Left:
+<a href="#h3-6-14" id="h3-6-14" class="d">-		if(cur &gt; 0 &amp;&amp; (!sel || !sel-&gt;left || lines &gt; 0)) {
+</a><a href="#h3-6-15" id="h3-6-15" class="d">-			while(cur-- &gt; 0 &amp;&amp; !IS_UTF8_1ST_CHAR(text[cur]));
+</a><a href="#h3-6-16" id="h3-6-16" class="i">+		if(cursor &gt; 0 &amp;&amp; (!sel || !sel-&gt;left || lines &gt; 0)) {
+</a><a href="#h3-6-17" id="h3-6-17" class="i">+			while(cursor-- &gt; 0 &amp;&amp; !UTF8_CODEPOINT(text[cursor]));
+</a> 			break;
+ 		}
+<a href="#h3-6-20" id="h3-6-20" class="d">-		if(lines &gt; 0)
+</a><a href="#h3-6-21" id="h3-6-21" class="i">+		else if(lines &gt; 0)
+</a> 			return;
+ 	case XK_Up:
+ 		if(!sel || !sel-&gt;left)
+<a href="#h3-7" id="h3-7" class="h">@@ -394,15 +347,16 @@ keypress(XKeyEvent *e) {
+</a> 		calcoffsets();
+ 		break;
+ 	case XK_Return:
+<a href="#h3-7-3" id="h3-7-3" class="d">-		fprintf(stdout, &quot;%s&quot;, ((e-&gt;state &amp; ShiftMask) || sel) ? sel-&gt;text : text);
+</a><a href="#h3-7-4" id="h3-7-4" class="i">+	case XK_KP_Enter:
+</a><a href="#h3-7-5" id="h3-7-5" class="i">+		fputs(((e-&gt;state &amp; ShiftMask) || sel) ? sel-&gt;text : text, stdout);
+</a> 		fflush(stdout);
+ 		exit(EXIT_SUCCESS);
+ 	case XK_Right:
+<a href="#h3-7-9" id="h3-7-9" class="d">-		if(cur &lt; len) {
+</a><a href="#h3-7-10" id="h3-7-10" class="d">-			while(cur++ &lt; len &amp;&amp; !IS_UTF8_1ST_CHAR(text[cur]));
+</a><a href="#h3-7-11" id="h3-7-11" class="i">+		if(cursor &lt; len) {
+</a><a href="#h3-7-12" id="h3-7-12" class="i">+			while(cursor++ &lt; len &amp;&amp; !UTF8_CODEPOINT(text[cursor]));
+</a> 			break;
+ 		}
+<a href="#h3-7-15" id="h3-7-15" class="d">-		if(lines &gt; 0)
+</a><a href="#h3-7-16" id="h3-7-16" class="i">+		else if(lines &gt; 0)
+</a> 			return;
+ 	case XK_Down:
+ 		if(!sel || !sel-&gt;right)
+<a href="#h3-8" id="h3-8" class="h">@@ -417,7 +371,7 @@ keypress(XKeyEvent *e) {
+</a> 		if(!sel)
+ 			return;
+ 		strncpy(text, sel-&gt;text, sizeof text);
+<a href="#h3-8-3" id="h3-8-3" class="d">-		cur = strlen(text);
+</a><a href="#h3-8-4" id="h3-8-4" class="i">+		cursor = strlen(text);
+</a> 		match();
+ 		break;
+ 	}
+<a href="#h3-9" id="h3-9" class="h">@@ -427,19 +381,19 @@ keypress(XKeyEvent *e) {
+</a> void
+ match(void) {
+ 	unsigned int len;
+<a href="#h3-9-3" id="h3-9-3" class="d">-	Item *i, *itemend, *lexact, *lprefix, *lsubstr, *exactend, *prefixend, *substrend;
+</a><a href="#h3-9-4" id="h3-9-4" class="i">+	Item *item, *itemend, *lexact, *lprefix, *lsubstr, *exactend, *prefixend, *substrend;
+</a> 
+ 	len = strlen(text);
+<a href="#h3-9-7" id="h3-9-7" class="d">-	item = lexact = lprefix = lsubstr = itemend = exactend = prefixend = substrend = NULL;
+</a><a href="#h3-9-8" id="h3-9-8" class="d">-	for(i = allitems; i; i = i-&gt;next)
+</a><a href="#h3-9-9" id="h3-9-9" class="d">-		if(!fstrncmp(text, i-&gt;text, len + 1))
+</a><a href="#h3-9-10" id="h3-9-10" class="d">-			appenditem(i, &amp;lexact, &amp;exactend);
+</a><a href="#h3-9-11" id="h3-9-11" class="d">-		else if(!fstrncmp(text, i-&gt;text, len))
+</a><a href="#h3-9-12" id="h3-9-12" class="d">-			appenditem(i, &amp;lprefix, &amp;prefixend);
+</a><a href="#h3-9-13" id="h3-9-13" class="d">-		else if(fstrstr(i-&gt;text, text))
+</a><a href="#h3-9-14" id="h3-9-14" class="d">-			appenditem(i, &amp;lsubstr, &amp;substrend);
+</a><a href="#h3-9-15" id="h3-9-15" class="i">+	matches = lexact = lprefix = lsubstr = itemend = exactend = prefixend = substrend = NULL;
+</a><a href="#h3-9-16" id="h3-9-16" class="i">+	for(item = allitems; item; item = item-&gt;next)
+</a><a href="#h3-9-17" id="h3-9-17" class="i">+		if(!fstrncmp(text, item-&gt;text, len + 1))
+</a><a href="#h3-9-18" id="h3-9-18" class="i">+			appenditem(item, &amp;lexact, &amp;exactend);
+</a><a href="#h3-9-19" id="h3-9-19" class="i">+		else if(!fstrncmp(text, item-&gt;text, len))
+</a><a href="#h3-9-20" id="h3-9-20" class="i">+			appenditem(item, &amp;lprefix, &amp;prefixend);
+</a><a href="#h3-9-21" id="h3-9-21" class="i">+		else if(fstrstr(item-&gt;text, text))
+</a><a href="#h3-9-22" id="h3-9-22" class="i">+			appenditem(item, &amp;lsubstr, &amp;substrend);
+</a> 	if(lexact) {
+<a href="#h3-9-24" id="h3-9-24" class="d">-		item = lexact;
+</a><a href="#h3-9-25" id="h3-9-25" class="i">+		matches = lexact;
+</a> 		itemend = exactend;
+ 	}
+ 	if(lprefix) {
+<a href="#h3-10" id="h3-10" class="h">@@ -448,7 +402,7 @@ match(void) {
+</a> 			lprefix-&gt;left = itemend;
+ 		}
+ 		else
+<a href="#h3-10-3" id="h3-10-3" class="d">-			item = lprefix;
+</a><a href="#h3-10-4" id="h3-10-4" class="i">+			matches = lprefix;
+</a> 		itemend = prefixend;
+ 	}
+ 	if(lsubstr) {
+<a href="#h3-11" id="h3-11" class="h">@@ -457,36 +411,48 @@ match(void) {
+</a> 			lsubstr-&gt;left = itemend;
+ 		}
+ 		else
+<a href="#h3-11-3" id="h3-11-3" class="d">-			item = lsubstr;
+</a><a href="#h3-11-4" id="h3-11-4" class="i">+			matches = lsubstr;
+</a> 	}
+<a href="#h3-11-6" id="h3-11-6" class="d">-	curr = prev = next = sel = item;
+</a><a href="#h3-11-7" id="h3-11-7" class="i">+	curr = prev = next = sel = matches;
+</a> 	calcoffsets();
+ }
+ 
+ void
+<a href="#h3-11-12" id="h3-11-12" class="i">+paste(Atom atom)
+</a><a href="#h3-11-13" id="h3-11-13" class="i">+{
+</a><a href="#h3-11-14" id="h3-11-14" class="i">+	char *p, *q;
+</a><a href="#h3-11-15" id="h3-11-15" class="i">+	int di;
+</a><a href="#h3-11-16" id="h3-11-16" class="i">+	unsigned long dl;
+</a><a href="#h3-11-17" id="h3-11-17" class="i">+	Atom da;
+</a><a href="#h3-11-18" id="h3-11-18" class="i">+
+</a><a href="#h3-11-19" id="h3-11-19" class="i">+	XGetWindowProperty(dc.dpy, win, atom, 0, sizeof text - cursor, True,
+</a><a href="#h3-11-20" id="h3-11-20" class="i">+			utf8, &amp;da, &amp;di, &amp;dl, &amp;dl, (unsigned char **)&amp;p);
+</a><a href="#h3-11-21" id="h3-11-21" class="i">+	insert(p, (q = strchr(p, &#39;\n&#39;)) ? q-p : strlen(p));
+</a><a href="#h3-11-22" id="h3-11-22" class="i">+	XFree(p);
+</a><a href="#h3-11-23" id="h3-11-23" class="i">+	drawmenu();
+</a><a href="#h3-11-24" id="h3-11-24" class="i">+}
+</a><a href="#h3-11-25" id="h3-11-25" class="i">+
+</a><a href="#h3-11-26" id="h3-11-26" class="i">+void
+</a> readstdin(void) {
+<a href="#h3-11-28" id="h3-11-28" class="d">-	char *p, buf[sizeof text];
+</a><a href="#h3-11-29" id="h3-11-29" class="d">-	unsigned int len = 0, max = 0;
+</a><a href="#h3-11-30" id="h3-11-30" class="d">-	Item *i, *new;
+</a><a href="#h3-11-31" id="h3-11-31" class="i">+	char buf[sizeof text];
+</a><a href="#h3-11-32" id="h3-11-32" class="i">+	size_t len;
+</a><a href="#h3-11-33" id="h3-11-33" class="i">+	Item *item, *new;
+</a> 
+<a href="#h3-11-35" id="h3-11-35" class="d">-	i = NULL;
+</a><a href="#h3-11-36" id="h3-11-36" class="d">-	while(fgets(buf, sizeof buf, stdin)) {
+</a><a href="#h3-11-37" id="h3-11-37" class="i">+	allitems = NULL;
+</a><a href="#h3-11-38" id="h3-11-38" class="i">+	for(item = NULL; fgets(buf, sizeof buf, stdin); item = new) {
+</a> 		len = strlen(buf);
+ 		if(buf[len-1] == &#39;\n&#39;)
+ 			buf[--len] = &#39;\0&#39;;
+<a href="#h3-11-42" id="h3-11-42" class="d">-		if(!(p = strdup(buf)))
+</a><a href="#h3-11-43" id="h3-11-43" class="d">-			eprint(&quot;cannot strdup %u bytes\n&quot;, len);
+</a><a href="#h3-11-44" id="h3-11-44" class="d">-		if((max = MAX(max, len)) == len)
+</a><a href="#h3-11-45" id="h3-11-45" class="d">-			maxname = p;
+</a> 		if(!(new = malloc(sizeof *new)))
+<a href="#h3-11-47" id="h3-11-47" class="d">-			eprint(&quot;cannot malloc %u bytes\n&quot;, sizeof *new);
+</a><a href="#h3-11-48" id="h3-11-48" class="i">+			eprintf(&quot;cannot malloc %u bytes\n&quot;, sizeof *new);
+</a><a href="#h3-11-49" id="h3-11-49" class="i">+		if(!(new-&gt;text = strdup(buf)))
+</a><a href="#h3-11-50" id="h3-11-50" class="i">+			eprintf(&quot;cannot strdup %u bytes\n&quot;, len);
+</a><a href="#h3-11-51" id="h3-11-51" class="i">+		inputw = MAX(inputw, textw(&amp;dc, new-&gt;text));
+</a> 		new-&gt;next = new-&gt;left = new-&gt;right = NULL;
+<a href="#h3-11-53" id="h3-11-53" class="d">-		new-&gt;text = p;
+</a><a href="#h3-11-54" id="h3-11-54" class="d">-		if(!i)
+</a><a href="#h3-11-55" id="h3-11-55" class="d">-			allitems = new;
+</a><a href="#h3-11-56" id="h3-11-56" class="i">+		if(item)
+</a><a href="#h3-11-57" id="h3-11-57" class="i">+			item-&gt;next = new;
+</a> 		else 
+<a href="#h3-11-59" id="h3-11-59" class="d">-			i-&gt;next = new;
+</a><a href="#h3-11-60" id="h3-11-60" class="d">-		i = new;
+</a><a href="#h3-11-61" id="h3-11-61" class="i">+			allitems = new;
+</a> 	}
+ }
+ 
+<a href="#h3-12" id="h3-12" class="h">@@ -494,8 +460,7 @@ void
+</a> run(void) {
+ 	XEvent ev;
+ 
+<a href="#h3-12-3" id="h3-12-3" class="d">-	XSync(dpy, False);
+</a><a href="#h3-12-4" id="h3-12-4" class="d">-	while(!XNextEvent(dpy, &amp;ev))
+</a><a href="#h3-12-5" id="h3-12-5" class="i">+	while(!XNextEvent(dc.dpy, &amp;ev))
+</a> 		switch(ev.type) {
+ 		case Expose:
+ 			if(ev.xexpose.count == 0)
+<a href="#h3-13" id="h3-13" class="h">@@ -504,62 +469,45 @@ run(void) {
+</a> 		case KeyPress:
+ 			keypress(&amp;ev.xkey);
+ 			break;
+<a href="#h3-13-3" id="h3-13-3" class="i">+		case SelectionNotify:
+</a><a href="#h3-13-4" id="h3-13-4" class="i">+			if(ev.xselection.property != None)
+</a><a href="#h3-13-5" id="h3-13-5" class="i">+				paste(ev.xselection.property);
+</a><a href="#h3-13-6" id="h3-13-6" class="i">+			break;
+</a> 		case VisibilityNotify:
+ 			if(ev.xvisibility.state != VisibilityUnobscured)
+<a href="#h3-13-9" id="h3-13-9" class="d">-				XRaiseWindow(dpy, win);
+</a><a href="#h3-13-10" id="h3-13-10" class="i">+				XRaiseWindow(dc.dpy, win);
+</a> 			break;
+ 		}
+<a href="#h3-13-13" id="h3-13-13" class="d">-	exit(EXIT_FAILURE);
+</a> }
+ 
+ void
+ setup(void) {
+<a href="#h3-13-18" id="h3-13-18" class="d">-	int i, j, x, y;
+</a><a href="#h3-13-19" id="h3-13-19" class="d">-#if XINERAMA
+</a><a href="#h3-13-20" id="h3-13-20" class="d">-	int n;
+</a><a href="#h3-13-21" id="h3-13-21" class="d">-	XineramaScreenInfo *info = NULL;
+</a><a href="#h3-13-22" id="h3-13-22" class="i">+	int x, y;
+</a><a href="#h3-13-23" id="h3-13-23" class="i">+#ifdef XINERAMA
+</a><a href="#h3-13-24" id="h3-13-24" class="i">+	int i, n;
+</a><a href="#h3-13-25" id="h3-13-25" class="i">+	XineramaScreenInfo *info;
+</a> #endif
+<a href="#h3-13-27" id="h3-13-27" class="d">-	XModifierKeymap *modmap;
+</a> 	XSetWindowAttributes wa;
+ 
+<a href="#h3-13-30" id="h3-13-30" class="d">-	/* init modifier map */
+</a><a href="#h3-13-31" id="h3-13-31" class="d">-	modmap = XGetModifierMapping(dpy);
+</a><a href="#h3-13-32" id="h3-13-32" class="d">-	for(i = 0; i &lt; 8; i++)
+</a><a href="#h3-13-33" id="h3-13-33" class="d">-		for(j = 0; j &lt; modmap-&gt;max_keypermod; j++) {
+</a><a href="#h3-13-34" id="h3-13-34" class="d">-			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j]
+</a><a href="#h3-13-35" id="h3-13-35" class="d">-			== XKeysymToKeycode(dpy, XK_Num_Lock))
+</a><a href="#h3-13-36" id="h3-13-36" class="d">-				numlockmask = (1 &lt;&lt; i);
+</a><a href="#h3-13-37" id="h3-13-37" class="d">-		}
+</a><a href="#h3-13-38" id="h3-13-38" class="d">-	XFreeModifiermap(modmap);
+</a><a href="#h3-13-39" id="h3-13-39" class="d">-
+</a><a href="#h3-13-40" id="h3-13-40" class="d">-	dc.dpy = dpy;
+</a> 	normcol[ColBG] = getcolor(&amp;dc, normbgcolor);
+ 	normcol[ColFG] = getcolor(&amp;dc, normfgcolor);
+ 	selcol[ColBG] = getcolor(&amp;dc, selbgcolor);
+ 	selcol[ColFG] = getcolor(&amp;dc, selfgcolor);
+<a href="#h3-13-45" id="h3-13-45" class="d">-	initfont(&amp;dc, font);
+</a><a href="#h3-13-46" id="h3-13-46" class="d">-
+</a><a href="#h3-13-47" id="h3-13-47" class="d">-	/* input window */
+</a><a href="#h3-13-48" id="h3-13-48" class="d">-	wa.override_redirect = True;
+</a><a href="#h3-13-49" id="h3-13-49" class="d">-	wa.background_pixmap = ParentRelative;
+</a><a href="#h3-13-50" id="h3-13-50" class="d">-	wa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
+</a> 
+ 	/* input window geometry */
+ 	mh = (dc.font.height + 2) * (lines + 1);
+<a href="#h3-13-54" id="h3-13-54" class="d">-#if XINERAMA
+</a><a href="#h3-13-55" id="h3-13-55" class="d">-	if(XineramaIsActive(dpy) &amp;&amp; (info = XineramaQueryScreens(dpy, &amp;n))) {
+</a><a href="#h3-13-56" id="h3-13-56" class="d">-		i = 0;
+</a><a href="#h3-13-57" id="h3-13-57" class="d">-		if(n &gt; 1) {
+</a><a href="#h3-13-58" id="h3-13-58" class="d">-			int di;
+</a><a href="#h3-13-59" id="h3-13-59" class="d">-			unsigned int dui;
+</a><a href="#h3-13-60" id="h3-13-60" class="d">-			Window dummy;
+</a><a href="#h3-13-61" id="h3-13-61" class="d">-			if(XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x, &amp;y, &amp;di, &amp;di, &amp;dui))
+</a><a href="#h3-13-62" id="h3-13-62" class="d">-				for(i = 0; i &lt; n; i++)
+</a><a href="#h3-13-63" id="h3-13-63" class="d">-					if(INRECT(x, y, info[i].x_org, info[i].y_org, info[i].width, info[i].height))
+</a><a href="#h3-13-64" id="h3-13-64" class="d">-						break;
+</a><a href="#h3-13-65" id="h3-13-65" class="d">-		}
+</a><a href="#h3-13-66" id="h3-13-66" class="i">+#ifdef XINERAMA
+</a><a href="#h3-13-67" id="h3-13-67" class="i">+	if((info = XineramaQueryScreens(dc.dpy, &amp;n))) {
+</a><a href="#h3-13-68" id="h3-13-68" class="i">+		int di;
+</a><a href="#h3-13-69" id="h3-13-69" class="i">+		unsigned int du;
+</a><a href="#h3-13-70" id="h3-13-70" class="i">+		Window dw;
+</a><a href="#h3-13-71" id="h3-13-71" class="i">+
+</a><a href="#h3-13-72" id="h3-13-72" class="i">+		XQueryPointer(dc.dpy, root, &amp;dw, &amp;dw, &amp;x, &amp;y, &amp;di, &amp;di, &amp;du);
+</a><a href="#h3-13-73" id="h3-13-73" class="i">+		for(i = 0; i &lt; n; i++)
+</a><a href="#h3-13-74" id="h3-13-74" class="i">+			if(INRECT(x, y, info[i].x_org, info[i].y_org, info[i].width, info[i].height))
+</a><a href="#h3-13-75" id="h3-13-75" class="i">+				break;
+</a> 		x = info[i].x_org;
+<a href="#h3-13-77" id="h3-13-77" class="d">-		y = topbar ? info[i].y_org : info[i].y_org + info[i].height - mh;
+</a><a href="#h3-13-78" id="h3-13-78" class="i">+		y = info[i].y_org + (topbar ? 0 : info[i].height - mh);
+</a> 		mw = info[i].width;
+ 		XFree(info);
+ 	}
+<a href="#h3-14" id="h3-14" class="h">@@ -567,84 +515,86 @@ setup(void) {
+</a> #endif
+ 	{
+ 		x = 0;
+<a href="#h3-14-3" id="h3-14-3" class="d">-		y = topbar ? 0 : DisplayHeight(dpy, screen) - mh;
+</a><a href="#h3-14-4" id="h3-14-4" class="d">-		mw = DisplayWidth(dpy, screen);
+</a><a href="#h3-14-5" id="h3-14-5" class="i">+		y = topbar ? 0 : DisplayHeight(dc.dpy, screen) - mh;
+</a><a href="#h3-14-6" id="h3-14-6" class="i">+		mw = DisplayWidth(dc.dpy, screen);
+</a> 	}
+ 
+<a href="#h3-14-9" id="h3-14-9" class="d">-	win = XCreateWindow(dpy, root, x, y, mw, mh, 0,
+</a><a href="#h3-14-10" id="h3-14-10" class="d">-			DefaultDepth(dpy, screen), CopyFromParent,
+</a><a href="#h3-14-11" id="h3-14-11" class="d">-			DefaultVisual(dpy, screen),
+</a><a href="#h3-14-12" id="h3-14-12" class="i">+	/* input window */
+</a><a href="#h3-14-13" id="h3-14-13" class="i">+	wa.override_redirect = True;
+</a><a href="#h3-14-14" id="h3-14-14" class="i">+	wa.background_pixmap = ParentRelative;
+</a><a href="#h3-14-15" id="h3-14-15" class="i">+	wa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
+</a><a href="#h3-14-16" id="h3-14-16" class="i">+	win = XCreateWindow(dc.dpy, root, x, y, mw, mh, 0,
+</a><a href="#h3-14-17" id="h3-14-17" class="i">+			DefaultDepth(dc.dpy, screen), CopyFromParent,
+</a><a href="#h3-14-18" id="h3-14-18" class="i">+			DefaultVisual(dc.dpy, screen),
+</a> 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+ 
+<a href="#h3-14-21" id="h3-14-21" class="i">+	match();
+</a><a href="#h3-14-22" id="h3-14-22" class="i">+	grabkeyboard();
+</a> 	setupdraw(&amp;dc, win);
+<a href="#h3-14-24" id="h3-14-24" class="d">-	if(prompt)
+</a><a href="#h3-14-25" id="h3-14-25" class="d">-		promptw = MIN(textw(&amp;dc, prompt), mw / 5);
+</a><a href="#h3-14-26" id="h3-14-26" class="d">-	XMapRaised(dpy, win);
+</a><a href="#h3-14-27" id="h3-14-27" class="i">+	inputw = MIN(inputw, mw / 3);
+</a><a href="#h3-14-28" id="h3-14-28" class="i">+	utf8 = XInternAtom(dc.dpy, &quot;UTF8_STRING&quot;, False);
+</a><a href="#h3-14-29" id="h3-14-29" class="i">+	XMapRaised(dc.dpy, win);
+</a><a href="#h3-14-30" id="h3-14-30" class="i">+}
+</a><a href="#h3-14-31" id="h3-14-31" class="i">+
+</a><a href="#h3-14-32" id="h3-14-32" class="i">+void
+</a><a href="#h3-14-33" id="h3-14-33" class="i">+usage(void) {
+</a><a href="#h3-14-34" id="h3-14-34" class="i">+	fputs(&quot;usage: dmenu [-b] [-i] [-l &lt;lines&gt;] [-p &lt;prompt&gt;] [-fn &lt;font&gt;] [-nb &lt;color&gt;]\n&quot;
+</a><a href="#h3-14-35" id="h3-14-35" class="i">+		      &quot;             [-nf &lt;color&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-v]\n&quot;, stderr);
+</a><a href="#h3-14-36" id="h3-14-36" class="i">+	exit(EXIT_FAILURE);
+</a> }
+ 
+ int
+ main(int argc, char *argv[]) {
+<a href="#h3-14-41" id="h3-14-41" class="d">-	unsigned int i;
+</a><a href="#h3-14-42" id="h3-14-42" class="i">+	int i;
+</a> 
+<a href="#h3-14-44" id="h3-14-44" class="d">-	/* command line args */
+</a> 	progname = &quot;dmenu&quot;;
+ 	for(i = 1; i &lt; argc; i++)
+<a href="#h3-14-47" id="h3-14-47" class="d">-		if(!strcmp(argv[i], &quot;-i&quot;)) {
+</a><a href="#h3-14-48" id="h3-14-48" class="d">-			fstrncmp = strncasecmp;
+</a><a href="#h3-14-49" id="h3-14-49" class="d">-			fstrstr = cistrstr;
+</a><a href="#h3-14-50" id="h3-14-50" class="i">+		/* 1-arg flags */
+</a><a href="#h3-14-51" id="h3-14-51" class="i">+		if(!strcmp(argv[i], &quot;-v&quot;)) {
+</a><a href="#h3-14-52" id="h3-14-52" class="i">+			fputs(&quot;dmenu-&quot;VERSION&quot;, © 2006-2010 dmenu engineers, see LICENSE for details\n&quot;, stdout);
+</a><a href="#h3-14-53" id="h3-14-53" class="i">+			exit(EXIT_SUCCESS);
+</a> 		}
+ 		else if(!strcmp(argv[i], &quot;-b&quot;))
+ 			topbar = False;
+<a href="#h3-14-57" id="h3-14-57" class="i">+		else if(!strcmp(argv[i], &quot;-i&quot;)) {
+</a><a href="#h3-14-58" id="h3-14-58" class="i">+			fstrncmp = strncasecmp;
+</a><a href="#h3-14-59" id="h3-14-59" class="i">+			fstrstr = cistrstr;
+</a><a href="#h3-14-60" id="h3-14-60" class="i">+		}
+</a><a href="#h3-14-61" id="h3-14-61" class="i">+		else if(i == argc-1)
+</a><a href="#h3-14-62" id="h3-14-62" class="i">+			usage();
+</a><a href="#h3-14-63" id="h3-14-63" class="i">+		/* 2-arg flags */
+</a> 		else if(!strcmp(argv[i], &quot;-l&quot;)) {
+<a href="#h3-14-65" id="h3-14-65" class="d">-			if(++i &lt; argc) lines = atoi(argv[i]);
+</a><a href="#h3-14-66" id="h3-14-66" class="d">-			if(lines &gt; 0)
+</a><a href="#h3-14-67" id="h3-14-67" class="i">+			if((lines = atoi(argv[++i])) &gt; 0)
+</a> 				calcoffsets = calcoffsetsv;
+ 		}
+<a href="#h3-14-70" id="h3-14-70" class="d">-		else if(!strcmp(argv[i], &quot;-fn&quot;)) {
+</a><a href="#h3-14-71" id="h3-14-71" class="d">-			if(++i &lt; argc) font = argv[i];
+</a><a href="#h3-14-72" id="h3-14-72" class="d">-		}
+</a><a href="#h3-14-73" id="h3-14-73" class="d">-		else if(!strcmp(argv[i], &quot;-nb&quot;)) {
+</a><a href="#h3-14-74" id="h3-14-74" class="d">-			if(++i &lt; argc) normbgcolor = argv[i];
+</a><a href="#h3-14-75" id="h3-14-75" class="d">-		}
+</a><a href="#h3-14-76" id="h3-14-76" class="d">-		else if(!strcmp(argv[i], &quot;-nf&quot;)) {
+</a><a href="#h3-14-77" id="h3-14-77" class="d">-			if(++i &lt; argc) normfgcolor = argv[i];
+</a><a href="#h3-14-78" id="h3-14-78" class="d">-		}
+</a> 		else if(!strcmp(argv[i], &quot;-p&quot;)) {
+<a href="#h3-14-80" id="h3-14-80" class="d">-			if(++i &lt; argc) prompt = argv[i];
+</a><a href="#h3-14-81" id="h3-14-81" class="d">-		}
+</a><a href="#h3-14-82" id="h3-14-82" class="d">-		else if(!strcmp(argv[i], &quot;-sb&quot;)) {
+</a><a href="#h3-14-83" id="h3-14-83" class="d">-			if(++i &lt; argc) selbgcolor = argv[i];
+</a><a href="#h3-14-84" id="h3-14-84" class="d">-		}
+</a><a href="#h3-14-85" id="h3-14-85" class="d">-		else if(!strcmp(argv[i], &quot;-sf&quot;)) {
+</a><a href="#h3-14-86" id="h3-14-86" class="d">-			if(++i &lt; argc) selfgcolor = argv[i];
+</a><a href="#h3-14-87" id="h3-14-87" class="d">-		}
+</a><a href="#h3-14-88" id="h3-14-88" class="d">-		else if(!strcmp(argv[i], &quot;-v&quot;)) {
+</a><a href="#h3-14-89" id="h3-14-89" class="d">-			printf(&quot;dmenu-&quot;VERSION&quot;, © 2006-2010 dmenu engineers, see LICENSE for details\n&quot;);
+</a><a href="#h3-14-90" id="h3-14-90" class="d">-			exit(EXIT_SUCCESS);
+</a><a href="#h3-14-91" id="h3-14-91" class="d">-		}
+</a><a href="#h3-14-92" id="h3-14-92" class="d">-		else {
+</a><a href="#h3-14-93" id="h3-14-93" class="d">-			fputs(&quot;usage: dmenu [-i] [-b] [-l &lt;lines&gt;] [-fn &lt;font&gt;] [-nb &lt;color&gt;]\n&quot;
+</a><a href="#h3-14-94" id="h3-14-94" class="d">-			      &quot;             [-nf &lt;color&gt;] [-p &lt;prompt&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-v]\n&quot;, stderr);
+</a><a href="#h3-14-95" id="h3-14-95" class="d">-			exit(EXIT_FAILURE);
+</a><a href="#h3-14-96" id="h3-14-96" class="i">+			prompt = argv[++i];
+</a><a href="#h3-14-97" id="h3-14-97" class="i">+			promptw = MIN(textw(&amp;dc, prompt), mw/5);
+</a> 		}
+<a href="#h3-14-99" id="h3-14-99" class="i">+		else if(!strcmp(argv[i], &quot;-fn&quot;))
+</a><a href="#h3-14-100" id="h3-14-100" class="i">+			font = argv[++i];
+</a><a href="#h3-14-101" id="h3-14-101" class="i">+		else if(!strcmp(argv[i], &quot;-nb&quot;))
+</a><a href="#h3-14-102" id="h3-14-102" class="i">+			normbgcolor = argv[++i];
+</a><a href="#h3-14-103" id="h3-14-103" class="i">+		else if(!strcmp(argv[i], &quot;-nf&quot;))
+</a><a href="#h3-14-104" id="h3-14-104" class="i">+			normfgcolor = argv[++i];
+</a><a href="#h3-14-105" id="h3-14-105" class="i">+		else if(!strcmp(argv[i], &quot;-sb&quot;))
+</a><a href="#h3-14-106" id="h3-14-106" class="i">+			selbgcolor = argv[++i];
+</a><a href="#h3-14-107" id="h3-14-107" class="i">+		else if(!strcmp(argv[i], &quot;-sf&quot;))
+</a><a href="#h3-14-108" id="h3-14-108" class="i">+			selfgcolor = argv[++i];
+</a><a href="#h3-14-109" id="h3-14-109" class="i">+		else
+</a><a href="#h3-14-110" id="h3-14-110" class="i">+			usage();
+</a><a href="#h3-14-111" id="h3-14-111" class="i">+
+</a> 	if(!setlocale(LC_CTYPE, &quot;&quot;) || !XSupportsLocale())
+<a href="#h3-14-113" id="h3-14-113" class="d">-		fprintf(stderr, &quot;dmenu: warning: no locale support\n&quot;);
+</a><a href="#h3-14-114" id="h3-14-114" class="d">-	if(!(dpy = XOpenDisplay(NULL)))
+</a><a href="#h3-14-115" id="h3-14-115" class="d">-		eprint(&quot;cannot open display\n&quot;);
+</a><a href="#h3-14-116" id="h3-14-116" class="d">-	if(atexit(&amp;cleanup) != 0)
+</a><a href="#h3-14-117" id="h3-14-117" class="d">-		eprint(&quot;cannot register cleanup\n&quot;);
+</a><a href="#h3-14-118" id="h3-14-118" class="d">-	screen = DefaultScreen(dpy);
+</a><a href="#h3-14-119" id="h3-14-119" class="d">-	root = RootWindow(dpy, screen);
+</a><a href="#h3-14-120" id="h3-14-120" class="d">-	if(!(argp = malloc(sizeof *argp * (argc+2))))
+</a><a href="#h3-14-121" id="h3-14-121" class="d">-		eprint(&quot;cannot malloc %u bytes\n&quot;, sizeof *argp * (argc+2));
+</a><a href="#h3-14-122" id="h3-14-122" class="d">-	memcpy(argp + 2, argv + 1, sizeof *argp * argc);
+</a><a href="#h3-14-123" id="h3-14-123" class="i">+		fputs(&quot;dmenu: warning: no locale support\n&quot;, stderr);
+</a><a href="#h3-14-124" id="h3-14-124" class="i">+	if(!(dc.dpy = XOpenDisplay(NULL)))
+</a><a href="#h3-14-125" id="h3-14-125" class="i">+		eprintf(&quot;cannot open display\n&quot;);
+</a><a href="#h3-14-126" id="h3-14-126" class="i">+	screen = DefaultScreen(dc.dpy);
+</a><a href="#h3-14-127" id="h3-14-127" class="i">+	root = RootWindow(dc.dpy, screen);
+</a><a href="#h3-14-128" id="h3-14-128" class="i">+	initfont(&amp;dc, font);
+</a> 
+ 	readstdin();
+<a href="#h3-14-131" id="h3-14-131" class="d">-	grabkeyboard();
+</a> 	setup();
+<a href="#h3-14-133" id="h3-14-133" class="d">-	if(maxname)
+</a><a href="#h3-14-134" id="h3-14-134" class="d">-		cmdw = MIN(textw(&amp;dc, maxname), mw / 3);
+</a><a href="#h3-14-135" id="h3-14-135" class="d">-	match();
+</a> 	run();
+<a href="#h3-14-137" id="h3-14-137" class="d">-	return 0;
+</a><a href="#h3-14-138" id="h3-14-138" class="i">+
+</a><a href="#h3-14-139" id="h3-14-139" class="i">+	return EXIT_FAILURE;  /* should not reach */
+</a> }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>efficiency tweaks - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2b92c95230fbbdcf47f701d9cc4fd133a7972fae.html">2b92c95230fbbdcf47f701d9cc4fd133a7972fae</a>
+<b>parent</b> <a href="../commit/16a0c0d52aa947b3fe8c9285986567189537d339.html">16a0c0d52aa947b3fe8c9285986567189537d339</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Thu, 14 Jul 2011 20:03:08 +0100
+
+efficiency tweaks
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">98</td><td><span class="i">+++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">draw.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 44 insertions(+), 60 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -25,8 +25,8 @@ struct Item {
+</a> 
+ static void appenditem(Item *item, Item **list, Item **last);
+ static void calcoffsets(void);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static char *cistrstr(const char *s, const char *sub);
+</a> static void drawmenu(void);
+<a href="#h0-0-5" id="h0-0-5" class="d">-static char *fstrstr(const char *s, const char *sub);
+</a> static void grabkeyboard(void);
+ static void insert(const char *str, ssize_t n);
+ static void keypress(XKeyEvent *ev);
+<a href="#h0-1" id="h0-1" class="h">@@ -60,6 +60,7 @@ static Item *prev, *curr, *next, *sel;
+</a> static Window win;
+ 
+ static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
+<a href="#h0-1-3" id="h0-1-3" class="i">+static char *(*fstrstr)(const char *, const char *) = strstr;
+</a> 
+ int
+ main(int argc, char *argv[]) {
+<a href="#h0-2" id="h0-2" class="h">@@ -76,8 +77,10 @@ main(int argc, char *argv[]) {
+</a> 			topbar = False;
+ 		else if(!strcmp(argv[i], &quot;-f&quot;))
+ 			fast = True;
+<a href="#h0-2-3" id="h0-2-3" class="d">-		else if(!strcmp(argv[i], &quot;-i&quot;))
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		else if(!strcmp(argv[i], &quot;-i&quot;)) {
+</a> 			fstrncmp = strncasecmp;
+<a href="#h0-2-6" id="h0-2-6" class="i">+			fstrstr = cistrstr;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		}
+</a> 		else if(i+1 == argc)
+ 			usage();
+ 		/* double flags */
+<a href="#h0-3" id="h0-3" class="h">@@ -112,7 +115,7 @@ main(int argc, char *argv[]) {
+</a> 	setup();
+ 	run();
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	return EXIT_FAILURE;  /* should not reach */
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	return EXIT_FAILURE; /* unreachable */
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -121,6 +124,7 @@ appenditem(Item *item, Item **list, Item **last) {
+</a> 		*list = item;
+ 	else
+ 		(*last)-&gt;right = item;
+<a href="#h0-4-3" id="h0-4-3" class="i">+
+</a> 	item-&gt;left = *last;
+ 	item-&gt;right = NULL;
+ 	*last = item;
+<a href="#h0-5" id="h0-5" class="h">@@ -143,6 +147,16 @@ calcoffsets(void) {
+</a> 			break;
+ }
+ 
+<a href="#h0-5-3" id="h0-5-3" class="i">+char *
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+cistrstr(const char *s, const char *sub) {
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+	size_t len;
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	for(len = strlen(sub); *s; s++)
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+		if(!strncasecmp(s, sub, len))
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+			return (char *)s;
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+	return NULL;
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+}
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+
+</a> void
+ drawmenu(void) {
+ 	int curpos;
+<a href="#h0-6" id="h0-6" class="h">@@ -188,16 +202,6 @@ drawmenu(void) {
+</a> 	mapdc(dc, win, mw, mh);
+ }
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-char *
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-fstrstr(const char *s, const char *sub) {
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-	size_t len;
+</a><a href="#h0-6-6" id="h0-6-6" class="d">-
+</a><a href="#h0-6-7" id="h0-6-7" class="d">-	for(len = strlen(sub); *s; s++)
+</a><a href="#h0-6-8" id="h0-6-8" class="d">-		if(!fstrncmp(s, sub, len))
+</a><a href="#h0-6-9" id="h0-6-9" class="d">-			return (char *)s;
+</a><a href="#h0-6-10" id="h0-6-10" class="d">-	return NULL;
+</a><a href="#h0-6-11" id="h0-6-11" class="d">-}
+</a><a href="#h0-6-12" id="h0-6-12" class="d">-
+</a> void
+ grabkeyboard(void) {
+ 	int i;
+<a href="#h0-7" id="h0-7" class="h">@@ -233,58 +237,37 @@ keypress(XKeyEvent *ev) {
+</a> 
+ 		XConvertCase(ksym, &amp;lower, &amp;upper);
+ 		switch(lower) {
+<a href="#h0-7-3" id="h0-7-3" class="d">-		default:
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-			return;
+</a><a href="#h0-7-5" id="h0-7-5" class="d">-		case XK_a:
+</a><a href="#h0-7-6" id="h0-7-6" class="d">-			ksym = XK_Home;
+</a><a href="#h0-7-7" id="h0-7-7" class="d">-			break;
+</a><a href="#h0-7-8" id="h0-7-8" class="d">-		case XK_b:
+</a><a href="#h0-7-9" id="h0-7-9" class="d">-			ksym = XK_Left;
+</a><a href="#h0-7-10" id="h0-7-10" class="d">-			break;
+</a><a href="#h0-7-11" id="h0-7-11" class="d">-		case XK_c:
+</a><a href="#h0-7-12" id="h0-7-12" class="d">-			ksym = XK_Escape;
+</a><a href="#h0-7-13" id="h0-7-13" class="d">-			break;
+</a><a href="#h0-7-14" id="h0-7-14" class="d">-		case XK_d:
+</a><a href="#h0-7-15" id="h0-7-15" class="d">-			ksym = XK_Delete;
+</a><a href="#h0-7-16" id="h0-7-16" class="d">-			break;
+</a><a href="#h0-7-17" id="h0-7-17" class="d">-		case XK_e:
+</a><a href="#h0-7-18" id="h0-7-18" class="d">-			ksym = XK_End;
+</a><a href="#h0-7-19" id="h0-7-19" class="d">-			break;
+</a><a href="#h0-7-20" id="h0-7-20" class="d">-		case XK_f:
+</a><a href="#h0-7-21" id="h0-7-21" class="d">-			ksym = XK_Right;
+</a><a href="#h0-7-22" id="h0-7-22" class="d">-			break;
+</a><a href="#h0-7-23" id="h0-7-23" class="d">-		case XK_h:
+</a><a href="#h0-7-24" id="h0-7-24" class="d">-			ksym = XK_BackSpace;
+</a><a href="#h0-7-25" id="h0-7-25" class="d">-			break;
+</a><a href="#h0-7-26" id="h0-7-26" class="d">-		case XK_i:
+</a><a href="#h0-7-27" id="h0-7-27" class="d">-			ksym = XK_Tab;
+</a><a href="#h0-7-28" id="h0-7-28" class="d">-			break;
+</a><a href="#h0-7-29" id="h0-7-29" class="d">-		case XK_j:
+</a><a href="#h0-7-30" id="h0-7-30" class="d">-		case XK_m:
+</a><a href="#h0-7-31" id="h0-7-31" class="d">-			ksym = XK_Return;
+</a><a href="#h0-7-32" id="h0-7-32" class="d">-			break;
+</a><a href="#h0-7-33" id="h0-7-33" class="d">-		case XK_k:  /* delete right */
+</a><a href="#h0-7-34" id="h0-7-34" class="i">+		case XK_a: ksym = XK_Home;      break;
+</a><a href="#h0-7-35" id="h0-7-35" class="i">+		case XK_b: ksym = XK_Left;      break;
+</a><a href="#h0-7-36" id="h0-7-36" class="i">+		case XK_c: ksym = XK_Escape;    break;
+</a><a href="#h0-7-37" id="h0-7-37" class="i">+		case XK_d: ksym = XK_Delete;    break;
+</a><a href="#h0-7-38" id="h0-7-38" class="i">+		case XK_e: ksym = XK_End;       break;
+</a><a href="#h0-7-39" id="h0-7-39" class="i">+		case XK_f: ksym = XK_Right;     break;
+</a><a href="#h0-7-40" id="h0-7-40" class="i">+		case XK_h: ksym = XK_BackSpace; break;
+</a><a href="#h0-7-41" id="h0-7-41" class="i">+		case XK_i: ksym = XK_Tab;       break;
+</a><a href="#h0-7-42" id="h0-7-42" class="i">+		case XK_j: ksym = XK_Return;    break;
+</a><a href="#h0-7-43" id="h0-7-43" class="i">+		case XK_m: ksym = XK_Return;    break;
+</a><a href="#h0-7-44" id="h0-7-44" class="i">+		case XK_n: ksym = XK_Up;        break;
+</a><a href="#h0-7-45" id="h0-7-45" class="i">+		case XK_p: ksym = XK_Down;      break;
+</a><a href="#h0-7-46" id="h0-7-46" class="i">+
+</a><a href="#h0-7-47" id="h0-7-47" class="i">+		case XK_k: /* delete right */
+</a> 			text[cursor] = &#39;\0&#39;;
+ 			match(False);
+ 			break;
+<a href="#h0-7-51" id="h0-7-51" class="d">-		case XK_n:
+</a><a href="#h0-7-52" id="h0-7-52" class="d">-			ksym = XK_Next;
+</a><a href="#h0-7-53" id="h0-7-53" class="d">-			break;
+</a><a href="#h0-7-54" id="h0-7-54" class="d">-		case XK_p:
+</a><a href="#h0-7-55" id="h0-7-55" class="d">-			ksym = XK_Prior;
+</a><a href="#h0-7-56" id="h0-7-56" class="d">-			break;
+</a><a href="#h0-7-57" id="h0-7-57" class="d">-		case XK_u:  /* delete left */
+</a><a href="#h0-7-58" id="h0-7-58" class="i">+		case XK_u: /* delete left */
+</a> 			insert(NULL, 0 - cursor);
+ 			break;
+<a href="#h0-7-61" id="h0-7-61" class="d">-		case XK_w:  /* delete word */
+</a><a href="#h0-7-62" id="h0-7-62" class="i">+		case XK_w: /* delete word */
+</a> 			while(cursor &gt; 0 &amp;&amp; text[nextrune(-1)] == &#39; &#39;)
+ 				insert(NULL, nextrune(-1) - cursor);
+ 			while(cursor &gt; 0 &amp;&amp; text[nextrune(-1)] != &#39; &#39;)
+ 				insert(NULL, nextrune(-1) - cursor);
+ 			break;
+<a href="#h0-7-68" id="h0-7-68" class="d">-		case XK_y:  /* paste selection */
+</a><a href="#h0-7-69" id="h0-7-69" class="i">+		case XK_y: /* paste selection */
+</a> 			XConvertSelection(dc-&gt;dpy, XA_PRIMARY, utf8, utf8, win, CurrentTime);
+ 			return;
+<a href="#h0-7-72" id="h0-7-72" class="i">+		default:
+</a><a href="#h0-7-73" id="h0-7-73" class="i">+			return;
+</a> 		}
+ 	}
+ 	switch(ksym) {
+<a href="#h0-8" id="h0-8" class="h">@@ -297,8 +280,9 @@ keypress(XKeyEvent *ev) {
+</a> 			return;
+ 		cursor = nextrune(+1);
+ 	case XK_BackSpace:
+<a href="#h0-8-3" id="h0-8-3" class="d">-		if(cursor &gt; 0)
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-			insert(NULL, nextrune(-1) - cursor);
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+		if(cursor == 0)
+</a><a href="#h0-8-6" id="h0-8-6" class="i">+			return;
+</a><a href="#h0-8-7" id="h0-8-7" class="i">+		insert(NULL, nextrune(-1) - cursor);
+</a> 		break;
+ 	case XK_End:
+ 		if(text[cursor] != &#39;\0&#39;) {
+<a href="#h0-9" id="h0-9" class="h">@@ -351,7 +335,7 @@ keypress(XKeyEvent *ev) {
+</a> 		break;
+ 	case XK_Return:
+ 	case XK_KP_Enter:
+<a href="#h0-9-3" id="h0-9-3" class="d">-		fputs((sel &amp;&amp; !(ev-&gt;state &amp; ShiftMask)) ? sel-&gt;text : text, stdout);
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+		puts((sel &amp;&amp; !(ev-&gt;state &amp; ShiftMask)) ? sel-&gt;text : text);
+</a> 		exit(EXIT_SUCCESS);
+ 	case XK_Right:
+ 		if(text[cursor] != &#39;\0&#39;) {
+<a href="#h0-10" id="h0-10" class="h">@@ -468,7 +452,7 @@ run(void) {
+</a> 		switch(ev.type) {
+ 		case Expose:
+ 			if(ev.xexpose.count == 0)
+<a href="#h0-10-3" id="h0-10-3" class="d">-				drawmenu();
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+				mapdc(dc, win, mw, mh);
+</a> 			break;
+ 		case KeyPress:
+ 			keypress(&amp;ev.xkey);
+<b>diff --git a/<a id="h1" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -96,7 +96,7 @@ initdc(void) {
+</a> 	DC *dc;
+ 
+ 	if(!setlocale(LC_CTYPE, &quot;&quot;) || !XSupportsLocale())
+<a href="#h1-0-3" id="h1-0-3" class="d">-		fprintf(stderr, &quot;no locale support\n&quot;);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		fputs(&quot;no locale support\n&quot;, stderr);
+</a> 	if(!(dc = calloc(1, sizeof *dc)))
+ 		eprintf(&quot;cannot malloc %u bytes:&quot;, sizeof *dc);
+ 	if(!(dc-&gt;dpy = XOpenDisplay(NULL)))
+<a href="#h1-1" id="h1-1" class="h">@@ -153,10 +153,10 @@ resizedc(DC *dc, unsigned int w, unsigned int h) {
+</a> 	if(dc-&gt;canvas)
+ 		XFreePixmap(dc-&gt;dpy, dc-&gt;canvas);
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	dc-&gt;canvas = XCreatePixmap(dc-&gt;dpy, DefaultRootWindow(dc-&gt;dpy), w, h,
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	                           DefaultDepth(dc-&gt;dpy, DefaultScreen(dc-&gt;dpy)));
+</a> 	dc-&gt;w = w;
+ 	dc-&gt;h = h;
+<a href="#h1-1-7" id="h1-1-7" class="i">+	dc-&gt;canvas = XCreatePixmap(dc-&gt;dpy, DefaultRootWindow(dc-&gt;dpy), w, h,
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	                           DefaultDepth(dc-&gt;dpy, DefaultScreen(dc-&gt;dpy)));
+</a> }
+ 
+ int
+</pre>
+</div>
+</body>
+</html>

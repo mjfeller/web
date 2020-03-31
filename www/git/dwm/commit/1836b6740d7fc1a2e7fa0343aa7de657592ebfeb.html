@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied sanders patch - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1836b6740d7fc1a2e7fa0343aa7de657592ebfeb.html">1836b6740d7fc1a2e7fa0343aa7de657592ebfeb</a>
+<b>parent</b> <a href="../commit/924a0888126bd8ff12312c6e3e6a33003f271b2a.html">924a0888126bd8ff12312c6e3e6a33003f271b2a</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Fri,  1 Sep 2006 10:32:50 +0200
+
+applied sanders patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.1</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">13</td><td><span class="i">++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>2 files changed, 20 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -47,16 +47,22 @@ and
+</a> .B floating
+ mode.
+ .TP
+<a href="#h0-0-3" id="h0-0-3" class="d">-.B Button2
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-click on a tag label adds/removes that
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-.B tag
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-to/from the focused
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-.B window.
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-.TP
+</a> .B Button3
+ click on a tag label adds/removes all windows with that
+ .B tag
+ to/from the view.
+<a href="#h0-0-13" id="h0-0-13" class="i">+.TP
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+.B Mod1-Button1
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+click on a tag label applies that
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+.B tag
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+to the focused
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+.BR window .
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+.TP
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+.B Mod1-Button3
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+click on a tag label adds/removes that
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+.B tag
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+to/from the focused
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+.BR window .
+</a> .SS Keyboard commands
+ .TP
+ .B Mod1-Shift-Return
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -111,13 +111,16 @@ buttonpress(XEvent *e)
+</a> 			if(ev-&gt;x &lt; x) {
+ 				switch(ev-&gt;button) {
+ 				case Button1:
+<a href="#h1-0-3" id="h1-0-3" class="d">-					view(&amp;a);
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-					break;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-				case Button2:
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-					toggletag(&amp;a);
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+					if(ev-&gt;state &amp; MODKEY)
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+						tag(&amp;a);
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+					else
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+						view(&amp;a);
+</a> 					break;
+ 				case Button3:
+<a href="#h1-0-13" id="h1-0-13" class="d">-					toggleview(&amp;a);
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+					if(ev-&gt;state &amp; MODKEY)
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+						toggletag(&amp;a);
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+					else
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+						toggleview(&amp;a);
+</a> 					break;
+ 				}
+ 				return;
+</pre>
+</div>
+</body>
+</html>

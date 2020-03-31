@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>some sanity changes - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3fd39feb4153cf73f26223918bc8145ee98a9a92.html">3fd39feb4153cf73f26223918bc8145ee98a9a92</a>
+<b>parent</b> <a href="../commit/93eee247caa059f67f7665dee3626e5171f5e793.html">93eee247caa059f67f7665dee3626e5171f5e793</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 27 Oct 2007 18:21:02 +0200
+
+some sanity changes
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 7 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -666,7 +666,7 @@ void
+</a> expose(XEvent *e) {
+ 	XExposeEvent *ev = &amp;e-&gt;xexpose;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if(ev-&gt;count == 0) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if(0 == ev-&gt;count) {
+</a> 		if(barwin == ev-&gt;window)
+ 			drawbar();
+ 	}
+<a href="#h0-1" id="h0-1" class="h">@@ -780,7 +780,7 @@ gettextprop(Window w, Atom atom, char *text, unsigned int size) {
+</a> 	int n;
+ 	XTextProperty name;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(!text || size == 0)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if(!text || 0 == size)
+</a> 		return False;
+ 	text[0] = &#39;\0&#39;;
+ 	XGetTextProperty(dpy, w, &amp;name, atom);
+<a href="#h0-2" id="h0-2" class="h">@@ -1398,7 +1398,7 @@ setmwfact(const char *arg) {
+</a> 	if(!(ISTILE))
+ 		return;
+ 	/* arg handling, manipulate mwfact */
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(arg == NULL)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if(NULL == arg)
+</a> 		mwfact = MWFACT;
+ 	else if(1 == sscanf(arg, &quot;%lf&quot;, &amp;delta)) {
+ 		if(arg[0] == &#39;+&#39; || arg[0] == &#39;-&#39;)
+<a href="#h0-3" id="h0-3" class="h">@@ -1515,8 +1515,8 @@ spawn(const char *arg) {
+</a> 		return;
+ 	/* The double-fork construct avoids zombie processes and keeps the code
+ 	 * clean from stupid signal handlers. */
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(fork() == 0) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		if(fork() == 0) {
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if(0 == fork()) {
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		if(0 == fork()) {
+</a> 			if(dpy)
+ 				close(ConnectionNumber(dpy));
+ 			setsid();
+<a href="#h0-4" id="h0-4" class="h">@@ -1576,7 +1576,7 @@ tile(void) {
+</a> 	nw = 0; /* gcc stupidity requires this */
+ 	for(i = 0, c = mc = nexttiled(clients); c; c = nexttiled(c-&gt;next), i++) {
+ 		c-&gt;ismax = False;
+<a href="#h0-4-3" id="h0-4-3" class="d">-		if(i == 0) { /* master */
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		if(0 == i) { /* master */
+</a> 			nw = mw - 2 * c-&gt;border;
+ 			nh = wah - 2 * c-&gt;border;
+ 		}
+<a href="#h0-5" id="h0-5" class="h">@@ -1836,7 +1836,7 @@ view(const char *arg) {
+</a> 
+ 	memcpy(prevtags, seltags, sizeof seltags);
+ 	for(i = 0; i &lt; NTAGS; i++)
+<a href="#h0-5-3" id="h0-5-3" class="d">-		seltags[i] = arg == NULL;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		seltags[i] = (NULL == arg);
+</a> 	seltags[idxoftag(arg)] = True;
+ 	arrange();
+ }
+</pre>
+</div>
+</body>
+</html>

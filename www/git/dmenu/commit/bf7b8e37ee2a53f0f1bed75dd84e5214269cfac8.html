@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>dmenu_path.c (shell is a bottleneck) - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bf7b8e37ee2a53f0f1bed75dd84e5214269cfac8.html">bf7b8e37ee2a53f0f1bed75dd84e5214269cfac8</a>
+<b>parent</b> <a href="../commit/610a0a8d126b5caa7fec60632c999ca326ca2eff.html">610a0a8d126b5caa7fec60632c999ca326ca2eff</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Fri,  8 Oct 2010 23:24:22 +0100
+
+dmenu_path.c (shell is a bottleneck)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h1">dmenu_path</a></td><td> | </td><td class="num">26</td><td><span class="i"></span><span class="d">--------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">dmenu_path.c</a></td><td> | </td><td class="num">101</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 108 insertions(+), 34 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-all: options dmenu
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+all: options dmenu dmenu_path
+</a> 
+ options:
+ 	@echo dmenu build options:
+<a href="#h0-1" id="h0-1" class="h">@@ -11,22 +11,21 @@ options:
+</a> 	@echo &quot;LDFLAGS  = ${LDFLAGS}&quot;
+ 	@echo &quot;CC       = ${CC}&quot;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-dmenu.o: dmenu.c config.mk
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	@echo CC $&lt;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	@${CC} -c ${CFLAGS} $&lt;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+dmenu: dmenu.c config.mk
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+dmenu_path: dmenu_path.c
+</a> 
+<a href="#h0-1-9" id="h0-1-9" class="d">-dmenu: dmenu.o
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+dmenu dmenu_path:
+</a> 	@echo CC -o $@
+<a href="#h0-1-12" id="h0-1-12" class="d">-	@${CC} -o $@ $+ ${LDFLAGS}
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	@${CC} -o $@ $&lt; ${CFLAGS} ${LDFLAGS}
+</a> 
+ clean:
+ 	@echo cleaning
+<a href="#h0-1-17" id="h0-1-17" class="d">-	@rm -f dmenu dmenu.o dmenu-${VERSION}.tar.gz
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	@rm -f dmenu dmenu_path dmenu-${VERSION}.tar.gz
+</a> 
+ dist: clean
+ 	@echo creating dist tarball
+ 	@mkdir -p dmenu-${VERSION}
+<a href="#h0-1-23" id="h0-1-23" class="d">-	@cp LICENSE Makefile README config.mk dmenu.1 dmenu.c dmenu_path dmenu_run dmenu-${VERSION}
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+	@cp LICENSE Makefile README config.mk dmenu.1 dmenu.c dmenu_path.c dmenu_run dmenu-${VERSION}
+</a> 	@tar -cf dmenu-${VERSION}.tar dmenu-${VERSION}
+ 	@gzip dmenu-${VERSION}.tar
+ 	@rm -rf dmenu-${VERSION}
+<b>diff --git a/<a id="h1" href="../file/dmenu_path.html">dmenu_path</a> b/<a href="../file/dmenu_path.html">dmenu_path</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,26 +0,0 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="d">-#!/bin/sh
+</a><a href="#h1-0-1" id="h1-0-1" class="d">-CACHE=$HOME/.dmenu_cache
+</a><a href="#h1-0-2" id="h1-0-2" class="d">-IFS=:
+</a><a href="#h1-0-3" id="h1-0-3" class="d">-
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-uptodate() {
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	test -f &quot;$CACHE&quot; &amp;&amp;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-	for dir in $PATH
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-	do
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-		test ! $dir -nt &quot;$CACHE&quot; || return 1
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-	done
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-}
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-if ! uptodate
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-then
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-	for dir in $PATH
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-	do
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-		cd &quot;$dir&quot; &amp;&amp;
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-		for file in *
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-		do
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-			test -x &quot;$file&quot; &amp;&amp; echo &quot;$file&quot;
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-		done
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-	done | sort -u &gt; &quot;$CACHE&quot;.$$ &amp;&amp;
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-	mv &quot;$CACHE&quot;.$$ &quot;$CACHE&quot;
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-fi
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-cat &quot;$CACHE&quot;
+</a><b>diff --git a/<a id="h2" href="../file/dmenu_path.c.html">dmenu_path.c</a> b/<a href="../file/dmenu_path.c.html">dmenu_path.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,101 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+#include &lt;dirent.h&gt;
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+#include &lt;string.h&gt;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+#include &lt;unistd.h&gt;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+#include &lt;sys/stat.h&gt;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+#define CACHE &quot;.dmenu_cache&quot;
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+static int qstrcmp(const void *a, const void *b);
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+static void die(const char *s);
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+static void scan(void);
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+static int uptodate(void);
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+static char **items = NULL;
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+static const char *Home, *Path;
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+static size_t count = 0;
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+int
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+main(void) {
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+	if(!(Home = getenv(&quot;HOME&quot;)))
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+		die(&quot;no $HOME&quot;);
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+	if(!(Path = getenv(&quot;PATH&quot;)))
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+		die(&quot;no $PATH&quot;);
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	if(chdir(Home) &lt; 0)
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+		die(&quot;chdir failed&quot;);
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+	if(uptodate()) {
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+		execlp(&quot;cat&quot;, &quot;cat&quot;, CACHE, NULL);
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+		die(&quot;exec failed&quot;);
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+	}
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+	scan();
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+	return EXIT_SUCCESS;
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+}
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+void
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+die(const char *s) {
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+	fprintf(stderr, &quot;dmenu_path: %s\n&quot;, s);
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+	exit(EXIT_FAILURE);
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+}
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+int
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+qstrcmp(const void *a, const void *b) {
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+	return strcmp(*(const char **)a, *(const char **)b);
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+}
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+void
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+scan(void) {
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+	char buf[PATH_MAX];
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+	char *dir, *path;
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+	size_t i;
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+	struct dirent *ent;
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+	DIR *dp;
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+	FILE *cache;
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+	if(!(path = strdup(Path)))
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+		die(&quot;strdup failed&quot;);
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+	for(dir = strtok(path, &quot;:&quot;); dir; dir = strtok(NULL, &quot;:&quot;)) {
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+		if(!(dp = opendir(dir)))
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+			continue;
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+		while((ent = readdir(dp))) {
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+			snprintf(buf, sizeof buf, &quot;%s/%s&quot;, dir, ent-&gt;d_name);
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+			if(ent-&gt;d_name[0] == &#39;.&#39; || access(buf, X_OK) &lt; 0)
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+				continue;
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+			if(!(items = realloc(items, ++count * sizeof *items)))
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+				die(&quot;malloc failed&quot;);
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+			if(!(items[count-1] = strdup(ent-&gt;d_name)))
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+				die(&quot;strdup failed&quot;);
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+		}
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+		closedir(dp);
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+	}
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+	qsort(items, count, sizeof *items, qstrcmp);
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+	if(!(cache = fopen(CACHE, &quot;w&quot;)))
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+		die(&quot;open failed&quot;);
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+	for(i = 0; i &lt; count; i++) {
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+		if(i &gt; 0 &amp;&amp; !strcmp(items[i], items[i-1]))
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+			continue;
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+		fprintf(cache,  &quot;%s\n&quot;, items[i]);
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+		fprintf(stdout, &quot;%s\n&quot;, items[i]);
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+	}
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+	fclose(cache);
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+	free(path);
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+}
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+int
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+uptodate(void) {
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+	char *dir, *path;
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+	time_t mtime;
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+	struct stat st;
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+	if(stat(CACHE, &amp;st) &lt; 0)
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+		return 0;
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+	mtime = st.st_mtime;
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+	if(!(path = strdup(Path)))
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+		die(&quot;strdup failed&quot;);
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+	for(dir = strtok(path, &quot;:&quot;); dir; dir = strtok(NULL, &quot;:&quot;))
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+		if(!stat(dir, &amp;st) &amp;&amp; st.st_mtime &gt; mtime)
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+			return 0;
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+	free(path);
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+	return 1;
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Dbe is not required anymore. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0e232a41150d67539df05e60c7e829f0bfb431d0.html">0e232a41150d67539df05e60c7e829f0bfb431d0</a>
+<b>parent</b> <a href="../commit/3ce96aea8af566c88ed1e076d270b4d1abcf6e96.html">3ce96aea8af566c88ed1e076d270b4d1abcf6e96</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sat, 19 Jan 2013 09:13:52 +0100
+
+Dbe is not required anymore.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">22</td><td><span class="i">+++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 15 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -203,7 +203,7 @@ typedef struct {
+</a> 	Display *dpy;
+ 	Colourmap cmap;
+ 	Window win;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	XdbeBackBuffer buf;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	Drawable buf;
+</a> 	Atom xembed, wmdeletewin;
+ 	XIM xim;
+ 	XIC xic;
+<a href="#h0-1" id="h0-1" class="h">@@ -414,6 +414,8 @@ static char *opt_embed = NULL;
+</a> static char *opt_class = NULL;
+ static char *opt_font = NULL;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+bool usedbe = False;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+
+</a> static char *usedfont = NULL;
+ static int usedfontsize = 0;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -2500,7 +2502,8 @@ xinit(void) {
+</a> 		| ButtonMotionMask | ButtonPressMask | ButtonReleaseMask;
+ 	attrs.colormap = xw.cmap;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-	parent = opt_embed ? strtol(opt_embed, NULL, 0) : XRootWindow(xw.dpy, xw.scr);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	parent = opt_embed ? strtol(opt_embed, NULL, 0) : \
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+			XRootWindow(xw.dpy, xw.scr);
+</a> 	xw.win = XCreateWindow(xw.dpy, parent, xw.fx, xw.fy,
+ 			xw.w, xw.h, 0, XDefaultDepth(xw.dpy, xw.scr), InputOutput,
+ 			xw.vis,
+<a href="#h0-3" id="h0-3" class="h">@@ -2509,12 +2512,16 @@ xinit(void) {
+</a> 			&amp;attrs);
+ 
+ 	/* double buffering */
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(!XdbeQueryExtension(xw.dpy, &amp;major, &amp;minor))
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		die(&quot;Xdbe extension is not present\n&quot;);
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	xw.buf = XdbeAllocateBackBufferName(xw.dpy, xw.win, XdbeBackground);
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	if(XdbeQueryExtension(xw.dpy, &amp;major, &amp;minor)) {
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+		xw.buf = XdbeAllocateBackBufferName(xw.dpy, xw.win,
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+				XdbeBackground);
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+		usedbe = True;
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+	} else {
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+		xw.buf = xw.win;
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+	}
+</a> 
+ 	/* Xft rendering context */
+<a href="#h0-3-15" id="h0-3-15" class="d">-	xw.draw = XftDrawCreate(xw.dpy, xw.buf, xw.vis, xw.cmap);
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+	xw.draw = XftDrawCreate(xw.dpy, xw.win, xw.vis, xw.cmap);
+</a> 
+ 	/* input methods */
+ 	if((xw.xim =  XOpenIM(xw.dpy, NULL, NULL, NULL)) == NULL) {
+<a href="#h0-4" id="h0-4" class="h">@@ -2822,7 +2829,8 @@ draw(void) {
+</a> 	XdbeSwapInfo swpinfo[1] = {{xw.win, XdbeCopied}};
+ 
+ 	drawregion(0, 0, term.col, term.row);
+<a href="#h0-4-3" id="h0-4-3" class="d">-	XdbeSwapBuffers(xw.dpy, swpinfo, 1);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	if(usedbe)
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+		XdbeSwapBuffers(xw.dpy, swpinfo, 1);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

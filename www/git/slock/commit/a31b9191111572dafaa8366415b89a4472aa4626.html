@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Dimitris&#39; style patch from Dec&#39;14, with some minor modifications - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a31b9191111572dafaa8366415b89a4472aa4626.html">a31b9191111572dafaa8366415b89a4472aa4626</a>
+<b>parent</b> <a href="../commit/66e31556db4921b5f24ced47dae5e1c7ea3bd150.html">66e31556db4921b5f24ced47dae5e1c7ea3bd150</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 27 Jan 2015 22:16:52 +0100
+
+applied Dimitris&#39; style patch from Dec&#39;14, with some minor modifications
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">112</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 60 insertions(+), 52 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,4 +1,3 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="d">-
+</a> /* See LICENSE file for license details. */
+ #define _XOPEN_SOURCE 500
+ #if HAVE_SHADOW_H
+<a href="#h0-1" id="h0-1" class="h">@@ -37,20 +36,22 @@ static int nscreens;
+</a> static Bool running = True;
+ 
+ static void
+<a href="#h0-1-3" id="h0-1-3" class="d">-die(const char *errstr, ...) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+die(const char *errstr, ...)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+{
+</a> 	va_list ap;
+ 
+ 	va_start(ap, errstr);
+ 	vfprintf(stderr, errstr, ap);
+ 	va_end(ap);
+<a href="#h0-1-11" id="h0-1-11" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	exit(1);
+</a> }
+ 
+ #ifdef __linux__
+ #include &lt;fcntl.h&gt;
+ 
+ static void
+<a href="#h0-1-19" id="h0-1-19" class="d">-dontkillme(void) {
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+dontkillme(void)
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+{
+</a> 	int fd;
+ 
+ 	fd = open(&quot;/proc/self/oom_score_adj&quot;, O_WRONLY);
+<a href="#h0-2" id="h0-2" class="h">@@ -62,8 +63,10 @@ dontkillme(void) {
+</a> #endif
+ 
+ #ifndef HAVE_BSD_AUTH
+<a href="#h0-2-3" id="h0-2-3" class="i">+/* only run as root */
+</a> static const char *
+<a href="#h0-2-5" id="h0-2-5" class="d">-getpw(void) { /* only run as root */
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+getpw(void)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+{
+</a> 	const char *rval;
+ 	struct passwd *pw;
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -73,7 +76,7 @@ getpw(void) { /* only run as root */
+</a> 		if (errno)
+ 			die(&quot;slock: getpwuid: %s\n&quot;, strerror(errno));
+ 		else
+<a href="#h0-3-3" id="h0-3-3" class="d">-			die(&quot;slock: cannot retrieve password entry (make sure to suid or sgid slock)\n&quot;);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			die(&quot;slock: cannot retrieve password entry\n&quot;);
+</a> 	}
+ 	rval =  pw-&gt;pw_passwd;
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -81,15 +84,15 @@ getpw(void) { /* only run as root */
+</a> 	if (rval[0] == &#39;x&#39; &amp;&amp; rval[1] == &#39;\0&#39;) {
+ 		struct spwd *sp;
+ 		sp = getspnam(getenv(&quot;USER&quot;));
+<a href="#h0-4-3" id="h0-4-3" class="d">-		if(!sp)
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		if (!sp)
+</a> 			die(&quot;slock: cannot retrieve shadow entry (make sure to suid or sgid slock)\n&quot;);
+ 		rval = sp-&gt;sp_pwdp;
+ 	}
+ #endif
+ 
+ 	/* drop privileges */
+<a href="#h0-4-11" id="h0-4-11" class="d">-	if (geteuid() == 0
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-	   &amp;&amp; ((getegid() != pw-&gt;pw_gid &amp;&amp; setgid(pw-&gt;pw_gid) &lt; 0) || setuid(pw-&gt;pw_uid) &lt; 0))
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+	if (geteuid() == 0 &amp;&amp;
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+	    ((getegid() != pw-&gt;pw_gid &amp;&amp; setgid(pw-&gt;pw_gid) &lt; 0) || setuid(pw-&gt;pw_uid) &lt; 0))
+</a> 		die(&quot;slock: cannot drop privileges\n&quot;);
+ 	return rval;
+ }
+<a href="#h0-5" id="h0-5" class="h">@@ -115,21 +118,23 @@ readpw(Display *dpy, const char *pws)
+</a> 	 * had been removed and you can set it with &quot;xset&quot; or some other
+ 	 * utility. This way the user can easily set a customized DPMS
+ 	 * timeout. */
+<a href="#h0-5-3" id="h0-5-3" class="d">-	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev)) {
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-		if(ev.type == KeyPress) {
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+	while (running &amp;&amp; !XNextEvent(dpy, &amp;ev)) {
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+		if (ev.type == KeyPress) {
+</a> 			buf[0] = 0;
+ 			num = XLookupString(&amp;ev.xkey, buf, sizeof buf, &amp;ksym, 0);
+<a href="#h0-5-9" id="h0-5-9" class="d">-			if(IsKeypadKey(ksym)) {
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-				if(ksym == XK_KP_Enter)
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+			if (IsKeypadKey(ksym)) {
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+				if (ksym == XK_KP_Enter)
+</a> 					ksym = XK_Return;
+<a href="#h0-5-14" id="h0-5-14" class="d">-				else if(ksym &gt;= XK_KP_0 &amp;&amp; ksym &lt;= XK_KP_9)
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+				else if (ksym &gt;= XK_KP_0 &amp;&amp; ksym &lt;= XK_KP_9)
+</a> 					ksym = (ksym - XK_KP_0) + XK_0;
+ 			}
+<a href="#h0-5-18" id="h0-5-18" class="d">-			if(IsFunctionKey(ksym) || IsKeypadKey(ksym)
+</a><a href="#h0-5-19" id="h0-5-19" class="d">-					|| IsMiscFunctionKey(ksym) || IsPFKey(ksym)
+</a><a href="#h0-5-20" id="h0-5-20" class="d">-					|| IsPrivateKeypadKey(ksym))
+</a><a href="#h0-5-21" id="h0-5-21" class="i">+			if (IsFunctionKey(ksym) ||
+</a><a href="#h0-5-22" id="h0-5-22" class="i">+			    IsKeypadKey(ksym) ||
+</a><a href="#h0-5-23" id="h0-5-23" class="i">+			    IsMiscFunctionKey(ksym) ||
+</a><a href="#h0-5-24" id="h0-5-24" class="i">+			    IsPFKey(ksym) ||
+</a><a href="#h0-5-25" id="h0-5-25" class="i">+			    IsPrivateKeypadKey(ksym))
+</a> 				continue;
+<a href="#h0-5-27" id="h0-5-27" class="d">-			switch(ksym) {
+</a><a href="#h0-5-28" id="h0-5-28" class="i">+			switch (ksym) {
+</a> 			case XK_Return:
+ 				passwd[len] = 0;
+ #ifdef HAVE_BSD_AUTH
+<a href="#h0-6" id="h0-6" class="h">@@ -137,7 +142,7 @@ readpw(Display *dpy, const char *pws)
+</a> #else
+ 				running = !!strcmp(crypt(passwd, pws), pws);
+ #endif
+<a href="#h0-6-3" id="h0-6-3" class="d">-				if(running)
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+				if (running)
+</a> 					XBell(dpy, 100);
+ 				len = 0;
+ 				break;
+<a href="#h0-7" id="h0-7" class="h">@@ -145,36 +150,37 @@ readpw(Display *dpy, const char *pws)
+</a> 				len = 0;
+ 				break;
+ 			case XK_BackSpace:
+<a href="#h0-7-3" id="h0-7-3" class="d">-				if(len)
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+				if (len)
+</a> 					--len;
+ 				break;
+ 			default:
+<a href="#h0-7-8" id="h0-7-8" class="d">-				if(num &amp;&amp; !iscntrl((int) buf[0]) &amp;&amp; (len + num &lt; sizeof passwd)) {
+</a><a href="#h0-7-9" id="h0-7-9" class="i">+				if (num &amp;&amp; !iscntrl((int) buf[0]) &amp;&amp; (len + num &lt; sizeof passwd)) {
+</a> 					memcpy(passwd + len, buf, num);
+ 					len += num;
+ 				}
+ 				break;
+ 			}
+<a href="#h0-7-15" id="h0-7-15" class="d">-			if(llen == 0 &amp;&amp; len != 0) {
+</a><a href="#h0-7-16" id="h0-7-16" class="d">-				for(screen = 0; screen &lt; nscreens; screen++) {
+</a><a href="#h0-7-17" id="h0-7-17" class="i">+			if (llen == 0 &amp;&amp; len != 0) {
+</a><a href="#h0-7-18" id="h0-7-18" class="i">+				for (screen = 0; screen &lt; nscreens; screen++) {
+</a> 					XSetWindowBackground(dpy, locks[screen]-&gt;win, locks[screen]-&gt;colors[1]);
+ 					XClearWindow(dpy, locks[screen]-&gt;win);
+ 				}
+<a href="#h0-7-22" id="h0-7-22" class="d">-			} else if(llen != 0 &amp;&amp; len == 0) {
+</a><a href="#h0-7-23" id="h0-7-23" class="d">-				for(screen = 0; screen &lt; nscreens; screen++) {
+</a><a href="#h0-7-24" id="h0-7-24" class="i">+			} else if (llen != 0 &amp;&amp; len == 0) {
+</a><a href="#h0-7-25" id="h0-7-25" class="i">+				for (screen = 0; screen &lt; nscreens; screen++) {
+</a> 					XSetWindowBackground(dpy, locks[screen]-&gt;win, locks[screen]-&gt;colors[0]);
+ 					XClearWindow(dpy, locks[screen]-&gt;win);
+ 				}
+ 			}
+ 			llen = len;
+ 		}
+<a href="#h0-7-32" id="h0-7-32" class="d">-		else for(screen = 0; screen &lt; nscreens; screen++)
+</a><a href="#h0-7-33" id="h0-7-33" class="i">+		else for (screen = 0; screen &lt; nscreens; screen++)
+</a> 			XRaiseWindow(dpy, locks[screen]-&gt;win);
+ 	}
+ }
+ 
+ static void
+<a href="#h0-7-39" id="h0-7-39" class="d">-unlockscreen(Display *dpy, Lock *lock) {
+</a><a href="#h0-7-40" id="h0-7-40" class="i">+unlockscreen(Display *dpy, Lock *lock)
+</a><a href="#h0-7-41" id="h0-7-41" class="i">+{
+</a> 	if(dpy == NULL || lock == NULL)
+ 		return;
+ 
+<a href="#h0-8" id="h0-8" class="h">@@ -187,7 +193,8 @@ unlockscreen(Display *dpy, Lock *lock) {
+</a> }
+ 
+ static Lock *
+<a href="#h0-8-3" id="h0-8-3" class="d">-lockscreen(Display *dpy, int screen) {
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+lockscreen(Display *dpy, int screen)
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+{
+</a> 	char curs[] = {0, 0, 0, 0, 0, 0, 0, 0};
+ 	unsigned int len;
+ 	Lock *lock;
+<a href="#h0-9" id="h0-9" class="h">@@ -195,11 +202,11 @@ lockscreen(Display *dpy, int screen) {
+</a> 	XSetWindowAttributes wa;
+ 	Cursor invisible;
+ 
+<a href="#h0-9-3" id="h0-9-3" class="d">-	if(dpy == NULL || screen &lt; 0)
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+	if (dpy == NULL || screen &lt; 0)
+</a> 		return NULL;
+ 
+ 	lock = malloc(sizeof(Lock));
+<a href="#h0-9-8" id="h0-9-8" class="d">-	if(lock == NULL)
+</a><a href="#h0-9-9" id="h0-9-9" class="i">+	if (lock == NULL)
+</a> 		return NULL;
+ 
+ 	lock-&gt;screen = screen;
+<a href="#h0-10" id="h0-10" class="h">@@ -210,8 +217,8 @@ lockscreen(Display *dpy, int screen) {
+</a> 	wa.override_redirect = 1;
+ 	wa.background_pixel = BlackPixel(dpy, lock-&gt;screen);
+ 	lock-&gt;win = XCreateWindow(dpy, lock-&gt;root, 0, 0, DisplayWidth(dpy, lock-&gt;screen), DisplayHeight(dpy, lock-&gt;screen),
+<a href="#h0-10-3" id="h0-10-3" class="d">-			0, DefaultDepth(dpy, lock-&gt;screen), CopyFromParent,
+</a><a href="#h0-10-4" id="h0-10-4" class="d">-			DefaultVisual(dpy, lock-&gt;screen), CWOverrideRedirect | CWBackPixel, &amp;wa);
+</a><a href="#h0-10-5" id="h0-10-5" class="i">+	                          0, DefaultDepth(dpy, lock-&gt;screen), CopyFromParent,
+</a><a href="#h0-10-6" id="h0-10-6" class="i">+	                          DefaultVisual(dpy, lock-&gt;screen), CWOverrideRedirect | CWBackPixel, &amp;wa);
+</a> 	XAllocNamedColor(dpy, DefaultColormap(dpy, lock-&gt;screen), COLOR2, &amp;color, &amp;dummy);
+ 	lock-&gt;colors[1] = color.pixel;
+ 	XAllocNamedColor(dpy, DefaultColormap(dpy, lock-&gt;screen), COLOR1, &amp;color, &amp;dummy);
+<a href="#h0-11" id="h0-11" class="h">@@ -220,36 +227,37 @@ lockscreen(Display *dpy, int screen) {
+</a> 	invisible = XCreatePixmapCursor(dpy, lock-&gt;pmap, lock-&gt;pmap, &amp;color, &amp;color, 0, 0);
+ 	XDefineCursor(dpy, lock-&gt;win, invisible);
+ 	XMapRaised(dpy, lock-&gt;win);
+<a href="#h0-11-3" id="h0-11-3" class="d">-	for(len = 1000; len; len--) {
+</a><a href="#h0-11-4" id="h0-11-4" class="d">-		if(XGrabPointer(dpy, lock-&gt;root, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+</a><a href="#h0-11-5" id="h0-11-5" class="d">-			GrabModeAsync, GrabModeAsync, None, invisible, CurrentTime) == GrabSuccess)
+</a><a href="#h0-11-6" id="h0-11-6" class="i">+	for (len = 1000; len; len--) {
+</a><a href="#h0-11-7" id="h0-11-7" class="i">+		if (XGrabPointer(dpy, lock-&gt;root, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+</a><a href="#h0-11-8" id="h0-11-8" class="i">+		    GrabModeAsync, GrabModeAsync, None, invisible, CurrentTime) == GrabSuccess)
+</a> 			break;
+ 		usleep(1000);
+ 	}
+<a href="#h0-11-12" id="h0-11-12" class="d">-	if(running &amp;&amp; (len &gt; 0)) {
+</a><a href="#h0-11-13" id="h0-11-13" class="d">-		for(len = 1000; len; len--) {
+</a><a href="#h0-11-14" id="h0-11-14" class="d">-			if(XGrabKeyboard(dpy, lock-&gt;root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+</a><a href="#h0-11-15" id="h0-11-15" class="d">-				== GrabSuccess)
+</a><a href="#h0-11-16" id="h0-11-16" class="i">+	if (running &amp;&amp; (len &gt; 0)) {
+</a><a href="#h0-11-17" id="h0-11-17" class="i">+		for (len = 1000; len; len--) {
+</a><a href="#h0-11-18" id="h0-11-18" class="i">+			if (XGrabKeyboard(dpy, lock-&gt;root, True, GrabModeAsync, GrabModeAsync, CurrentTime) == GrabSuccess)
+</a> 				break;
+ 			usleep(1000);
+ 		}
+ 	}
+ 
+ 	running &amp;= (len &gt; 0);
+<a href="#h0-11-25" id="h0-11-25" class="d">-	if(!running) {
+</a><a href="#h0-11-26" id="h0-11-26" class="i">+	if (!running) {
+</a> 		unlockscreen(dpy, lock);
+ 		lock = NULL;
+ 	}
+<a href="#h0-11-30" id="h0-11-30" class="d">-	else 
+</a><a href="#h0-11-31" id="h0-11-31" class="i">+	else {
+</a> 		XSelectInput(dpy, lock-&gt;root, SubstructureNotifyMask);
+<a href="#h0-11-33" id="h0-11-33" class="i">+	}
+</a> 
+ 	return lock;
+ }
+ 
+ static void
+<a href="#h0-11-39" id="h0-11-39" class="d">-usage(void) {
+</a><a href="#h0-11-40" id="h0-11-40" class="i">+usage(void)
+</a><a href="#h0-11-41" id="h0-11-41" class="i">+{
+</a> 	fprintf(stderr, &quot;usage: slock [-v]\n&quot;);
+<a href="#h0-11-43" id="h0-11-43" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h0-11-44" id="h0-11-44" class="i">+	exit(1);
+</a> }
+ 
+ int
+<a href="#h0-12" id="h0-12" class="h">@@ -260,38 +268,38 @@ main(int argc, char **argv) {
+</a> 	Display *dpy;
+ 	int screen;
+ 
+<a href="#h0-12-3" id="h0-12-3" class="d">-	if((argc == 2) &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+</a><a href="#h0-12-4" id="h0-12-4" class="d">-		die(&quot;slock-%s, © 2006-2014 slock engineers\n&quot;, VERSION);
+</a><a href="#h0-12-5" id="h0-12-5" class="d">-	else if(argc != 1)
+</a><a href="#h0-12-6" id="h0-12-6" class="i">+	if ((argc == 2) &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+</a><a href="#h0-12-7" id="h0-12-7" class="i">+		die(&quot;slock-%s, © 2006-2015 slock engineers\n&quot;, VERSION);
+</a><a href="#h0-12-8" id="h0-12-8" class="i">+	else if (argc != 1)
+</a> 		usage();
+ 
+ #ifdef __linux__
+ 	dontkillme();
+ #endif
+ 
+<a href="#h0-12-15" id="h0-12-15" class="d">-	if(!getpwuid(getuid()))
+</a><a href="#h0-12-16" id="h0-12-16" class="i">+	if (!getpwuid(getuid()))
+</a> 		die(&quot;slock: no passwd entry for you\n&quot;);
+ 
+ #ifndef HAVE_BSD_AUTH
+ 	pws = getpw();
+ #endif
+ 
+<a href="#h0-12-23" id="h0-12-23" class="d">-	if(!(dpy = XOpenDisplay(0)))
+</a><a href="#h0-12-24" id="h0-12-24" class="i">+	if (!(dpy = XOpenDisplay(0)))
+</a> 		die(&quot;slock: cannot open display\n&quot;);
+ 	/* Get the number of screens in display &quot;dpy&quot; and blank them all. */
+ 	nscreens = ScreenCount(dpy);
+ 	locks = malloc(sizeof(Lock *) * nscreens);
+<a href="#h0-12-29" id="h0-12-29" class="d">-	if(locks == NULL)
+</a><a href="#h0-12-30" id="h0-12-30" class="i">+	if (locks == NULL)
+</a> 		die(&quot;slock: malloc: %s\n&quot;, strerror(errno));
+ 	int nlocks = 0;
+<a href="#h0-12-33" id="h0-12-33" class="d">-	for(screen = 0; screen &lt; nscreens; screen++) {
+</a><a href="#h0-12-34" id="h0-12-34" class="i">+	for (screen = 0; screen &lt; nscreens; screen++) {
+</a> 		if ( (locks[screen] = lockscreen(dpy, screen)) != NULL)
+ 			nlocks++;
+ 	}
+ 	XSync(dpy, False);
+ 
+ 	/* Did we actually manage to lock something? */
+<a href="#h0-12-41" id="h0-12-41" class="d">-	if (nlocks == 0) { // nothing to protect
+</a><a href="#h0-12-42" id="h0-12-42" class="i">+	if (nlocks == 0) { /* nothing to protect */
+</a> 		free(locks);
+ 		XCloseDisplay(dpy);
+ 		return 1;
+<a href="#h0-13" id="h0-13" class="h">@@ -305,7 +313,7 @@ main(int argc, char **argv) {
+</a> #endif
+ 
+ 	/* Password ok, unlock everything and quit. */
+<a href="#h0-13-3" id="h0-13-3" class="d">-	for(screen = 0; screen &lt; nscreens; screen++)
+</a><a href="#h0-13-4" id="h0-13-4" class="i">+	for (screen = 0; screen &lt; nscreens; screen++)
+</a> 		unlockscreen(dpy, locks[screen]);
+ 
+ 	free(locks);
+</pre>
+</div>
+</body>
+</html>

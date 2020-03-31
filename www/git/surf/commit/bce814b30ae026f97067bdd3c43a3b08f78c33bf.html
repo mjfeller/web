@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Replace decidewindow() and decidedownload() with decidepolicy() - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bce814b30ae026f97067bdd3c43a3b08f78c33bf.html">bce814b30ae026f97067bdd3c43a3b08f78c33bf</a>
+<b>parent</b> <a href="../commit/1f99df029c5c190941a20ed87344aeef56f76418.html">1f99df029c5c190941a20ed87344aeef56f76418</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Wed, 18 Nov 2015 18:30:28 +0100
+
+Replace decidewindow() and decidedownload() with decidepolicy()
+
+Now all the requests are triggered by one signal.
+We then handle each type, resource download, navigation, newwindow, in
+separate functions.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">121</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------</span></td></tr>
+</table></pre><pre>1 file changed, 93 insertions(+), 28 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -116,12 +116,11 @@ static char cookiepolicy_set(const WebKitCookieAcceptPolicy p);
+</a> static char *copystr(char **str, const char *src);
+ static GtkWidget *createview(WebKitWebView *v, WebKitNavigationAction *a,
+ 		Client *c);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static gboolean decidedownload(WebKitWebView *v, WebKitWebFrame *f,
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-                               WebKitNetworkRequest *r, gchar *m,
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-			       WebKitWebPolicyDecision *p, Client *c);
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-static gboolean decidewindow(WebKitWebView *v, WebKitWebFrame *f,
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-                             WebKitNetworkRequest *r, WebKitWebNavigationAction
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-			     *n, WebKitWebPolicyDecision *p, Client *c);
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+static gboolean decidepolicy(WebKitWebView *v, WebKitPolicyDecision *d,
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+    WebKitPolicyDecisionType dt, Client *c);
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+static void decidenavigation(WebKitPolicyDecision *d, Client *c);
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+static void decidenewwindow(WebKitPolicyDecision *d, Client *c);
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+static void decideresource(WebKitPolicyDecision *d, Client *c);
+</a> static gboolean deletion_interface(WebKitWebView *view,
+                                    WebKitDOMHTMLElement *arg1, Client *c);
+ static void destroyclient(Client *c);
+<a href="#h0-1" id="h0-1" class="h">@@ -438,6 +437,7 @@ createview(WebKitWebView *v, WebKitNavigationAction *a, Client *c)
+</a> 		 * popup windows of type “other” are almost always triggered
+ 		 * by user gesture, so inverse the logic here
+ 		 */
+<a href="#h0-1-3" id="h0-1-3" class="i">+/* instead of this, compare destination uri to mouse-over uri for validating window */
+</a> 		if (webkit_navigation_action_is_user_gesture(a)) {
+ 			return NULL;
+ 			break;
+<a href="#h0-2" id="h0-2" class="h">@@ -458,31 +458,99 @@ createview(WebKitWebView *v, WebKitNavigationAction *a, Client *c)
+</a> }
+ 
+ gboolean
+<a href="#h0-2-3" id="h0-2-3" class="d">-decidedownload(WebKitWebView *v, WebKitWebFrame *f, WebKitNetworkRequest *r,
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-               gchar *m,  WebKitWebPolicyDecision *p, Client *c)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+decidepolicy(WebKitWebView *v, WebKitPolicyDecision *d,
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+    WebKitPolicyDecisionType dt, Client *c)
+</a> {
+<a href="#h0-2-8" id="h0-2-8" class="d">-	if (!webkit_web_view_can_show_mime_type(v, m)) {
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-		webkit_web_policy_decision_download(p);
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-		return TRUE;
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	switch (dt) {
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	case WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION:
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		decidenavigation(d, c);
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+		break;
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	case WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION:
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+		decidenewwindow(d, c);
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+		break;
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+	case WEBKIT_POLICY_DECISION_TYPE_RESPONSE:
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+		decideresource(d, c);
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+		break;
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+	default:
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+		webkit_policy_decision_ignore(d);
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+		break;
+</a> 	}
+<a href="#h0-2-25" id="h0-2-25" class="d">-	return FALSE;
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+	return TRUE;
+</a> }
+ 
+<a href="#h0-2-29" id="h0-2-29" class="d">-gboolean
+</a><a href="#h0-2-30" id="h0-2-30" class="d">-decidewindow(WebKitWebView *view, WebKitWebFrame *f, WebKitNetworkRequest *r,
+</a><a href="#h0-2-31" id="h0-2-31" class="d">-             WebKitWebNavigationAction *n, WebKitWebPolicyDecision *p,
+</a><a href="#h0-2-32" id="h0-2-32" class="d">-	     Client *c)
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+void
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+decidenavigation(WebKitPolicyDecision *d, Client *c)
+</a> {
+<a href="#h0-2-36" id="h0-2-36" class="i">+	WebKitNavigationAction *a;
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+	a = webkit_navigation_policy_decision_get_navigation_action(
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+	    WEBKIT_NAVIGATION_POLICY_DECISION(d));
+</a><a href="#h0-2-40" id="h0-2-40" class="i">+
+</a><a href="#h0-2-41" id="h0-2-41" class="i">+	switch (webkit_navigation_action_get_navigation_type(a)) {
+</a><a href="#h0-2-42" id="h0-2-42" class="i">+	case WEBKIT_NAVIGATION_TYPE_LINK_CLICKED: /* fallthrough */
+</a><a href="#h0-2-43" id="h0-2-43" class="i">+	case WEBKIT_NAVIGATION_TYPE_FORM_SUBMITTED: /* fallthrough */
+</a><a href="#h0-2-44" id="h0-2-44" class="i">+	case WEBKIT_NAVIGATION_TYPE_BACK_FORWARD: /* fallthrough */
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+	case WEBKIT_NAVIGATION_TYPE_RELOAD: /* fallthrough */
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+	case WEBKIT_NAVIGATION_TYPE_FORM_RESUBMITTED:
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+	case WEBKIT_NAVIGATION_TYPE_OTHER: /* fallthrough */
+</a><a href="#h0-2-48" id="h0-2-48" class="i">+	default:
+</a><a href="#h0-2-49" id="h0-2-49" class="i">+		/* Do not navigate to links with a &quot;_blank&quot; target (popup) */
+</a><a href="#h0-2-50" id="h0-2-50" class="i">+		if (webkit_navigation_policy_decision_get_frame_name(
+</a><a href="#h0-2-51" id="h0-2-51" class="i">+		    WEBKIT_NAVIGATION_POLICY_DECISION(d))) {
+</a><a href="#h0-2-52" id="h0-2-52" class="i">+			webkit_policy_decision_ignore(d);
+</a><a href="#h0-2-53" id="h0-2-53" class="i">+		} else {
+</a><a href="#h0-2-54" id="h0-2-54" class="i">+			/* Filter out navigation to different domain ? */
+</a><a href="#h0-2-55" id="h0-2-55" class="i">+			/* get action→urirequest, copy and load in new window+view
+</a><a href="#h0-2-56" id="h0-2-56" class="i">+			 * on Ctrl+Click ? */
+</a><a href="#h0-2-57" id="h0-2-57" class="i">+			webkit_policy_decision_use(d);
+</a><a href="#h0-2-58" id="h0-2-58" class="i">+		}
+</a><a href="#h0-2-59" id="h0-2-59" class="i">+		break;
+</a><a href="#h0-2-60" id="h0-2-60" class="i">+	}
+</a><a href="#h0-2-61" id="h0-2-61" class="i">+}
+</a><a href="#h0-2-62" id="h0-2-62" class="i">+
+</a><a href="#h0-2-63" id="h0-2-63" class="i">+void
+</a><a href="#h0-2-64" id="h0-2-64" class="i">+decidenewwindow(WebKitPolicyDecision *d, Client *c)
+</a><a href="#h0-2-65" id="h0-2-65" class="i">+{
+</a><a href="#h0-2-66" id="h0-2-66" class="i">+	WebKitNavigationAction *a;
+</a> 	Arg arg;
+ 
+<a href="#h0-2-69" id="h0-2-69" class="d">-	if (webkit_web_navigation_action_get_reason(n)
+</a><a href="#h0-2-70" id="h0-2-70" class="d">-	    == WEBKIT_WEB_NAVIGATION_REASON_LINK_CLICKED) {
+</a><a href="#h0-2-71" id="h0-2-71" class="d">-		webkit_web_policy_decision_ignore(p);
+</a><a href="#h0-2-72" id="h0-2-72" class="d">-		arg.v = (void *)webkit_network_request_get_uri(r);
+</a><a href="#h0-2-73" id="h0-2-73" class="d">-		newwindow(NULL, &amp;arg, 0);
+</a><a href="#h0-2-74" id="h0-2-74" class="d">-		return TRUE;
+</a><a href="#h0-2-75" id="h0-2-75" class="i">+	a = webkit_navigation_policy_decision_get_navigation_action(
+</a><a href="#h0-2-76" id="h0-2-76" class="i">+	    WEBKIT_NAVIGATION_POLICY_DECISION(d));
+</a><a href="#h0-2-77" id="h0-2-77" class="i">+
+</a><a href="#h0-2-78" id="h0-2-78" class="i">+	switch (webkit_navigation_action_get_navigation_type(a)) {
+</a><a href="#h0-2-79" id="h0-2-79" class="i">+	case WEBKIT_NAVIGATION_TYPE_LINK_CLICKED: /* fallthrough */
+</a><a href="#h0-2-80" id="h0-2-80" class="i">+	case WEBKIT_NAVIGATION_TYPE_FORM_SUBMITTED: /* fallthrough */
+</a><a href="#h0-2-81" id="h0-2-81" class="i">+	case WEBKIT_NAVIGATION_TYPE_BACK_FORWARD: /* fallthrough */
+</a><a href="#h0-2-82" id="h0-2-82" class="i">+	case WEBKIT_NAVIGATION_TYPE_RELOAD: /* fallthrough */
+</a><a href="#h0-2-83" id="h0-2-83" class="i">+	case WEBKIT_NAVIGATION_TYPE_FORM_RESUBMITTED:
+</a><a href="#h0-2-84" id="h0-2-84" class="i">+		/* Filter domains here */
+</a><a href="#h0-2-85" id="h0-2-85" class="i">+/* If the value of “mouse-button” is not 0, then the navigation was triggered by a mouse event.
+</a><a href="#h0-2-86" id="h0-2-86" class="i">+ * test for link clicked but no button ? */
+</a><a href="#h0-2-87" id="h0-2-87" class="i">+		arg.v = webkit_uri_request_get_uri(
+</a><a href="#h0-2-88" id="h0-2-88" class="i">+		    webkit_navigation_action_get_request(a));
+</a><a href="#h0-2-89" id="h0-2-89" class="i">+		newwindow(c, &amp;arg, 0);
+</a><a href="#h0-2-90" id="h0-2-90" class="i">+		break;
+</a><a href="#h0-2-91" id="h0-2-91" class="i">+	case WEBKIT_NAVIGATION_TYPE_OTHER: /* fallthrough */
+</a><a href="#h0-2-92" id="h0-2-92" class="i">+	default:
+</a><a href="#h0-2-93" id="h0-2-93" class="i">+		break;
+</a><a href="#h0-2-94" id="h0-2-94" class="i">+	}
+</a><a href="#h0-2-95" id="h0-2-95" class="i">+
+</a><a href="#h0-2-96" id="h0-2-96" class="i">+	webkit_policy_decision_ignore(d);
+</a><a href="#h0-2-97" id="h0-2-97" class="i">+}
+</a><a href="#h0-2-98" id="h0-2-98" class="i">+
+</a><a href="#h0-2-99" id="h0-2-99" class="i">+void
+</a><a href="#h0-2-100" id="h0-2-100" class="i">+decideresource(WebKitPolicyDecision *d, Client *c)
+</a><a href="#h0-2-101" id="h0-2-101" class="i">+{
+</a><a href="#h0-2-102" id="h0-2-102" class="i">+	WebKitResponsePolicyDecision *r = WEBKIT_RESPONSE_POLICY_DECISION(d);
+</a><a href="#h0-2-103" id="h0-2-103" class="i">+	WebKitURIResponse *res;
+</a><a href="#h0-2-104" id="h0-2-104" class="i">+
+</a><a href="#h0-2-105" id="h0-2-105" class="i">+	if (webkit_response_policy_decision_is_mime_type_supported(r)) {
+</a><a href="#h0-2-106" id="h0-2-106" class="i">+		webkit_policy_decision_use(d);
+</a><a href="#h0-2-107" id="h0-2-107" class="i">+	} else {
+</a><a href="#h0-2-108" id="h0-2-108" class="i">+res = webkit_response_policy_decision_get_response(r);
+</a><a href="#h0-2-109" id="h0-2-109" class="i">+		webkit_policy_decision_ignore(d);
+</a><a href="#h0-2-110" id="h0-2-110" class="i">+		download(c, res);
+</a> 	}
+<a href="#h0-2-112" id="h0-2-112" class="d">-	return FALSE;
+</a> }
+ 
+ gboolean
+<a href="#h0-3" id="h0-3" class="h">@@ -918,11 +986,8 @@ newview(Client *c, WebKitWebView *rv)
+</a> 	g_signal_connect(G_OBJECT(v), &quot;ready-to-show&quot;,
+ 			 G_CALLBACK(showview), c);
+ 	g_signal_connect(G_OBJECT(v),
+<a href="#h0-3-3" id="h0-3-3" class="d">-	                 &quot;new-window-policy-decision-requested&quot;,
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-			 G_CALLBACK(decidewindow), c);
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	g_signal_connect(G_OBJECT(v),
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-	                 &quot;mime-type-policy-decision-requested&quot;,
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-			 G_CALLBACK(decidedownload), c);
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	                 &quot;decide-policy&quot;,
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+			 G_CALLBACK(decidepolicy), c);
+</a> 	g_signal_connect(G_OBJECT(v),
+ 	                 &quot;window-object-cleared&quot;,
+ 			 G_CALLBACK(windowobjectcleared), c);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>improved tile() for the RESIZEHINTS == True case, now more space is consumed by the clients (esp. if those clients use increment handling heavily) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3f3086f8b87aed5bf443c8fbcbe32e052fc9c17d.html">3f3086f8b87aed5bf443c8fbcbe32e052fc9c17d</a>
+<b>parent</b> <a href="../commit/f92a4e45c42b5cdd26ec1a28048d9c47b51b98ce.html">f92a4e45c42b5cdd26ec1a28048d9c47b51b98ce</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 27 Sep 2007 20:08:21 +0200
+
+improved tile() for the RESIZEHINTS == True case, now more space is consumed by the clients (esp. if those clients use increment handling heavily)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">11</td><td><span class="i">++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 6 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1569,7 +1569,7 @@ textw(const char *text) {
+</a> void
+ tile(void) {
+ 	unsigned int i, n, nx, ny, nw, nh, mw, th;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	Client *c;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	Client *c, *mc;
+</a> 
+ 	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+ 		n++;
+<a href="#h0-1" id="h0-1" class="h">@@ -1582,7 +1582,8 @@ tile(void) {
+</a> 
+ 	nx = wax;
+ 	ny = way;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	for(i = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next), i++) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	nw = 0; /* gcc stupidity requires this */
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	for(i = 0, c = mc = nexttiled(clients); c; c = nexttiled(c-&gt;next), i++) {
+</a> 		c-&gt;ismax = False;
+ 		if(i == 0) { /* master */
+ 			nw = mw - 2 * c-&gt;border;
+<a href="#h0-2" id="h0-2" class="h">@@ -1591,9 +1592,9 @@ tile(void) {
+</a> 		else {  /* tile window */
+ 			if(i == 1) {
+ 				ny = way;
+<a href="#h0-2-3" id="h0-2-3" class="d">-				nx += mw;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+				nx += mc-&gt;w + 2 * mc-&gt;border;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+				nw = waw - nx - 2 * c-&gt;border;
+</a> 			}
+<a href="#h0-2-7" id="h0-2-7" class="d">-			nw = waw - mw - 2 * c-&gt;border;
+</a> 			if(i + 1 == n) /* remainder */
+ 				nh = (way + wah) - ny - 2 * c-&gt;border;
+ 			else
+<a href="#h0-3" id="h0-3" class="h">@@ -1601,7 +1602,7 @@ tile(void) {
+</a> 		}
+ 		resize(c, nx, ny, nw, nh, RESIZEHINTS);
+ 		if(n &gt; 1 &amp;&amp; th != wah)
+<a href="#h0-3-3" id="h0-3-3" class="d">-			ny += nh + 2 * c-&gt;border;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			ny = c-&gt;y + c-&gt;h + 2 * c-&gt;border;
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

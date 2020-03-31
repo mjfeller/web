@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>changed Client-&gt;tags and Rule-&gt;tags to be Bool (I&#39;ll also try to remove the TLast enum) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8cc7f3bace087dfb024a23115c211d82b35614ae.html">8cc7f3bace087dfb024a23115c211d82b35614ae</a>
+<b>parent</b> <a href="../commit/5d3fd3707b262508d1750cf95ac2e2f666be6163.html">5d3fd3707b262508d1750cf95ac2e2f666be6163</a>
+<b>Author:</b> arg@10ksloc.org &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Thu,  3 Aug 2006 10:55:07 +0200
+
+changed Client-&gt;tags and Rule-&gt;tags to be Bool (I&#39;ll also try to remove the TLast enum)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.arg.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">config.default.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">draw.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">dwm.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">tag.c</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>6 files changed, 18 insertions(+), 17 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -18,7 +18,7 @@ resizetitle(Client *c)
+</a> 	c-&gt;tw = 0;
+ 	for(i = 0; i &lt; TLast; i++)
+ 		if(c-&gt;tags[i])
+<a href="#h0-0-3" id="h0-0-3" class="d">-			c-&gt;tw += textw(c-&gt;tags[i]);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			c-&gt;tw += textw(tags[i]);
+</a> 	c-&gt;tw += textw(c-&gt;name);
+ 	if(c-&gt;tw &gt; c-&gt;w)
+ 		c-&gt;tw = c-&gt;w + 2;
+<b>diff --git a/<a id="h1" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -5,7 +5,7 @@
+</a> 
+ enum { Tfnord, Tdev, Tnet, Twork, Tmisc, TLast };
+ #define TAGS \
+<a href="#h1-0-3" id="h1-0-3" class="d">-char *tags[TLast] = { \
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+const char *tags[TLast] = { \
+</a> 	[Tfnord] = &quot;fnord&quot;, \
+ 	[Tdev] = &quot;dev&quot;, \
+ 	[Tnet] = &quot;net&quot;, \
+<a href="#h1-1" id="h1-1" class="h">@@ -66,7 +66,7 @@ static Key key[] = { \
+</a> #define RULES \
+ static Rule rule[] = { \
+ 	/* class:instance	tags				isfloat */ \
+<a href="#h1-1-3" id="h1-1-3" class="d">-	{ &quot;Firefox.*&quot;,		{ [Tnet] = &quot;net&quot; },		False }, \
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	{ &quot;Firefox.*&quot;,		{ [Tnet] = True },		False }, \
+</a> 	{ &quot;Gimp.*&quot;,		{ 0 },				True}, \
+ 	{ &quot;MPlayer.*&quot;,		{ 0 },				True}, \
+ 	{ &quot;Acroread.*&quot;,		{ 0 },				True}, \
+<b>diff --git a/<a id="h2" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,7 +5,7 @@
+</a> 
+ enum { Tfnord, Tdev, Tnet, Twork, Tmisc, TLast };
+ #define TAGS \
+<a href="#h2-0-3" id="h2-0-3" class="d">-char *tags[TLast] = { \
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+const char *tags[TLast] = { \
+</a> 	[Tfnord] = &quot;fnord&quot;, \
+ 	[Tdev] = &quot;dev&quot;, \
+ 	[Tnet] = &quot;net&quot;, \
+<a href="#h2-1" id="h2-1" class="h">@@ -57,6 +57,6 @@ static Key key[] = { \
+</a> #define RULES \
+ static Rule rule[] = { \
+ 	/* class:instance	tags				isfloat */ \
+<a href="#h2-1-3" id="h2-1-3" class="d">-	{ &quot;Firefox.*&quot;,		{ [Tnet] = &quot;net&quot; },		False }, \
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	{ &quot;Firefox.*&quot;,		{ [Tnet] = True },		False }, \
+</a> 	{ &quot;Gimp.*&quot;,		{ 0 },				True}, \
+ };
+<b>diff --git a/<a id="h3" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -30,7 +30,7 @@ drawborder(void)
+</a> }
+ 
+ static unsigned int
+<a href="#h3-0-3" id="h3-0-3" class="d">-textnw(char *text, unsigned int len)
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+textnw(const char *text, unsigned int len)
+</a> {
+ 	XRectangle r;
+ 
+<a href="#h3-1" id="h3-1" class="h">@@ -156,8 +156,8 @@ drawtitle(Client *c)
+</a> 	for(i = 0; i &lt; TLast; i++) {
+ 		if(c-&gt;tags[i]) {
+ 			dc.x += dc.w;
+<a href="#h3-1-3" id="h3-1-3" class="d">-			dc.w = textw(c-&gt;tags[i]);
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-			drawtext(c-&gt;tags[i], !istile, True);
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+			dc.w = textw(tags[i]);
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+			drawtext(tags[i], !istile, True);
+</a> 		}
+ 	}
+ 	dc.x += dc.w;
+<a href="#h3-2" id="h3-2" class="h">@@ -229,7 +229,7 @@ setfont(const char *fontstr)
+</a> }
+ 
+ unsigned int
+<a href="#h3-2-3" id="h3-2-3" class="d">-textw(char *text)
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+textw(const char *text)
+</a> {
+ 	return textnw(text, strlen(text)) + dc.font.height;
+ }
+<b>diff --git a/<a id="h4" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -51,7 +51,6 @@ struct DC { /* draw context */
+</a> 
+ struct Client {
+ 	char name[256];
+<a href="#h4-0-3" id="h4-0-3" class="d">-	char *tags[TLast];
+</a> 	int proto;
+ 	int x, y, w, h;
+ 	int tx, ty, tw, th; /* title */
+<a href="#h4-1" id="h4-1" class="h">@@ -61,13 +60,15 @@ struct Client {
+</a> 	unsigned int border;
+ 	Bool isfloat;
+ 	Bool ismax;
+<a href="#h4-1-3" id="h4-1-3" class="i">+	Bool tags[TLast];
+</a> 	Client *next;
+ 	Client *prev;
+ 	Window win;
+ 	Window title;
+ };
+ 
+<a href="#h4-1-10" id="h4-1-10" class="d">-extern char *tags[TLast], stext[1024];
+</a><a href="#h4-1-11" id="h4-1-11" class="i">+extern const char *tags[TLast];
+</a><a href="#h4-1-12" id="h4-1-12" class="i">+extern char stext[1024];
+</a> extern int tsel, screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+ extern void (*handler[LASTEvent])(XEvent *);
+ extern void (*arrange)(Arg *);
+<a href="#h4-2" id="h4-2" class="h">@@ -104,7 +105,7 @@ extern void drawstatus();
+</a> extern void drawtitle(Client *c);
+ extern unsigned long getcolor(const char *colstr);
+ extern void setfont(const char *fontstr);
+<a href="#h4-2-3" id="h4-2-3" class="d">-extern unsigned int textw(char *text);
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+extern unsigned int textw(const char *text);
+</a> 
+ /* event.c */
+ extern void grabkeys();
+<b>diff --git a/<a id="h5" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -13,7 +13,7 @@
+</a> 
+ typedef struct {
+ 	const char *pattern;
+<a href="#h5-0-3" id="h5-0-3" class="d">-	char *tags[TLast];
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	Bool tags[TLast];
+</a> 	Bool isfloat;
+ } Rule;
+ 
+<a href="#h5-1" id="h5-1" class="h">@@ -30,7 +30,7 @@ appendtag(Arg *arg)
+</a> 	if(!sel)
+ 		return;
+ 
+<a href="#h5-1-3" id="h5-1-3" class="d">-	sel-&gt;tags[arg-&gt;i] = tags[arg-&gt;i];
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+	sel-&gt;tags[arg-&gt;i] = True;
+</a> 	arrange(NULL);
+ }
+ 
+<a href="#h5-2" id="h5-2" class="h">@@ -146,7 +146,7 @@ replacetag(Arg *arg)
+</a> 		return;
+ 
+ 	for(i = 0; i &lt; TLast; i++)
+<a href="#h5-2-3" id="h5-2-3" class="d">-		sel-&gt;tags[i] = NULL;
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+		sel-&gt;tags[i] = False;
+</a> 	appendtag(arg);
+ }
+ 
+<a href="#h5-3" id="h5-3" class="h">@@ -171,7 +171,7 @@ settags(Client *c)
+</a> 					for(j = 0; j &lt; TLast; j++) {
+ 						if(rule[i].tags[j])
+ 							matched = True;
+<a href="#h5-3-3" id="h5-3-3" class="d">-						c-&gt;tags[j] = rule[i].tags[j];
+</a><a href="#h5-3-4" id="h5-3-4" class="i">+						c-&gt;tags[j] = True;
+</a> 					}
+ 					c-&gt;isfloat = rule[i].isfloat;
+ 				}
+<a href="#h5-4" id="h5-4" class="h">@@ -184,7 +184,7 @@ settags(Client *c)
+</a> 			XFree(ch.res_name);
+ 	}
+ 	if(!matched)
+<a href="#h5-4-3" id="h5-4-3" class="d">-		c-&gt;tags[tsel] = tags[tsel];
+</a><a href="#h5-4-4" id="h5-4-4" class="i">+		c-&gt;tags[tsel] = True;
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

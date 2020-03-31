@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add -n option for setting WM_CLASS instance name - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0cd5117a2cfc4134712de748ec416be0655838b2.html">0cd5117a2cfc4134712de748ec416be0655838b2</a>
+<b>parent</b> <a href="../commit/bd5fdbe64c8abfb624ad59939ed9b221c8b04eef.html">bd5fdbe64c8abfb624ad59939ed9b221c8b04eef</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Fri, 29 Jan 2016 22:03:01 +0100
+
+Add -n option for setting WM_CLASS instance name
+
+Signed-off-by: Christoph Lohmann &lt;20h@r-36.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.1</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">34</td><td><span class="i">+++++++++++++++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>2 files changed, 26 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.1.html">st.1</a> b/<a href="../file/st.1.html">st.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,6 +10,8 @@ st \- simple terminal
+</a> .IR font ]
+ .RB [ \-g
+ .IR geometry ]
+<a href="#h0-0-3" id="h0-0-3" class="i">+.RB [ \-n
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+.IR name ]
+</a> .RB [ \-o
+ .IR iofile ]
+ .RB [ \-T
+<a href="#h0-1" id="h0-1" class="h">@@ -32,6 +34,8 @@ st \- simple terminal
+</a> .IR font ]
+ .RB [ \-g
+ .IR geometry ]
+<a href="#h0-1-3" id="h0-1-3" class="i">+.RB [ \-n
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+.IR name ]
+</a> .RB [ \-o
+ .IR iofile ]
+ .RB [ \-T
+<a href="#h0-2" id="h0-2" class="h">@@ -68,6 +72,9 @@ for further details.
+</a> .B \-i
+ will fixate the position given with the -g option.
+ .TP
+<a href="#h0-2-3" id="h0-2-3" class="i">+.BI \-n &quot; name&quot;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+defines the window instance name (default $TERM).
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+.TP
+</a> .BI \-o &quot; iofile&quot;
+ writes all the I/O to
+ .I iofile.
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -524,14 +524,15 @@ static int cmdfd;
+</a> static pid_t pid;
+ static Selection sel;
+ static int iofd = 1;
+<a href="#h1-0-3" id="h1-0-3" class="d">-static char **opt_cmd = NULL;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-static char *opt_io = NULL;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-static char *opt_title = NULL;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-static char *opt_embed = NULL;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+static char **opt_cmd  = NULL;
+</a> static char *opt_class = NULL;
+<a href="#h1-0-9" id="h1-0-9" class="d">-static char *opt_font = NULL;
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-static char *opt_line = NULL;
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-static int oldbutton = 3; /* button event on startup: 3 = release */
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+static char *opt_embed = NULL;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+static char *opt_font  = NULL;
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+static char *opt_io    = NULL;
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+static char *opt_line  = NULL;
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+static char *opt_name  = NULL;
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+static char *opt_title = NULL;
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+static int oldbutton   = 3; /* button event on startup: 3 = release */
+</a> 
+ static char *usedfont = NULL;
+ static double usedfontsize = 0;
+<a href="#h1-1" id="h1-1" class="h">@@ -3240,7 +3241,8 @@ xclear(int x1, int y1, int x2, int y2)
+</a> void
+ xhints(void)
+ {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	XClassHint class = {termname, opt_class ? opt_class : termname};
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	XClassHint class = {opt_name ? opt_name : termname,
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	                    opt_class ? opt_class : termname};
+</a> 	XWMHints wm = {.flags = InputHint, .input = 1};
+ 	XSizeHints *sizeh = NULL;
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -4332,13 +4334,12 @@ run(void)
+</a> void
+ usage(void)
+ {
+<a href="#h1-2-3" id="h1-2-3" class="d">-	die(&quot;usage: %s [-aiv] [-c class] [-f font] [-g geometry]&quot;
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-	&quot; [-o file] [-T title]\n&quot;
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-	&quot;          [-t title] [-w windowid] [[-e] command [args ...]]\n&quot;
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-	&quot;       %s [-aiv] [-c class] [-f font] [-g geometry]&quot;
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-	&quot; [-o file] [-T title]\n&quot;
+</a><a href="#h1-2-8" id="h1-2-8" class="d">-	&quot;          [-t title] [-w windowid] -l line [stty_args ...]\n&quot;,
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-	argv0, argv0);
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+	die(&quot;usage: %s &quot;
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+	&quot;[-aiv] [-c class] [-f font] [-g geometry] [-n name] [-o file]\n       &quot;
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+	&quot;   [-T title] [-t title] [-w windowid] [[-e] command [args ...]\n     &quot;
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+	&quot;  %s [-aiv] [-c class] [-f font] [-g geometry] [-n name] [-o file]\n  &quot;
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+	&quot;        [-o file] [-T title] [-t title] [-w windowid] -l line&quot;
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+	&quot; [stty_args ...]\n&quot;, argv0, argv0);
+</a> }
+ 
+ void
+<a href="#h1-3" id="h1-3" class="h">@@ -4383,6 +4384,9 @@ main(int argc, char *argv[])
+</a> 	case &#39;l&#39;:
+ 		opt_line = EARGF(usage());
+ 		break;
+<a href="#h1-3-3" id="h1-3-3" class="i">+	case &#39;n&#39;:
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		opt_name = EARGF(usage());
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+		break;
+</a> 	case &#39;t&#39;:
+ 	case &#39;T&#39;:
+ 		opt_title = EARGF(usage());
+</pre>
+</div>
+</body>
+</html>

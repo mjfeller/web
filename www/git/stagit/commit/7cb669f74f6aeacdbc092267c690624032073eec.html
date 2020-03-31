@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>dont truncate summary length anymore - stagit - static site generate for git repositories
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="stagit Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>stagit</h1><span class="desc">static site generate for git repositories
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7cb669f74f6aeacdbc092267c690624032073eec.html">7cb669f74f6aeacdbc092267c690624032073eec</a>
+<b>parent</b> <a href="../commit/dc8d0c84ff1f09b25e36313a1de6848f51a32320.html">dc8d0c84ff1f09b25e36313a1de6848f51a32320</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Sun,  7 May 2017 12:02:48 +0200
+
+dont truncate summary length anymore
+
+make sure not partial (invalid) utf-8 sequences are written. The old logic
+truncated by bytelen was wrong. It is too complex to implement it in a
+correct way with git: it is not assured a commit message is UTF-8 encoded.
+
+remove showlinecount and summarylen variables.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">stagit.c</a></td><td> | </td><td class="num">16</td><td><span class="i">++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/stagit.c.html">stagit.c</a> b/<a href="../file/stagit.c.html">stagit.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -46,11 +46,6 @@ struct commitinfo {
+</a> 	size_t ndeltas;
+ };
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-/* summary length (bytes) in the log */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-static const unsigned summarylen = 70;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-/* display line count or file size in file tree index */
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-static const int showlinecount = 1;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-
+</a> static git_repository *repo;
+ 
+ static const char *relpath = &quot;&quot;;
+<a href="#h0-1" id="h0-1" class="h">@@ -537,20 +532,13 @@ printshowfile(FILE *fp, struct commitinfo *ci)
+</a> void
+ writelogline(FILE *fp, struct commitinfo *ci)
+ {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	size_t len;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-
+</a> 	fputs(&quot;&lt;tr&gt;&lt;td&gt;&quot;, fp);
+ 	if (ci-&gt;author)
+ 		printtimeshort(fp, &amp;(ci-&gt;author-&gt;when));
+ 	fputs(&quot;&lt;/td&gt;&lt;td&gt;&quot;, fp);
+ 	if (ci-&gt;summary) {
+ 		fprintf(fp, &quot;&lt;a href=\&quot;%scommit/%s.html\&quot;&gt;&quot;, relpath, ci-&gt;oid);
+<a href="#h0-1-11" id="h0-1-11" class="d">-		if ((len = strlen(ci-&gt;summary)) &gt; summarylen) {
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-			xmlencode(fp, ci-&gt;summary, summarylen - 1);
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-			fputs(&quot;…&quot;, fp);
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-		} else {
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-			xmlencode(fp, ci-&gt;summary, len);
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-		}
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		xmlencode(fp, ci-&gt;summary, strlen(ci-&gt;summary));
+</a> 		fputs(&quot;&lt;/a&gt;&quot;, fp);
+ 	}
+ 	fputs(&quot;&lt;/td&gt;&lt;td&gt;&quot;, fp);
+<a href="#h0-2" id="h0-2" class="h">@@ -836,7 +824,7 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
+</a> 			fprintf(fp, &quot;&lt;/td&gt;&lt;td&gt;&lt;a href=\&quot;%s%s\&quot;&gt;&quot;, relpath, filepath);
+ 			xmlencode(fp, entrypath, strlen(entrypath));
+ 			fputs(&quot;&lt;/a&gt;&lt;/td&gt;&lt;td class=\&quot;num\&quot; align=\&quot;right\&quot;&gt;&quot;, fp);
+<a href="#h0-2-3" id="h0-2-3" class="d">-			if (showlinecount &amp;&amp; lc &gt; 0)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			if (lc &gt; 0)
+</a> 				fprintf(fp, &quot;%dL&quot;, lc);
+ 			else
+ 				fprintf(fp, &quot;%juB&quot;, (uintmax_t)filesize);
+</pre>
+</div>
+</body>
+</html>

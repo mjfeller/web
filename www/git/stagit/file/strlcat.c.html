@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>strlcat.c - stagit - static site generate for git repositories
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="stagit Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>stagit</h1><span class="desc">static site generate for git repositories
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> strlcat.c (1767B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> /*	$OpenBSD: strlcat.c,v 1.15 2015/03/02 21:41:08 millert Exp $	*/
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> /*
+<a href="#l4" class="line" id="l4">      4</a>  * Copyright (c) 1998, 2015 Todd C. Miller &lt;Todd.Miller@courtesan.com&gt;
+<a href="#l5" class="line" id="l5">      5</a>  *
+<a href="#l6" class="line" id="l6">      6</a>  * Permission to use, copy, modify, and distribute this software for any
+<a href="#l7" class="line" id="l7">      7</a>  * purpose with or without fee is hereby granted, provided that the above
+<a href="#l8" class="line" id="l8">      8</a>  * copyright notice and this permission notice appear in all copies.
+<a href="#l9" class="line" id="l9">      9</a>  *
+<a href="#l10" class="line" id="l10">     10</a>  * THE SOFTWARE IS PROVIDED &quot;AS IS&quot; AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+<a href="#l11" class="line" id="l11">     11</a>  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+<a href="#l12" class="line" id="l12">     12</a>  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+<a href="#l13" class="line" id="l13">     13</a>  * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+<a href="#l14" class="line" id="l14">     14</a>  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+<a href="#l15" class="line" id="l15">     15</a>  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+<a href="#l16" class="line" id="l16">     16</a>  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+<a href="#l17" class="line" id="l17">     17</a>  */
+<a href="#l18" class="line" id="l18">     18</a> 
+<a href="#l19" class="line" id="l19">     19</a> #include &lt;sys/types.h&gt;
+<a href="#l20" class="line" id="l20">     20</a> #include &lt;string.h&gt;
+<a href="#l21" class="line" id="l21">     21</a> 
+<a href="#l22" class="line" id="l22">     22</a> #include &quot;compat.h&quot;
+<a href="#l23" class="line" id="l23">     23</a> 
+<a href="#l24" class="line" id="l24">     24</a> /*
+<a href="#l25" class="line" id="l25">     25</a>  * Appends src to string dst of size dsize (unlike strncat, dsize is the
+<a href="#l26" class="line" id="l26">     26</a>  * full size of dst, not space left).  At most dsize-1 characters
+<a href="#l27" class="line" id="l27">     27</a>  * will be copied.  Always NUL terminates (unless dsize &lt;= strlen(dst)).
+<a href="#l28" class="line" id="l28">     28</a>  * Returns strlen(src) + MIN(dsize, strlen(initial dst)).
+<a href="#l29" class="line" id="l29">     29</a>  * If retval &gt;= dsize, truncation occurred.
+<a href="#l30" class="line" id="l30">     30</a>  */
+<a href="#l31" class="line" id="l31">     31</a> size_t
+<a href="#l32" class="line" id="l32">     32</a> strlcat(char *dst, const char *src, size_t dsize)
+<a href="#l33" class="line" id="l33">     33</a> {
+<a href="#l34" class="line" id="l34">     34</a> 	const char *odst = dst;
+<a href="#l35" class="line" id="l35">     35</a> 	const char *osrc = src;
+<a href="#l36" class="line" id="l36">     36</a> 	size_t n = dsize;
+<a href="#l37" class="line" id="l37">     37</a> 	size_t dlen;
+<a href="#l38" class="line" id="l38">     38</a> 
+<a href="#l39" class="line" id="l39">     39</a> 	/* Find the end of dst and adjust bytes left but don&#39;t go past end. */
+<a href="#l40" class="line" id="l40">     40</a> 	while (n-- != 0 &amp;&amp; *dst != &#39;\0&#39;)
+<a href="#l41" class="line" id="l41">     41</a> 		dst++;
+<a href="#l42" class="line" id="l42">     42</a> 	dlen = dst - odst;
+<a href="#l43" class="line" id="l43">     43</a> 	n = dsize - dlen;
+<a href="#l44" class="line" id="l44">     44</a> 
+<a href="#l45" class="line" id="l45">     45</a> 	if (n-- == 0)
+<a href="#l46" class="line" id="l46">     46</a> 		return(dlen + strlen(src));
+<a href="#l47" class="line" id="l47">     47</a> 	while (*src != &#39;\0&#39;) {
+<a href="#l48" class="line" id="l48">     48</a> 		if (n != 0) {
+<a href="#l49" class="line" id="l49">     49</a> 			*dst++ = *src;
+<a href="#l50" class="line" id="l50">     50</a> 			n--;
+<a href="#l51" class="line" id="l51">     51</a> 		}
+<a href="#l52" class="line" id="l52">     52</a> 		src++;
+<a href="#l53" class="line" id="l53">     53</a> 	}
+<a href="#l54" class="line" id="l54">     54</a> 	*dst = &#39;\0&#39;;
+<a href="#l55" class="line" id="l55">     55</a> 
+<a href="#l56" class="line" id="l56">     56</a> 	return(dlen + (src - osrc));	/* count does not include NUL */
+<a href="#l57" class="line" id="l57">     57</a> }
+</pre>
+</div>
+</body>
+</html>

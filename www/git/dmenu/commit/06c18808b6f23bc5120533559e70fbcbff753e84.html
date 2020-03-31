@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>replaced promptw - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/06c18808b6f23bc5120533559e70fbcbff753e84.html">06c18808b6f23bc5120533559e70fbcbff753e84</a>
+<b>parent</b> <a href="../commit/a7aee433ccfd2590e0785a7b93a89d8d0593a234.html">a7aee433ccfd2590e0785a7b93a89d8d0593a234</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Mon,  2 Aug 2010 14:49:14 +0100
+
+replaced promptw
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 6 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -26,7 +26,7 @@ clean:
+</a> dist: clean
+ 	@echo creating dist tarball
+ 	@mkdir -p dmenu-${VERSION}
+<a href="#h0-0-3" id="h0-0-3" class="d">-	@cp -R LICENSE Makefile README config.mk dmenu.1 dmenu.c dmenu_path dmenu_run dmenu-${VERSION}
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	@cp LICENSE Makefile README config.mk dmenu.1 dmenu.c dmenu_path dmenu_run dmenu-${VERSION}
+</a> 	@tar -cf dmenu-${VERSION}.tar dmenu-${VERSION}
+ 	@gzip dmenu-${VERSION}.tar
+ 	@rm -rf dmenu-${VERSION}
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -42,6 +42,7 @@ static void setup(void);
+</a> static void usage(void);
+ 
+ static char text[4096];
+<a href="#h1-0-3" id="h1-0-3" class="i">+static int promptw;
+</a> static size_t cursor = 0;
+ static const char *prompt = NULL;
+ static const char *normbgcolor = &quot;#cccccc&quot;;
+<a href="#h1-1" id="h1-1" class="h">@@ -79,7 +80,7 @@ void
+</a> calcoffsetsh(void) {
+ 	unsigned int w, x;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	w = (prompt ? textw(dc, prompt) : 0) + inputw + textw(dc, &quot;&lt;&quot;) + textw(dc, &quot;&gt;&quot;);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	w = promptw + inputw + textw(dc, &quot;&lt;&quot;) + textw(dc, &quot;&gt;&quot;);
+</a> 	for(x = w, next = curr; next; next = next-&gt;right)
+ 		if((x += MIN(textw(dc, next-&gt;text), mw / 3)) &gt; mw)
+ 			break;
+<a href="#h1-2" id="h1-2" class="h">@@ -118,7 +119,7 @@ drawmenu(void) {
+</a> 	dc-&gt;y = topbar ? 0 : mh - dc-&gt;h;
+ 	/* print prompt? */
+ 	if(prompt) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-		dc-&gt;w = textw(dc, prompt);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		dc-&gt;w = promptw;
+</a> 		drawtext(dc, prompt, selcol);
+ 		dc-&gt;x = dc-&gt;w;
+ 	}
+<a href="#h1-3" id="h1-3" class="h">@@ -506,7 +507,9 @@ setup(void) {
+</a> 	grabkeyboard();
+ 	setcanvas(dc, win, mw, mh);
+ 	inputw = MIN(inputw, mw/3);
+<a href="#h1-3-3" id="h1-3-3" class="i">+	promptw = prompt ? MIN(textw(dc, prompt), mw/5) : 0;
+</a> 	XMapRaised(dc-&gt;dpy, win);
+<a href="#h1-3-5" id="h1-3-5" class="i">+	text[0] = &#39;\0&#39;;
+</a> 	match();
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

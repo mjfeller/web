@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add &#39;--&#39; and concatenated parameter support. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c6b1f05d151e74197ca80c9b6363ebc28ced4951.html">c6b1f05d151e74197ca80c9b6363ebc28ced4951</a>
+<b>parent</b> <a href="../commit/c79e3392413da488eecb2769473989d0c2c861c9.html">c79e3392413da488eecb2769473989d0c2c861c9</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Thu,  9 Feb 2012 18:03:50 +0100
+
+Add &#39;--&#39; and concatenated parameter support.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">54</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>1 file changed, 38 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -863,30 +863,52 @@ xerror(Display *dpy, XErrorEvent *ee) {
+</a> 	return xerrorxlib(dpy, ee); /* may call exit */
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+char *argv0;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a> void
+<a href="#h0-0-6" id="h0-0-6" class="d">-usage(char *argv0)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+usage(void)
+</a> {
+ 	die(&quot;usage: %s [-dhsv] command...\n&quot;, argv0);
+ }
+ 
+ int
+ main(int argc, char *argv[]) {
+<a href="#h0-0-14" id="h0-0-14" class="d">-	int i, detach = 0;
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	for(i = 1; i &lt; argc &amp;&amp; !cmd; i++) {
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-		if(!strcmp(&quot;-v&quot;, argv[i]))
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-			die(&quot;tabbed-&quot;VERSION&quot;, © 2009-2011 tabbed engineers, see LICENSE for details\n&quot;);
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-		else if(!strcmp(&quot;-d&quot;, argv[i]))
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-			detach = 1;
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-		else if(!strcmp(&quot;-s&quot;, argv[i]))
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-			doinitspawn = False;
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-		else if(!strcmp(&quot;-h&quot;, argv[i]))
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-			usage(argv[0]);
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-		else
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-			setcmd(argc-i, argv+i);
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	int detach = 0;
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	char _argc;
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	char **_argv;
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	for(argv0 = *argv, argv++, argc--;
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+			argv[0] &amp;&amp; argv[0][1] &amp;&amp; argv[0][0] == &#39;-&#39;;
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+			argc--, argv++) {
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+		if(argv[0][1] == &#39;-&#39; &amp;&amp; argv[0][2] == &#39;\0&#39;) {
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+			argv++;
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+			argc--;
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+			break;
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+		}
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+		for(argv[0]++, _argv = argv; argv[0][0]; argv[0]++) {
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+			if(_argv != argv)
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+				break;
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+			_argc = argv[0][0];
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+			switch(_argc) {
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+			case &#39;v&#39;:
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+				die(&quot;tabbed-&quot;VERSION&quot;, © 2009-2011&quot;
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+					&quot; tabbed engineers, see LICENSE&quot;
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+					&quot; for details.\n&quot;);
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+			case &#39;s&#39;:
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+				doinitspawn = False;
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+				break;
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+			case &#39;h&#39;:
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+				usage();
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+			case &#39;d&#39;:
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+				detach = 1;
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+				break;
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+			}
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+		}
+</a> 	}
+<a href="#h0-0-59" id="h0-0-59" class="d">-	if(!cmd)
+</a><a href="#h0-0-60" id="h0-0-60" class="d">-		usage(argv[0]);
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+	if(argc &lt; 1)
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+		usage();
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+	setcmd(argc, argv);
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+
+</a> 	if(!setlocale(LC_CTYPE, &quot;&quot;) || !XSupportsLocale())
+ 		fprintf(stderr, &quot;tabbed: no locale support\n&quot;);
+ 	if(!(dpy = XOpenDisplay(NULL)))
+</pre>
+</div>
+</body>
+</html>

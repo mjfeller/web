@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix WM_CLASS and WM_WINDOW_ROLE properties - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3e017b1a89c1e0d8cb706638d0223afcf834e70d.html">3e017b1a89c1e0d8cb706638d0223afcf834e70d</a>
+<b>parent</b> <a href="../commit/bd17d359d6a9eb2461a939a33d710b2f0dade4f1.html">bd17d359d6a9eb2461a939a33d710b2f0dade4f1</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sun, 22 Nov 2015 11:53:19 +0100
+
+Fix WM_CLASS and WM_WINDOW_ROLE properties
+
+Instead of forcing class and instance names, which is what GTK does by
+default anyway, allow the user to set the instance name, but keep the
+general class as “Surf”.
+Is we won&#39;t support a “-name” parameter and don&#39;t implement a parsing of
+RESOURCE_NAME env variable, let&#39;s fallback on the third behaviour, use
+the name of the calling executable.
+That would let the user do things like &#39;ln -s ./surf ./surf-other;
+./surf-other&#39; and set different parameters for the two instances (in dwm
+for example).
+Try to generate a unique WM_WINDOW_ROLE (within the surf process)
+composed of “Surf” and the view ID.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -948,6 +948,7 @@ showview(WebKitWebView *v, Client *c)
+</a> GtkWidget *
+ createwindow(Client *c)
+ {
+<a href="#h0-0-3" id="h0-0-3" class="i">+	char *wmstr;
+</a> 	GtkWidget *w;
+ 
+ 	if (embed) {
+<a href="#h0-1" id="h0-1" class="h">@@ -955,19 +956,14 @@ createwindow(Client *c)
+</a> 	} else {
+ 		w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-		/* TA:  20091214:  Despite what the GNOME docs say, the ICCCM
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		 * is always correct, so we should still call this function.
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		 * But when doing so, we *must* differentiate between a
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-		 * WM_CLASS and a resource on the window.  By convention, the
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		 * window class (WM_CLASS) is capped, while the resource is in
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-		 * lowercase.   Both these values come as a pair.
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-		 */
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-		gtk_window_set_wmclass(GTK_WINDOW(w), &quot;surf&quot;, &quot;Surf&quot;);
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		wmstr = g_path_get_basename(argv0);
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		gtk_window_set_wmclass(GTK_WINDOW(w), wmstr, &quot;Surf&quot;);
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+		g_free(wmstr);
+</a> 
+<a href="#h0-1-15" id="h0-1-15" class="d">-		/* TA:  20091214:  And set the role here as well -- so that
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-		 * sessions can pick this up.
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-		 */
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-		gtk_window_set_role(GTK_WINDOW(w), &quot;Surf&quot;);
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+		wmstr = g_strdup_printf(&quot;%s[%lu]&quot;, &quot;Surf&quot;,
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+		        webkit_web_view_get_page_id(c-&gt;view));
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+		gtk_window_set_role(GTK_WINDOW(w), wmstr);
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+		g_free(wmstr);
+</a> 
+ 		gtk_window_set_default_size(GTK_WINDOW(w), 800, 600);
+ 	}
+</pre>
+</div>
+</body>
+</html>

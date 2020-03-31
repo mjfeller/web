@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Peter Hartlich&#39;s patch regarding aspect calculation with slight modifications - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/db5db8806f4bbb26bb1259f7ea42d7a826517bbb.html">db5db8806f4bbb26bb1259f7ea42d7a826517bbb</a>
+<b>parent</b> <a href="../commit/258c3380305683de8031871cf95c1cc04ed7ad9e.html">258c3380305683de8031871cf95c1cc04ed7ad9e</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 23 Aug 2008 09:54:55 +0100
+
+applied Peter Hartlich&#39;s patch regarding aspect calculation with slight modifications
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">23</td><td><span class="i">+++++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 17 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1046,23 +1046,34 @@ quit(const Arg *arg) {
+</a> 
+ void
+ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+<a href="#h0-0-3" id="h0-0-3" class="i">+	float a;
+</a> 	XWindowChanges wc;
+ 
+ 	if(sizehints) {
+<a href="#h0-0-7" id="h0-0-7" class="i">+		/* see last two sentences in ICCCM 4.1.2.3 */
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		Bool baseismin = c-&gt;basew == c-&gt;minw &amp;&amp; c-&gt;baseh == c-&gt;minh;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a> 		/* set minimum possible */
+ 		w = MAX(1, w);
+ 		h = MAX(1, h);
+ 
+<a href="#h0-0-14" id="h0-0-14" class="d">-		/* temporarily remove base dimensions */
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-		w -= c-&gt;basew;
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-		h -= c-&gt;baseh;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		if(!baseismin) { /* temporarily remove base dimensions */
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+			w -= c-&gt;basew;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+			h -= c-&gt;baseh;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		}
+</a> 
+ 		/* adjust for aspect limits */
+ 		if(c-&gt;mina &gt; 0 &amp;&amp; c-&gt;maxa &gt; 0) {
+<a href="#h0-0-24" id="h0-0-24" class="d">-			if(c-&gt;maxa &lt; (float) w/h)
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+			a = (float) w/h;
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+			if(a &gt; c-&gt;maxa)
+</a> 				w = h * c-&gt;maxa;
+<a href="#h0-0-28" id="h0-0-28" class="d">-			else if(c-&gt;mina &gt; (float) h/w)
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-				h = w * c-&gt;mina;
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+			else if(a &lt; c-&gt;mina)
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+				h = w / c-&gt;mina;
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+		}
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+		if(baseismin) { /* increment calculation requires this */
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+			w -= c-&gt;basew;
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+			h -= c-&gt;baseh;
+</a> 		}
+ 
+ 		/* adjust for increment value */
+</pre>
+</div>
+</body>
+</html>

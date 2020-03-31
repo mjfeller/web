@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied sanders jukka patch - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7d7cde0fd6ceae2f7d759b924afd8df279a4ddde.html">7d7cde0fd6ceae2f7d759b924afd8df279a4ddde</a>
+<b>parent</b> <a href="../commit/6b25d06d7d159bf89d740847fedc876ab0137b6b.html">6b25d06d7d159bf89d740847fedc876ab0137b6b</a>
+<b>Author:</b> arg@mmvi &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Mon, 25 Sep 2006 20:38:30 +0200
+
+applied sanders jukka patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">view.c</a></td><td> | </td><td class="num">8</td><td><span class="i">+++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>3 files changed, 5 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -101,7 +101,7 @@ extern void (*handler[LASTEvent])(XEvent *);	/* event handler */
+</a> extern void (*arrange)(Arg *);			/* arrange function, indicates mode  */
+ extern Atom wmatom[WMLast], netatom[NetLast];
+ extern Bool running, issel, *seltag;		/* seltag is array of Bool */
+<a href="#h0-0-3" id="h0-0-3" class="d">-extern Client *clients, *sel, *stack;		/* global cleint list and stack */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+extern Client *clients, *sel, *stack;		/* global client list and stack */
+</a> extern Cursor cursor[CurLast];
+ extern DC dc;					/* global draw context */
+ extern Display *dpy;
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -190,11 +190,7 @@ configurerequest(XEvent *e) {
+</a> 	XWindowChanges wc;
+ 
+ 	if((c = getclient(ev-&gt;window))) {
+<a href="#h1-0-3" id="h1-0-3" class="d">-		if((c == sel) &amp;&amp; !c-&gt;isfloat &amp;&amp; (arrange != dofloat)) {
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-			synconfig(c, sx, sy + bh, sw - 2, sh - 2 - bh, ev-&gt;border_width);
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-			XSync(dpy, False);
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-			return;
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-		}
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		c-&gt;ismax = False;
+</a> 		gravitate(c, True);
+ 		if(ev-&gt;value_mask &amp; CWX)
+ 			c-&gt;x = ev-&gt;x;
+<b>diff --git a/<a id="h2" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -101,9 +101,8 @@ dotile(Arg *arg) {
+</a> 	Client *c;
+ 
+ 	w = sw - mw;
+<a href="#h2-0-3" id="h2-0-3" class="d">-	for(n = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-		if(isvisible(c) &amp;&amp; !c-&gt;isfloat)
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-			n++;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+		n++;
+</a> 
+ 	if(n &gt; 1)
+ 		h = (sh - bh) / (n - 1);
+<a href="#h2-1" id="h2-1" class="h">@@ -116,8 +115,7 @@ dotile(Arg *arg) {
+</a> 				resize(c, True, TopLeft);
+ 				continue;
+ 			}
+<a href="#h2-1-3" id="h2-1-3" class="d">-			if(c-&gt;ismax)
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-				togglemax(c);
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+			c-&gt;ismax = False;
+</a> 			if(n == 1) {
+ 				c-&gt;x = sx;
+ 				c-&gt;y = sy + bh;
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>several bugfixes - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1d729384d12d289951504b130b8804ab85c0b12b.html">1d729384d12d289951504b130b8804ab85c0b12b</a>
+<b>parent</b> <a href="../commit/25c1eb28f955adf241226596335f5d73b28620a0.html">25c1eb28f955adf241226596335f5d73b28620a0</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Wed,  1 Jul 2009 19:15:20 +0100
+
+several bugfixes
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i"></span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">25</td><td><span class="i">++++++++</span><span class="d">-----------------</span></td></tr>
+</table></pre><pre>3 files changed, 10 insertions(+), 21 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -68,12 +68,10 @@ static Key keys[] = {
+</a> 	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
+ 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
+ 	{ MODKEY|ShiftMask,             XK_0,      tag,            {.ui = ~0 } },
+<a href="#h0-0-3" id="h0-0-3" class="d">-#ifdef XINERAMA
+</a> 	{ MODKEY,                       XK_w,      focusmon,       {.ui = 0 } },
+ 	{ MODKEY,                       XK_e,      focusmon,       {.ui = 1 } },
+ 	{ MODKEY|ShiftMask,             XK_w,      tagmon,         {.ui = 0 } },
+ 	{ MODKEY|ShiftMask,             XK_e,      tagmon,         {.ui = 1 } },
+<a href="#h0-0-8" id="h0-0-8" class="d">-#endif /* XINERAMA */
+</a> 	TAGKEYS(                        XK_1,                      0)
+ 	TAGKEYS(                        XK_2,                      1)
+ 	TAGKEYS(                        XK_3,                      2)
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -11,8 +11,8 @@ X11INC = /usr/X11R6/include
+</a> X11LIB = /usr/X11R6/lib
+ 
+ # Xinerama, un-comment if you want it
+<a href="#h1-0-3" id="h1-0-3" class="d">-#XINERAMALIBS = -L${X11LIB} -lXinerama
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#XINERAMAFLAGS = -DXINERAMA
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+XINERAMALIBS = -L${X11LIB} -lXinerama
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+XINERAMAFLAGS = -DXINERAMA
+</a> 
+ # includes and libs
+ INCS = -I. -I/usr/include -I${X11INC}
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -172,6 +172,7 @@ static void enternotify(XEvent *e);
+</a> static void expose(XEvent *e);
+ static void focus(Client *c);
+ static void focusin(XEvent *e);
+<a href="#h2-0-3" id="h2-0-3" class="i">+static void focusmon(const Arg *arg);
+</a> static void focusstack(const Arg *arg);
+ static unsigned long getcolor(const char *colstr);
+ static Bool getrootpointer(int *x, int *y);
+<a href="#h2-1" id="h2-1" class="h">@@ -179,6 +180,7 @@ static long getstate(Window w);
+</a> static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+ static void grabbuttons(Client *c, Bool focused);
+ static void grabkeys(void);
+<a href="#h2-1-3" id="h2-1-3" class="i">+static Monitor *idxtomon(unsigned int n);
+</a> static void initfont(const char *fontstr);
+ static Bool isprotodel(Client *c);
+ static void keypress(XEvent *e);
+<a href="#h2-2" id="h2-2" class="h">@@ -206,6 +208,7 @@ static void showhide(Client *c);
+</a> static void sigchld(int signal);
+ static void spawn(const Arg *arg);
+ static void tag(const Arg *arg);
+<a href="#h2-2-3" id="h2-2-3" class="i">+static void tagmon(const Arg *arg);
+</a> static int textnw(const char *text, unsigned int len);
+ static void tile(Monitor *);
+ static void togglebar(const Arg *arg);
+<a href="#h2-3" id="h2-3" class="h">@@ -230,11 +233,6 @@ static int xerror(Display *dpy, XErrorEvent *ee);
+</a> static int xerrordummy(Display *dpy, XErrorEvent *ee);
+ static int xerrorstart(Display *dpy, XErrorEvent *ee);
+ static void zoom(const Arg *arg);
+<a href="#h2-3-3" id="h2-3-3" class="d">-#ifdef XINERAMA
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-static void focusmon(const Arg *arg);
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-static Monitor *idxtomon(unsigned int n);
+</a><a href="#h2-3-6" id="h2-3-6" class="d">-static void tagmon(const Arg *arg);
+</a><a href="#h2-3-7" id="h2-3-7" class="d">-#endif /* XINERAMA */
+</a> 
+ /* variables */
+ static char stext[256];
+<a href="#h2-4" id="h2-4" class="h">@@ -309,9 +307,9 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h) {
+</a> 	*h = MAX(1, *h);
+ 
+ 	if(*x &gt; m-&gt;mx + m-&gt;mw)
+<a href="#h2-4-3" id="h2-4-3" class="d">-		*x = m-&gt;mw - WIDTH(c);
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+		*x = m-&gt;mx + m-&gt;mw - WIDTH(c);
+</a> 	if(*y &gt; m-&gt;my + m-&gt;mh)
+<a href="#h2-4-6" id="h2-4-6" class="d">-		*y = m-&gt;mh - HEIGHT(c);
+</a><a href="#h2-4-7" id="h2-4-7" class="i">+		*y = m-&gt;my + m-&gt;mh - HEIGHT(c);
+</a> 	if(*x + *w + 2 * c-&gt;bw &lt; m-&gt;mx)
+ 		*x = m-&gt;mx;
+ 	if(*y + *h + 2 * c-&gt;bw &lt; m-&gt;my)
+<a href="#h2-5" id="h2-5" class="h">@@ -636,7 +634,6 @@ drawbar(Monitor *m) {
+</a> 	}
+ 
+ 	dc.x = 0;
+<a href="#h2-5-3" id="h2-5-3" class="d">-#ifdef XINERAMA
+</a> 	if(mons-&gt;next) { /* more than a single monitor */
+ 		char buf[2];
+ 		buf[0] = m-&gt;screen_number + &#39;0&#39;;
+<a href="#h2-6" id="h2-6" class="h">@@ -645,7 +642,6 @@ drawbar(Monitor *m) {
+</a> 		drawtext(buf, selmon == m ? dc.sel : dc.norm, True);
+ 		dc.x += dc.w;
+ 	}
+<a href="#h2-6-3" id="h2-6-3" class="d">-#endif /* XINERAMA */
+</a> 	m-&gt;btx = dc.x;
+ 	for(i = 0; i &lt; LENGTH(tags); i++) {
+ 		dc.w = TEXTW(tags[i]);
+<a href="#h2-7" id="h2-7" class="h">@@ -803,7 +799,6 @@ focusin(XEvent *e) { /* there are some broken focus acquiring clients */
+</a> 		XSetInputFocus(dpy, selmon-&gt;sel-&gt;win, RevertToPointerRoot, CurrentTime);
+ }
+ 
+<a href="#h2-7-3" id="h2-7-3" class="d">-#ifdef XINERAMA
+</a> void
+ focusmon(const Arg *arg) {
+ 	Monitor *m;
+<a href="#h2-8" id="h2-8" class="h">@@ -814,7 +809,6 @@ focusmon(const Arg *arg) {
+</a> 	selmon = m;
+ 	focus(NULL);
+ }
+<a href="#h2-8-3" id="h2-8-3" class="d">-#endif /* XINERAMA */
+</a> 
+ void
+ focusstack(const Arg *arg) {
+<a href="#h2-9" id="h2-9" class="h">@@ -943,7 +937,6 @@ grabkeys(void) {
+</a> 	}
+ }
+ 
+<a href="#h2-9-3" id="h2-9-3" class="d">-#ifdef XINERAMA
+</a> Monitor *
+ idxtomon(unsigned int n) {
+ 	unsigned int i;
+<a href="#h2-10" id="h2-10" class="h">@@ -952,7 +945,6 @@ idxtomon(unsigned int n) {
+</a> 	for(m = mons, i = 0; m &amp;&amp; i != n; m = m-&gt;next, i++);
+ 	return m;
+ }
+<a href="#h2-10-3" id="h2-10-3" class="d">-#endif /* XINERAMA */
+</a> 
+ void
+ initfont(const char *fontstr) {
+<a href="#h2-11" id="h2-11" class="h">@@ -1378,6 +1370,7 @@ void
+</a> sendmon(Client *c, Monitor *m) {
+ 	if(c-&gt;mon == m)
+ 		return;
+<a href="#h2-11-3" id="h2-11-3" class="i">+	unfocus(c);
+</a> 	detach(c);
+ 	detachstack(c);
+ 	c-&gt;mon = m;
+<a href="#h2-12" id="h2-12" class="h">@@ -1531,7 +1524,6 @@ tag(const Arg *arg) {
+</a> 	}
+ }
+ 
+<a href="#h2-12-3" id="h2-12-3" class="d">-#ifdef XINERAMA
+</a> void
+ tagmon(const Arg *arg) {
+ 	Monitor *m;
+<a href="#h2-13" id="h2-13" class="h">@@ -1540,7 +1532,6 @@ tagmon(const Arg *arg) {
+</a> 		return;
+ 	sendmon(selmon-&gt;sel, m);
+ }
+<a href="#h2-13-3" id="h2-13-3" class="d">-#endif /* XINERAMA */
+</a> 
+ int
+ textnw(const char *text, unsigned int len) {
+<a href="#h2-14" id="h2-14" class="h">@@ -1736,9 +1727,9 @@ updategeom(void) {
+</a> 	/* default monitor setup */
+ 	{
+ 		m-&gt;screen_number = 0;
+<a href="#h2-14-3" id="h2-14-3" class="d">-		m-&gt;wx = 0;
+</a><a href="#h2-14-4" id="h2-14-4" class="i">+		m-&gt;mx = m-&gt;wx = 0;
+</a> 		m-&gt;my = m-&gt;wy = 0;
+<a href="#h2-14-6" id="h2-14-6" class="d">-		m-&gt;ww = sw;
+</a><a href="#h2-14-7" id="h2-14-7" class="i">+		m-&gt;mw = m-&gt;ww = sw;
+</a> 		m-&gt;mh = m-&gt;wh = sh;
+ 	}
+ 
+</pre>
+</div>
+</body>
+</html>

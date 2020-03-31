@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>nicer tabbar. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5fbda03ff703e9a4a82fc4e69ab6dab8c0618e21.html">5fbda03ff703e9a4a82fc4e69ab6dab8c0618e21</a>
+<b>parent</b> <a href="../commit/0f67f586b1a95c0f006f50738bf8b418968076c8.html">0f67f586b1a95c0f006f50738bf8b418968076c8</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue,  8 Sep 2009 12:17:59 +0200
+
+nicer tabbar.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">25</td><td><span class="i">++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 20 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -190,16 +190,32 @@ die(const char *errstr, ...) {
+</a> void
+ drawbar() {
+ 	unsigned long *col;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	unsigned int n;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	int n, width;
+</a> 	Client *c, *fc;
+ 
+<a href="#h0-0-7" id="h0-0-7" class="i">+	width = ww;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	for(n = 0, fc = c = getfirsttab(); c; c = c-&gt;next, n++);
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	if(n * 200 &gt; width) {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		dc.w = TEXTW(after);
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		dc.x = width - dc.w;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		drawtext(after, dc.norm);
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		width -= dc.w;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	}
+</a> 	dc.x = 0;
+<a href="#h0-0-16" id="h0-0-16" class="d">-	drawtext(&quot;&quot;, dc.norm);
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	for(fc = c = getfirsttab(); c; c = c-&gt;next, n++);
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-	for(c = fc; c &amp;&amp; dc.x &lt; ww; c = c-&gt;next) {
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	if(fc != clients) {
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		dc.w = TEXTW(before);
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+		drawtext(before, dc.norm);
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		dc.x += dc.w;
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		width -= dc.w;
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	}
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	for(c = fc; c &amp;&amp; dc.x &lt; width; c = c-&gt;next) {
+</a> 		dc.w = tabwidth;
+ 		if(c == sel) {
+ 			col = dc.sel;
+<a href="#h0-0-29" id="h0-0-29" class="i">+			if(n * tabwidth &gt; width)
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+				dc.w += width % tabwidth;
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+			else
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+				dc.w = width - (n - 1) * 200;
+</a> 		}
+ 		else {
+ 			col = dc.norm;
+<a href="#h0-1" id="h0-1" class="h">@@ -292,7 +308,6 @@ getfirsttab() {
+</a> 	unsigned int n, seli;
+ 	Client *c, *fc;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	return clients;
+</a> 	c = fc = clients;
+ 	for(n = 0; c; c = c-&gt;next, n++);
+ 	if(n * tabwidth &gt; ww) {
+</pre>
+</div>
+</body>
+</html>

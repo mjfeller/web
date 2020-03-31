@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added togglefloat to hg tip (i consider this useful for some cases), using MODKEY-Shift-space as shortcut - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/46d5f9d1bfd8caaabaabfb7c7e5eac269aff4987.html">46d5f9d1bfd8caaabaabfb7c7e5eac269aff4987</a>
+<b>parent</b> <a href="../commit/35e96b8deba8aae863cef32f2ea2a84ebf162472.html">35e96b8deba8aae863cef32f2ea2a84ebf162472</a>
+<b>Author:</b> arg@mig29 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Mon, 27 Nov 2006 10:57:37 +0100
+
+added togglefloat to hg tip (i consider this useful for some cases), using MODKEY-Shift-space as shortcut
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">view.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 11 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -45,6 +45,7 @@ static Key key[] = { \
+</a> 	{ MODKEY|ControlMask|ShiftMask,	XK_4,		toggletag,	{ .i = 3 } }, \
+ 	{ MODKEY|ShiftMask,		XK_c,		killclient,	{ 0 } }, \
+ 	{ MODKEY,			XK_space,	togglemode,	{ 0 } }, \
+<a href="#h0-0-3" id="h0-0-3" class="i">+	{ MODKEY|ShiftMask,		XK_space,	togglefloat,	{ 0 } }, \
+</a> 	{ MODKEY,			XK_0,		viewall,	{ 0 } }, \
+ 	{ MODKEY,			XK_1,		view,		{ .i = 0 } }, \
+ 	{ MODKEY,			XK_2,		view,		{ .i = 1 } }, \
+<b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -42,6 +42,7 @@ static Key key[] = { \
+</a> 	{ MODKEY|ControlMask|ShiftMask,	XK_5,		toggletag,	{ .i = 4 } }, \
+ 	{ MODKEY|ShiftMask,		XK_c,		killclient,	{ 0 } }, \
+ 	{ MODKEY,			XK_space,	togglemode,	{ 0 } }, \
+<a href="#h1-0-3" id="h1-0-3" class="i">+	{ MODKEY|ShiftMask,		XK_space,	togglefloat,	{ 0 } }, \
+</a> 	{ MODKEY,			XK_0,		viewall,	{ 0 } }, \
+ 	{ MODKEY,			XK_1,		view,		{ .i = 0 } }, \
+ 	{ MODKEY,			XK_2,		view,		{ .i = 1 } }, \
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -164,6 +164,7 @@ extern void focusprev(Arg *arg);		/* focuses previous visible client, arg is ign
+</a> extern Bool isvisible(Client *c);		/* returns True if client is visible */
+ extern void resizemaster(Arg *arg);		/* resizes the master percent with arg&#39;s index value */
+ extern void restack(void);			/* restores z layers of all clients */
+<a href="#h2-0-3" id="h2-0-3" class="i">+extern void togglefloat(Arg *arg);		/* toggles selected client floating/tiled resp. */
+</a> extern void togglemode(Arg *arg);		/* toggles global arrange function (dotile/dofloat) */
+ extern void toggleview(Arg *arg);		/* toggles the tag with arg&#39;s index (in)visible */
+ extern void view(Arg *arg);			/* views the tag with arg&#39;s index */
+<b>diff --git a/<a id="h3" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -201,6 +201,14 @@ restack(void) {
+</a> }
+ 
+ void
+<a href="#h3-0-3" id="h3-0-3" class="i">+togglefloat(Arg *arg) {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	if (!sel)
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+		return;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+	sel-&gt;isfloat = !sel-&gt;isfloat;
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	arrange();
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+}
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+void
+</a> togglemode(Arg *arg) {
+ 	arrange = (arrange == dofloat) ? dotile : dofloat;
+ 	if(sel)
+</pre>
+</div>
+</body>
+</html>

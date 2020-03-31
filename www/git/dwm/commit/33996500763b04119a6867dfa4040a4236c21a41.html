@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added protocol killing stuff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/33996500763b04119a6867dfa4040a4236c21a41.html">33996500763b04119a6867dfa4040a4236c21a41</a>
+<b>parent</b> <a href="../commit/272e15c4b7bdeeb258caadb7c62e70c49c12b16d.html">272e15c4b7bdeeb258caadb7c62e70c49c12b16d</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Tue, 11 Jul 2006 16:14:22 +0200
+
+added protocol killing stuff
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">33</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">cmd.c</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">event.c</a></td><td> | </td><td class="num">50</td><td><span class="i">+++++++++++++++++++++++++++++++++</span><span class="d">-----------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">menu.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">wm.c</a></td><td> | </td><td class="num">66</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">wm.h</a></td><td> | </td><td class="num">24</td><td><span class="i">+++++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>6 files changed, 153 insertions(+), 36 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,8 +10,8 @@
+</a> #include &quot;util.h&quot;
+ #include &quot;wm.h&quot;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-update_client_name(Client *c)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+void
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+update_name(Client *c)
+</a> {
+ 	XTextProperty name;
+ 	int n;
+<a href="#h0-1" id="h0-1" class="h">@@ -38,6 +38,20 @@ update_client_name(Client *c)
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="i">+focus(Client *c)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+{
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	Client **l;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	for(l=&amp;stack; *l &amp;&amp; *l != c; l=&amp;(*l)-&gt;snext);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	eassert(*l == c);
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	*l = c-&gt;snext;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	c-&gt;snext = stack;
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	stack = c;
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	XRaiseWindow(dpy, c-&gt;win);
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	XFlush(dpy);
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+}
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+void
+</a> manage(Window w, XWindowAttributes *wa)
+ {
+ 	Client *c, **l;
+<a href="#h0-2" id="h0-2" class="h">@@ -59,7 +73,7 @@ manage(Window w, XWindowAttributes *wa)
+</a> 		(c-&gt;size.flags &amp; PMinSize &amp;&amp; c-&gt;size.flags &amp; PMaxSize
+ 		 &amp;&amp; c-&gt;size.min_width == c-&gt;size.max_width
+ 		 &amp;&amp; c-&gt;size.min_height == c-&gt;size.max_height);
+<a href="#h0-2-3" id="h0-2-3" class="d">-	update_client_name(c);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	update_name(c);
+</a> 	twa.override_redirect = 1;
+ 	twa.background_pixmap = ParentRelative;
+ 	twa.event_mask = ExposureMask;
+<a href="#h0-3" id="h0-3" class="h">@@ -73,9 +87,10 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	for(l=&amp;clients; *l; l=&amp;(*l)-&gt;next);
+ 	c-&gt;next = *l; /* *l == nil */
+ 	*l = c;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	XMapRaised(dpy, c-&gt;win);
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	XFlush(dpy);
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	c-&gt;snext = stack;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	stack = c;
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	XMapWindow(dpy, c-&gt;win);
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+	focus(c);
+</a> }
+ 
+ static int
+<a href="#h0-4" id="h0-4" class="h">@@ -98,12 +113,15 @@ unmanage(Client *c)
+</a> 	for(l=&amp;clients; *l &amp;&amp; *l != c; l=&amp;(*l)-&gt;next);
+ 	eassert(*l == c);
+ 	*l = c-&gt;next;
+<a href="#h0-4-3" id="h0-4-3" class="i">+	for(l=&amp;stack; *l &amp;&amp; *l != c; l=&amp;(*l)-&gt;snext);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	eassert(*l == c);
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	*l = c-&gt;snext;
+</a> 	free(c);
+ 
+ 	XFlush(dpy);
+ 	XSetErrorHandler(error_handler);
+ 	XUngrabServer(dpy);
+<a href="#h0-4-11" id="h0-4-11" class="d">-	/*flush_masked_events(EnterWindowMask); ? */
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+	flush_events(EnterWindowMask);
+</a> }
+ 
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -116,3 +134,4 @@ getclient(Window w)
+</a> 			return c;
+ 	return NULL;
+ }
+<a href="#h0-5-3" id="h0-5-3" class="i">+
+</a><b>diff --git a/<a id="h1" href="../file/cmd.c.html">cmd.c</a> b/<a href="../file/cmd.c.html">cmd.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -18,3 +18,17 @@ quit(char *arg)
+</a> 	fputs(&quot;quit\n&quot;, stderr);
+ 	running = False;
+ }
+<a href="#h1-0-3" id="h1-0-3" class="i">+
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+void
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+kill(char *arg)
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+{
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	Client *c = stack;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	if(!c)
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+		return;
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	if(c-&gt;proto &amp; WM_PROTOCOL_DELWIN)
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+		send_message(c-&gt;win, wm_atom[WMProtocols], wm_atom[WMDelete]);
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	else
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		XKillClient(dpy, c-&gt;win);
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+}
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+
+</a><b>diff --git a/<a id="h2" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -7,6 +7,7 @@
+</a> #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+ #include &lt;X11/keysym.h&gt;
+<a href="#h2-0-3" id="h2-0-3" class="i">+#include &lt;X11/Xatom.h&gt;
+</a> 
+ #include &quot;wm.h&quot;
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -35,7 +36,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
+</a> };
+ 
+ unsigned int
+<a href="#h2-1-3" id="h2-1-3" class="d">-flush_masked_events(long even_mask)
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+flush_events(long even_mask)
+</a> {
+ 	XEvent ev;
+ 	unsigned int n = 0;
+<a href="#h2-2" id="h2-2" class="h">@@ -91,25 +92,18 @@ destroynotify(XEvent *e)
+</a> static void
+ enternotify(XEvent *e)
+ {
+<a href="#h2-2-3" id="h2-2-3" class="d">-#if 0
+</a> 	XCrossingEvent *ev = &amp;e-&gt;xcrossing;
+ 	Client *c;
+ 
+ 	if(ev-&gt;mode != NotifyNormal || ev-&gt;detail == NotifyInferior)
+ 		return;
+ 
+<a href="#h2-2-10" id="h2-2-10" class="d">-	if((c = client_of_win(ev-&gt;window))) {
+</a><a href="#h2-2-11" id="h2-2-11" class="d">-		Frame *f = c-&gt;sel;
+</a><a href="#h2-2-12" id="h2-2-12" class="d">-		Area *a = f-&gt;area;
+</a><a href="#h2-2-13" id="h2-2-13" class="d">-		if(a-&gt;mode == Colmax)
+</a><a href="#h2-2-14" id="h2-2-14" class="d">-			c = a-&gt;sel-&gt;client;
+</a><a href="#h2-2-15" id="h2-2-15" class="d">-		focus(c, False);
+</a><a href="#h2-2-16" id="h2-2-16" class="d">-	}
+</a><a href="#h2-2-17" id="h2-2-17" class="i">+	if((c = getclient(ev-&gt;window)))
+</a><a href="#h2-2-18" id="h2-2-18" class="i">+		focus(c);
+</a> 	else if(ev-&gt;window == root) {
+ 		sel_screen = True;
+<a href="#h2-2-21" id="h2-2-21" class="d">-		draw_frames();
+</a><a href="#h2-2-22" id="h2-2-22" class="i">+		/*draw_frames();*/
+</a> 	}
+<a href="#h2-2-24" id="h2-2-24" class="d">-#endif
+</a> }
+ 
+ static void
+<a href="#h2-3" id="h2-3" class="h">@@ -137,9 +131,7 @@ expose(XEvent *e)
+</a> static void
+ keymapnotify(XEvent *e)
+ {
+<a href="#h2-3-3" id="h2-3-3" class="d">-#if 0
+</a> 	update_keys();
+<a href="#h2-3-5" id="h2-3-5" class="d">-#endif
+</a> }
+ 
+ static void
+<a href="#h2-4" id="h2-4" class="h">@@ -164,16 +156,40 @@ maprequest(XEvent *e)
+</a> static void
+ propertynotify(XEvent *e)
+ {
+<a href="#h2-4-3" id="h2-4-3" class="d">-#if 0
+</a> 	XPropertyEvent *ev = &amp;e-&gt;xproperty;
+<a href="#h2-4-5" id="h2-4-5" class="i">+	long msize;
+</a> 	Client *c;
+ 
+ 	if(ev-&gt;state == PropertyDelete)
+ 		return; /* ignore */
+ 
+<a href="#h2-4-11" id="h2-4-11" class="d">-	if((c = client_of_win(ev-&gt;window)))
+</a><a href="#h2-4-12" id="h2-4-12" class="d">-		prop_client(c, ev);
+</a><a href="#h2-4-13" id="h2-4-13" class="d">-#endif
+</a><a href="#h2-4-14" id="h2-4-14" class="i">+	if(ev-&gt;atom == wm_atom[WMProtocols]) {
+</a><a href="#h2-4-15" id="h2-4-15" class="i">+		c-&gt;proto = win_proto(c-&gt;win);
+</a><a href="#h2-4-16" id="h2-4-16" class="i">+		return;
+</a><a href="#h2-4-17" id="h2-4-17" class="i">+	}
+</a><a href="#h2-4-18" id="h2-4-18" class="i">+	if((c = getclient(ev-&gt;window))) {
+</a><a href="#h2-4-19" id="h2-4-19" class="i">+		switch (ev-&gt;atom) {
+</a><a href="#h2-4-20" id="h2-4-20" class="i">+			default: break;
+</a><a href="#h2-4-21" id="h2-4-21" class="i">+			case XA_WM_TRANSIENT_FOR:
+</a><a href="#h2-4-22" id="h2-4-22" class="i">+				XGetTransientForHint(dpy, c-&gt;win, &amp;c-&gt;trans);
+</a><a href="#h2-4-23" id="h2-4-23" class="i">+				break;
+</a><a href="#h2-4-24" id="h2-4-24" class="i">+			case XA_WM_NORMAL_HINTS:
+</a><a href="#h2-4-25" id="h2-4-25" class="i">+				if(!XGetWMNormalHints(dpy, c-&gt;win, &amp;c-&gt;size, &amp;msize)
+</a><a href="#h2-4-26" id="h2-4-26" class="i">+						|| !c-&gt;size.flags)
+</a><a href="#h2-4-27" id="h2-4-27" class="i">+					c-&gt;size.flags = PSize;
+</a><a href="#h2-4-28" id="h2-4-28" class="i">+				if(c-&gt;size.flags &amp; PMinSize &amp;&amp; c-&gt;size.flags &amp; PMaxSize
+</a><a href="#h2-4-29" id="h2-4-29" class="i">+						&amp;&amp; c-&gt;size.min_width == c-&gt;size.max_width
+</a><a href="#h2-4-30" id="h2-4-30" class="i">+						&amp;&amp; c-&gt;size.min_height == c-&gt;size.max_height)
+</a><a href="#h2-4-31" id="h2-4-31" class="i">+					c-&gt;fixedsize = True;
+</a><a href="#h2-4-32" id="h2-4-32" class="i">+				else
+</a><a href="#h2-4-33" id="h2-4-33" class="i">+					c-&gt;fixedsize = False;
+</a><a href="#h2-4-34" id="h2-4-34" class="i">+				break;
+</a><a href="#h2-4-35" id="h2-4-35" class="i">+		}
+</a><a href="#h2-4-36" id="h2-4-36" class="i">+		if(ev-&gt;atom == XA_WM_NAME || ev-&gt;atom == net_atom[NetWMName]) {
+</a><a href="#h2-4-37" id="h2-4-37" class="i">+			update_name(c);
+</a><a href="#h2-4-38" id="h2-4-38" class="i">+			/*draw_frame(c-&gt;sel);*/
+</a><a href="#h2-4-39" id="h2-4-39" class="i">+		}
+</a><a href="#h2-4-40" id="h2-4-40" class="i">+	}
+</a> }
+ 
+ static void
+<b>diff --git a/<a id="h3" href="../file/menu.c.html">menu.c</a> b/<a href="../file/menu.c.html">menu.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -304,7 +304,7 @@ kpress(XKeyEvent * e)
+</a> 		}
+ 		break;
+ 	default:
+<a href="#h3-0-3" id="h3-0-3" class="d">-		if((num == 1) &amp;&amp; !iscntrl((int) buf[0])) {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+		if(num &amp;&amp; !iscntrl((int) buf[0])) {
+</a> 			buf[num] = 0;
+ 			if(len &gt; 0)
+ 				strncat(text, buf, sizeof(text));
+<b>diff --git a/<a id="h4" href="../file/wm.c.html">wm.c</a> b/<a href="../file/wm.c.html">wm.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -16,18 +16,18 @@
+</a> /* X structs */
+ Display *dpy;
+ Window root, barwin;
+<a href="#h4-0-3" id="h4-0-3" class="d">-Atom net_atom[NetLast];
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+Atom wm_atom[WMLast], net_atom[NetLast];
+</a> Cursor cursor[CurLast];
+ XRectangle rect, barrect;
+ Bool running = True;
+<a href="#h4-0-8" id="h4-0-8" class="i">+Bool sel_screen;
+</a> 
+ char *bartext, tag[256];
+<a href="#h4-0-11" id="h4-0-11" class="d">-int screen, sel_screen;
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+int screen;
+</a> 
+ Brush brush = {0};
+ Client *clients = NULL;
+<a href="#h4-0-16" id="h4-0-16" class="d">-
+</a><a href="#h4-0-17" id="h4-0-17" class="d">-enum { WM_PROTOCOL_DELWIN = 1 };
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+Client *stack = NULL;
+</a> 
+ static Bool other_wm_running;
+ static char version[] = &quot;gridwm - &quot; VERSION &quot;, (C)opyright MMVI Anselm R. Garbe\n&quot;;
+<a href="#h4-1" id="h4-1" class="h">@@ -62,6 +62,62 @@ scan_wins()
+</a> 		XFree(wins);
+ }
+ 
+<a href="#h4-1-3" id="h4-1-3" class="i">+static int
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+win_property(Window w, Atom a, Atom t, long l, unsigned char **prop)
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+{
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+	Atom real;
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+	int format;
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+	unsigned long res, extra;
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+	int status;
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+
+</a><a href="#h4-1-11" id="h4-1-11" class="i">+	status = XGetWindowProperty(dpy, w, a, 0L, l, False, t, &amp;real, &amp;format,
+</a><a href="#h4-1-12" id="h4-1-12" class="i">+			&amp;res, &amp;extra, prop);
+</a><a href="#h4-1-13" id="h4-1-13" class="i">+
+</a><a href="#h4-1-14" id="h4-1-14" class="i">+	if(status != Success || *prop == 0) {
+</a><a href="#h4-1-15" id="h4-1-15" class="i">+		return 0;
+</a><a href="#h4-1-16" id="h4-1-16" class="i">+	}
+</a><a href="#h4-1-17" id="h4-1-17" class="i">+	if(res == 0) {
+</a><a href="#h4-1-18" id="h4-1-18" class="i">+		free((void *) *prop);
+</a><a href="#h4-1-19" id="h4-1-19" class="i">+	}
+</a><a href="#h4-1-20" id="h4-1-20" class="i">+	return res;
+</a><a href="#h4-1-21" id="h4-1-21" class="i">+}
+</a><a href="#h4-1-22" id="h4-1-22" class="i">+
+</a><a href="#h4-1-23" id="h4-1-23" class="i">+int
+</a><a href="#h4-1-24" id="h4-1-24" class="i">+win_proto(Window w)
+</a><a href="#h4-1-25" id="h4-1-25" class="i">+{
+</a><a href="#h4-1-26" id="h4-1-26" class="i">+	Atom *protocols;
+</a><a href="#h4-1-27" id="h4-1-27" class="i">+	long res;
+</a><a href="#h4-1-28" id="h4-1-28" class="i">+	int protos = 0;
+</a><a href="#h4-1-29" id="h4-1-29" class="i">+	int i;
+</a><a href="#h4-1-30" id="h4-1-30" class="i">+
+</a><a href="#h4-1-31" id="h4-1-31" class="i">+	res = win_property(w, wm_atom[WMProtocols], XA_ATOM, 20L,
+</a><a href="#h4-1-32" id="h4-1-32" class="i">+			((unsigned char **) &amp;protocols));
+</a><a href="#h4-1-33" id="h4-1-33" class="i">+	if(res &lt;= 0) {
+</a><a href="#h4-1-34" id="h4-1-34" class="i">+		return protos;
+</a><a href="#h4-1-35" id="h4-1-35" class="i">+	}
+</a><a href="#h4-1-36" id="h4-1-36" class="i">+	for(i = 0; i &lt; res; i++) {
+</a><a href="#h4-1-37" id="h4-1-37" class="i">+		if(protocols[i] == wm_atom[WMDelete])
+</a><a href="#h4-1-38" id="h4-1-38" class="i">+			protos |= WM_PROTOCOL_DELWIN;
+</a><a href="#h4-1-39" id="h4-1-39" class="i">+	}
+</a><a href="#h4-1-40" id="h4-1-40" class="i">+	free((char *) protocols);
+</a><a href="#h4-1-41" id="h4-1-41" class="i">+	return protos;
+</a><a href="#h4-1-42" id="h4-1-42" class="i">+}
+</a><a href="#h4-1-43" id="h4-1-43" class="i">+
+</a><a href="#h4-1-44" id="h4-1-44" class="i">+void
+</a><a href="#h4-1-45" id="h4-1-45" class="i">+send_message(Window w, Atom a, long value)
+</a><a href="#h4-1-46" id="h4-1-46" class="i">+{
+</a><a href="#h4-1-47" id="h4-1-47" class="i">+	XEvent e;
+</a><a href="#h4-1-48" id="h4-1-48" class="i">+
+</a><a href="#h4-1-49" id="h4-1-49" class="i">+	e.type = ClientMessage;
+</a><a href="#h4-1-50" id="h4-1-50" class="i">+	e.xclient.window = w;
+</a><a href="#h4-1-51" id="h4-1-51" class="i">+	e.xclient.message_type = a;
+</a><a href="#h4-1-52" id="h4-1-52" class="i">+	e.xclient.format = 32;
+</a><a href="#h4-1-53" id="h4-1-53" class="i">+	e.xclient.data.l[0] = value;
+</a><a href="#h4-1-54" id="h4-1-54" class="i">+	e.xclient.data.l[1] = CurrentTime;
+</a><a href="#h4-1-55" id="h4-1-55" class="i">+	XSendEvent(dpy, w, False, NoEventMask, &amp;e);
+</a><a href="#h4-1-56" id="h4-1-56" class="i">+	XFlush(dpy);
+</a><a href="#h4-1-57" id="h4-1-57" class="i">+}
+</a><a href="#h4-1-58" id="h4-1-58" class="i">+
+</a> /*
+  * There&#39;s no way to check accesses to destroyed windows, thus
+  * those cases are ignored (especially on UnmapNotify&#39;s).
+<a href="#h4-2" id="h4-2" class="h">@@ -160,6 +216,8 @@ main(int argc, char *argv[])
+</a> 	x_error_handler = XSetErrorHandler(error_handler);
+ 
+ 	/* init atoms */
+<a href="#h4-2-3" id="h4-2-3" class="i">+	wm_atom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+	wm_atom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+</a> 	net_atom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+ 	net_atom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+ 
+<b>diff --git a/<a id="h5" href="../file/wm.h.html">wm.h</a> b/<a href="../file/wm.h.html">wm.h</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -9,7 +9,10 @@
+</a> 
+ #include &lt;X11/Xutil.h&gt;
+ 
+<a href="#h5-0-3" id="h5-0-3" class="i">+#define WM_PROTOCOL_DELWIN 1
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+
+</a> /* atoms */
+<a href="#h5-0-6" id="h5-0-6" class="i">+enum { WMProtocols, WMDelete, WMLast };
+</a> enum { NetSupported, NetWMName, NetLast };
+ 
+ /* cursor */
+<a href="#h5-1" id="h5-1" class="h">@@ -25,6 +28,7 @@ struct Client {
+</a> 	char name[256];
+ 	char tag[256];
+ 	unsigned int border;
+<a href="#h5-1-3" id="h5-1-3" class="i">+	int proto;
+</a> 	Bool fixedsize;
+ 	Window win;
+ 	Window trans;
+<a href="#h5-2" id="h5-2" class="h">@@ -44,18 +48,17 @@ struct Key {
+</a> 
+ extern Display *dpy;
+ extern Window root, barwin;
+<a href="#h5-2-3" id="h5-2-3" class="d">-extern Atom net_atom[NetLast];
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+extern Atom wm_atom[WMLast], net_atom[NetLast];
+</a> extern Cursor cursor[CurLast];
+ extern XRectangle rect, barrect;
+<a href="#h5-2-7" id="h5-2-7" class="d">-extern Bool running;
+</a><a href="#h5-2-8" id="h5-2-8" class="d">-extern Bool grid;
+</a><a href="#h5-2-9" id="h5-2-9" class="i">+extern Bool running, sel_screen, grid;
+</a> extern void (*handler[LASTEvent]) (XEvent *);
+ 
+<a href="#h5-2-12" id="h5-2-12" class="d">-extern int screen, sel_screen;
+</a><a href="#h5-2-13" id="h5-2-13" class="i">+extern int screen;
+</a> extern char *bartext, tag[256];
+ 
+ extern Brush brush;
+<a href="#h5-2-17" id="h5-2-17" class="d">-extern Client *clients;
+</a><a href="#h5-2-18" id="h5-2-18" class="i">+extern Client *clients, *stack;
+</a> 
+ /* bar.c */
+ extern void draw_bar();
+<a href="#h5-3" id="h5-3" class="h">@@ -66,8 +69,13 @@ extern void quit(char *arg);
+</a> 
+ /* client.c */
+ extern void manage(Window w, XWindowAttributes *wa);
+<a href="#h5-3-3" id="h5-3-3" class="d">-void unmanage(Client *c);
+</a><a href="#h5-3-4" id="h5-3-4" class="d">-extern Client * getclient(Window w);
+</a><a href="#h5-3-5" id="h5-3-5" class="i">+extern void unmanage(Client *c);
+</a><a href="#h5-3-6" id="h5-3-6" class="i">+extern Client *getclient(Window w);
+</a><a href="#h5-3-7" id="h5-3-7" class="i">+extern void focus(Client *c);
+</a><a href="#h5-3-8" id="h5-3-8" class="i">+extern void update_name(Client *c);
+</a><a href="#h5-3-9" id="h5-3-9" class="i">+
+</a><a href="#h5-3-10" id="h5-3-10" class="i">+/* event.c */
+</a><a href="#h5-3-11" id="h5-3-11" class="i">+extern unsigned int flush_events(long even_mask);
+</a> 
+ /* key.c */
+ extern void update_keys();
+<a href="#h5-4" id="h5-4" class="h">@@ -75,3 +83,5 @@ extern void keypress(XEvent *e);
+</a> 
+ /* wm.c */
+ extern int error_handler(Display *dpy, XErrorEvent *error);
+<a href="#h5-4-3" id="h5-4-3" class="i">+extern void send_message(Window w, Atom a, long value);
+</a><a href="#h5-4-4" id="h5-4-4" class="i">+extern int win_proto(Window w);
+</a></pre>
+</div>
+</body>
+</html>

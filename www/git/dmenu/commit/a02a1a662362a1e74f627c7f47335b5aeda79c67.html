@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>faster dmenu_run -f - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a02a1a662362a1e74f627c7f47335b5aeda79c67.html">a02a1a662362a1e74f627c7f47335b5aeda79c67</a>
+<b>parent</b> <a href="../commit/8ac44eb75a3e2190aa7b89548956b2de33c5a6ce.html">8ac44eb75a3e2190aa7b89548956b2de33c5a6ce</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Sat, 19 Nov 2011 21:24:07 +0100
+
+faster dmenu_run -f
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu_run</a></td><td> | </td><td class="num">17</td><td><span class="i">++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>2 files changed, 11 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -117,7 +117,7 @@ main(int argc, char *argv[]) {
+</a> 	setup();
+ 	run();
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	return EXIT_FAILURE; /* unreachable */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	return 1; /* unreachable */
+</a> }
+ 
+ void
+<b>diff --git a/<a id="h1" href="../file/dmenu_run.html">dmenu_run</a> b/<a href="../file/dmenu_run.html">dmenu_run</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,12 +1,15 @@
+</a> #!/bin/sh
+<a href="#h1-0-1" id="h1-0-1" class="d">-CACHE=${XDG_CACHE_HOME:-&quot;$HOME/.cache&quot;}/dmenu_run
+</a><a href="#h1-0-2" id="h1-0-2" class="d">-if [ ! -d &quot;`dirname &quot;$CACHE&quot;`&quot; ]; then
+</a><a href="#h1-0-3" id="h1-0-3" class="d">-	CACHE=$HOME/.dmenu_cache
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+cachedir=${XDG_CACHE_HOME:-&quot;$HOME/.cache&quot;}
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+if [ -d &quot;$cachedir&quot; ]; then
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	cache=$cachedir/dmenu_run
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+else
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	cache=$HOME/.dmenu_cache
+</a> fi
+ (
+ 	IFS=:
+<a href="#h1-0-12" id="h1-0-12" class="d">-	if [ &quot;`ls -dt $PATH &quot;$CACHE&quot; | head -n 1`&quot; != &quot;$CACHE&quot; ]; then
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-		lsx $PATH | sort -u &gt; &quot;$CACHE&quot;
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	if [ &quot;`ls -dt $PATH &quot;$cache&quot; | head -n 1`&quot; != &quot;$cache&quot; ]; then
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+		lsx $PATH | sort -u | tee &quot;$cache&quot; | dmenu &quot;$@&quot;
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	else
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+		dmenu &quot;$@&quot; &lt; &quot;$cache&quot;
+</a> 	fi
+<a href="#h1-0-19" id="h1-0-19" class="d">-)
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-cmd=`dmenu &quot;$@&quot; &lt; &quot;$CACHE&quot;` &amp;&amp; exec sh -c &quot;$cmd&quot;
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+) | read cmd &amp;&amp; exec sh -c &quot;$cmd&quot;
+</a></pre>
+</div>
+</body>
+</html>

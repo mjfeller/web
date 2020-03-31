@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>split screen.c into layout.c and tag.c (because the view is an implicit mixture of both) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8012fcf3334148d2b39646fd372a7514cc74c250.html">8012fcf3334148d2b39646fd372a7514cc74c250</a>
+<b>parent</b> <a href="../commit/6bc4556ebd7f48f52f9a446e53d1705d8fd79b27.html">6bc4556ebd7f48f52f9a446e53d1705d8fd79b27</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Tue, 20 Feb 2007 10:49:53 +0100
+
+split screen.c into layout.c and tag.c (because the view is an implicit mixture of both)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">layout.c</a></td><td> | </td><td class="num">185</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="D">D</td><td><a href="#h3">screen.c</a></td><td> | </td><td class="num">328</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">tag.c</a></td><td> | </td><td class="num">149</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 345 insertions(+), 337 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = client.c event.c main.c screen.c util.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+SRC = client.c event.c layout.c main.c tag.c util.c
+</a> OBJ = ${SRC:.c=.o}
+ 
+ all: options dwm
+<b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -120,6 +120,15 @@ extern void zoom(Arg *arg);			/* zooms the focused client to master area, arg is
+</a> /* event.c */
+ extern void grabkeys(void);			/* grab all keys defined in config.h */
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+/* layout.c */
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+extern void incnmaster(Arg *arg);		/* increments nmaster with arg&#39;s index value */
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+extern void initlayouts(void);			/* initialize layout array */
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+extern void resizemaster(Arg *arg);		/* resizes the master percent with arg&#39;s index value */
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+extern void restack(void);			/* restores z layers of all clients */
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+extern void setlayout(Arg *arg);		/* sets layout, -1 toggles */
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+extern void toggleversatile(Arg *arg);		/* toggles focusesd client between versatile/and non-versatile state */
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+extern void versatile(void);			/* arranges all windows versatile */
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+
+</a> /* main.c */
+ extern void drawstatus(void);			/* draw the bar */
+ extern unsigned int textw(const char *text);	/* return the width of text in px*/
+<a href="#h1-1" id="h1-1" class="h">@@ -127,20 +136,13 @@ extern void quit(Arg *arg);			/* quit dwm nicely */
+</a> extern void sendevent(Window w, Atom a, long value);	/* send synthetic event to w */
+ extern int xerror(Display *dsply, XErrorEvent *ee);	/* dwm&#39;s X error handler */
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-/* screen.c */
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+/* tag.c */
+</a> extern void compileregs(void);			/* initialize regexps of rules defined in config.h */
+<a href="#h1-1-6" id="h1-1-6" class="d">-extern void incnmaster(Arg *arg);		/* increments nmaster with arg&#39;s index value */
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-extern void initlayouts(void);			/* initialize layout array */
+</a> extern Bool isvisible(Client *c);		/* returns True if client is visible */
+<a href="#h1-1-9" id="h1-1-9" class="d">-extern void resizemaster(Arg *arg);		/* resizes the master percent with arg&#39;s index value */
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-extern void restack(void);			/* restores z layers of all clients */
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-extern void setlayout(Arg *arg);		/* sets layout, -1 toggles */
+</a> extern void settags(Client *c, Client *trans);	/* sets tags of c */
+ extern void tag(Arg *arg);			/* tags c with arg&#39;s index */
+<a href="#h1-1-14" id="h1-1-14" class="d">-extern void toggleversatile(Arg *arg);		/* toggles focusesd client between versatile/and non-versatile state */
+</a> extern void toggletag(Arg *arg);		/* toggles c tags with arg&#39;s index */
+ extern void toggleview(Arg *arg);		/* toggles the tag with arg&#39;s index (in)visible */
+<a href="#h1-1-17" id="h1-1-17" class="d">-extern void versatile(void);			/* arranges all windows versatile */
+</a> extern void view(Arg *arg);			/* views the tag with arg&#39;s index */
+ 
+ /* util.c */
+<b>diff --git a/<a id="h2" href="../file/layout.c.html">layout.c</a> b/<a href="../file/layout.c.html">layout.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,185 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+/* (C)opyright MMVI-MMVII Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+ * See LICENSE file for license details.
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+ */
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+#include &quot;dwm.h&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+unsigned int master = MASTER;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+unsigned int nmaster = NMASTER;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+unsigned int blw = 0;
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+Layout *lt = NULL;
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+/* static */
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+static unsigned int nlayouts = 0;
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+static void
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+tile(void) {
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	unsigned int i, n, nx, ny, nw, nh, mw, mh, tw, th;
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+	Client *c;
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+		n++;
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+	/* window geoms */
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	mh = (n &gt; nmaster) ? wah / nmaster : wah / (n &gt; 0 ? n : 1);
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+	mw = (n &gt; nmaster) ? (waw * master) / 1000 : waw;
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+	th = (n &gt; nmaster) ? wah / (n - nmaster) : 0;
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	tw = waw - mw;
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+	for(i = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+		if(isvisible(c)) {
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+			if(c-&gt;isbanned)
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+				XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+			c-&gt;isbanned = False;
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+			if(c-&gt;isversatile)
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+				continue;
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+			c-&gt;ismax = False;
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+			nx = wax;
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+			ny = way;
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+			if(i &lt; nmaster) {
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+				ny += i * mh;
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+				nw = mw - 2 * BORDERPX;
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+				nh = mh - 2 * BORDERPX;
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+			}
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+			else {  /* tile window */
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+				nx += mw;
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+				nw = tw - 2 * BORDERPX;
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+				if(th &gt; 2 * BORDERPX) {
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+					ny += (i - nmaster) * th;
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+					nh = th - 2 * BORDERPX;
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+				}
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+				else /* fallback if th &lt;= 2 * BORDERPX */
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+					nh = wah - 2 * BORDERPX;
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+			}
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+			resize(c, nx, ny, nw, nh, False);
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+			i++;
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+		}
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+		else {
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+			c-&gt;isbanned = True;
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+			XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+		}
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+	if(!sel || !isvisible(sel)) {
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+		for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+		focus(c);
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+	}
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+	restack();
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+}
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+LAYOUTS
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+/* extern */
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+void
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+incnmaster(Arg *arg) {
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+	if((lt-&gt;arrange != tile) || (nmaster + arg-&gt;i &lt; 1)
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+	|| (wah / (nmaster + arg-&gt;i) &lt;= 2 * BORDERPX))
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+		return;
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+	nmaster += arg-&gt;i;
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+	if(sel)
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+		lt-&gt;arrange();
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+	else
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+		drawstatus();
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+}
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+void
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+initlayouts(void) {
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+	unsigned int i, w;
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+	lt = &amp;layout[0];
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+	nlayouts = sizeof layout / sizeof layout[0];
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+	for(blw = i = 0; i &lt; nlayouts; i++) {
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+		w = textw(layout[i].symbol);
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+		if(w &gt; blw)
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+			blw = w;
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+	}
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+}
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+void
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+resizemaster(Arg *arg) {
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+	if(lt-&gt;arrange != tile)
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+		return;
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+	if(arg-&gt;i == 0)
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+		master = MASTER;
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+	else {
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+		if(waw * (master + arg-&gt;i) / 1000 &gt;= waw - 2 * BORDERPX
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+		|| waw * (master + arg-&gt;i) / 1000 &lt;= 2 * BORDERPX)
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+			return;
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+		master += arg-&gt;i;
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+	}
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+	lt-&gt;arrange();
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+}
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+void
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+restack(void) {
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+	Client *c;
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+	XEvent ev;
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+	drawstatus();
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+	if(!sel)
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+		return;
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+	if(sel-&gt;isversatile || lt-&gt;arrange == versatile)
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+		XRaiseWindow(dpy, sel-&gt;win);
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+	if(lt-&gt;arrange != versatile) {
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+		if(!sel-&gt;isversatile)
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+			XLowerWindow(dpy, sel-&gt;win);
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+		for(c = nexttiled(clients); c; c = nexttiled(c-&gt;next)) {
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+			if(c == sel)
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+				continue;
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+			XLowerWindow(dpy, c-&gt;win);
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+		}
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+	}
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+	XSync(dpy, False);
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+}
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+void
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+setlayout(Arg *arg) {
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+	unsigned int i;
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+	if(arg-&gt;i == -1) {
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+		for(i = 0; i &lt; nlayouts &amp;&amp; lt != &amp;layout[i]; i++);
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+		if(i == nlayouts - 1)
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+			lt = &amp;layout[0];
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+		else
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+			lt = &amp;layout[++i];
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+	}
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+	else {
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+		if(arg-&gt;i &lt; 0 || arg-&gt;i &gt;= nlayouts)
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+			return;
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+		lt = &amp;layout[arg-&gt;i];
+</a><a href="#h2-0-148" id="h2-0-148" class="i">+	}
+</a><a href="#h2-0-149" id="h2-0-149" class="i">+	if(sel)
+</a><a href="#h2-0-150" id="h2-0-150" class="i">+		lt-&gt;arrange();
+</a><a href="#h2-0-151" id="h2-0-151" class="i">+	else
+</a><a href="#h2-0-152" id="h2-0-152" class="i">+		drawstatus();
+</a><a href="#h2-0-153" id="h2-0-153" class="i">+}
+</a><a href="#h2-0-154" id="h2-0-154" class="i">+
+</a><a href="#h2-0-155" id="h2-0-155" class="i">+void
+</a><a href="#h2-0-156" id="h2-0-156" class="i">+toggleversatile(Arg *arg) {
+</a><a href="#h2-0-157" id="h2-0-157" class="i">+	if(!sel || lt-&gt;arrange == versatile)
+</a><a href="#h2-0-158" id="h2-0-158" class="i">+		return;
+</a><a href="#h2-0-159" id="h2-0-159" class="i">+	sel-&gt;isversatile = !sel-&gt;isversatile;
+</a><a href="#h2-0-160" id="h2-0-160" class="i">+	lt-&gt;arrange();
+</a><a href="#h2-0-161" id="h2-0-161" class="i">+}
+</a><a href="#h2-0-162" id="h2-0-162" class="i">+
+</a><a href="#h2-0-163" id="h2-0-163" class="i">+void
+</a><a href="#h2-0-164" id="h2-0-164" class="i">+versatile(void) {
+</a><a href="#h2-0-165" id="h2-0-165" class="i">+	Client *c;
+</a><a href="#h2-0-166" id="h2-0-166" class="i">+
+</a><a href="#h2-0-167" id="h2-0-167" class="i">+	for(c = clients; c; c = c-&gt;next) {
+</a><a href="#h2-0-168" id="h2-0-168" class="i">+		if(isvisible(c)) {
+</a><a href="#h2-0-169" id="h2-0-169" class="i">+			if(c-&gt;isbanned)
+</a><a href="#h2-0-170" id="h2-0-170" class="i">+				XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a><a href="#h2-0-171" id="h2-0-171" class="i">+			c-&gt;isbanned = False;
+</a><a href="#h2-0-172" id="h2-0-172" class="i">+			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+</a><a href="#h2-0-173" id="h2-0-173" class="i">+		}
+</a><a href="#h2-0-174" id="h2-0-174" class="i">+		else {
+</a><a href="#h2-0-175" id="h2-0-175" class="i">+			c-&gt;isbanned = True;
+</a><a href="#h2-0-176" id="h2-0-176" class="i">+			XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h2-0-177" id="h2-0-177" class="i">+		}
+</a><a href="#h2-0-178" id="h2-0-178" class="i">+	}
+</a><a href="#h2-0-179" id="h2-0-179" class="i">+	if(!sel || !isvisible(sel)) {
+</a><a href="#h2-0-180" id="h2-0-180" class="i">+		for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+</a><a href="#h2-0-181" id="h2-0-181" class="i">+		focus(c);
+</a><a href="#h2-0-182" id="h2-0-182" class="i">+	}
+</a><a href="#h2-0-183" id="h2-0-183" class="i">+	restack();
+</a><a href="#h2-0-184" id="h2-0-184" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/screen.c.html">screen.c</a> b/<a href="../file/screen.c.html">screen.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,328 +0,0 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="d">-/* (C)opyright MMVI-MMVII Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h3-0-1" id="h3-0-1" class="d">- * See LICENSE file for license details.
+</a><a href="#h3-0-2" id="h3-0-2" class="d">- */
+</a><a href="#h3-0-3" id="h3-0-3" class="d">-#include &quot;dwm.h&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-#include &lt;regex.h&gt;
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-#include &lt;stdio.h&gt;
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-#include &lt;stdlib.h&gt;
+</a><a href="#h3-0-7" id="h3-0-7" class="d">-#include &lt;string.h&gt;
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-#include &lt;sys/types.h&gt;
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-#include &lt;X11/Xutil.h&gt;
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-
+</a><a href="#h3-0-11" id="h3-0-11" class="d">-unsigned int master = MASTER;
+</a><a href="#h3-0-12" id="h3-0-12" class="d">-unsigned int nmaster = NMASTER;
+</a><a href="#h3-0-13" id="h3-0-13" class="d">-unsigned int blw = 0;
+</a><a href="#h3-0-14" id="h3-0-14" class="d">-Layout *lt = NULL;
+</a><a href="#h3-0-15" id="h3-0-15" class="d">-
+</a><a href="#h3-0-16" id="h3-0-16" class="d">-/* static */
+</a><a href="#h3-0-17" id="h3-0-17" class="d">-
+</a><a href="#h3-0-18" id="h3-0-18" class="d">-typedef struct {
+</a><a href="#h3-0-19" id="h3-0-19" class="d">-	const char *prop;
+</a><a href="#h3-0-20" id="h3-0-20" class="d">-	const char *tags;
+</a><a href="#h3-0-21" id="h3-0-21" class="d">-	Bool isversatile;
+</a><a href="#h3-0-22" id="h3-0-22" class="d">-} Rule;
+</a><a href="#h3-0-23" id="h3-0-23" class="d">-
+</a><a href="#h3-0-24" id="h3-0-24" class="d">-typedef struct {
+</a><a href="#h3-0-25" id="h3-0-25" class="d">-	regex_t *propregex;
+</a><a href="#h3-0-26" id="h3-0-26" class="d">-	regex_t *tagregex;
+</a><a href="#h3-0-27" id="h3-0-27" class="d">-} Regs;
+</a><a href="#h3-0-28" id="h3-0-28" class="d">-
+</a><a href="#h3-0-29" id="h3-0-29" class="d">-TAGS
+</a><a href="#h3-0-30" id="h3-0-30" class="d">-RULES
+</a><a href="#h3-0-31" id="h3-0-31" class="d">-
+</a><a href="#h3-0-32" id="h3-0-32" class="d">-static Regs *regs = NULL;
+</a><a href="#h3-0-33" id="h3-0-33" class="d">-static unsigned int nrules = 0;
+</a><a href="#h3-0-34" id="h3-0-34" class="d">-static unsigned int nlayouts = 0;
+</a><a href="#h3-0-35" id="h3-0-35" class="d">-
+</a><a href="#h3-0-36" id="h3-0-36" class="d">-static void
+</a><a href="#h3-0-37" id="h3-0-37" class="d">-tile(void) {
+</a><a href="#h3-0-38" id="h3-0-38" class="d">-	unsigned int i, n, nx, ny, nw, nh, mw, mh, tw, th;
+</a><a href="#h3-0-39" id="h3-0-39" class="d">-	Client *c;
+</a><a href="#h3-0-40" id="h3-0-40" class="d">-
+</a><a href="#h3-0-41" id="h3-0-41" class="d">-	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+</a><a href="#h3-0-42" id="h3-0-42" class="d">-		n++;
+</a><a href="#h3-0-43" id="h3-0-43" class="d">-	/* window geoms */
+</a><a href="#h3-0-44" id="h3-0-44" class="d">-	mh = (n &gt; nmaster) ? wah / nmaster : wah / (n &gt; 0 ? n : 1);
+</a><a href="#h3-0-45" id="h3-0-45" class="d">-	mw = (n &gt; nmaster) ? (waw * master) / 1000 : waw;
+</a><a href="#h3-0-46" id="h3-0-46" class="d">-	th = (n &gt; nmaster) ? wah / (n - nmaster) : 0;
+</a><a href="#h3-0-47" id="h3-0-47" class="d">-	tw = waw - mw;
+</a><a href="#h3-0-48" id="h3-0-48" class="d">-
+</a><a href="#h3-0-49" id="h3-0-49" class="d">-	for(i = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h3-0-50" id="h3-0-50" class="d">-		if(isvisible(c)) {
+</a><a href="#h3-0-51" id="h3-0-51" class="d">-			if(c-&gt;isbanned)
+</a><a href="#h3-0-52" id="h3-0-52" class="d">-				XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a><a href="#h3-0-53" id="h3-0-53" class="d">-			c-&gt;isbanned = False;
+</a><a href="#h3-0-54" id="h3-0-54" class="d">-			if(c-&gt;isversatile)
+</a><a href="#h3-0-55" id="h3-0-55" class="d">-				continue;
+</a><a href="#h3-0-56" id="h3-0-56" class="d">-			c-&gt;ismax = False;
+</a><a href="#h3-0-57" id="h3-0-57" class="d">-			nx = wax;
+</a><a href="#h3-0-58" id="h3-0-58" class="d">-			ny = way;
+</a><a href="#h3-0-59" id="h3-0-59" class="d">-			if(i &lt; nmaster) {
+</a><a href="#h3-0-60" id="h3-0-60" class="d">-				ny += i * mh;
+</a><a href="#h3-0-61" id="h3-0-61" class="d">-				nw = mw - 2 * BORDERPX;
+</a><a href="#h3-0-62" id="h3-0-62" class="d">-				nh = mh - 2 * BORDERPX;
+</a><a href="#h3-0-63" id="h3-0-63" class="d">-			}
+</a><a href="#h3-0-64" id="h3-0-64" class="d">-			else {  /* tile window */
+</a><a href="#h3-0-65" id="h3-0-65" class="d">-				nx += mw;
+</a><a href="#h3-0-66" id="h3-0-66" class="d">-				nw = tw - 2 * BORDERPX;
+</a><a href="#h3-0-67" id="h3-0-67" class="d">-				if(th &gt; 2 * BORDERPX) {
+</a><a href="#h3-0-68" id="h3-0-68" class="d">-					ny += (i - nmaster) * th;
+</a><a href="#h3-0-69" id="h3-0-69" class="d">-					nh = th - 2 * BORDERPX;
+</a><a href="#h3-0-70" id="h3-0-70" class="d">-				}
+</a><a href="#h3-0-71" id="h3-0-71" class="d">-				else /* fallback if th &lt;= 2 * BORDERPX */
+</a><a href="#h3-0-72" id="h3-0-72" class="d">-					nh = wah - 2 * BORDERPX;
+</a><a href="#h3-0-73" id="h3-0-73" class="d">-			}
+</a><a href="#h3-0-74" id="h3-0-74" class="d">-			resize(c, nx, ny, nw, nh, False);
+</a><a href="#h3-0-75" id="h3-0-75" class="d">-			i++;
+</a><a href="#h3-0-76" id="h3-0-76" class="d">-		}
+</a><a href="#h3-0-77" id="h3-0-77" class="d">-		else {
+</a><a href="#h3-0-78" id="h3-0-78" class="d">-			c-&gt;isbanned = True;
+</a><a href="#h3-0-79" id="h3-0-79" class="d">-			XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h3-0-80" id="h3-0-80" class="d">-		}
+</a><a href="#h3-0-81" id="h3-0-81" class="d">-	if(!sel || !isvisible(sel)) {
+</a><a href="#h3-0-82" id="h3-0-82" class="d">-		for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+</a><a href="#h3-0-83" id="h3-0-83" class="d">-		focus(c);
+</a><a href="#h3-0-84" id="h3-0-84" class="d">-	}
+</a><a href="#h3-0-85" id="h3-0-85" class="d">-	restack();
+</a><a href="#h3-0-86" id="h3-0-86" class="d">-}
+</a><a href="#h3-0-87" id="h3-0-87" class="d">-
+</a><a href="#h3-0-88" id="h3-0-88" class="d">-LAYOUTS
+</a><a href="#h3-0-89" id="h3-0-89" class="d">-
+</a><a href="#h3-0-90" id="h3-0-90" class="d">-/* extern */
+</a><a href="#h3-0-91" id="h3-0-91" class="d">-
+</a><a href="#h3-0-92" id="h3-0-92" class="d">-void
+</a><a href="#h3-0-93" id="h3-0-93" class="d">-compileregs(void) {
+</a><a href="#h3-0-94" id="h3-0-94" class="d">-	unsigned int i;
+</a><a href="#h3-0-95" id="h3-0-95" class="d">-	regex_t *reg;
+</a><a href="#h3-0-96" id="h3-0-96" class="d">-
+</a><a href="#h3-0-97" id="h3-0-97" class="d">-	if(regs)
+</a><a href="#h3-0-98" id="h3-0-98" class="d">-		return;
+</a><a href="#h3-0-99" id="h3-0-99" class="d">-	nrules = sizeof rule / sizeof rule[0];
+</a><a href="#h3-0-100" id="h3-0-100" class="d">-	regs = emallocz(nrules * sizeof(Regs));
+</a><a href="#h3-0-101" id="h3-0-101" class="d">-	for(i = 0; i &lt; nrules; i++) {
+</a><a href="#h3-0-102" id="h3-0-102" class="d">-		if(rule[i].prop) {
+</a><a href="#h3-0-103" id="h3-0-103" class="d">-			reg = emallocz(sizeof(regex_t));
+</a><a href="#h3-0-104" id="h3-0-104" class="d">-			if(regcomp(reg, rule[i].prop, REG_EXTENDED))
+</a><a href="#h3-0-105" id="h3-0-105" class="d">-				free(reg);
+</a><a href="#h3-0-106" id="h3-0-106" class="d">-			else
+</a><a href="#h3-0-107" id="h3-0-107" class="d">-				regs[i].propregex = reg;
+</a><a href="#h3-0-108" id="h3-0-108" class="d">-		}
+</a><a href="#h3-0-109" id="h3-0-109" class="d">-		if(rule[i].tags) {
+</a><a href="#h3-0-110" id="h3-0-110" class="d">-			reg = emallocz(sizeof(regex_t));
+</a><a href="#h3-0-111" id="h3-0-111" class="d">-			if(regcomp(reg, rule[i].tags, REG_EXTENDED))
+</a><a href="#h3-0-112" id="h3-0-112" class="d">-				free(reg);
+</a><a href="#h3-0-113" id="h3-0-113" class="d">-			else
+</a><a href="#h3-0-114" id="h3-0-114" class="d">-				regs[i].tagregex = reg;
+</a><a href="#h3-0-115" id="h3-0-115" class="d">-		}
+</a><a href="#h3-0-116" id="h3-0-116" class="d">-	}
+</a><a href="#h3-0-117" id="h3-0-117" class="d">-}
+</a><a href="#h3-0-118" id="h3-0-118" class="d">-
+</a><a href="#h3-0-119" id="h3-0-119" class="d">-void
+</a><a href="#h3-0-120" id="h3-0-120" class="d">-incnmaster(Arg *arg) {
+</a><a href="#h3-0-121" id="h3-0-121" class="d">-	if((lt-&gt;arrange != tile) || (nmaster + arg-&gt;i &lt; 1)
+</a><a href="#h3-0-122" id="h3-0-122" class="d">-	|| (wah / (nmaster + arg-&gt;i) &lt;= 2 * BORDERPX))
+</a><a href="#h3-0-123" id="h3-0-123" class="d">-		return;
+</a><a href="#h3-0-124" id="h3-0-124" class="d">-	nmaster += arg-&gt;i;
+</a><a href="#h3-0-125" id="h3-0-125" class="d">-	if(sel)
+</a><a href="#h3-0-126" id="h3-0-126" class="d">-		lt-&gt;arrange();
+</a><a href="#h3-0-127" id="h3-0-127" class="d">-	else
+</a><a href="#h3-0-128" id="h3-0-128" class="d">-		drawstatus();
+</a><a href="#h3-0-129" id="h3-0-129" class="d">-}
+</a><a href="#h3-0-130" id="h3-0-130" class="d">-
+</a><a href="#h3-0-131" id="h3-0-131" class="d">-void
+</a><a href="#h3-0-132" id="h3-0-132" class="d">-initlayouts(void) {
+</a><a href="#h3-0-133" id="h3-0-133" class="d">-	unsigned int i, w;
+</a><a href="#h3-0-134" id="h3-0-134" class="d">-
+</a><a href="#h3-0-135" id="h3-0-135" class="d">-	lt = &amp;layout[0];
+</a><a href="#h3-0-136" id="h3-0-136" class="d">-	nlayouts = sizeof layout / sizeof layout[0];
+</a><a href="#h3-0-137" id="h3-0-137" class="d">-	for(blw = i = 0; i &lt; nlayouts; i++) {
+</a><a href="#h3-0-138" id="h3-0-138" class="d">-		w = textw(layout[i].symbol);
+</a><a href="#h3-0-139" id="h3-0-139" class="d">-		if(w &gt; blw)
+</a><a href="#h3-0-140" id="h3-0-140" class="d">-			blw = w;
+</a><a href="#h3-0-141" id="h3-0-141" class="d">-	}
+</a><a href="#h3-0-142" id="h3-0-142" class="d">-}
+</a><a href="#h3-0-143" id="h3-0-143" class="d">-
+</a><a href="#h3-0-144" id="h3-0-144" class="d">-Bool
+</a><a href="#h3-0-145" id="h3-0-145" class="d">-isvisible(Client *c) {
+</a><a href="#h3-0-146" id="h3-0-146" class="d">-	unsigned int i;
+</a><a href="#h3-0-147" id="h3-0-147" class="d">-
+</a><a href="#h3-0-148" id="h3-0-148" class="d">-	for(i = 0; i &lt; ntags; i++)
+</a><a href="#h3-0-149" id="h3-0-149" class="d">-		if(c-&gt;tags[i] &amp;&amp; seltag[i])
+</a><a href="#h3-0-150" id="h3-0-150" class="d">-			return True;
+</a><a href="#h3-0-151" id="h3-0-151" class="d">-	return False;
+</a><a href="#h3-0-152" id="h3-0-152" class="d">-}
+</a><a href="#h3-0-153" id="h3-0-153" class="d">-
+</a><a href="#h3-0-154" id="h3-0-154" class="d">-void
+</a><a href="#h3-0-155" id="h3-0-155" class="d">-resizemaster(Arg *arg) {
+</a><a href="#h3-0-156" id="h3-0-156" class="d">-	if(lt-&gt;arrange != tile)
+</a><a href="#h3-0-157" id="h3-0-157" class="d">-		return;
+</a><a href="#h3-0-158" id="h3-0-158" class="d">-	if(arg-&gt;i == 0)
+</a><a href="#h3-0-159" id="h3-0-159" class="d">-		master = MASTER;
+</a><a href="#h3-0-160" id="h3-0-160" class="d">-	else {
+</a><a href="#h3-0-161" id="h3-0-161" class="d">-		if(waw * (master + arg-&gt;i) / 1000 &gt;= waw - 2 * BORDERPX
+</a><a href="#h3-0-162" id="h3-0-162" class="d">-		|| waw * (master + arg-&gt;i) / 1000 &lt;= 2 * BORDERPX)
+</a><a href="#h3-0-163" id="h3-0-163" class="d">-			return;
+</a><a href="#h3-0-164" id="h3-0-164" class="d">-		master += arg-&gt;i;
+</a><a href="#h3-0-165" id="h3-0-165" class="d">-	}
+</a><a href="#h3-0-166" id="h3-0-166" class="d">-	lt-&gt;arrange();
+</a><a href="#h3-0-167" id="h3-0-167" class="d">-}
+</a><a href="#h3-0-168" id="h3-0-168" class="d">-
+</a><a href="#h3-0-169" id="h3-0-169" class="d">-void
+</a><a href="#h3-0-170" id="h3-0-170" class="d">-restack(void) {
+</a><a href="#h3-0-171" id="h3-0-171" class="d">-	Client *c;
+</a><a href="#h3-0-172" id="h3-0-172" class="d">-	XEvent ev;
+</a><a href="#h3-0-173" id="h3-0-173" class="d">-
+</a><a href="#h3-0-174" id="h3-0-174" class="d">-	drawstatus();
+</a><a href="#h3-0-175" id="h3-0-175" class="d">-	if(!sel)
+</a><a href="#h3-0-176" id="h3-0-176" class="d">-		return;
+</a><a href="#h3-0-177" id="h3-0-177" class="d">-	if(sel-&gt;isversatile || lt-&gt;arrange == versatile)
+</a><a href="#h3-0-178" id="h3-0-178" class="d">-		XRaiseWindow(dpy, sel-&gt;win);
+</a><a href="#h3-0-179" id="h3-0-179" class="d">-	if(lt-&gt;arrange != versatile) {
+</a><a href="#h3-0-180" id="h3-0-180" class="d">-		if(!sel-&gt;isversatile)
+</a><a href="#h3-0-181" id="h3-0-181" class="d">-			XLowerWindow(dpy, sel-&gt;win);
+</a><a href="#h3-0-182" id="h3-0-182" class="d">-		for(c = nexttiled(clients); c; c = nexttiled(c-&gt;next)) {
+</a><a href="#h3-0-183" id="h3-0-183" class="d">-			if(c == sel)
+</a><a href="#h3-0-184" id="h3-0-184" class="d">-				continue;
+</a><a href="#h3-0-185" id="h3-0-185" class="d">-			XLowerWindow(dpy, c-&gt;win);
+</a><a href="#h3-0-186" id="h3-0-186" class="d">-		}
+</a><a href="#h3-0-187" id="h3-0-187" class="d">-	}
+</a><a href="#h3-0-188" id="h3-0-188" class="d">-	XSync(dpy, False);
+</a><a href="#h3-0-189" id="h3-0-189" class="d">-	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+</a><a href="#h3-0-190" id="h3-0-190" class="d">-}
+</a><a href="#h3-0-191" id="h3-0-191" class="d">-
+</a><a href="#h3-0-192" id="h3-0-192" class="d">-void
+</a><a href="#h3-0-193" id="h3-0-193" class="d">-setlayout(Arg *arg) {
+</a><a href="#h3-0-194" id="h3-0-194" class="d">-	unsigned int i;
+</a><a href="#h3-0-195" id="h3-0-195" class="d">-
+</a><a href="#h3-0-196" id="h3-0-196" class="d">-	if(arg-&gt;i == -1) {
+</a><a href="#h3-0-197" id="h3-0-197" class="d">-		for(i = 0; i &lt; nlayouts &amp;&amp; lt != &amp;layout[i]; i++);
+</a><a href="#h3-0-198" id="h3-0-198" class="d">-		if(i == nlayouts - 1)
+</a><a href="#h3-0-199" id="h3-0-199" class="d">-			lt = &amp;layout[0];
+</a><a href="#h3-0-200" id="h3-0-200" class="d">-		else
+</a><a href="#h3-0-201" id="h3-0-201" class="d">-			lt = &amp;layout[++i];
+</a><a href="#h3-0-202" id="h3-0-202" class="d">-	}
+</a><a href="#h3-0-203" id="h3-0-203" class="d">-	else {
+</a><a href="#h3-0-204" id="h3-0-204" class="d">-		if(arg-&gt;i &lt; 0 || arg-&gt;i &gt;= nlayouts)
+</a><a href="#h3-0-205" id="h3-0-205" class="d">-			return;
+</a><a href="#h3-0-206" id="h3-0-206" class="d">-		lt = &amp;layout[arg-&gt;i];
+</a><a href="#h3-0-207" id="h3-0-207" class="d">-	}
+</a><a href="#h3-0-208" id="h3-0-208" class="d">-	if(sel)
+</a><a href="#h3-0-209" id="h3-0-209" class="d">-		lt-&gt;arrange();
+</a><a href="#h3-0-210" id="h3-0-210" class="d">-	else
+</a><a href="#h3-0-211" id="h3-0-211" class="d">-		drawstatus();
+</a><a href="#h3-0-212" id="h3-0-212" class="d">-}
+</a><a href="#h3-0-213" id="h3-0-213" class="d">-
+</a><a href="#h3-0-214" id="h3-0-214" class="d">-void
+</a><a href="#h3-0-215" id="h3-0-215" class="d">-settags(Client *c, Client *trans) {
+</a><a href="#h3-0-216" id="h3-0-216" class="d">-	char prop[512];
+</a><a href="#h3-0-217" id="h3-0-217" class="d">-	unsigned int i, j;
+</a><a href="#h3-0-218" id="h3-0-218" class="d">-	regmatch_t tmp;
+</a><a href="#h3-0-219" id="h3-0-219" class="d">-	Bool matched = trans != NULL;
+</a><a href="#h3-0-220" id="h3-0-220" class="d">-	XClassHint ch = { 0 };
+</a><a href="#h3-0-221" id="h3-0-221" class="d">-
+</a><a href="#h3-0-222" id="h3-0-222" class="d">-	if(matched)
+</a><a href="#h3-0-223" id="h3-0-223" class="d">-		for(i = 0; i &lt; ntags; i++)
+</a><a href="#h3-0-224" id="h3-0-224" class="d">-			c-&gt;tags[i] = trans-&gt;tags[i];
+</a><a href="#h3-0-225" id="h3-0-225" class="d">-	else {
+</a><a href="#h3-0-226" id="h3-0-226" class="d">-		XGetClassHint(dpy, c-&gt;win, &amp;ch);
+</a><a href="#h3-0-227" id="h3-0-227" class="d">-		snprintf(prop, sizeof prop, &quot;%s:%s:%s&quot;,
+</a><a href="#h3-0-228" id="h3-0-228" class="d">-				ch.res_class ? ch.res_class : &quot;&quot;,
+</a><a href="#h3-0-229" id="h3-0-229" class="d">-				ch.res_name ? ch.res_name : &quot;&quot;, c-&gt;name);
+</a><a href="#h3-0-230" id="h3-0-230" class="d">-		for(i = 0; i &lt; nrules; i++)
+</a><a href="#h3-0-231" id="h3-0-231" class="d">-			if(regs[i].propregex &amp;&amp; !regexec(regs[i].propregex, prop, 1, &amp;tmp, 0)) {
+</a><a href="#h3-0-232" id="h3-0-232" class="d">-				c-&gt;isversatile = rule[i].isversatile;
+</a><a href="#h3-0-233" id="h3-0-233" class="d">-				for(j = 0; regs[i].tagregex &amp;&amp; j &lt; ntags; j++) {
+</a><a href="#h3-0-234" id="h3-0-234" class="d">-					if(!regexec(regs[i].tagregex, tags[j], 1, &amp;tmp, 0)) {
+</a><a href="#h3-0-235" id="h3-0-235" class="d">-						matched = True;
+</a><a href="#h3-0-236" id="h3-0-236" class="d">-						c-&gt;tags[j] = True;
+</a><a href="#h3-0-237" id="h3-0-237" class="d">-					}
+</a><a href="#h3-0-238" id="h3-0-238" class="d">-				}
+</a><a href="#h3-0-239" id="h3-0-239" class="d">-			}
+</a><a href="#h3-0-240" id="h3-0-240" class="d">-		if(ch.res_class)
+</a><a href="#h3-0-241" id="h3-0-241" class="d">-			XFree(ch.res_class);
+</a><a href="#h3-0-242" id="h3-0-242" class="d">-		if(ch.res_name)
+</a><a href="#h3-0-243" id="h3-0-243" class="d">-			XFree(ch.res_name);
+</a><a href="#h3-0-244" id="h3-0-244" class="d">-	}
+</a><a href="#h3-0-245" id="h3-0-245" class="d">-	if(!matched)
+</a><a href="#h3-0-246" id="h3-0-246" class="d">-		for(i = 0; i &lt; ntags; i++)
+</a><a href="#h3-0-247" id="h3-0-247" class="d">-			c-&gt;tags[i] = seltag[i];
+</a><a href="#h3-0-248" id="h3-0-248" class="d">-}
+</a><a href="#h3-0-249" id="h3-0-249" class="d">-
+</a><a href="#h3-0-250" id="h3-0-250" class="d">-void
+</a><a href="#h3-0-251" id="h3-0-251" class="d">-tag(Arg *arg) {
+</a><a href="#h3-0-252" id="h3-0-252" class="d">-	unsigned int i;
+</a><a href="#h3-0-253" id="h3-0-253" class="d">-
+</a><a href="#h3-0-254" id="h3-0-254" class="d">-	if(!sel)
+</a><a href="#h3-0-255" id="h3-0-255" class="d">-		return;
+</a><a href="#h3-0-256" id="h3-0-256" class="d">-	for(i = 0; i &lt; ntags; i++)
+</a><a href="#h3-0-257" id="h3-0-257" class="d">-		sel-&gt;tags[i] = (arg-&gt;i == -1) ? True : False;
+</a><a href="#h3-0-258" id="h3-0-258" class="d">-	if(arg-&gt;i &gt;= 0 &amp;&amp; arg-&gt;i &lt; ntags)
+</a><a href="#h3-0-259" id="h3-0-259" class="d">-		sel-&gt;tags[arg-&gt;i] = True;
+</a><a href="#h3-0-260" id="h3-0-260" class="d">-	lt-&gt;arrange();
+</a><a href="#h3-0-261" id="h3-0-261" class="d">-}
+</a><a href="#h3-0-262" id="h3-0-262" class="d">-
+</a><a href="#h3-0-263" id="h3-0-263" class="d">-void
+</a><a href="#h3-0-264" id="h3-0-264" class="d">-toggletag(Arg *arg) {
+</a><a href="#h3-0-265" id="h3-0-265" class="d">-	unsigned int i;
+</a><a href="#h3-0-266" id="h3-0-266" class="d">-
+</a><a href="#h3-0-267" id="h3-0-267" class="d">-	if(!sel)
+</a><a href="#h3-0-268" id="h3-0-268" class="d">-		return;
+</a><a href="#h3-0-269" id="h3-0-269" class="d">-	sel-&gt;tags[arg-&gt;i] = !sel-&gt;tags[arg-&gt;i];
+</a><a href="#h3-0-270" id="h3-0-270" class="d">-	for(i = 0; i &lt; ntags &amp;&amp; !sel-&gt;tags[i]; i++);
+</a><a href="#h3-0-271" id="h3-0-271" class="d">-	if(i == ntags)
+</a><a href="#h3-0-272" id="h3-0-272" class="d">-		sel-&gt;tags[arg-&gt;i] = True;
+</a><a href="#h3-0-273" id="h3-0-273" class="d">-	lt-&gt;arrange();
+</a><a href="#h3-0-274" id="h3-0-274" class="d">-}
+</a><a href="#h3-0-275" id="h3-0-275" class="d">-
+</a><a href="#h3-0-276" id="h3-0-276" class="d">-void
+</a><a href="#h3-0-277" id="h3-0-277" class="d">-toggleversatile(Arg *arg) {
+</a><a href="#h3-0-278" id="h3-0-278" class="d">-	if(!sel || lt-&gt;arrange == versatile)
+</a><a href="#h3-0-279" id="h3-0-279" class="d">-		return;
+</a><a href="#h3-0-280" id="h3-0-280" class="d">-	sel-&gt;isversatile = !sel-&gt;isversatile;
+</a><a href="#h3-0-281" id="h3-0-281" class="d">-	lt-&gt;arrange();
+</a><a href="#h3-0-282" id="h3-0-282" class="d">-}
+</a><a href="#h3-0-283" id="h3-0-283" class="d">-
+</a><a href="#h3-0-284" id="h3-0-284" class="d">-void
+</a><a href="#h3-0-285" id="h3-0-285" class="d">-toggleview(Arg *arg) {
+</a><a href="#h3-0-286" id="h3-0-286" class="d">-	unsigned int i;
+</a><a href="#h3-0-287" id="h3-0-287" class="d">-
+</a><a href="#h3-0-288" id="h3-0-288" class="d">-	seltag[arg-&gt;i] = !seltag[arg-&gt;i];
+</a><a href="#h3-0-289" id="h3-0-289" class="d">-	for(i = 0; i &lt; ntags &amp;&amp; !seltag[i]; i++);
+</a><a href="#h3-0-290" id="h3-0-290" class="d">-	if(i == ntags)
+</a><a href="#h3-0-291" id="h3-0-291" class="d">-		seltag[arg-&gt;i] = True; /* cannot toggle last view */
+</a><a href="#h3-0-292" id="h3-0-292" class="d">-	lt-&gt;arrange();
+</a><a href="#h3-0-293" id="h3-0-293" class="d">-}
+</a><a href="#h3-0-294" id="h3-0-294" class="d">-
+</a><a href="#h3-0-295" id="h3-0-295" class="d">-void
+</a><a href="#h3-0-296" id="h3-0-296" class="d">-versatile(void) {
+</a><a href="#h3-0-297" id="h3-0-297" class="d">-	Client *c;
+</a><a href="#h3-0-298" id="h3-0-298" class="d">-
+</a><a href="#h3-0-299" id="h3-0-299" class="d">-	for(c = clients; c; c = c-&gt;next) {
+</a><a href="#h3-0-300" id="h3-0-300" class="d">-		if(isvisible(c)) {
+</a><a href="#h3-0-301" id="h3-0-301" class="d">-			if(c-&gt;isbanned)
+</a><a href="#h3-0-302" id="h3-0-302" class="d">-				XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a><a href="#h3-0-303" id="h3-0-303" class="d">-			c-&gt;isbanned = False;
+</a><a href="#h3-0-304" id="h3-0-304" class="d">-			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+</a><a href="#h3-0-305" id="h3-0-305" class="d">-		}
+</a><a href="#h3-0-306" id="h3-0-306" class="d">-		else {
+</a><a href="#h3-0-307" id="h3-0-307" class="d">-			c-&gt;isbanned = True;
+</a><a href="#h3-0-308" id="h3-0-308" class="d">-			XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h3-0-309" id="h3-0-309" class="d">-		}
+</a><a href="#h3-0-310" id="h3-0-310" class="d">-	}
+</a><a href="#h3-0-311" id="h3-0-311" class="d">-	if(!sel || !isvisible(sel)) {
+</a><a href="#h3-0-312" id="h3-0-312" class="d">-		for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+</a><a href="#h3-0-313" id="h3-0-313" class="d">-		focus(c);
+</a><a href="#h3-0-314" id="h3-0-314" class="d">-	}
+</a><a href="#h3-0-315" id="h3-0-315" class="d">-	restack();
+</a><a href="#h3-0-316" id="h3-0-316" class="d">-}
+</a><a href="#h3-0-317" id="h3-0-317" class="d">-
+</a><a href="#h3-0-318" id="h3-0-318" class="d">-void
+</a><a href="#h3-0-319" id="h3-0-319" class="d">-view(Arg *arg) {
+</a><a href="#h3-0-320" id="h3-0-320" class="d">-	unsigned int i;
+</a><a href="#h3-0-321" id="h3-0-321" class="d">-
+</a><a href="#h3-0-322" id="h3-0-322" class="d">-	for(i = 0; i &lt; ntags; i++)
+</a><a href="#h3-0-323" id="h3-0-323" class="d">-		seltag[i] = (arg-&gt;i == -1) ? True : False;
+</a><a href="#h3-0-324" id="h3-0-324" class="d">-	if(arg-&gt;i &gt;= 0 &amp;&amp; arg-&gt;i &lt; ntags)
+</a><a href="#h3-0-325" id="h3-0-325" class="d">-		seltag[arg-&gt;i] = True;
+</a><a href="#h3-0-326" id="h3-0-326" class="d">-	lt-&gt;arrange();
+</a><a href="#h3-0-327" id="h3-0-327" class="d">-}
+</a><b>diff --git a/<a id="h4" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,149 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+/* (C)opyright MMVI-MMVII Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+ * See LICENSE file for license details.
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+ */
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+#include &quot;dwm.h&quot;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+#include &lt;regex.h&gt;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+#include &lt;X11/Xutil.h&gt;
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+/* static */
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+typedef struct {
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+	const char *prop;
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+	const char *tags;
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+	Bool isversatile;
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+} Rule;
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+typedef struct {
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+	regex_t *propregex;
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	regex_t *tagregex;
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+} Regs;
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+TAGS
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+RULES
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+static Regs *regs = NULL;
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+static unsigned int nrules = 0;
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+/* extern */
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+void
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+compileregs(void) {
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+	unsigned int i;
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+	regex_t *reg;
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+	if(regs)
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+		return;
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+	nrules = sizeof rule / sizeof rule[0];
+</a><a href="#h4-0-37" id="h4-0-37" class="i">+	regs = emallocz(nrules * sizeof(Regs));
+</a><a href="#h4-0-38" id="h4-0-38" class="i">+	for(i = 0; i &lt; nrules; i++) {
+</a><a href="#h4-0-39" id="h4-0-39" class="i">+		if(rule[i].prop) {
+</a><a href="#h4-0-40" id="h4-0-40" class="i">+			reg = emallocz(sizeof(regex_t));
+</a><a href="#h4-0-41" id="h4-0-41" class="i">+			if(regcomp(reg, rule[i].prop, REG_EXTENDED))
+</a><a href="#h4-0-42" id="h4-0-42" class="i">+				free(reg);
+</a><a href="#h4-0-43" id="h4-0-43" class="i">+			else
+</a><a href="#h4-0-44" id="h4-0-44" class="i">+				regs[i].propregex = reg;
+</a><a href="#h4-0-45" id="h4-0-45" class="i">+		}
+</a><a href="#h4-0-46" id="h4-0-46" class="i">+		if(rule[i].tags) {
+</a><a href="#h4-0-47" id="h4-0-47" class="i">+			reg = emallocz(sizeof(regex_t));
+</a><a href="#h4-0-48" id="h4-0-48" class="i">+			if(regcomp(reg, rule[i].tags, REG_EXTENDED))
+</a><a href="#h4-0-49" id="h4-0-49" class="i">+				free(reg);
+</a><a href="#h4-0-50" id="h4-0-50" class="i">+			else
+</a><a href="#h4-0-51" id="h4-0-51" class="i">+				regs[i].tagregex = reg;
+</a><a href="#h4-0-52" id="h4-0-52" class="i">+		}
+</a><a href="#h4-0-53" id="h4-0-53" class="i">+	}
+</a><a href="#h4-0-54" id="h4-0-54" class="i">+}
+</a><a href="#h4-0-55" id="h4-0-55" class="i">+
+</a><a href="#h4-0-56" id="h4-0-56" class="i">+Bool
+</a><a href="#h4-0-57" id="h4-0-57" class="i">+isvisible(Client *c) {
+</a><a href="#h4-0-58" id="h4-0-58" class="i">+	unsigned int i;
+</a><a href="#h4-0-59" id="h4-0-59" class="i">+
+</a><a href="#h4-0-60" id="h4-0-60" class="i">+	for(i = 0; i &lt; ntags; i++)
+</a><a href="#h4-0-61" id="h4-0-61" class="i">+		if(c-&gt;tags[i] &amp;&amp; seltag[i])
+</a><a href="#h4-0-62" id="h4-0-62" class="i">+			return True;
+</a><a href="#h4-0-63" id="h4-0-63" class="i">+	return False;
+</a><a href="#h4-0-64" id="h4-0-64" class="i">+}
+</a><a href="#h4-0-65" id="h4-0-65" class="i">+
+</a><a href="#h4-0-66" id="h4-0-66" class="i">+void
+</a><a href="#h4-0-67" id="h4-0-67" class="i">+settags(Client *c, Client *trans) {
+</a><a href="#h4-0-68" id="h4-0-68" class="i">+	char prop[512];
+</a><a href="#h4-0-69" id="h4-0-69" class="i">+	unsigned int i, j;
+</a><a href="#h4-0-70" id="h4-0-70" class="i">+	regmatch_t tmp;
+</a><a href="#h4-0-71" id="h4-0-71" class="i">+	Bool matched = trans != NULL;
+</a><a href="#h4-0-72" id="h4-0-72" class="i">+	XClassHint ch = { 0 };
+</a><a href="#h4-0-73" id="h4-0-73" class="i">+
+</a><a href="#h4-0-74" id="h4-0-74" class="i">+	if(matched)
+</a><a href="#h4-0-75" id="h4-0-75" class="i">+		for(i = 0; i &lt; ntags; i++)
+</a><a href="#h4-0-76" id="h4-0-76" class="i">+			c-&gt;tags[i] = trans-&gt;tags[i];
+</a><a href="#h4-0-77" id="h4-0-77" class="i">+	else {
+</a><a href="#h4-0-78" id="h4-0-78" class="i">+		XGetClassHint(dpy, c-&gt;win, &amp;ch);
+</a><a href="#h4-0-79" id="h4-0-79" class="i">+		snprintf(prop, sizeof prop, &quot;%s:%s:%s&quot;,
+</a><a href="#h4-0-80" id="h4-0-80" class="i">+				ch.res_class ? ch.res_class : &quot;&quot;,
+</a><a href="#h4-0-81" id="h4-0-81" class="i">+				ch.res_name ? ch.res_name : &quot;&quot;, c-&gt;name);
+</a><a href="#h4-0-82" id="h4-0-82" class="i">+		for(i = 0; i &lt; nrules; i++)
+</a><a href="#h4-0-83" id="h4-0-83" class="i">+			if(regs[i].propregex &amp;&amp; !regexec(regs[i].propregex, prop, 1, &amp;tmp, 0)) {
+</a><a href="#h4-0-84" id="h4-0-84" class="i">+				c-&gt;isversatile = rule[i].isversatile;
+</a><a href="#h4-0-85" id="h4-0-85" class="i">+				for(j = 0; regs[i].tagregex &amp;&amp; j &lt; ntags; j++) {
+</a><a href="#h4-0-86" id="h4-0-86" class="i">+					if(!regexec(regs[i].tagregex, tags[j], 1, &amp;tmp, 0)) {
+</a><a href="#h4-0-87" id="h4-0-87" class="i">+						matched = True;
+</a><a href="#h4-0-88" id="h4-0-88" class="i">+						c-&gt;tags[j] = True;
+</a><a href="#h4-0-89" id="h4-0-89" class="i">+					}
+</a><a href="#h4-0-90" id="h4-0-90" class="i">+				}
+</a><a href="#h4-0-91" id="h4-0-91" class="i">+			}
+</a><a href="#h4-0-92" id="h4-0-92" class="i">+		if(ch.res_class)
+</a><a href="#h4-0-93" id="h4-0-93" class="i">+			XFree(ch.res_class);
+</a><a href="#h4-0-94" id="h4-0-94" class="i">+		if(ch.res_name)
+</a><a href="#h4-0-95" id="h4-0-95" class="i">+			XFree(ch.res_name);
+</a><a href="#h4-0-96" id="h4-0-96" class="i">+	}
+</a><a href="#h4-0-97" id="h4-0-97" class="i">+	if(!matched)
+</a><a href="#h4-0-98" id="h4-0-98" class="i">+		for(i = 0; i &lt; ntags; i++)
+</a><a href="#h4-0-99" id="h4-0-99" class="i">+			c-&gt;tags[i] = seltag[i];
+</a><a href="#h4-0-100" id="h4-0-100" class="i">+}
+</a><a href="#h4-0-101" id="h4-0-101" class="i">+
+</a><a href="#h4-0-102" id="h4-0-102" class="i">+void
+</a><a href="#h4-0-103" id="h4-0-103" class="i">+tag(Arg *arg) {
+</a><a href="#h4-0-104" id="h4-0-104" class="i">+	unsigned int i;
+</a><a href="#h4-0-105" id="h4-0-105" class="i">+
+</a><a href="#h4-0-106" id="h4-0-106" class="i">+	if(!sel)
+</a><a href="#h4-0-107" id="h4-0-107" class="i">+		return;
+</a><a href="#h4-0-108" id="h4-0-108" class="i">+	for(i = 0; i &lt; ntags; i++)
+</a><a href="#h4-0-109" id="h4-0-109" class="i">+		sel-&gt;tags[i] = (arg-&gt;i == -1) ? True : False;
+</a><a href="#h4-0-110" id="h4-0-110" class="i">+	if(arg-&gt;i &gt;= 0 &amp;&amp; arg-&gt;i &lt; ntags)
+</a><a href="#h4-0-111" id="h4-0-111" class="i">+		sel-&gt;tags[arg-&gt;i] = True;
+</a><a href="#h4-0-112" id="h4-0-112" class="i">+	lt-&gt;arrange();
+</a><a href="#h4-0-113" id="h4-0-113" class="i">+}
+</a><a href="#h4-0-114" id="h4-0-114" class="i">+
+</a><a href="#h4-0-115" id="h4-0-115" class="i">+void
+</a><a href="#h4-0-116" id="h4-0-116" class="i">+toggletag(Arg *arg) {
+</a><a href="#h4-0-117" id="h4-0-117" class="i">+	unsigned int i;
+</a><a href="#h4-0-118" id="h4-0-118" class="i">+
+</a><a href="#h4-0-119" id="h4-0-119" class="i">+	if(!sel)
+</a><a href="#h4-0-120" id="h4-0-120" class="i">+		return;
+</a><a href="#h4-0-121" id="h4-0-121" class="i">+	sel-&gt;tags[arg-&gt;i] = !sel-&gt;tags[arg-&gt;i];
+</a><a href="#h4-0-122" id="h4-0-122" class="i">+	for(i = 0; i &lt; ntags &amp;&amp; !sel-&gt;tags[i]; i++);
+</a><a href="#h4-0-123" id="h4-0-123" class="i">+	if(i == ntags)
+</a><a href="#h4-0-124" id="h4-0-124" class="i">+		sel-&gt;tags[arg-&gt;i] = True;
+</a><a href="#h4-0-125" id="h4-0-125" class="i">+	lt-&gt;arrange();
+</a><a href="#h4-0-126" id="h4-0-126" class="i">+}
+</a><a href="#h4-0-127" id="h4-0-127" class="i">+
+</a><a href="#h4-0-128" id="h4-0-128" class="i">+void
+</a><a href="#h4-0-129" id="h4-0-129" class="i">+toggleview(Arg *arg) {
+</a><a href="#h4-0-130" id="h4-0-130" class="i">+	unsigned int i;
+</a><a href="#h4-0-131" id="h4-0-131" class="i">+
+</a><a href="#h4-0-132" id="h4-0-132" class="i">+	seltag[arg-&gt;i] = !seltag[arg-&gt;i];
+</a><a href="#h4-0-133" id="h4-0-133" class="i">+	for(i = 0; i &lt; ntags &amp;&amp; !seltag[i]; i++);
+</a><a href="#h4-0-134" id="h4-0-134" class="i">+	if(i == ntags)
+</a><a href="#h4-0-135" id="h4-0-135" class="i">+		seltag[arg-&gt;i] = True; /* cannot toggle last view */
+</a><a href="#h4-0-136" id="h4-0-136" class="i">+	lt-&gt;arrange();
+</a><a href="#h4-0-137" id="h4-0-137" class="i">+}
+</a><a href="#h4-0-138" id="h4-0-138" class="i">+
+</a><a href="#h4-0-139" id="h4-0-139" class="i">+void
+</a><a href="#h4-0-140" id="h4-0-140" class="i">+view(Arg *arg) {
+</a><a href="#h4-0-141" id="h4-0-141" class="i">+	unsigned int i;
+</a><a href="#h4-0-142" id="h4-0-142" class="i">+
+</a><a href="#h4-0-143" id="h4-0-143" class="i">+	for(i = 0; i &lt; ntags; i++)
+</a><a href="#h4-0-144" id="h4-0-144" class="i">+		seltag[i] = (arg-&gt;i == -1) ? True : False;
+</a><a href="#h4-0-145" id="h4-0-145" class="i">+	if(arg-&gt;i &gt;= 0 &amp;&amp; arg-&gt;i &lt; ntags)
+</a><a href="#h4-0-146" id="h4-0-146" class="i">+		seltag[arg-&gt;i] = True;
+</a><a href="#h4-0-147" id="h4-0-147" class="i">+	lt-&gt;arrange();
+</a><a href="#h4-0-148" id="h4-0-148" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

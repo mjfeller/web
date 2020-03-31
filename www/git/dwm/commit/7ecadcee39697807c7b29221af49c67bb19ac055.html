@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>local use of xidx is useless, got rid of it, falling back to screen 0 if pointer query fails for whatever reason - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7ecadcee39697807c7b29221af49c67bb19ac055.html">7ecadcee39697807c7b29221af49c67bb19ac055</a>
+<b>parent</b> <a href="../commit/c86ed46a1bbba0635a76d05ebeb839c7fec7f7fc.html">c86ed46a1bbba0635a76d05ebeb839c7fec7f7fc</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 16 Jul 2008 18:39:48 +0100
+
+local use of xidx is useless, got rid of it, falling back to screen 0 if pointer query fails for whatever reason
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++</span><span class="d">----------</span></td></tr>
+</table></pre><pre>1 file changed, 7 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1558,28 +1558,25 @@ updatebar(void) {
+</a> void
+ updategeom(void) {
+ #ifdef XINERAMA
+<a href="#h0-0-3" id="h0-0-3" class="d">-	int n;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	unsigned int xidx = 0;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	int n, i = 0;
+</a> 	XineramaScreenInfo *info = NULL;
+ 
+ 	/* window area geometry */
+ 	if(XineramaIsActive(dpy)) {
+ 		info = XineramaQueryScreens(dpy, &amp;n);
+ 		if(n &gt; 1) {
+<a href="#h0-0-12" id="h0-0-12" class="d">-			int di, i, x, y;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+			int di, x, y;
+</a> 			unsigned int dui;
+ 			Window dummy;
+ 			if(XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x, &amp;y, &amp;di, &amp;di, &amp;dui))
+ 				for(i = 0; i &lt; n; i++)
+<a href="#h0-0-18" id="h0-0-18" class="d">-					if(INRECT(x, y, info[i].x_org, info[i].y_org, info[i].width, info[i].height)) {
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-						xidx = i;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+					if(INRECT(x, y, info[i].x_org, info[i].y_org, info[i].width, info[i].height))
+</a> 						break;
+<a href="#h0-0-22" id="h0-0-22" class="d">-					}
+</a> 		}
+<a href="#h0-0-24" id="h0-0-24" class="d">-		wx = info[xidx].x_org;
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-		wy = showbar &amp;&amp; topbar ?  info[xidx].y_org + bh : info[xidx].y_org;
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-		ww = info[xidx].width;
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-		wh = showbar ? info[xidx].height - bh : info[xidx].height;
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		wx = info[i].x_org;
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+		wy = showbar &amp;&amp; topbar ?  info[i].y_org + bh : info[i].y_org;
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+		ww = info[i].width;
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+		wh = showbar ? info[i].height - bh : info[i].height;
+</a> 		XFree(info);
+ 	}
+ 	else
+</pre>
+</div>
+</body>
+</html>

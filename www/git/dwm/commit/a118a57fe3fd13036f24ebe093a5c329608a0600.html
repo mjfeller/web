@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>renamed column into area - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a118a57fe3fd13036f24ebe093a5c329608a0600.html">a118a57fe3fd13036f24ebe093a5c329608a0600</a>
+<b>parent</b> <a href="../commit/02cea3b47e944ddb7541dfb404af205c1064191a.html">02cea3b47e944ddb7541dfb404af205c1064191a</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Thu, 28 Sep 2006 21:29:20 +0200
+
+renamed column into area
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.1</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">view.c</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 25 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -9,9 +9,9 @@ dwm is a dynamic window manager for X. It manages windows in tiling and
+</a> floating modes. Either mode can be applied dynamically, optimizing the
+ environment for the application in use and the task performed.
+ .P
+<a href="#h0-0-3" id="h0-0-3" class="d">-In tiling mode windows are managed in a master and stacking column. The master
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-column contains the window which currently needs most attention, whereas the
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-stacking column contains all other windows. In floating mode windows can be
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+In tiling mode windows are managed in a master and stacking area. The master
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+area contains the window which currently needs most attention, whereas the
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+stacking area contains all other windows. In floating mode windows can be
+</a> resized and moved freely. Dialog windows are always managed floating,
+ regardless of the mode selected.
+ .P
+<a href="#h0-1" id="h0-1" class="h">@@ -60,13 +60,13 @@ Focus next window.
+</a> Focus previous window.
+ .TP
+ .B Mod1-Return
+<a href="#h0-1-3" id="h0-1-3" class="d">-Zooms/cycles current window to/from master column (tiling mode), toggles maximization current window (floating mode).
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+Zooms/cycles current window to/from master area (tiling mode), toggles maximization current window (floating mode).
+</a> .TP
+ .B Mod1-g
+<a href="#h0-1-7" id="h0-1-7" class="d">-Grow current column (tiling mode only).
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+Grow current area (tiling mode only).
+</a> .TP
+ .B Mod1-s
+<a href="#h0-1-11" id="h0-1-11" class="d">-Shrink current column (tiling mode only).
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+Shrink current area (tiling mode only).
+</a> .TP
+ .B Mod1-Shift-[1..n]
+ Apply
+<a href="#h0-2" id="h0-2" class="h">@@ -105,7 +105,7 @@ Quit dwm.
+</a> Move current window while dragging (floating mode only).
+ .TP
+ .B Mod1-Button2
+<a href="#h0-2-3" id="h0-2-3" class="d">-Zoom current window to the master column (tiling mode only).
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+Zoom current window to the master area (tiling mode only).
+</a> .TP
+ .B Mod1-Button3
+ Resize current window while dragging (floating mode only).
+<b>diff --git a/<a id="h1" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -95,6 +95,24 @@ dofloat(Arg *arg) {
+</a> 	restack();
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+/* This algorithm is based on a (M)aster area and a (S)tacking area.
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+ * It supports following arrangements:
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+ *
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+ * 	MMMS		MMMM
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+ * 	MMMS		MMMM
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+ * 	MMMS		SSSS
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+ *
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+ * The stacking area can be set to arrange clients vertically or horizontally.
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+ * Through inverting the algorithm it can be used to achieve following setup in
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+ * a dual head environment (due to running two dwm instances concurrently on
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+ * the specific screen):
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+ *
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+ * 	SMM MMS		MMM MMM
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+ * 	SMM MMS		MMM MMM
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+ * 	SMM MMS		SSS SSS
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+ *
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+ * This uses the center of the two screens for master areas.
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+ */
+</a> void
+ dotile(Arg *arg) {
+ 	int h, i, n, w;
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>drw: simplify drw_font_xcreate and prevent a potential unneeded allocation - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e2e7fcb2198d40e2a50591932ee2b2a8f9969a5f.html">e2e7fcb2198d40e2a50591932ee2b2a8f9969a5f</a>
+<b>parent</b> <a href="../commit/1f2226df1380f178240bb81dddcad6c5ff2e9d62.html">1f2226df1380f178240bb81dddcad6c5ff2e9d62</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Tue, 20 Oct 2015 22:55:39 +0200
+
+drw: simplify drw_font_xcreate and prevent a potential unneeded allocation
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">drw.c</a></td><td> | </td><td class="num">41</td><td><span class="i">+++++++++++++++++++</span><span class="d">----------------------</span></td></tr>
+</table></pre><pre>1 file changed, 19 insertions(+), 22 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/drw.c.html">drw.c</a> b/<a href="../file/drw.c.html">drw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -108,12 +108,8 @@ static Fnt *
+</a> drw_font_xcreate(Drw *drw, const char *fontname, FcPattern *fontpattern)
+ {
+ 	Fnt *font;
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	if (!(fontname || fontpattern))
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-		die(&quot;No font specified.\n&quot;);
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	if (!(font = calloc(1, sizeof(Fnt))))
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-		return NULL;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	XftFont *xfont = NULL;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	FcPattern *pattern = NULL;
+</a> 
+ 	if (fontname) {
+ 		/* Using the pattern found at font-&gt;xfont-&gt;pattern does not yield same
+<a href="#h0-1" id="h0-1" class="h">@@ -122,28 +118,29 @@ drw_font_xcreate(Drw *drw, const char *fontname, FcPattern *fontpattern)
+</a> 		 * behaviour whereas the former just results in
+ 		 * missing-character-rectangles being drawn, at least with some fonts.
+ 		 */
+<a href="#h0-1-3" id="h0-1-3" class="d">-		if (!(font-&gt;xfont = XftFontOpenName(drw-&gt;dpy, drw-&gt;screen, fontname)) ||
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		    !(font-&gt;pattern = FcNameParse((FcChar8 *) fontname))) {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-			if (font-&gt;xfont) {
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-				XftFontClose(drw-&gt;dpy, font-&gt;xfont);
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-				font-&gt;xfont = NULL;
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-			}
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		if (!(xfont = XftFontOpenName(drw-&gt;dpy, drw-&gt;screen, fontname))) {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			fprintf(stderr, &quot;error, cannot load font: &#39;%s&#39;\n&quot;, fontname);
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+			return NULL;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		}
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+		if (!(pattern = FcNameParse((FcChar8 *) fontname))) {
+</a> 			fprintf(stderr, &quot;error, cannot load font: &#39;%s&#39;\n&quot;, fontname);
+<a href="#h0-1-15" id="h0-1-15" class="i">+			XftFontClose(drw-&gt;dpy, xfont);
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+			return NULL;
+</a> 		}
+ 	} else if (fontpattern) {
+<a href="#h0-1-19" id="h0-1-19" class="d">-		if (!(font-&gt;xfont = XftFontOpenPattern(drw-&gt;dpy, fontpattern)))
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+		if (!(xfont = XftFontOpenPattern(drw-&gt;dpy, fontpattern))) {
+</a> 			fprintf(stderr, &quot;error, cannot load font pattern.\n&quot;);
+<a href="#h0-1-22" id="h0-1-22" class="d">-		else
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-			font-&gt;pattern = NULL;
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-	}
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-	if (!font-&gt;xfont) {
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-		free(font);
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-		return NULL;
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+			return NULL;
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+		}
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+	} else {
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+		die(&quot;no font specified.\n&quot;);
+</a> 	}
+ 
+<a href="#h0-1-35" id="h0-1-35" class="d">-	font-&gt;ascent = font-&gt;xfont-&gt;ascent;
+</a><a href="#h0-1-36" id="h0-1-36" class="d">-	font-&gt;descent = font-&gt;xfont-&gt;descent;
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+	font = ecalloc(1, sizeof(Fnt));
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+	font-&gt;xfont = xfont;
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+	font-&gt;pattern = pattern;
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+	font-&gt;ascent = xfont-&gt;ascent;
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+	font-&gt;descent = xfont-&gt;descent;
+</a> 	font-&gt;h = font-&gt;ascent + font-&gt;descent;
+ 	font-&gt;dpy = drw-&gt;dpy;
+ 
+</pre>
+</div>
+</body>
+</html>

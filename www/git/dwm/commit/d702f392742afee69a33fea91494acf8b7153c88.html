@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>moved clients/stack/sel to Monitor, that&#39;s a per monitor structure from now on - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d702f392742afee69a33fea91494acf8b7153c88.html">d702f392742afee69a33fea91494acf8b7153c88</a>
+<b>parent</b> <a href="../commit/0d8671a5ad040000541ebaa893582e520c7e33a3.html">0d8671a5ad040000541ebaa893582e520c7e33a3</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Tue, 23 Jun 2009 17:17:25 +0100
+
+moved clients/stack/sel to Monitor, that&#39;s a per monitor structure from now on
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">194</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 111 insertions(+), 83 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,3 +1,4 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+/* TODO: cleanup nexttiled, ISVISIBLE, etc */
+</a> /* See LICENSE file for copyright and license details.
+  *
+  * dynamic window manager is designed like any other X client as well. It is
+<a href="#h0-1" id="h0-1" class="h">@@ -44,7 +45,7 @@
+</a> #define BUTTONMASK              (ButtonPressMask|ButtonReleaseMask)
+ #define CLEANMASK(mask)         (mask &amp; ~(numlockmask|LockMask))
+ #define INRECT(X,Y,RX,RY,RW,RH) ((X) &gt;= (RX) &amp;&amp; (X) &lt; (RX) + (RW) &amp;&amp; (Y) &gt;= (RY) &amp;&amp; (Y) &lt; (RY) + (RH))
+<a href="#h0-1-3" id="h0-1-3" class="d">-#define ISVISIBLE(M, C)         ((M) == (C-&gt;m) &amp;&amp; (C-&gt;tags &amp; M-&gt;tagset[M-&gt;seltags]))
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+#define ISVISIBLE(M, C)         ((M) == (C-&gt;mon) &amp;&amp; (C-&gt;tags &amp; M-&gt;tagset[M-&gt;seltags]))
+</a> #define LENGTH(X)               (sizeof X / sizeof X[0])
+ #define MAX(A, B)               ((A) &gt; (B) ? (A) : (B))
+ #define MIN(A, B)               ((A) &lt; (B) ? (A) : (B))
+<a href="#h0-2" id="h0-2" class="h">@@ -89,7 +90,7 @@ struct Client {
+</a> 	Bool isfixed, isfloating, isurgent;
+ 	Client *next;
+ 	Client *snext;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	Monitor *m;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	Monitor *mon;
+</a> 	Window win;
+ };
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -131,8 +132,11 @@ struct Monitor {
+</a> 	unsigned int tagset[2];
+ 	Bool showbar;
+ 	Bool topbar;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	Window barwin;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	Client *clients;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	Client *sel;
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	Client *stack;
+</a> 	Monitor *next;
+<a href="#h0-3-8" id="h0-3-8" class="i">+	Window barwin;
+</a> };
+ 
+ typedef struct {
+<a href="#h0-4" id="h0-4" class="h">@@ -251,9 +255,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> static Atom wmatom[WMLast], netatom[NetLast];
+ static Bool otherwm;
+ static Bool running = True;
+<a href="#h0-4-3" id="h0-4-3" class="d">-static Client *clients = NULL;
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-static Client *sel = NULL;
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-static Client *stack = NULL;
+</a> static Cursor cursor[CurLast];
+ static Display *dpy;
+ static DC dc;
+<a href="#h0-5" id="h0-5" class="h">@@ -290,7 +291,7 @@ applyrules(Client *c) {
+</a> 		if(ch.res_name)
+ 			XFree(ch.res_name);
+ 	}
+<a href="#h0-5-3" id="h0-5-3" class="d">-	c-&gt;tags = c-&gt;tags &amp; TAGMASK ? c-&gt;tags &amp; TAGMASK : c-&gt;m-&gt;tagset[c-&gt;m-&gt;seltags];
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	c-&gt;tags = c-&gt;tags &amp; TAGMASK ? c-&gt;tags &amp; TAGMASK : c-&gt;mon-&gt;tagset[c-&gt;mon-&gt;seltags];
+</a> }
+ 
+ Bool
+<a href="#h0-6" id="h0-6" class="h">@@ -362,7 +363,9 @@ void
+</a> arrange(void) {
+ 	Monitor *m;
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-	showhide(stack);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	/* optimise two loops into one, check focus(NULL) */
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+	for(m = mons; m; m = m-&gt;next)
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+		showhide(m-&gt;stack);
+</a> 	focus(NULL);
+ 	for(m = mons; m; m = m-&gt;next) {
+ 		if(lt[m-&gt;sellt]-&gt;arrange)
+<a href="#h0-7" id="h0-7" class="h">@@ -373,14 +376,14 @@ arrange(void) {
+</a> 
+ void
+ attach(Client *c) {
+<a href="#h0-7-3" id="h0-7-3" class="d">-	c-&gt;next = clients;
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-	clients = c;
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+	c-&gt;next = selmon-&gt;clients;
+</a><a href="#h0-7-6" id="h0-7-6" class="i">+	selmon-&gt;clients = c;
+</a> }
+ 
+ void
+ attachstack(Client *c) {
+<a href="#h0-7-11" id="h0-7-11" class="d">-	c-&gt;snext = stack;
+</a><a href="#h0-7-12" id="h0-7-12" class="d">-	stack = c;
+</a><a href="#h0-7-13" id="h0-7-13" class="i">+	c-&gt;snext = selmon-&gt;stack;
+</a><a href="#h0-7-14" id="h0-7-14" class="i">+	selmon-&gt;stack = c;
+</a> }
+ 
+ void
+<a href="#h0-8" id="h0-8" class="h">@@ -437,11 +440,15 @@ void
+</a> cleanup(void) {
+ 	Arg a = {.ui = ~0};
+ 	Layout foo = { &quot;&quot;, NULL };
+<a href="#h0-8-3" id="h0-8-3" class="i">+	Monitor *m;
+</a> 
+ 	view(&amp;a);
+ 	lt[selmon-&gt;sellt] = &amp;foo;
+<a href="#h0-8-7" id="h0-8-7" class="d">-	while(stack)
+</a><a href="#h0-8-8" id="h0-8-8" class="d">-		unmanage(stack);
+</a><a href="#h0-8-9" id="h0-8-9" class="i">+
+</a><a href="#h0-8-10" id="h0-8-10" class="i">+	/* TODO: consider simplifying cleanup code of the stack, perhaps do that in cleanmons() ? */
+</a><a href="#h0-8-11" id="h0-8-11" class="i">+	for(m = mons; m; m = m-&gt;next)
+</a><a href="#h0-8-12" id="h0-8-12" class="i">+		while(m-&gt;stack)
+</a><a href="#h0-8-13" id="h0-8-13" class="i">+			unmanage(m-&gt;stack);
+</a> 	if(dc.font.set)
+ 		XFreeFontSet(dpy, dc.font.set);
+ 	else
+<a href="#h0-9" id="h0-9" class="h">@@ -543,7 +550,7 @@ configurerequest(XEvent *e) {
+</a> 				c-&gt;y = sy + (sh / 2 - c-&gt;h / 2); /* center in y direction */
+ 			if((ev-&gt;value_mask &amp; (CWX|CWY)) &amp;&amp; !(ev-&gt;value_mask &amp; (CWWidth|CWHeight)))
+ 				configure(c);
+<a href="#h0-9-3" id="h0-9-3" class="d">-			if(ISVISIBLE((c-&gt;m), c))
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+			if(ISVISIBLE((c-&gt;mon), c))
+</a> 				XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+ 		}
+ 		else
+<a href="#h0-10" id="h0-10" class="h">@@ -575,7 +582,7 @@ void
+</a> detach(Client *c) {
+ 	Client **tc;
+ 
+<a href="#h0-10-3" id="h0-10-3" class="d">-	for(tc = &amp;clients; *tc &amp;&amp; *tc != c; tc = &amp;(*tc)-&gt;next);
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+	for(tc = &amp;c-&gt;mon-&gt;clients; *tc &amp;&amp; *tc != c; tc = &amp;(*tc)-&gt;next);
+</a> 	*tc = c-&gt;next;
+ }
+ 
+<a href="#h0-11" id="h0-11" class="h">@@ -583,7 +590,7 @@ void
+</a> detachstack(Client *c) {
+ 	Client **tc;
+ 
+<a href="#h0-11-3" id="h0-11-3" class="d">-	for(tc = &amp;stack; *tc &amp;&amp; *tc != c; tc = &amp;(*tc)-&gt;snext);
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+	for(tc = &amp;c-&gt;mon-&gt;stack; *tc &amp;&amp; *tc != c; tc = &amp;(*tc)-&gt;snext);
+</a> 	*tc = c-&gt;snext;
+ }
+ 
+<a href="#h0-12" id="h0-12" class="h">@@ -604,12 +611,10 @@ drawbar(Monitor *m) {
+</a> 	unsigned long *col;
+ 	Client *c;
+ 
+<a href="#h0-12-3" id="h0-12-3" class="d">-	for(c = clients; c; c = c-&gt;next) {
+</a><a href="#h0-12-4" id="h0-12-4" class="d">-		if(m == c-&gt;m) {
+</a><a href="#h0-12-5" id="h0-12-5" class="d">-			occ |= c-&gt;tags;
+</a><a href="#h0-12-6" id="h0-12-6" class="d">-			if(c-&gt;isurgent)
+</a><a href="#h0-12-7" id="h0-12-7" class="d">-				urg |= c-&gt;tags;
+</a><a href="#h0-12-8" id="h0-12-8" class="d">-		}
+</a><a href="#h0-12-9" id="h0-12-9" class="i">+	for(c = m-&gt;clients; c; c = c-&gt;next) {
+</a><a href="#h0-12-10" id="h0-12-10" class="i">+		occ |= c-&gt;tags;
+</a><a href="#h0-12-11" id="h0-12-11" class="i">+		if(c-&gt;isurgent)
+</a><a href="#h0-12-12" id="h0-12-12" class="i">+			urg |= c-&gt;tags;
+</a> 	}
+ 
+ 	dc.x = 0;
+<a href="#h0-13" id="h0-13" class="h">@@ -628,7 +633,7 @@ drawbar(Monitor *m) {
+</a> 		dc.w = TEXTW(tags[i]);
+ 		col = m-&gt;tagset[m-&gt;seltags] &amp; 1 &lt;&lt; i ? dc.sel : dc.norm;
+ 		drawtext(tags[i], col, urg &amp; 1 &lt;&lt; i);
+<a href="#h0-13-3" id="h0-13-3" class="d">-		drawsquare(m == selmon &amp;&amp; sel &amp;&amp; sel-&gt;tags &amp; 1 &lt;&lt; i,
+</a><a href="#h0-13-4" id="h0-13-4" class="i">+		drawsquare(m == selmon &amp;&amp; selmon-&gt;sel &amp;&amp; selmon-&gt;sel-&gt;tags &amp; 1 &lt;&lt; i,
+</a> 		           occ &amp; 1 &lt;&lt; i, urg &amp; 1 &lt;&lt; i, col);
+ 		dc.x += dc.w;
+ 	}
+<a href="#h0-14" id="h0-14" class="h">@@ -649,9 +654,9 @@ drawbar(Monitor *m) {
+</a> 		drawtext(stext, dc.norm, False);
+ 		if((dc.w = dc.x - x) &gt; bh) {
+ 			dc.x = x;
+<a href="#h0-14-3" id="h0-14-3" class="d">-			if(sel) {
+</a><a href="#h0-14-4" id="h0-14-4" class="d">-				drawtext(sel-&gt;name, dc.sel, False);
+</a><a href="#h0-14-5" id="h0-14-5" class="d">-				drawsquare(sel-&gt;isfixed, sel-&gt;isfloating, False, dc.sel);
+</a><a href="#h0-14-6" id="h0-14-6" class="i">+			if(selmon-&gt;sel) {
+</a><a href="#h0-14-7" id="h0-14-7" class="i">+				drawtext(selmon-&gt;sel-&gt;name, dc.sel, False);
+</a><a href="#h0-14-8" id="h0-14-8" class="i">+				drawsquare(selmon-&gt;sel-&gt;isfixed, selmon-&gt;sel-&gt;isfloating, False, dc.sel);
+</a> 			}
+ 			else
+ 				drawtext(NULL, dc.norm, False);
+<a href="#h0-15" id="h0-15" class="h">@@ -751,11 +756,11 @@ expose(XEvent *e) {
+</a> 
+ void
+ focus(Client *c) {
+<a href="#h0-15-3" id="h0-15-3" class="d">-	if(!c || !ISVISIBLE((c-&gt;m), c))
+</a><a href="#h0-15-4" id="h0-15-4" class="d">-		for(c = stack; c &amp;&amp; !ISVISIBLE(selmon, c); c = c-&gt;snext);
+</a><a href="#h0-15-5" id="h0-15-5" class="d">-	if(sel &amp;&amp; sel != c) {
+</a><a href="#h0-15-6" id="h0-15-6" class="d">-		grabbuttons(sel, False);
+</a><a href="#h0-15-7" id="h0-15-7" class="d">-		XSetWindowBorder(dpy, sel-&gt;win, dc.norm[ColBorder]);
+</a><a href="#h0-15-8" id="h0-15-8" class="i">+	if(!c || !ISVISIBLE((c-&gt;mon), c))
+</a><a href="#h0-15-9" id="h0-15-9" class="i">+		for(c = selmon-&gt;stack; c &amp;&amp; !ISVISIBLE(selmon, c); c = c-&gt;snext);
+</a><a href="#h0-15-10" id="h0-15-10" class="i">+	if(selmon-&gt;sel &amp;&amp; selmon-&gt;sel != c) {
+</a><a href="#h0-15-11" id="h0-15-11" class="i">+		grabbuttons(selmon-&gt;sel, False);
+</a><a href="#h0-15-12" id="h0-15-12" class="i">+		XSetWindowBorder(dpy, selmon-&gt;sel-&gt;win, dc.norm[ColBorder]);
+</a> 	}
+ 	if(c) {
+ 		if(c-&gt;isurgent)
+<a href="#h0-16" id="h0-16" class="h">@@ -768,7 +773,7 @@ focus(Client *c) {
+</a> 	}
+ 	else
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+<a href="#h0-16-3" id="h0-16-3" class="d">-	sel = c;
+</a><a href="#h0-16-4" id="h0-16-4" class="i">+	selmon-&gt;sel = c;
+</a> 	drawbars();
+ }
+ 
+<a href="#h0-17" id="h0-17" class="h">@@ -776,8 +781,8 @@ void
+</a> focusin(XEvent *e) { /* there are some broken focus acquiring clients */
+ 	XFocusChangeEvent *ev = &amp;e-&gt;xfocus;
+ 
+<a href="#h0-17-3" id="h0-17-3" class="d">-	if(sel &amp;&amp; ev-&gt;window != sel-&gt;win)
+</a><a href="#h0-17-4" id="h0-17-4" class="d">-		XSetInputFocus(dpy, sel-&gt;win, RevertToPointerRoot, CurrentTime);
+</a><a href="#h0-17-5" id="h0-17-5" class="i">+	if(selmon-&gt;sel &amp;&amp; ev-&gt;window != selmon-&gt;sel-&gt;win)
+</a><a href="#h0-17-6" id="h0-17-6" class="i">+		XSetInputFocus(dpy, selmon-&gt;sel-&gt;win, RevertToPointerRoot, CurrentTime);
+</a> }
+ 
+ #ifdef XINERAMA
+<a href="#h0-18" id="h0-18" class="h">@@ -800,15 +805,15 @@ void
+</a> focusstack(const Arg *arg) {
+ 	Client *c = NULL, *i;
+ 
+<a href="#h0-18-3" id="h0-18-3" class="d">-	if(!sel)
+</a><a href="#h0-18-4" id="h0-18-4" class="i">+	if(!selmon-&gt;sel)
+</a> 		return;
+ 	if(arg-&gt;i &gt; 0) {
+<a href="#h0-18-7" id="h0-18-7" class="d">-		for(c = sel-&gt;next; c &amp;&amp; !ISVISIBLE(selmon, c); c = c-&gt;next);
+</a><a href="#h0-18-8" id="h0-18-8" class="i">+		for(c = selmon-&gt;sel-&gt;next; c &amp;&amp; !ISVISIBLE(selmon, c); c = c-&gt;next);
+</a> 		if(!c)
+<a href="#h0-18-10" id="h0-18-10" class="d">-			for(c = clients; c &amp;&amp; !ISVISIBLE(selmon, c); c = c-&gt;next);
+</a><a href="#h0-18-11" id="h0-18-11" class="i">+			for(c = selmon-&gt;clients; c &amp;&amp; !ISVISIBLE(selmon, c); c = c-&gt;next);
+</a> 	}
+ 	else {
+<a href="#h0-18-14" id="h0-18-14" class="d">-		for(i = clients; i != sel; i = i-&gt;next)
+</a><a href="#h0-18-15" id="h0-18-15" class="i">+		for(i = selmon-&gt;clients; i != selmon-&gt;sel; i = i-&gt;next)
+</a> 			if(ISVISIBLE(selmon, i))
+ 				c = i;
+ 		if(!c)
+<a href="#h0-19" id="h0-19" class="h">@@ -824,9 +829,11 @@ focusstack(const Arg *arg) {
+</a> 
+ Client *
+ getclient(Window w) {
+<a href="#h0-19-3" id="h0-19-3" class="d">-	Client *c;
+</a><a href="#h0-19-4" id="h0-19-4" class="i">+	Client *c = NULL;
+</a><a href="#h0-19-5" id="h0-19-5" class="i">+	Monitor *m;
+</a> 
+<a href="#h0-19-7" id="h0-19-7" class="d">-	for(c = clients; c &amp;&amp; c-&gt;win != w; c = c-&gt;next);
+</a><a href="#h0-19-8" id="h0-19-8" class="i">+	for(m = mons; m; m = m-&gt;next)
+</a><a href="#h0-19-9" id="h0-19-9" class="i">+		for(c = m-&gt;clients; c &amp;&amp; c-&gt;win != w; c = c-&gt;next);
+</a> 	return c;
+ }
+ 
+<a href="#h0-20" id="h0-20" class="h">@@ -992,19 +999,19 @@ void
+</a> killclient(const Arg *arg) {
+ 	XEvent ev;
+ 
+<a href="#h0-20-3" id="h0-20-3" class="d">-	if(!sel)
+</a><a href="#h0-20-4" id="h0-20-4" class="i">+	if(!selmon-&gt;sel)
+</a> 		return;
+<a href="#h0-20-6" id="h0-20-6" class="d">-	if(isprotodel(sel)) {
+</a><a href="#h0-20-7" id="h0-20-7" class="i">+	if(isprotodel(selmon-&gt;sel)) {
+</a> 		ev.type = ClientMessage;
+<a href="#h0-20-9" id="h0-20-9" class="d">-		ev.xclient.window = sel-&gt;win;
+</a><a href="#h0-20-10" id="h0-20-10" class="i">+		ev.xclient.window = selmon-&gt;sel-&gt;win;
+</a> 		ev.xclient.message_type = wmatom[WMProtocols];
+ 		ev.xclient.format = 32;
+ 		ev.xclient.data.l[0] = wmatom[WMDelete];
+ 		ev.xclient.data.l[1] = CurrentTime;
+<a href="#h0-20-15" id="h0-20-15" class="d">-		XSendEvent(dpy, sel-&gt;win, False, NoEventMask, &amp;ev);
+</a><a href="#h0-20-16" id="h0-20-16" class="i">+		XSendEvent(dpy, selmon-&gt;sel-&gt;win, False, NoEventMask, &amp;ev);
+</a> 	}
+ 	else
+<a href="#h0-20-19" id="h0-20-19" class="d">-		XKillClient(dpy, sel-&gt;win);
+</a><a href="#h0-20-20" id="h0-20-20" class="i">+		XKillClient(dpy, selmon-&gt;sel-&gt;win);
+</a> }
+ 
+ void
+<a href="#h0-21" id="h0-21" class="h">@@ -1018,7 +1025,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 		die(&quot;fatal: could not malloc() %u bytes\n&quot;, sizeof(Client));
+ 	*c = cz;
+ 	c-&gt;win = w;
+<a href="#h0-21-3" id="h0-21-3" class="d">-	c-&gt;m = selmon;
+</a><a href="#h0-21-4" id="h0-21-4" class="i">+	c-&gt;mon = selmon;
+</a> 
+ 	/* geometry */
+ 	c-&gt;x = wa-&gt;x;
+<a href="#h0-22" id="h0-22" class="h">@@ -1095,7 +1102,7 @@ void
+</a> monocle(Monitor *m) {
+ 	Client *c;
+ 
+<a href="#h0-22-3" id="h0-22-3" class="d">-	for(c = nexttiled(m, clients); c; c = nexttiled(m, c-&gt;next))
+</a><a href="#h0-22-4" id="h0-22-4" class="i">+	for(c = nexttiled(m, selmon-&gt;clients); c; c = nexttiled(m, c-&gt;next))
+</a> 		resize(c, m-&gt;wx, m-&gt;wy, m-&gt;ww - 2 * c-&gt;bw, m-&gt;wh - 2 * c-&gt;bw);
+ }
+ 
+<a href="#h0-23" id="h0-23" class="h">@@ -1107,7 +1114,7 @@ movemouse(const Arg *arg) {
+</a> 	Window dummy;
+ 	XEvent ev;
+ 
+<a href="#h0-23-3" id="h0-23-3" class="d">-	if(!(c = sel))
+</a><a href="#h0-23-4" id="h0-23-4" class="i">+	if(!(c = selmon-&gt;sel))
+</a> 		return;
+ 	restack(selmon);
+ 	ocx = c-&gt;x;
+<a href="#h0-24" id="h0-24" class="h">@@ -1185,7 +1192,7 @@ propertynotify(XEvent *e) {
+</a> 		}
+ 		if(ev-&gt;atom == XA_WM_NAME || ev-&gt;atom == netatom[NetWMName]) {
+ 			updatetitle(c);
+<a href="#h0-24-3" id="h0-24-3" class="d">-			if(c == sel)
+</a><a href="#h0-24-4" id="h0-24-4" class="i">+			if(c == selmon-&gt;sel)
+</a> 				drawbars();
+ 		}
+ 	}
+<a href="#h0-25" id="h0-25" class="h">@@ -1220,7 +1227,7 @@ resizemouse(const Arg *arg) {
+</a> 	Client *c;
+ 	XEvent ev;
+ 
+<a href="#h0-25-3" id="h0-25-3" class="d">-	if(!(c = sel))
+</a><a href="#h0-25-4" id="h0-25-4" class="i">+	if(!(c = selmon-&gt;sel))
+</a> 		return;
+ 	restack(selmon);
+ 	ocx = c-&gt;x;
+<a href="#h0-26" id="h0-26" class="h">@@ -1265,14 +1272,14 @@ restack(Monitor *m) {
+</a> 	XWindowChanges wc;
+ 
+ 	drawbars();
+<a href="#h0-26-3" id="h0-26-3" class="d">-	if(!sel)
+</a><a href="#h0-26-4" id="h0-26-4" class="i">+	if(!selmon-&gt;sel)
+</a> 		return;
+<a href="#h0-26-6" id="h0-26-6" class="d">-	if(m == selmon &amp;&amp; (sel-&gt;isfloating || !lt[m-&gt;sellt]-&gt;arrange))
+</a><a href="#h0-26-7" id="h0-26-7" class="d">-		XRaiseWindow(dpy, sel-&gt;win);
+</a><a href="#h0-26-8" id="h0-26-8" class="i">+	if(m == selmon &amp;&amp; (selmon-&gt;sel-&gt;isfloating || !lt[m-&gt;sellt]-&gt;arrange))
+</a><a href="#h0-26-9" id="h0-26-9" class="i">+		XRaiseWindow(dpy, selmon-&gt;sel-&gt;win);
+</a> 	if(lt[m-&gt;sellt]-&gt;arrange) {
+ 		wc.stack_mode = Below;
+ 		wc.sibling = m-&gt;barwin;
+<a href="#h0-26-13" id="h0-26-13" class="d">-		for(c = stack; c; c = c-&gt;snext)
+</a><a href="#h0-26-14" id="h0-26-14" class="i">+		for(c = m-&gt;stack; c; c = c-&gt;snext)
+</a> 			if(!c-&gt;isfloating &amp;&amp; ISVISIBLE(m, c)) {
+ 				XConfigureWindow(dpy, c-&gt;win, CWSibling|CWStackMode, &amp;wc);
+ 				wc.sibling = c-&gt;win;
+<a href="#h0-27" id="h0-27" class="h">@@ -1334,7 +1341,7 @@ setlayout(const Arg *arg) {
+</a> 		selmon-&gt;sellt ^= 1;
+ 	if(arg &amp;&amp; arg-&gt;v)
+ 		lt[selmon-&gt;sellt] = (Layout *)arg-&gt;v;
+<a href="#h0-27-3" id="h0-27-3" class="d">-	if(sel)
+</a><a href="#h0-27-4" id="h0-27-4" class="i">+	if(selmon-&gt;sel)
+</a> 		arrange();
+ 	else
+ 		drawbars();
+<a href="#h0-28" id="h0-28" class="h">@@ -1425,9 +1432,9 @@ void
+</a> showhide(Client *c) {
+ 	if(!c)
+ 		return;
+<a href="#h0-28-3" id="h0-28-3" class="d">-	if(ISVISIBLE((c-&gt;m), c)) { /* show clients top down */
+</a><a href="#h0-28-4" id="h0-28-4" class="i">+	if(ISVISIBLE((c-&gt;mon), c)) { /* show clients top down */
+</a> 		XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+<a href="#h0-28-6" id="h0-28-6" class="d">-		if(!lt[c-&gt;m-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+</a><a href="#h0-28-7" id="h0-28-7" class="i">+		if(!lt[c-&gt;mon-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+</a> 			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+ 		showhide(c-&gt;snext);
+ 	}
+<a href="#h0-29" id="h0-29" class="h">@@ -1459,8 +1466,8 @@ spawn(const Arg *arg) {
+</a> 
+ void
+ tag(const Arg *arg) {
+<a href="#h0-29-3" id="h0-29-3" class="d">-	if(sel &amp;&amp; arg-&gt;ui &amp; TAGMASK) {
+</a><a href="#h0-29-4" id="h0-29-4" class="d">-		sel-&gt;tags = arg-&gt;ui &amp; TAGMASK;
+</a><a href="#h0-29-5" id="h0-29-5" class="i">+	if(selmon-&gt;sel &amp;&amp; arg-&gt;ui &amp; TAGMASK) {
+</a><a href="#h0-29-6" id="h0-29-6" class="i">+		selmon-&gt;sel-&gt;tags = arg-&gt;ui &amp; TAGMASK;
+</a> 		arrange();
+ 	}
+ }
+<a href="#h0-30" id="h0-30" class="h">@@ -1473,7 +1480,7 @@ tagmon(const Arg *arg) {
+</a> 
+ 	for(i = 0, m = mons; m; m = m-&gt;next, i++)
+ 		if(i == arg-&gt;ui) {
+<a href="#h0-30-3" id="h0-30-3" class="d">-			sel-&gt;m = m;
+</a><a href="#h0-30-4" id="h0-30-4" class="i">+			selmon-&gt;sel-&gt;m = m;
+</a> 			arrange();
+ 			break;
+ 		}
+<a href="#h0-31" id="h0-31" class="h">@@ -1497,12 +1504,12 @@ tile(Monitor *m) {
+</a> 	unsigned int i, n;
+ 	Client *c;
+ 
+<a href="#h0-31-3" id="h0-31-3" class="d">-	for(n = 0, c = nexttiled(m, clients); c; c = nexttiled(m, c-&gt;next), n++);
+</a><a href="#h0-31-4" id="h0-31-4" class="i">+	for(n = 0, c = nexttiled(m, m-&gt;clients); c; c = nexttiled(m, c-&gt;next), n++);
+</a> 	if(n == 0)
+ 		return;
+ 
+ 	/* master */
+<a href="#h0-31-9" id="h0-31-9" class="d">-	c = nexttiled(m, clients);
+</a><a href="#h0-31-10" id="h0-31-10" class="i">+	c = nexttiled(m, m-&gt;clients);
+</a> 	mw = m-&gt;mfact * m-&gt;ww;
+ 	resize(c, m-&gt;wx, m-&gt;wy, (n == 1 ? m-&gt;ww : mw) - 2 * c-&gt;bw, m-&gt;wh - 2 * c-&gt;bw);
+ 
+<a href="#h0-32" id="h0-32" class="h">@@ -1535,11 +1542,11 @@ togglebar(const Arg *arg) {
+</a> 
+ void
+ togglefloating(const Arg *arg) {
+<a href="#h0-32-3" id="h0-32-3" class="d">-	if(!sel)
+</a><a href="#h0-32-4" id="h0-32-4" class="i">+	if(!selmon-&gt;sel)
+</a> 		return;
+<a href="#h0-32-6" id="h0-32-6" class="d">-	sel-&gt;isfloating = !sel-&gt;isfloating || sel-&gt;isfixed;
+</a><a href="#h0-32-7" id="h0-32-7" class="d">-	if(sel-&gt;isfloating)
+</a><a href="#h0-32-8" id="h0-32-8" class="d">-		resize(sel, sel-&gt;x, sel-&gt;y, sel-&gt;w, sel-&gt;h);
+</a><a href="#h0-32-9" id="h0-32-9" class="i">+	selmon-&gt;sel-&gt;isfloating = !selmon-&gt;sel-&gt;isfloating || selmon-&gt;sel-&gt;isfixed;
+</a><a href="#h0-32-10" id="h0-32-10" class="i">+	if(selmon-&gt;sel-&gt;isfloating)
+</a><a href="#h0-32-11" id="h0-32-11" class="i">+		resize(selmon-&gt;sel, selmon-&gt;sel-&gt;x, selmon-&gt;sel-&gt;y, selmon-&gt;sel-&gt;w, selmon-&gt;sel-&gt;h);
+</a> 	arrange();
+ }
+ 
+<a href="#h0-33" id="h0-33" class="h">@@ -1547,12 +1554,12 @@ void
+</a> toggletag(const Arg *arg) {
+ 	unsigned int mask;
+ 
+<a href="#h0-33-3" id="h0-33-3" class="d">-	if(!sel)
+</a><a href="#h0-33-4" id="h0-33-4" class="i">+	if(!selmon-&gt;sel)
+</a> 		return;
+ 	
+<a href="#h0-33-7" id="h0-33-7" class="d">-	mask = sel-&gt;tags ^ (arg-&gt;ui &amp; TAGMASK);
+</a><a href="#h0-33-8" id="h0-33-8" class="i">+	mask = selmon-&gt;sel-&gt;tags ^ (arg-&gt;ui &amp; TAGMASK);
+</a> 	if(mask) {
+<a href="#h0-33-10" id="h0-33-10" class="d">-		sel-&gt;tags = mask;
+</a><a href="#h0-33-11" id="h0-33-11" class="i">+		selmon-&gt;sel-&gt;tags = mask;
+</a> 		arrange();
+ 	}
+ }
+<a href="#h0-34" id="h0-34" class="h">@@ -1578,7 +1585,7 @@ unmanage(Client *c) {
+</a> 	XConfigureWindow(dpy, c-&gt;win, CWBorderWidth, &amp;wc); /* restore border */
+ 	detach(c);
+ 	detachstack(c);
+<a href="#h0-34-3" id="h0-34-3" class="d">-	if(sel == c)
+</a><a href="#h0-34-4" id="h0-34-4" class="i">+	if(selmon-&gt;sel == c)
+</a> 		focus(NULL);
+ 	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+ 	setclientstate(c, WithdrawnState);
+<a href="#h0-35" id="h0-35" class="h">@@ -1634,7 +1641,7 @@ void
+</a> updategeom(void) {
+ 	int i, n = 1;
+ 	Client *c;
+<a href="#h0-35-3" id="h0-35-3" class="d">-	Monitor *newmons = NULL, *m;
+</a><a href="#h0-35-4" id="h0-35-4" class="i">+	Monitor *newmons = NULL, *m, *tm;
+</a> 
+ #ifdef XINERAMA
+ 	XineramaScreenInfo *info = NULL;
+<a href="#h0-36" id="h0-36" class="h">@@ -1675,6 +1682,9 @@ updategeom(void) {
+</a> 	/* bar geometry setup */
+ 	for(m = newmons; m; m = m-&gt;next) {
+ 		/* TODO: consider removing the following values from config.h */
+<a href="#h0-36-3" id="h0-36-3" class="i">+		m-&gt;clients = NULL;
+</a><a href="#h0-36-4" id="h0-36-4" class="i">+		m-&gt;sel = NULL;
+</a><a href="#h0-36-5" id="h0-36-5" class="i">+		m-&gt;stack = NULL;
+</a> 		m-&gt;seltags = 0;
+ 		m-&gt;sellt = 0;
+ 		m-&gt;tagset[0] = m-&gt;tagset[1] = 1;
+<a href="#h0-37" id="h0-37" class="h">@@ -1683,15 +1693,33 @@ updategeom(void) {
+</a> 		m-&gt;topbar = topbar;
+ 		updatebarpos(m);
+ 		/* reassign all clients with same screen number */
+<a href="#h0-37-3" id="h0-37-3" class="d">-		for(c = clients; c; c = c-&gt;next)
+</a><a href="#h0-37-4" id="h0-37-4" class="d">-			if(c-&gt;m-&gt;screen_number == m-&gt;screen_number)
+</a><a href="#h0-37-5" id="h0-37-5" class="d">-				c-&gt;m = m;
+</a><a href="#h0-37-6" id="h0-37-6" class="i">+		for(tm = mons; tm; tm = tm-&gt;next)
+</a><a href="#h0-37-7" id="h0-37-7" class="i">+			if(tm-&gt;screen_number == m-&gt;screen_number) {
+</a><a href="#h0-37-8" id="h0-37-8" class="i">+				m-&gt;clients = tm-&gt;clients;
+</a><a href="#h0-37-9" id="h0-37-9" class="i">+				m-&gt;stack = tm-&gt;stack;
+</a><a href="#h0-37-10" id="h0-37-10" class="i">+				tm-&gt;clients = NULL;
+</a><a href="#h0-37-11" id="h0-37-11" class="i">+				tm-&gt;stack = NULL;
+</a><a href="#h0-37-12" id="h0-37-12" class="i">+				for(c = m-&gt;clients; c; c = c-&gt;next)
+</a><a href="#h0-37-13" id="h0-37-13" class="i">+					c-&gt;mon = m;
+</a><a href="#h0-37-14" id="h0-37-14" class="i">+			}
+</a> 	}
+ 
+<a href="#h0-37-17" id="h0-37-17" class="d">-	/* reassign left over clients with disappeared screen number */
+</a><a href="#h0-37-18" id="h0-37-18" class="d">-	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h0-37-19" id="h0-37-19" class="d">-		if(c-&gt;m-&gt;screen_number &gt;= n)
+</a><a href="#h0-37-20" id="h0-37-20" class="d">-			c-&gt;m = newmons;
+</a><a href="#h0-37-21" id="h0-37-21" class="i">+	/* reassign left over clients of disappeared monitors */
+</a><a href="#h0-37-22" id="h0-37-22" class="i">+	for(tm = mons; tm; tm = tm-&gt;next) {
+</a><a href="#h0-37-23" id="h0-37-23" class="i">+		while(tm-&gt;clients) {
+</a><a href="#h0-37-24" id="h0-37-24" class="i">+			c = tm-&gt;clients-&gt;next;
+</a><a href="#h0-37-25" id="h0-37-25" class="i">+			tm-&gt;clients-&gt;next = newmons-&gt;clients;
+</a><a href="#h0-37-26" id="h0-37-26" class="i">+			tm-&gt;clients-&gt;mon = newmons;
+</a><a href="#h0-37-27" id="h0-37-27" class="i">+			newmons-&gt;clients = tm-&gt;clients;
+</a><a href="#h0-37-28" id="h0-37-28" class="i">+			tm-&gt;clients = c;
+</a><a href="#h0-37-29" id="h0-37-29" class="i">+		}
+</a><a href="#h0-37-30" id="h0-37-30" class="i">+		while(tm-&gt;stack) {
+</a><a href="#h0-37-31" id="h0-37-31" class="i">+			c = tm-&gt;stack-&gt;snext;
+</a><a href="#h0-37-32" id="h0-37-32" class="i">+			tm-&gt;stack-&gt;snext = newmons-&gt;stack;
+</a><a href="#h0-37-33" id="h0-37-33" class="i">+			newmons-&gt;stack = tm-&gt;stack;
+</a><a href="#h0-37-34" id="h0-37-34" class="i">+			tm-&gt;stack = c;
+</a><a href="#h0-37-35" id="h0-37-35" class="i">+		}
+</a><a href="#h0-37-36" id="h0-37-36" class="i">+	}
+</a> 
+ 	/* select focused monitor */
+ 	if(!selmon) {
+<a href="#h0-38" id="h0-38" class="h">@@ -1795,7 +1823,7 @@ updatewmhints(Client *c) {
+</a> 	XWMHints *wmh;
+ 
+ 	if((wmh = XGetWMHints(dpy, c-&gt;win))) {
+<a href="#h0-38-3" id="h0-38-3" class="d">-		if(c == sel &amp;&amp; wmh-&gt;flags &amp; XUrgencyHint) {
+</a><a href="#h0-38-4" id="h0-38-4" class="i">+		if(c == selmon-&gt;sel &amp;&amp; wmh-&gt;flags &amp; XUrgencyHint) {
+</a> 			wmh-&gt;flags &amp;= ~XUrgencyHint;
+ 			XSetWMHints(dpy, c-&gt;win, wmh);
+ 		}
+<a href="#h0-39" id="h0-39" class="h">@@ -1851,11 +1879,11 @@ xerrorstart(Display *dpy, XErrorEvent *ee) {
+</a> 
+ void
+ zoom(const Arg *arg) {
+<a href="#h0-39-3" id="h0-39-3" class="d">-	Client *c = sel;
+</a><a href="#h0-39-4" id="h0-39-4" class="i">+	Client *c = selmon-&gt;sel;
+</a> 
+<a href="#h0-39-6" id="h0-39-6" class="d">-	if(!lt[selmon-&gt;sellt]-&gt;arrange || lt[selmon-&gt;sellt]-&gt;arrange == monocle || (sel &amp;&amp; sel-&gt;isfloating))
+</a><a href="#h0-39-7" id="h0-39-7" class="i">+	if(!lt[selmon-&gt;sellt]-&gt;arrange || lt[selmon-&gt;sellt]-&gt;arrange == monocle || (selmon-&gt;sel &amp;&amp; selmon-&gt;sel-&gt;isfloating))
+</a> 		return;
+<a href="#h0-39-9" id="h0-39-9" class="d">-	if(c == nexttiled(selmon, clients))
+</a><a href="#h0-39-10" id="h0-39-10" class="i">+	if(c == nexttiled(selmon, selmon-&gt;clients))
+</a> 		if(!c || !(c = nexttiled(selmon, c-&gt;next)))
+ 			return;
+ 	detach(c);
+</pre>
+</div>
+</body>
+</html>

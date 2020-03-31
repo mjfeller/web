@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>renamed Rule members, renamed RReg into Regexps - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2e95bc04135936ff8adc75e57e21f5edab56e0d6.html">2e95bc04135936ff8adc75e57e21f5edab56e0d6</a>
+<b>parent</b> <a href="../commit/4cdbd523e5f02f7cf392dda8690f95ce6eaff9dd.html">4cdbd523e5f02f7cf392dda8690f95ce6eaff9dd</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Mon, 19 Feb 2007 14:52:19 +0100
+
+renamed Rule members, renamed RReg into Regexps
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">manage.c</a></td><td> | </td><td class="num">34</td><td><span class="i">+++++++++++++++++</span><span class="d">-----------------</span></td></tr>
+</table></pre><pre>1 file changed, 17 insertions(+), 17 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/manage.c.html">manage.c</a> b/<a href="../file/manage.c.html">manage.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -16,20 +16,20 @@ unsigned int nmaster = NMASTER;
+</a> /* static */
+ 
+ typedef struct {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	const char *clpattern;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	const char *tpattern;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	const char *prop;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	const char *tags;
+</a> 	Bool isfloat;
+ } Rule;
+ 
+ typedef struct {
+<a href="#h0-0-11" id="h0-0-11" class="d">-	regex_t *clregex;
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	regex_t *tregex;
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-} RReg;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	regex_t *propregex;
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	regex_t *tagregex;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+} Regexps;
+</a> 
+ TAGS
+ RULES
+ 
+<a href="#h0-0-21" id="h0-0-21" class="d">-static RReg *rreg = NULL;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+static Regexps *regexps = NULL;
+</a> static unsigned int len = 0;
+ 
+ static Client *
+<a href="#h0-1" id="h0-1" class="h">@@ -77,24 +77,24 @@ compileregexps(void) {
+</a> 	unsigned int i;
+ 	regex_t *reg;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(rreg)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if(regexps)
+</a> 		return;
+ 	len = sizeof rule / sizeof rule[0];
+<a href="#h0-1-7" id="h0-1-7" class="d">-	rreg = emallocz(len * sizeof(RReg));
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	regexps = emallocz(len * sizeof(Regexps));
+</a> 	for(i = 0; i &lt; len; i++) {
+<a href="#h0-1-10" id="h0-1-10" class="d">-		if(rule[i].clpattern) {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		if(rule[i].prop) {
+</a> 			reg = emallocz(sizeof(regex_t));
+<a href="#h0-1-13" id="h0-1-13" class="d">-			if(regcomp(reg, rule[i].clpattern, REG_EXTENDED))
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+			if(regcomp(reg, rule[i].prop, REG_EXTENDED))
+</a> 				free(reg);
+ 			else
+<a href="#h0-1-17" id="h0-1-17" class="d">-				rreg[i].clregex = reg;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+				regexps[i].propregex = reg;
+</a> 		}
+<a href="#h0-1-20" id="h0-1-20" class="d">-		if(rule[i].tpattern) {
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+		if(rule[i].tags) {
+</a> 			reg = emallocz(sizeof(regex_t));
+<a href="#h0-1-23" id="h0-1-23" class="d">-			if(regcomp(reg, rule[i].tpattern, REG_EXTENDED))
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+			if(regcomp(reg, rule[i].tags, REG_EXTENDED))
+</a> 				free(reg);
+ 			else
+<a href="#h0-1-27" id="h0-1-27" class="d">-				rreg[i].tregex = reg;
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+				regexps[i].tagregex = reg;
+</a> 		}
+ 	}
+ }
+<a href="#h0-2" id="h0-2" class="h">@@ -310,10 +310,10 @@ settags(Client *c, Client *trans) {
+</a> 				ch.res_class ? ch.res_class : &quot;&quot;,
+ 				ch.res_name ? ch.res_name : &quot;&quot;, c-&gt;name);
+ 		for(i = 0; i &lt; len; i++)
+<a href="#h0-2-3" id="h0-2-3" class="d">-			if(rreg[i].clregex &amp;&amp; !regexec(rreg[i].clregex, prop, 1, &amp;tmp, 0)) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			if(regexps[i].propregex &amp;&amp; !regexec(regexps[i].propregex, prop, 1, &amp;tmp, 0)) {
+</a> 				c-&gt;isfloat = rule[i].isfloat;
+<a href="#h0-2-6" id="h0-2-6" class="d">-				for(j = 0; rreg[i].tregex &amp;&amp; j &lt; ntags; j++) {
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-					if(!regexec(rreg[i].tregex, tags[j], 1, &amp;tmp, 0)) {
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+				for(j = 0; regexps[i].tagregex &amp;&amp; j &lt; ntags; j++) {
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+					if(!regexec(regexps[i].tagregex, tags[j], 1, &amp;tmp, 0)) {
+</a> 						matched = True;
+ 						c-&gt;tags[j] = True;
+ 					}
+</pre>
+</div>
+</body>
+</html>

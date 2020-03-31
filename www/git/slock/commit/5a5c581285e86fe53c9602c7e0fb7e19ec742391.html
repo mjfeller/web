@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added dummy error handler to prevent X from terminating slock just in case - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5a5c581285e86fe53c9602c7e0fb7e19ec742391.html">5a5c581285e86fe53c9602c7e0fb7e19ec742391</a>
+<b>parent</b> <a href="../commit/ede2935e10fdab76994676d5052b571907612199.html">ede2935e10fdab76994676d5052b571907612199</a>
+<b>Author:</b> anselm@garbe.us &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Sun, 22 Jan 2012 18:58:10 +0100
+
+added dummy error handler to prevent X from terminating slock just in case
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">22</td><td><span class="i">++++++++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 14 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -46,7 +46,7 @@ die(const char *errstr, ...) {
+</a> 
+ #ifndef HAVE_BSD_AUTH
+ static const char *
+<a href="#h0-0-3" id="h0-0-3" class="d">-get_password(void) { /* only run as root */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+getpw(void) { /* only run as root */
+</a> 	const char *rval;
+ 	struct passwd *pw;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -74,9 +74,9 @@ get_password(void) { /* only run as root */
+</a> 
+ static void
+ #ifdef HAVE_BSD_AUTH
+<a href="#h0-1-3" id="h0-1-3" class="d">-read_password(Display *dpy)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+readpw(Display *dpy)
+</a> #else
+<a href="#h0-1-6" id="h0-1-6" class="d">-read_password(Display *dpy, const char *pws)
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+readpw(Display *dpy, const char *pws)
+</a> #endif
+ {
+ 	char buf[32], passwd[256];
+<a href="#h0-2" id="h0-2" class="h">@@ -213,6 +213,11 @@ usage(void) {
+</a> 	exit(EXIT_FAILURE);
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+static int
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+xerrordummy(Display *dpy, XErrorEvent *ee) {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	return 0;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+}
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+
+</a> int
+ main(int argc, char **argv) {
+ #ifndef HAVE_BSD_AUTH
+<a href="#h0-3" id="h0-3" class="h">@@ -224,7 +229,7 @@ main(int argc, char **argv) {
+</a> 	struct st_lock **locks;
+ 
+ 	if((argc == 2) &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+<a href="#h0-3-3" id="h0-3-3" class="d">-		die(&quot;slock-%s, © 2006-2008 Anselm R Garbe&quot;, VERSION);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		die(&quot;slock-%s, © 2006-2012 Anselm R Garbe&quot;, VERSION);
+</a> 	else if(argc != 1)
+ 		usage();
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -232,12 +237,13 @@ main(int argc, char **argv) {
+</a> 		die(&quot;no passwd entry for you&quot;);
+ 
+ #ifndef HAVE_BSD_AUTH
+<a href="#h0-4-3" id="h0-4-3" class="d">-	pws = get_password();
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	pws = getpw();
+</a> #endif
+ 
+ 	if(!(dpy = XOpenDisplay(0)))
+ 		die(&quot;cannot open display&quot;);
+<a href="#h0-4-9" id="h0-4-9" class="d">-
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+	/* prevent default error handler to take over */
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+	XSetErrorHandler(xerrordummy);
+</a> 	/* Get the number of screens in display &quot;dpy&quot; and blank them all. */
+ 	nscreens = ScreenCount(dpy);
+ 	locks = malloc(sizeof(struct st_lock *) * nscreens);
+<a href="#h0-5" id="h0-5" class="h">@@ -251,9 +257,9 @@ main(int argc, char **argv) {
+</a> 
+ 	/* Everything is now blank. Now wait for the correct password. */
+ #ifdef HAVE_BSD_AUTH
+<a href="#h0-5-3" id="h0-5-3" class="d">-	read_password(dpy);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	readpw(dpy);
+</a> #else
+<a href="#h0-5-6" id="h0-5-6" class="d">-	read_password(dpy, pws);
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	readpw(dpy, pws);
+</a> #endif
+ 
+ 	/* Password ok, unlock everything and quit. */
+</pre>
+</div>
+</body>
+</html>

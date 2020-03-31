@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed swap(), implemented pop for everything - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7ac0de8350c51ef39e4dee5f60e1da641c4fbd5b.html">7ac0de8350c51ef39e4dee5f60e1da641c4fbd5b</a>
+<b>parent</b> <a href="../commit/0b7c0f10eeee1c473b1adcee3a8b90db61b854e9.html">0b7c0f10eeee1c473b1adcee3a8b90db61b854e9</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Fri,  5 Jan 2007 21:55:43 +0100
+
+removed swap(), implemented pop for everything
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">view.c</a></td><td> | </td><td class="num">69</td><td><span class="i">++++++++</span><span class="d">-------------------------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 61 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -11,44 +11,6 @@ nexttiled(Client *c) {
+</a> 	return c;
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static Bool
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-ismaster(Client *c) {
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	Client *cl;
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	unsigned int i;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	for(cl = nexttiled(clients), i = 0; cl &amp;&amp; cl != c; cl = nexttiled(cl-&gt;next), i++);
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	return i &lt; nmaster;
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-}
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-static void
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-pop(Client *c) {
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-	detach(c);
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-	if(clients)
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-		clients-&gt;prev = c;
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	c-&gt;next = clients;
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-	clients = c;
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-}
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-static void
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-swap(Client *c1, Client *c2) {
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-	Client tmp = *c1;
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-	Client *c1p = c1-&gt;prev;
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-	Client *c1n = c1-&gt;next;
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-	Client *c1s = c1-&gt;snext;
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-	Client *c2p = c2-&gt;prev;
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-	Client *c2n = c2-&gt;next;
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-	Client *c2s = c2-&gt;snext;
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-	*c1 = *c2;
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-	*c2 = tmp;
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-	c1-&gt;prev = c1p;
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-	c1-&gt;next = c1n;
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-	c1-&gt;snext = c1s;
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-	c2-&gt;prev = c2p;
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-	c2-&gt;next = c2n;
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-	c2-&gt;snext = c2s;
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-}
+</a><a href="#h0-0-40" id="h0-0-40" class="d">-
+</a> static void
+ togglemax(Client *c) {
+ 	XEvent ev;
+<a href="#h0-1" id="h0-1" class="h">@@ -72,15 +34,6 @@ togglemax(Client *c) {
+</a> 	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-static Client *
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-topofstack() {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	Client *c;
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	unsigned int i;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	for(c = nexttiled(clients), i = 0; c &amp;&amp; i &lt; nmaster; c = nexttiled(c-&gt;next), i++);
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	return (i &lt; nmaster) ? NULL : c;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-}
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-
+</a> /* extern */
+ 
+ void (*arrange)(void) = DEFMODE;
+<a href="#h0-2" id="h0-2" class="h">@@ -308,19 +261,13 @@ zoom(Arg *arg) {
+</a> 		n++;
+ 
+ 	c = sel;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(arrange == dofloat)
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		return;
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	else if(n &lt;= nmaster)
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-		pop(c);
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-	else if(ismaster(sel)) {
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-		if(!(c = topofstack()))
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-			return;
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-		swap(c, sel);
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-		c = sel;
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	if(arrange != dofloat) {
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		detach(c);
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+		if(clients)
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+			clients-&gt;prev = c;
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+		c-&gt;next = clients;
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+		clients = c;
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+		focus(c);
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+		arrange();
+</a> 	}
+<a href="#h0-2-21" id="h0-2-21" class="d">-	else
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-		pop(c);
+</a><a href="#h0-2-23" id="h0-2-23" class="d">-
+</a><a href="#h0-2-24" id="h0-2-24" class="d">-	focus(c);
+</a><a href="#h0-2-25" id="h0-2-25" class="d">-	arrange();
+</a> }
+</pre>
+</div>
+</body>
+</html>

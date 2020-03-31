@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added gravity stuff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2e836ecce1ba0629a6088b739c1092d27fccd72b.html">2e836ecce1ba0629a6088b739c1092d27fccd72b</a>
+<b>parent</b> <a href="../commit/6db5ffb6c9a9c0db5c425c64a96a3896a682c95e.html">6db5ffb6c9a9c0db5c425c64a96a3896a682c95e</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Wed, 12 Jul 2006 17:17:15 +0200
+
+added gravity stuff
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">72</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">kb.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">wm.h</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>4 files changed, 76 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -18,9 +18,10 @@ max(void *aux)
+</a> 		return;
+ 	stack-&gt;x = sx;
+ 	stack-&gt;y = bh;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	stack-&gt;w = sw - 2;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	stack-&gt;h = sh - bh - 2;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	stack-&gt;w = sw - 2 * stack-&gt;border;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	stack-&gt;h = sh - bh - 2 * stack-&gt;border;
+</a> 	resize(stack);
+<a href="#h0-0-8" id="h0-0-8" class="i">+	discard_events(EnterWindowMask);
+</a> }
+ 
+ void
+<a href="#h0-1" id="h0-1" class="h">@@ -43,8 +44,8 @@ arrange(void *aux)
+</a> 	else
+ 		cols = rows;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	gw = (sw - 1)  / cols;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	gh = (sh - bh - 1) / rows;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	gw = (sw - 2 * c-&gt;border)  / cols;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	gh = (sh - bh - 2 * c-&gt;border) / rows;
+</a> 
+ 	for(i = j = 0, c = clients; c; c = c-&gt;next) {
+ 		c-&gt;x = i * gw;
+<a href="#h0-2" id="h0-2" class="h">@@ -57,6 +58,7 @@ arrange(void *aux)
+</a> 			i = 0;
+ 		}
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="i">+	discard_events(EnterWindowMask);
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -161,6 +163,10 @@ update_size(Client *c)
+</a> 	}
+ 	else
+ 		c-&gt;minw = c-&gt;minh = 0;
+<a href="#h0-3-3" id="h0-3-3" class="i">+	if(c-&gt;flags &amp; PWinGravity)
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		c-&gt;grav = size.win_gravity;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	else
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		c-&gt;grav = NorthWestGravity;
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -213,6 +219,7 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	c-&gt;tw = c-&gt;w = wa-&gt;width;
+ 	c-&gt;h = wa-&gt;height;
+ 	c-&gt;th = bh;
+<a href="#h0-4-3" id="h0-4-3" class="i">+	c-&gt;border = 1;
+</a> 	update_size(c);
+ 	XSetWindowBorderWidth(dpy, c-&gt;win, 1);
+ 	XSetWindowBorder(dpy, c-&gt;win, brush.border);
+<a href="#h0-5" id="h0-5" class="h">@@ -247,6 +254,61 @@ manage(Window w, XWindowAttributes *wa)
+</a> }
+ 
+ void
+<a href="#h0-5-3" id="h0-5-3" class="i">+gravitate(Client *c, Bool invert)
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+{
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+	int dx = 0, dy = 0;
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	switch(c-&gt;grav) {
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+	case StaticGravity:
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+	case NorthWestGravity:
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+	case NorthGravity:
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+	case NorthEastGravity:
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+		dy = c-&gt;border;
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+		break;
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+	case EastGravity:
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+	case CenterGravity:
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+	case WestGravity:
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+		dy = -(c-&gt;h / 2) + c-&gt;border;
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+		break;
+</a><a href="#h0-5-19" id="h0-5-19" class="i">+	case SouthEastGravity:
+</a><a href="#h0-5-20" id="h0-5-20" class="i">+	case SouthGravity:
+</a><a href="#h0-5-21" id="h0-5-21" class="i">+	case SouthWestGravity:
+</a><a href="#h0-5-22" id="h0-5-22" class="i">+		dy = -c-&gt;h;
+</a><a href="#h0-5-23" id="h0-5-23" class="i">+		break;
+</a><a href="#h0-5-24" id="h0-5-24" class="i">+	default:
+</a><a href="#h0-5-25" id="h0-5-25" class="i">+		break;
+</a><a href="#h0-5-26" id="h0-5-26" class="i">+	}
+</a><a href="#h0-5-27" id="h0-5-27" class="i">+
+</a><a href="#h0-5-28" id="h0-5-28" class="i">+	switch (c-&gt;grav) {
+</a><a href="#h0-5-29" id="h0-5-29" class="i">+	case StaticGravity:
+</a><a href="#h0-5-30" id="h0-5-30" class="i">+	case NorthWestGravity:
+</a><a href="#h0-5-31" id="h0-5-31" class="i">+	case WestGravity:
+</a><a href="#h0-5-32" id="h0-5-32" class="i">+	case SouthWestGravity:
+</a><a href="#h0-5-33" id="h0-5-33" class="i">+		dx = c-&gt;border;
+</a><a href="#h0-5-34" id="h0-5-34" class="i">+		break;
+</a><a href="#h0-5-35" id="h0-5-35" class="i">+	case NorthGravity:
+</a><a href="#h0-5-36" id="h0-5-36" class="i">+	case CenterGravity:
+</a><a href="#h0-5-37" id="h0-5-37" class="i">+	case SouthGravity:
+</a><a href="#h0-5-38" id="h0-5-38" class="i">+		dx = -(c-&gt;w / 2) + c-&gt;border;
+</a><a href="#h0-5-39" id="h0-5-39" class="i">+		break;
+</a><a href="#h0-5-40" id="h0-5-40" class="i">+	case NorthEastGravity:
+</a><a href="#h0-5-41" id="h0-5-41" class="i">+	case EastGravity:
+</a><a href="#h0-5-42" id="h0-5-42" class="i">+	case SouthEastGravity:
+</a><a href="#h0-5-43" id="h0-5-43" class="i">+		dx = -(c-&gt;w + c-&gt;border);
+</a><a href="#h0-5-44" id="h0-5-44" class="i">+		break;
+</a><a href="#h0-5-45" id="h0-5-45" class="i">+	default:
+</a><a href="#h0-5-46" id="h0-5-46" class="i">+		break;
+</a><a href="#h0-5-47" id="h0-5-47" class="i">+	}
+</a><a href="#h0-5-48" id="h0-5-48" class="i">+
+</a><a href="#h0-5-49" id="h0-5-49" class="i">+	if(invert) {
+</a><a href="#h0-5-50" id="h0-5-50" class="i">+		dx = -dx;
+</a><a href="#h0-5-51" id="h0-5-51" class="i">+		dy = -dy;
+</a><a href="#h0-5-52" id="h0-5-52" class="i">+	}
+</a><a href="#h0-5-53" id="h0-5-53" class="i">+	c-&gt;x += dx;
+</a><a href="#h0-5-54" id="h0-5-54" class="i">+	c-&gt;y += dy;
+</a><a href="#h0-5-55" id="h0-5-55" class="i">+}
+</a><a href="#h0-5-56" id="h0-5-56" class="i">+
+</a><a href="#h0-5-57" id="h0-5-57" class="i">+void
+</a> resize(Client *c)
+ {
+ 	XConfigureEvent e;
+<a href="#h0-6" id="h0-6" class="h">@@ -260,7 +322,7 @@ resize(Client *c)
+</a> 	e.y = c-&gt;y;
+ 	e.width = c-&gt;w;
+ 	e.height = c-&gt;h;
+<a href="#h0-6-3" id="h0-6-3" class="d">-	e.border_width = 0;
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	e.border_width = c-&gt;border;
+</a> 	e.above = None;
+ 	e.override_redirect = False;
+ 	XSendEvent(dpy, c-&gt;win, False, StructureNotifyMask, (XEvent *)&amp;e);
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -77,6 +77,7 @@ configurerequest(XEvent *e)
+</a> 
+ 	ev-&gt;value_mask &amp;= ~CWSibling;
+ 	if((c = getclient(ev-&gt;window))) {
+<a href="#h1-0-3" id="h1-0-3" class="i">+		gravitate(c, True);
+</a> 		if(ev-&gt;value_mask &amp; CWX)
+ 			c-&gt;x = ev-&gt;x;
+ 		if(ev-&gt;value_mask &amp; CWY)
+<a href="#h1-1" id="h1-1" class="h">@@ -85,6 +86,9 @@ configurerequest(XEvent *e)
+</a> 			c-&gt;w = ev-&gt;width;
+ 		if(ev-&gt;value_mask &amp; CWHeight)
+ 			c-&gt;h = ev-&gt;height;
+<a href="#h1-1-3" id="h1-1-3" class="i">+		if(ev-&gt;value_mask &amp; CWBorderWidth)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+			c-&gt;border = ev-&gt;border_width;
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+		gravitate(c, False);
+</a> 	}
+ 
+ 	wc.x = ev-&gt;x;
+<b>diff --git a/<a id="h2" href="../file/kb.c.html">kb.c</a> b/<a href="../file/kb.c.html">kb.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -8,7 +8,7 @@
+</a> #include &lt;X11/keysym.h&gt;
+ 
+ static const char *term[] = { 
+<a href="#h2-0-3" id="h2-0-3" class="d">-	&quot;xterm&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-fn&quot;,
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;aterm&quot;, &quot;-tr&quot;, &quot;+sb&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-fn&quot;,
+</a> 	&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;, 0 
+ };
+ 
+<b>diff --git a/<a id="h3" href="../file/wm.h.html">wm.h</a> b/<a href="../file/wm.h.html">wm.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -27,6 +27,8 @@ struct Client {
+</a> 	int x, y, w, h;
+ 	int tx, ty, tw, th;
+ 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+<a href="#h3-0-3" id="h3-0-3" class="i">+	int grav;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	unsigned int border;
+</a> 	long flags; 
+ 	Window win;
+ 	Window trans;
+<a href="#h3-1" id="h3-1" class="h">@@ -73,7 +75,8 @@ extern void lower(Client *c);
+</a> extern void kill(void *aux);
+ extern void sel(void *aux);
+ extern void max(void *aux);
+<a href="#h3-1-3" id="h3-1-3" class="d">-extern void arrange();
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+extern void arrange(void *aux);
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+extern void gravitate(Client *c, Bool invert);
+</a> 
+ /* event.c */
+ extern void discard_events(long even_mask);
+</pre>
+</div>
+</body>
+</html>

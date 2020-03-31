@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied anydot&#39;s 3 minor patches, thank you anydot - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/199a6016114875656102d11e79a80939bfaff3b3.html">199a6016114875656102d11e79a80939bfaff3b3</a>
+<b>parent</b> <a href="../commit/492c6f10fcf9acf74d84eb3fe005ecf2dd42611a.html">492c6f10fcf9acf74d84eb3fe005ecf2dd42611a</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Tue, 29 May 2007 11:35:20 +0200
+
+applied anydot&#39;s 3 minor patches, thank you anydot
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">17</td><td><span class="i">++++</span><span class="d">-------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">layout.c</a></td><td> | </td><td class="num">41</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">-----------------</span></td></tr>
+</table></pre><pre>4 files changed, 31 insertions(+), 34 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -129,8 +129,8 @@ detach(Client *c) {
+</a> 
+ void
+ focus(Client *c) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if(c &amp;&amp; !isvisible(c))
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		return;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	if( !c &amp;&amp; selscreen || c &amp;&amp; !isvisible(c))
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+</a> 	if(sel &amp;&amp; sel != c) {
+ 		grabbuttons(sel, False);
+ 		XSetWindowBorder(dpy, sel-&gt;win, dc.norm[ColBorder]);
+<a href="#h0-1" id="h0-1" class="h">@@ -153,14 +153,6 @@ focus(Client *c) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="d">-focustopvisible(void) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	Client *c;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	focus(c);
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-}
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-void
+</a> killclient(const char *arg) {
+ 	XEvent ev;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -230,8 +222,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	XMoveWindow(dpy, w, c-&gt;x + 2 * sw, c-&gt;y);
+ 	XMapWindow(dpy, w);
+ 	setclientstate(c, NormalState);
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(isvisible(c))
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		focus(c);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	focus(c);
+</a> 	lt-&gt;arrange();
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -401,7 +392,7 @@ unmanage(Client *c) {
+</a> 	detach(c);
+ 	detachstack(c);
+ 	if(sel == c)
+<a href="#h0-3-3" id="h0-3-3" class="d">-		focustopvisible();
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		focus(NULL);
+</a> 	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+ 	setclientstate(c, WithdrawnState);
+ 	free(c-&gt;tags);
+<b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -100,8 +100,7 @@ Window root, barwin;
+</a> void attach(Client *c);			/* attaches c to global client list */
+ void configure(Client *c);		/* send synthetic configure event */
+ void detach(Client *c);			/* detaches c from global client list */
+<a href="#h1-0-3" id="h1-0-3" class="d">-void focus(Client *c);			/* focus c, c may be NULL */
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-void focustopvisible(void);		/* focus top visible window on stack */
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+void focus(Client *c);			/* focus c if visible &amp;&amp; !NULL, or focus top visible */
+</a> void killclient(const char *arg);	/* kill sel  nicely */
+ void manage(Window w, XWindowAttributes *wa);	/* manage new client */
+ void resize(Client *c, int x, int y,
+<b>diff --git a/<a id="h2" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -242,11 +242,11 @@ enternotify(XEvent *e) {
+</a> 
+ 	if(ev-&gt;mode != NotifyNormal || ev-&gt;detail == NotifyInferior)
+ 		return;
+<a href="#h2-0-3" id="h2-0-3" class="d">-	if((c = getclient(ev-&gt;window)) &amp;&amp; isvisible(c))
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	if(c = getclient(ev-&gt;window))
+</a> 		focus(c);
+ 	else if(ev-&gt;window == root) {
+ 		selscreen = True;
+<a href="#h2-0-8" id="h2-0-8" class="d">-		focustopvisible();
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+		focus(NULL);
+</a> 	}
+ }
+ 
+<b>diff --git a/<a id="h3" href="../file/layout.c.html">layout.c</a> b/<a href="../file/layout.c.html">layout.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -14,6 +14,22 @@ static unsigned int masterw = MASTERWIDTH;
+</a> static unsigned int nmaster = NMASTER;
+ 
+ static void
+<a href="#h3-0-3" id="h3-0-3" class="i">+ban(Client *c) {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	if (c-&gt;isbanned)
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+		return;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+	XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	c-&gt;isbanned = True;
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+}
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+static void
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+unban(Client *c) {
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	if (!c-&gt;isbanned)
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+		return;
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	c-&gt;isbanned = False;
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+}
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+static void
+</a> tile(void) {
+ 	unsigned int i, n, nx, ny, nw, nh, mw, mh, tw, th;
+ 	Client *c;
+<a href="#h3-1" id="h3-1" class="h">@@ -28,9 +44,7 @@ tile(void) {
+</a> 
+ 	for(i = 0, c = clients; c; c = c-&gt;next)
+ 		if(isvisible(c)) {
+<a href="#h3-1-3" id="h3-1-3" class="d">-			if(c-&gt;isbanned)
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-				XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-			c-&gt;isbanned = False;
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+			unban(c);
+</a> 			if(c-&gt;isfloating)
+ 				continue;
+ 			c-&gt;ismax = False;
+<a href="#h3-2" id="h3-2" class="h">@@ -60,12 +74,9 @@ tile(void) {
+</a> 			resize(c, nx, ny, nw, nh, False);
+ 			i++;
+ 		}
+<a href="#h3-2-3" id="h3-2-3" class="d">-		else {
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-			c-&gt;isbanned = True;
+</a><a href="#h3-2-5" id="h3-2-5" class="d">-			XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h3-2-6" id="h3-2-6" class="d">-		}
+</a><a href="#h3-2-7" id="h3-2-7" class="d">-	if(!sel || !isvisible(sel)) 
+</a><a href="#h3-2-8" id="h3-2-8" class="d">-		focustopvisible();
+</a><a href="#h3-2-9" id="h3-2-9" class="i">+		else
+</a><a href="#h3-2-10" id="h3-2-10" class="i">+			ban(c);
+</a><a href="#h3-2-11" id="h3-2-11" class="i">+	focus(NULL);
+</a> 	restack();
+ }
+ 
+<a href="#h3-3" id="h3-3" class="h">@@ -77,20 +88,16 @@ void
+</a> floating(void) {
+ 	Client *c;
+ 
+<a href="#h3-3-3" id="h3-3-3" class="d">-	for(c = clients; c; c = c-&gt;next) {
+</a><a href="#h3-3-4" id="h3-3-4" class="i">+	for(c = clients; c; c = c-&gt;next)
+</a> 		if(isvisible(c)) {
+ 			if(c-&gt;isbanned)
+ 				XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+ 			c-&gt;isbanned = False;
+ 			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+ 		}
+<a href="#h3-3-11" id="h3-3-11" class="d">-		else {
+</a><a href="#h3-3-12" id="h3-3-12" class="d">-			c-&gt;isbanned = True;
+</a><a href="#h3-3-13" id="h3-3-13" class="d">-			XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h3-3-14" id="h3-3-14" class="d">-		}
+</a><a href="#h3-3-15" id="h3-3-15" class="d">-	}
+</a><a href="#h3-3-16" id="h3-3-16" class="d">-	if(!sel || !isvisible(sel))
+</a><a href="#h3-3-17" id="h3-3-17" class="d">-		focustopvisible();
+</a><a href="#h3-3-18" id="h3-3-18" class="i">+		else
+</a><a href="#h3-3-19" id="h3-3-19" class="i">+			ban(c);
+</a><a href="#h3-3-20" id="h3-3-20" class="i">+	focus(NULL);
+</a> 	restack();
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

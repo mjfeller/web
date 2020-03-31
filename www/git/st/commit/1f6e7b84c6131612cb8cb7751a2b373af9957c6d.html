@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed old VT52 escapes, fixed VT100 IND. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1f6e7b84c6131612cb8cb7751a2b373af9957c6d.html">1f6e7b84c6131612cb8cb7751a2b373af9957c6d</a>
+<b>parent</b> <a href="../commit/5258d6054599e456c260984b8619500d0b4b75b7.html">5258d6054599e456c260984b8619500d0b4b75b7</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 30 Aug 2010 01:19:05 +0200
+
+removed old VT52 escapes, fixed VT100 IND.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -867,20 +867,11 @@ tputc(char c) {
+</a> 			case &#39;(&#39;:
+ 				term.esc |= ESC_ALTCHARSET;
+ 				break;
+<a href="#h0-0-3" id="h0-0-3" class="d">-			case &#39;A&#39;:
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-				tmoveto(term.c.x, term.c.y-1);
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-				term.esc = 0;
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-				break;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-			case &#39;B&#39;:
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-				tmoveto(term.c.x, term.c.y+1);
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-				term.esc = 0;
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-				break;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-			case &#39;C&#39;:
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-				tmoveto(term.c.x+1, term.c.y);
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-				term.esc = 0;
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-				break;
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-			case &#39;D&#39;: /* XXX: CUP (VT100) or IND (VT52) ... */
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-				tmoveto(term.c.x-1, term.c.y);
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+			case &#39;D&#39;: /* IND -- Linefeed */
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+				if(term.c.y == term.bot)
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+					tscrollup(1);
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+				else
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+					tmoveto(term.c.x, term.c.y+1);
+</a> 				term.esc = 0;
+ 				break;
+ 			case &#39;E&#39;: /* NEL -- Next line */
+</pre>
+</div>
+</body>
+</html>

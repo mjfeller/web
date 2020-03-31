@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add showview() - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/421486db18ce2de31de71bf0372b6f5c049eb970.html">421486db18ce2de31de71bf0372b6f5c049eb970</a>
+<b>parent</b> <a href="../commit/f86977a6fab8ed51bd1208b843b9f53db0cdd058.html">f86977a6fab8ed51bd1208b843b9f53db0cdd058</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Wed, 18 Nov 2015 16:13:27 +0100
+
+Add showview()
+
+Only show the window when and if the view is ready.
+Move all the window rendering there.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">129</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 68 insertions(+), 61 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -156,6 +156,7 @@ static void loadstatuschange(WebKitWebView *view, GParamSpec *pspec,
+</a> static void loaduri(Client *c, const Arg *arg);
+ static void navigate(Client *c, const Arg *arg);
+ static Client *newclient(void);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void showview(WebKitWebView *v, Client *c);
+</a> static void newwindow(Client *c, const Arg *arg, gboolean noembed);
+ static void pasteuri(GtkClipboard *clipboard, const char *text, gpointer d);
+ static gboolean contextmenu(WebKitWebView *view, GtkWidget *menu,
+<a href="#h0-1" id="h0-1" class="h">@@ -778,9 +779,6 @@ newclient(void)
+</a> {
+ 	Client *c;
+ 	WebKitWebSettings *settings;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	GdkGeometry hints = { 1, 1 };
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	GdkScreen *screen;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	GdkWindow *gwin;
+</a> 	gdouble dpi;
+ 	char *ua;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -790,37 +788,6 @@ newclient(void)
+</a> 	c-&gt;title = NULL;
+ 	c-&gt;progress = 100;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-	/* Window */
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	if (embed) {
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-		c-&gt;win = gtk_plug_new(embed);
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-	} else {
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-		c-&gt;win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-		/* TA:  20091214:  Despite what the GNOME docs say, the ICCCM
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-		 * is always correct, so we should still call this function.
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-		 * But when doing so, we *must* differentiate between a
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-		 * WM_CLASS and a resource on the window.  By convention, the
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-		 * window class (WM_CLASS) is capped, while the resource is in
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-		 * lowercase.   Both these values come as a pair.
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-		 */
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-		gtk_window_set_wmclass(GTK_WINDOW(c-&gt;win), &quot;surf&quot;, &quot;Surf&quot;);
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-
+</a><a href="#h0-2-18" id="h0-2-18" class="d">-		/* TA:  20091214:  And set the role here as well -- so that
+</a><a href="#h0-2-19" id="h0-2-19" class="d">-		 * sessions can pick this up.
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-		 */
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-		gtk_window_set_role(GTK_WINDOW(c-&gt;win), &quot;Surf&quot;);
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-	}
+</a><a href="#h0-2-23" id="h0-2-23" class="d">-	gtk_window_set_default_size(GTK_WINDOW(c-&gt;win), 800, 600);
+</a><a href="#h0-2-24" id="h0-2-24" class="d">-	g_signal_connect(G_OBJECT(c-&gt;win),
+</a><a href="#h0-2-25" id="h0-2-25" class="d">-	                 &quot;destroy&quot;,
+</a><a href="#h0-2-26" id="h0-2-26" class="d">-			 G_CALLBACK(destroywin), c);
+</a><a href="#h0-2-27" id="h0-2-27" class="d">-	g_signal_connect(G_OBJECT(c-&gt;win),
+</a><a href="#h0-2-28" id="h0-2-28" class="d">-	                 &quot;leave_notify_event&quot;,
+</a><a href="#h0-2-29" id="h0-2-29" class="d">-			 G_CALLBACK(titlechangeleave), c);
+</a><a href="#h0-2-30" id="h0-2-30" class="d">-
+</a><a href="#h0-2-31" id="h0-2-31" class="d">-	if (!kioskmode)
+</a><a href="#h0-2-32" id="h0-2-32" class="d">-		addaccelgroup(c);
+</a><a href="#h0-2-33" id="h0-2-33" class="d">-
+</a> 	/* Webview */
+ 	c-&gt;view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -836,6 +803,8 @@ newclient(void)
+</a> 	g_signal_connect(G_OBJECT(c-&gt;view),
+ 	                 &quot;create-web-view&quot;,
+ 			 G_CALLBACK(createwindow), c);
+<a href="#h0-3-3" id="h0-3-3" class="i">+	g_signal_connect(G_OBJECT(v), &quot;ready-to-show&quot;,
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			 G_CALLBACK(showview), c);
+</a> 	g_signal_connect(G_OBJECT(c-&gt;view),
+ 	                 &quot;new-window-policy-decision-requested&quot;,
+ 			 G_CALLBACK(decidewindow), c);
+<a href="#h0-4" id="h0-4" class="h">@@ -867,23 +836,6 @@ newclient(void)
+</a> 	                 &quot;should-show-delete-interface-for-element&quot;,
+ 			 G_CALLBACK(deletion_interface), c);
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-	/* Arranging */
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	gtk_container_add(GTK_CONTAINER(c-&gt;win), GTK_WIDGET(c-&gt;view));
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-	/* Setup */
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-	gtk_widget_grab_focus(GTK_WIDGET(c-&gt;view));
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-	gtk_widget_show(GTK_WIDGET(c-&gt;view));
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-	gtk_widget_show(c-&gt;win);
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-	gwin = gtk_widget_get_window(GTK_WIDGET(c-&gt;win));
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-	c-&gt;xid = gdk_x11_window_get_xid(gwin);
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-	gtk_window_set_geometry_hints(GTK_WINDOW(c-&gt;win), NULL, &amp;hints,
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-				      GDK_HINT_MIN_SIZE);
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-	gdk_window_set_events(gwin, GDK_ALL_EVENTS_MASK);
+</a><a href="#h0-4-15" id="h0-4-15" class="d">-	gdk_window_add_filter(gwin, processx, c);
+</a><a href="#h0-4-16" id="h0-4-16" class="d">-	webkit_web_view_set_full_content_zoom(c-&gt;view, TRUE);
+</a><a href="#h0-4-17" id="h0-4-17" class="d">-
+</a><a href="#h0-4-18" id="h0-4-18" class="d">-	runscript(frame);
+</a><a href="#h0-4-19" id="h0-4-19" class="d">-
+</a> 	settings = webkit_web_view_get_settings(c-&gt;view);
+ 	if (!(ua = getenv(&quot;SURF_USERAGENT&quot;)))
+ 		ua = useragent;
+<a href="#h0-5" id="h0-5" class="h">@@ -907,10 +859,6 @@ newclient(void)
+</a> 	if (enablestyle)
+ 		setstyle(c, getstyle(&quot;about:blank&quot;));
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-	/* This might conflict with _zoomto96dpi_. */
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	if (zoomlevel != 1.0)
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-		webkit_web_view_set_zoom_level(c-&gt;view, zoomlevel);
+</a><a href="#h0-5-6" id="h0-5-6" class="d">-
+</a> 	if (enableinspector) {
+ 		c-&gt;inspector = webkit_web_view_get_inspector(c-&gt;view);
+ 		g_signal_connect(G_OBJECT(c-&gt;inspector), &quot;inspect-web-view&quot;,
+<a href="#h0-6" id="h0-6" class="h">@@ -924,16 +872,77 @@ newclient(void)
+</a> 		c-&gt;isinspecting = false;
+ 	}
+ 
+<a href="#h0-6-3" id="h0-6-3" class="i">+	c-&gt;next = clients;
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	clients = c;
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+	return c;
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+}
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+void
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+showview(WebKitWebView *v, Client *c)
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+{
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+	GdkGeometry hints = { 1, 1 };
+</a><a href="#h0-6-13" id="h0-6-13" class="i">+	GdkRGBA bgcolor = { 0 };
+</a><a href="#h0-6-14" id="h0-6-14" class="i">+	GdkWindow *gwin;
+</a><a href="#h0-6-15" id="h0-6-15" class="i">+
+</a><a href="#h0-6-16" id="h0-6-16" class="i">+	/* Window */
+</a><a href="#h0-6-17" id="h0-6-17" class="i">+	if (embed) {
+</a><a href="#h0-6-18" id="h0-6-18" class="i">+		c-&gt;win = gtk_plug_new(embed);
+</a><a href="#h0-6-19" id="h0-6-19" class="i">+	} else {
+</a><a href="#h0-6-20" id="h0-6-20" class="i">+		c-&gt;win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+</a><a href="#h0-6-21" id="h0-6-21" class="i">+
+</a><a href="#h0-6-22" id="h0-6-22" class="i">+		/* TA:  20091214:  Despite what the GNOME docs say, the ICCCM
+</a><a href="#h0-6-23" id="h0-6-23" class="i">+		 * is always correct, so we should still call this function.
+</a><a href="#h0-6-24" id="h0-6-24" class="i">+		 * But when doing so, we *must* differentiate between a
+</a><a href="#h0-6-25" id="h0-6-25" class="i">+		 * WM_CLASS and a resource on the window.  By convention, the
+</a><a href="#h0-6-26" id="h0-6-26" class="i">+		 * window class (WM_CLASS) is capped, while the resource is in
+</a><a href="#h0-6-27" id="h0-6-27" class="i">+		 * lowercase.   Both these values come as a pair.
+</a><a href="#h0-6-28" id="h0-6-28" class="i">+		 */
+</a><a href="#h0-6-29" id="h0-6-29" class="i">+		gtk_window_set_wmclass(GTK_WINDOW(c-&gt;win), &quot;surf&quot;, &quot;Surf&quot;);
+</a><a href="#h0-6-30" id="h0-6-30" class="i">+
+</a><a href="#h0-6-31" id="h0-6-31" class="i">+		/* TA:  20091214:  And set the role here as well -- so that
+</a><a href="#h0-6-32" id="h0-6-32" class="i">+		 * sessions can pick this up.
+</a><a href="#h0-6-33" id="h0-6-33" class="i">+		 */
+</a><a href="#h0-6-34" id="h0-6-34" class="i">+		gtk_window_set_role(GTK_WINDOW(c-&gt;win), &quot;Surf&quot;);
+</a><a href="#h0-6-35" id="h0-6-35" class="i">+	}
+</a><a href="#h0-6-36" id="h0-6-36" class="i">+	gtk_window_set_default_size(GTK_WINDOW(c-&gt;win), 800, 600);
+</a><a href="#h0-6-37" id="h0-6-37" class="i">+	g_signal_connect(G_OBJECT(c-&gt;win),
+</a><a href="#h0-6-38" id="h0-6-38" class="i">+	                 &quot;destroy&quot;,
+</a><a href="#h0-6-39" id="h0-6-39" class="i">+			 G_CALLBACK(destroywin), c);
+</a><a href="#h0-6-40" id="h0-6-40" class="i">+	g_signal_connect(G_OBJECT(c-&gt;win),
+</a><a href="#h0-6-41" id="h0-6-41" class="i">+	                 &quot;leave_notify_event&quot;,
+</a><a href="#h0-6-42" id="h0-6-42" class="i">+			 G_CALLBACK(titlechangeleave), c);
+</a><a href="#h0-6-43" id="h0-6-43" class="i">+
+</a><a href="#h0-6-44" id="h0-6-44" class="i">+	if (!kioskmode)
+</a><a href="#h0-6-45" id="h0-6-45" class="i">+		addaccelgroup(c);
+</a><a href="#h0-6-46" id="h0-6-46" class="i">+
+</a><a href="#h0-6-47" id="h0-6-47" class="i">+	/* Arranging */
+</a><a href="#h0-6-48" id="h0-6-48" class="i">+	gtk_container_add(GTK_CONTAINER(c-&gt;win), GTK_WIDGET(c-&gt;view));
+</a><a href="#h0-6-49" id="h0-6-49" class="i">+
+</a><a href="#h0-6-50" id="h0-6-50" class="i">+	/* Setup */
+</a><a href="#h0-6-51" id="h0-6-51" class="i">+	gtk_widget_grab_focus(GTK_WIDGET(c-&gt;view));
+</a><a href="#h0-6-52" id="h0-6-52" class="i">+	gtk_widget_show(GTK_WIDGET(c-&gt;view));
+</a><a href="#h0-6-53" id="h0-6-53" class="i">+	gtk_widget_show(c-&gt;win);
+</a><a href="#h0-6-54" id="h0-6-54" class="i">+	gwin = gtk_widget_get_window(GTK_WIDGET(c-&gt;win));
+</a><a href="#h0-6-55" id="h0-6-55" class="i">+	c-&gt;xid = gdk_x11_window_get_xid(gwin);
+</a><a href="#h0-6-56" id="h0-6-56" class="i">+	gtk_window_set_geometry_hints(GTK_WINDOW(c-&gt;win), NULL, &amp;hints,
+</a><a href="#h0-6-57" id="h0-6-57" class="i">+				      GDK_HINT_MIN_SIZE);
+</a><a href="#h0-6-58" id="h0-6-58" class="i">+	gdk_window_set_events(gwin, GDK_ALL_EVENTS_MASK);
+</a><a href="#h0-6-59" id="h0-6-59" class="i">+	gdk_window_add_filter(gwin, processx, c);
+</a><a href="#h0-6-60" id="h0-6-60" class="i">+
+</a><a href="#h0-6-61" id="h0-6-61" class="i">+	runscript(frame);
+</a><a href="#h0-6-62" id="h0-6-62" class="i">+
+</a><a href="#h0-6-63" id="h0-6-63" class="i">+	/* This might conflict with _zoomto96dpi_. */
+</a><a href="#h0-6-64" id="h0-6-64" class="i">+	if (zoomlevel != 1.0)
+</a><a href="#h0-6-65" id="h0-6-65" class="i">+		webkit_web_view_set_zoom_level(c-&gt;view, zoomlevel);
+</a><a href="#h0-6-66" id="h0-6-66" class="i">+
+</a> 	if (runinfullscreen)
+ 		fullscreen(c, NULL);
+ 
+ 	setatom(c, AtomFind, &quot;&quot;);
+ 	setatom(c, AtomUri, &quot;about:blank&quot;);
+ 	if (hidebackground)
+<a href="#h0-6-73" id="h0-6-73" class="d">-		webkit_web_view_set_transparent(c-&gt;view, TRUE);
+</a><a href="#h0-6-74" id="h0-6-74" class="d">-
+</a><a href="#h0-6-75" id="h0-6-75" class="d">-	c-&gt;next = clients;
+</a><a href="#h0-6-76" id="h0-6-76" class="d">-	clients = c;
+</a><a href="#h0-6-77" id="h0-6-77" class="i">+		webkit_web_view_set_background_color(c-&gt;view, &amp;bgcolor);
+</a> 
+ 	if (showxid) {
+ 		gdk_display_sync(gtk_widget_get_display(c-&gt;win));
+<a href="#h0-7" id="h0-7" class="h">@@ -943,8 +952,6 @@ newclient(void)
+</a> 			die(&quot;Error closing stdout&quot;);
+                 }
+ 	}
+<a href="#h0-7-3" id="h0-7-3" class="d">-
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-	return c;
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

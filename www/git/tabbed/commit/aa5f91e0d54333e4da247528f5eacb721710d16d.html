@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>adding sourcecode. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/aa5f91e0d54333e4da247528f5eacb721710d16d.html">aa5f91e0d54333e4da247528f5eacb721710d16d</a>
+<b>parent</b> <a href="../commit/77aac73c1e88d840dc9a8b07f2c02b5cb8553835.html">77aac73c1e88d840dc9a8b07f2c02b5cb8553835</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Mon,  7 Sep 2009 13:32:58 +0200
+
+adding sourcecode.
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">317</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 317 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,317 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+/* See LICENSE file for copyright and license details.
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+ *
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+ * To understand tabbed, start reading main().
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+ */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#include &lt;locale.h&gt;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#include &lt;stdarg.h&gt;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+#include &lt;string.h&gt;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+#include &lt;X11/keysym.h&gt;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+#include &lt;X11/Xatom.h&gt;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+#include &lt;X11/Xlib.h&gt;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+#include &lt;X11/Xutil.h&gt;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+#include &lt;X11/Xproto.h&gt;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+#include &lt;X11/extensions/XTest.h&gt;
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+/* macros */
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+#define MAX(a, b)       ((a) &gt; (b) ? (a) : (b))
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+#define LENGTH(x)       (sizeof x / sizeof x[0])
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+#define CLEANMASK(mask)         (mask &amp; ~(numlockmask|LockMask))
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+enum { ColFG, ColBG, ColLast };              /* color */
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+typedef union {
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	int i;
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	unsigned int ui;
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	float f;
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	const void *v;
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+} Arg;
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+typedef struct {
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	unsigned int mod;
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+	KeySym keysym;
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+	void (*func)(const Arg *);
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+	const Arg arg;
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+} Key;
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+typedef struct {
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+	int x, y, w, h;
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+	unsigned long norm[ColLast];
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+	unsigned long sel[ColLast];
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	Drawable drawable;
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	GC gc;
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+	struct {
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+		int ascent;
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+		int descent;
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+		int height;
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+		XFontSet set;
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+		XFontStruct *xfont;
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+	} font;
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+} DC; /* draw context */
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+typedef struct Client Client;
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+struct Client {
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+	char name[256];
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+	struct Client *next;
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+	Window win;
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+};
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+/* function declarations */
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+static void cleanup(void);
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+static void configurenotify(XEvent *e);
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+static void unmapnotify(XEvent *e);
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+static void die(const char *errstr, ...);
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+static void expose(XEvent *e);
+</a><a href="#h0-0-65" id="h0-0-65" class="i">+static unsigned long getcolor(const char *colstr);
+</a><a href="#h0-0-66" id="h0-0-66" class="i">+static void initfont(const char *fontstr);
+</a><a href="#h0-0-67" id="h0-0-67" class="i">+static void keypress(XEvent *e);
+</a><a href="#h0-0-68" id="h0-0-68" class="i">+static void move(const Arg *arg);
+</a><a href="#h0-0-69" id="h0-0-69" class="i">+static void newtab(const Arg *arg);
+</a><a href="#h0-0-70" id="h0-0-70" class="i">+static void rotate(const Arg *arg);
+</a><a href="#h0-0-71" id="h0-0-71" class="i">+static void run(void);
+</a><a href="#h0-0-72" id="h0-0-72" class="i">+static void setup(void);
+</a><a href="#h0-0-73" id="h0-0-73" class="i">+static int textnw(const char *text, unsigned int len);
+</a><a href="#h0-0-74" id="h0-0-74" class="i">+static void updatenumlockmask(void);
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+/* variables */
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+static int screen;
+</a><a href="#h0-0-78" id="h0-0-78" class="i">+static int wx, wy, ww, wh;
+</a><a href="#h0-0-79" id="h0-0-79" class="i">+static void (*handler[LASTEvent]) (XEvent *) = {
+</a><a href="#h0-0-80" id="h0-0-80" class="i">+	[ConfigureNotify] = configurenotify,
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+	[UnmapNotify] = unmapnotify,
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+	[KeyPress] = keypress,
+</a><a href="#h0-0-83" id="h0-0-83" class="i">+	[Expose] = expose,
+</a><a href="#h0-0-84" id="h0-0-84" class="i">+};
+</a><a href="#h0-0-85" id="h0-0-85" class="i">+static Display *dpy;
+</a><a href="#h0-0-86" id="h0-0-86" class="i">+static DC dc;
+</a><a href="#h0-0-87" id="h0-0-87" class="i">+static Window root, win;
+</a><a href="#h0-0-88" id="h0-0-88" class="i">+static Bool running = True;
+</a><a href="#h0-0-89" id="h0-0-89" class="i">+static unsigned int numlockmask = 0;
+</a><a href="#h0-0-90" id="h0-0-90" class="i">+/* configuration, allows nested code to access above variables */
+</a><a href="#h0-0-91" id="h0-0-91" class="i">+#define TABBED
+</a><a href="#h0-0-92" id="h0-0-92" class="i">+#include &quot;config.h&quot;
+</a><a href="#h0-0-93" id="h0-0-93" class="i">+
+</a><a href="#h0-0-94" id="h0-0-94" class="i">+void
+</a><a href="#h0-0-95" id="h0-0-95" class="i">+buttonrelease(XEvent *e) {
+</a><a href="#h0-0-96" id="h0-0-96" class="i">+	//XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+</a><a href="#h0-0-97" id="h0-0-97" class="i">+}
+</a><a href="#h0-0-98" id="h0-0-98" class="i">+
+</a><a href="#h0-0-99" id="h0-0-99" class="i">+void
+</a><a href="#h0-0-100" id="h0-0-100" class="i">+cleanup(void) {
+</a><a href="#h0-0-101" id="h0-0-101" class="i">+	if(dc.font.set)
+</a><a href="#h0-0-102" id="h0-0-102" class="i">+		XFreeFontSet(dpy, dc.font.set);
+</a><a href="#h0-0-103" id="h0-0-103" class="i">+	else
+</a><a href="#h0-0-104" id="h0-0-104" class="i">+		XFreeFont(dpy, dc.font.xfont);
+</a><a href="#h0-0-105" id="h0-0-105" class="i">+	XFreePixmap(dpy, dc.drawable);
+</a><a href="#h0-0-106" id="h0-0-106" class="i">+	XFreeGC(dpy, dc.gc);
+</a><a href="#h0-0-107" id="h0-0-107" class="i">+	XDestroyWindow(dpy, win);
+</a><a href="#h0-0-108" id="h0-0-108" class="i">+	XSync(dpy, False);
+</a><a href="#h0-0-109" id="h0-0-109" class="i">+	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+</a><a href="#h0-0-110" id="h0-0-110" class="i">+}
+</a><a href="#h0-0-111" id="h0-0-111" class="i">+
+</a><a href="#h0-0-112" id="h0-0-112" class="i">+void
+</a><a href="#h0-0-113" id="h0-0-113" class="i">+configurenotify(XEvent *e) {
+</a><a href="#h0-0-114" id="h0-0-114" class="i">+	XConfigureEvent *ev = &amp;e-&gt;xconfigure;
+</a><a href="#h0-0-115" id="h0-0-115" class="i">+
+</a><a href="#h0-0-116" id="h0-0-116" class="i">+	if(ev-&gt;window == win &amp;&amp; (ev-&gt;width != ww || ev-&gt;height != wh)) {
+</a><a href="#h0-0-117" id="h0-0-117" class="i">+		ww = ev-&gt;width;
+</a><a href="#h0-0-118" id="h0-0-118" class="i">+		wh = ev-&gt;height;
+</a><a href="#h0-0-119" id="h0-0-119" class="i">+		XFreePixmap(dpy, dc.drawable);
+</a><a href="#h0-0-120" id="h0-0-120" class="i">+		dc.drawable = XCreatePixmap(dpy, root, ww, wh, DefaultDepth(dpy, screen));
+</a><a href="#h0-0-121" id="h0-0-121" class="i">+	}
+</a><a href="#h0-0-122" id="h0-0-122" class="i">+}
+</a><a href="#h0-0-123" id="h0-0-123" class="i">+
+</a><a href="#h0-0-124" id="h0-0-124" class="i">+void
+</a><a href="#h0-0-125" id="h0-0-125" class="i">+die(const char *errstr, ...) {
+</a><a href="#h0-0-126" id="h0-0-126" class="i">+	va_list ap;
+</a><a href="#h0-0-127" id="h0-0-127" class="i">+
+</a><a href="#h0-0-128" id="h0-0-128" class="i">+	va_start(ap, errstr);
+</a><a href="#h0-0-129" id="h0-0-129" class="i">+	vfprintf(stderr, errstr, ap);
+</a><a href="#h0-0-130" id="h0-0-130" class="i">+	va_end(ap);
+</a><a href="#h0-0-131" id="h0-0-131" class="i">+	exit(EXIT_FAILURE);
+</a><a href="#h0-0-132" id="h0-0-132" class="i">+}
+</a><a href="#h0-0-133" id="h0-0-133" class="i">+
+</a><a href="#h0-0-134" id="h0-0-134" class="i">+void
+</a><a href="#h0-0-135" id="h0-0-135" class="i">+unmapnotify(XEvent *e) {
+</a><a href="#h0-0-136" id="h0-0-136" class="i">+	running = False;
+</a><a href="#h0-0-137" id="h0-0-137" class="i">+}
+</a><a href="#h0-0-138" id="h0-0-138" class="i">+
+</a><a href="#h0-0-139" id="h0-0-139" class="i">+void
+</a><a href="#h0-0-140" id="h0-0-140" class="i">+expose(XEvent *e) {
+</a><a href="#h0-0-141" id="h0-0-141" class="i">+	/*XExposeEvent *ev = &amp;e-&gt;xexpose;*/
+</a><a href="#h0-0-142" id="h0-0-142" class="i">+}
+</a><a href="#h0-0-143" id="h0-0-143" class="i">+
+</a><a href="#h0-0-144" id="h0-0-144" class="i">+unsigned long
+</a><a href="#h0-0-145" id="h0-0-145" class="i">+getcolor(const char *colstr) {
+</a><a href="#h0-0-146" id="h0-0-146" class="i">+	Colormap cmap = DefaultColormap(dpy, screen);
+</a><a href="#h0-0-147" id="h0-0-147" class="i">+	XColor color;
+</a><a href="#h0-0-148" id="h0-0-148" class="i">+
+</a><a href="#h0-0-149" id="h0-0-149" class="i">+	if(!XAllocNamedColor(dpy, cmap, colstr, &amp;color, &amp;color))
+</a><a href="#h0-0-150" id="h0-0-150" class="i">+		die(&quot;error, cannot allocate color &#39;%s&#39;\n&quot;, colstr);
+</a><a href="#h0-0-151" id="h0-0-151" class="i">+	return color.pixel;
+</a><a href="#h0-0-152" id="h0-0-152" class="i">+}
+</a><a href="#h0-0-153" id="h0-0-153" class="i">+
+</a><a href="#h0-0-154" id="h0-0-154" class="i">+void
+</a><a href="#h0-0-155" id="h0-0-155" class="i">+initfont(const char *fontstr) {
+</a><a href="#h0-0-156" id="h0-0-156" class="i">+	char *def, **missing;
+</a><a href="#h0-0-157" id="h0-0-157" class="i">+	int i, n;
+</a><a href="#h0-0-158" id="h0-0-158" class="i">+
+</a><a href="#h0-0-159" id="h0-0-159" class="i">+	missing = NULL;
+</a><a href="#h0-0-160" id="h0-0-160" class="i">+	if(dc.font.set)
+</a><a href="#h0-0-161" id="h0-0-161" class="i">+		XFreeFontSet(dpy, dc.font.set);
+</a><a href="#h0-0-162" id="h0-0-162" class="i">+	dc.font.set = XCreateFontSet(dpy, fontstr, &amp;missing, &amp;n, &amp;def);
+</a><a href="#h0-0-163" id="h0-0-163" class="i">+	if(missing) {
+</a><a href="#h0-0-164" id="h0-0-164" class="i">+		while(n--)
+</a><a href="#h0-0-165" id="h0-0-165" class="i">+			fprintf(stderr, &quot;tabbed: missing fontset: %s\n&quot;, missing[n]);
+</a><a href="#h0-0-166" id="h0-0-166" class="i">+		XFreeStringList(missing);
+</a><a href="#h0-0-167" id="h0-0-167" class="i">+	}
+</a><a href="#h0-0-168" id="h0-0-168" class="i">+	if(dc.font.set) {
+</a><a href="#h0-0-169" id="h0-0-169" class="i">+		XFontSetExtents *font_extents;
+</a><a href="#h0-0-170" id="h0-0-170" class="i">+		XFontStruct **xfonts;
+</a><a href="#h0-0-171" id="h0-0-171" class="i">+		char **font_names;
+</a><a href="#h0-0-172" id="h0-0-172" class="i">+		dc.font.ascent = dc.font.descent = 0;
+</a><a href="#h0-0-173" id="h0-0-173" class="i">+		font_extents = XExtentsOfFontSet(dc.font.set);
+</a><a href="#h0-0-174" id="h0-0-174" class="i">+		n = XFontsOfFontSet(dc.font.set, &amp;xfonts, &amp;font_names);
+</a><a href="#h0-0-175" id="h0-0-175" class="i">+		for(i = 0, dc.font.ascent = 0, dc.font.descent = 0; i &lt; n; i++) {
+</a><a href="#h0-0-176" id="h0-0-176" class="i">+			dc.font.ascent = MAX(dc.font.ascent, (*xfonts)-&gt;ascent);
+</a><a href="#h0-0-177" id="h0-0-177" class="i">+			dc.font.descent = MAX(dc.font.descent,(*xfonts)-&gt;descent);
+</a><a href="#h0-0-178" id="h0-0-178" class="i">+			xfonts++;
+</a><a href="#h0-0-179" id="h0-0-179" class="i">+		}
+</a><a href="#h0-0-180" id="h0-0-180" class="i">+	}
+</a><a href="#h0-0-181" id="h0-0-181" class="i">+	else {
+</a><a href="#h0-0-182" id="h0-0-182" class="i">+		if(dc.font.xfont)
+</a><a href="#h0-0-183" id="h0-0-183" class="i">+			XFreeFont(dpy, dc.font.xfont);
+</a><a href="#h0-0-184" id="h0-0-184" class="i">+		dc.font.xfont = NULL;
+</a><a href="#h0-0-185" id="h0-0-185" class="i">+		if(!(dc.font.xfont = XLoadQueryFont(dpy, fontstr))
+</a><a href="#h0-0-186" id="h0-0-186" class="i">+		&amp;&amp; !(dc.font.xfont = XLoadQueryFont(dpy, &quot;fixed&quot;)))
+</a><a href="#h0-0-187" id="h0-0-187" class="i">+			die(&quot;error, cannot load font: &#39;%s&#39;\n&quot;, fontstr);
+</a><a href="#h0-0-188" id="h0-0-188" class="i">+		dc.font.ascent = dc.font.xfont-&gt;ascent;
+</a><a href="#h0-0-189" id="h0-0-189" class="i">+		dc.font.descent = dc.font.xfont-&gt;descent;
+</a><a href="#h0-0-190" id="h0-0-190" class="i">+	}
+</a><a href="#h0-0-191" id="h0-0-191" class="i">+	dc.font.height = dc.font.ascent + dc.font.descent;
+</a><a href="#h0-0-192" id="h0-0-192" class="i">+}
+</a><a href="#h0-0-193" id="h0-0-193" class="i">+
+</a><a href="#h0-0-194" id="h0-0-194" class="i">+void
+</a><a href="#h0-0-195" id="h0-0-195" class="i">+keypress(XEvent *e) {
+</a><a href="#h0-0-196" id="h0-0-196" class="i">+	unsigned int i;
+</a><a href="#h0-0-197" id="h0-0-197" class="i">+	KeySym keysym;
+</a><a href="#h0-0-198" id="h0-0-198" class="i">+	XKeyEvent *ev;
+</a><a href="#h0-0-199" id="h0-0-199" class="i">+
+</a><a href="#h0-0-200" id="h0-0-200" class="i">+	ev = &amp;e-&gt;xkey;
+</a><a href="#h0-0-201" id="h0-0-201" class="i">+	keysym = XKeycodeToKeysym(dpy, (KeyCode)ev-&gt;keycode, 0);
+</a><a href="#h0-0-202" id="h0-0-202" class="i">+	for(i = 0; i &lt; LENGTH(keys); i++)
+</a><a href="#h0-0-203" id="h0-0-203" class="i">+		if(keysym == keys[i].keysym
+</a><a href="#h0-0-204" id="h0-0-204" class="i">+		&amp;&amp; CLEANMASK(keys[i].mod) == CLEANMASK(ev-&gt;state)
+</a><a href="#h0-0-205" id="h0-0-205" class="i">+		&amp;&amp; keys[i].func)
+</a><a href="#h0-0-206" id="h0-0-206" class="i">+			keys[i].func(&amp;(keys[i].arg));
+</a><a href="#h0-0-207" id="h0-0-207" class="i">+}
+</a><a href="#h0-0-208" id="h0-0-208" class="i">+
+</a><a href="#h0-0-209" id="h0-0-209" class="i">+void
+</a><a href="#h0-0-210" id="h0-0-210" class="i">+move(const Arg *arg) {
+</a><a href="#h0-0-211" id="h0-0-211" class="i">+
+</a><a href="#h0-0-212" id="h0-0-212" class="i">+}
+</a><a href="#h0-0-213" id="h0-0-213" class="i">+
+</a><a href="#h0-0-214" id="h0-0-214" class="i">+void
+</a><a href="#h0-0-215" id="h0-0-215" class="i">+newtab(const Arg *arg) {
+</a><a href="#h0-0-216" id="h0-0-216" class="i">+
+</a><a href="#h0-0-217" id="h0-0-217" class="i">+}
+</a><a href="#h0-0-218" id="h0-0-218" class="i">+
+</a><a href="#h0-0-219" id="h0-0-219" class="i">+void
+</a><a href="#h0-0-220" id="h0-0-220" class="i">+rotate(const Arg *arg) {
+</a><a href="#h0-0-221" id="h0-0-221" class="i">+
+</a><a href="#h0-0-222" id="h0-0-222" class="i">+}
+</a><a href="#h0-0-223" id="h0-0-223" class="i">+
+</a><a href="#h0-0-224" id="h0-0-224" class="i">+void
+</a><a href="#h0-0-225" id="h0-0-225" class="i">+run(void) {
+</a><a href="#h0-0-226" id="h0-0-226" class="i">+	XEvent ev;
+</a><a href="#h0-0-227" id="h0-0-227" class="i">+
+</a><a href="#h0-0-228" id="h0-0-228" class="i">+	/* main event loop, also reads status text from stdin */
+</a><a href="#h0-0-229" id="h0-0-229" class="i">+	XSync(dpy, False);
+</a><a href="#h0-0-230" id="h0-0-230" class="i">+	while(running) {
+</a><a href="#h0-0-231" id="h0-0-231" class="i">+		XNextEvent(dpy, &amp;ev);
+</a><a href="#h0-0-232" id="h0-0-232" class="i">+		if(handler[ev.type])
+</a><a href="#h0-0-233" id="h0-0-233" class="i">+			(handler[ev.type])(&amp;ev); /* call handler */
+</a><a href="#h0-0-234" id="h0-0-234" class="i">+	}
+</a><a href="#h0-0-235" id="h0-0-235" class="i">+}
+</a><a href="#h0-0-236" id="h0-0-236" class="i">+
+</a><a href="#h0-0-237" id="h0-0-237" class="i">+void
+</a><a href="#h0-0-238" id="h0-0-238" class="i">+setup(void) {
+</a><a href="#h0-0-239" id="h0-0-239" class="i">+	XWMHints *wmh;
+</a><a href="#h0-0-240" id="h0-0-240" class="i">+
+</a><a href="#h0-0-241" id="h0-0-241" class="i">+	/* init screen */
+</a><a href="#h0-0-242" id="h0-0-242" class="i">+	screen = DefaultScreen(dpy);
+</a><a href="#h0-0-243" id="h0-0-243" class="i">+	root = RootWindow(dpy, screen);
+</a><a href="#h0-0-244" id="h0-0-244" class="i">+	initfont(font);
+</a><a href="#h0-0-245" id="h0-0-245" class="i">+
+</a><a href="#h0-0-246" id="h0-0-246" class="i">+	/* init appearance */
+</a><a href="#h0-0-247" id="h0-0-247" class="i">+	wx = 0;
+</a><a href="#h0-0-248" id="h0-0-248" class="i">+	wy = 0;
+</a><a href="#h0-0-249" id="h0-0-249" class="i">+	ww = 800;
+</a><a href="#h0-0-250" id="h0-0-250" class="i">+	wh = 600;
+</a><a href="#h0-0-251" id="h0-0-251" class="i">+	dc.norm[ColBG] = getcolor(normbgcolor);
+</a><a href="#h0-0-252" id="h0-0-252" class="i">+	dc.norm[ColFG] = getcolor(normfgcolor);
+</a><a href="#h0-0-253" id="h0-0-253" class="i">+	dc.sel[ColBG] = getcolor(selbgcolor);
+</a><a href="#h0-0-254" id="h0-0-254" class="i">+	dc.sel[ColFG] = getcolor(selfgcolor);
+</a><a href="#h0-0-255" id="h0-0-255" class="i">+	dc.drawable = XCreatePixmap(dpy, root, ww, wh, DefaultDepth(dpy, screen));
+</a><a href="#h0-0-256" id="h0-0-256" class="i">+	dc.gc = XCreateGC(dpy, root, 0, 0);
+</a><a href="#h0-0-257" id="h0-0-257" class="i">+	if(!dc.font.set)
+</a><a href="#h0-0-258" id="h0-0-258" class="i">+		XSetFont(dpy, dc.gc, dc.font.xfont-&gt;fid);
+</a><a href="#h0-0-259" id="h0-0-259" class="i">+
+</a><a href="#h0-0-260" id="h0-0-260" class="i">+	win = XCreateSimpleWindow(dpy, root, wx, wy, ww, wh, 0, dc.norm[ColFG], dc.norm[ColBG]);
+</a><a href="#h0-0-261" id="h0-0-261" class="i">+	XSelectInput(dpy, win, StructureNotifyMask|PointerMotionMask|
+</a><a href="#h0-0-262" id="h0-0-262" class="i">+			ButtonReleaseMask|ButtonPressMask|ExposureMask|
+</a><a href="#h0-0-263" id="h0-0-263" class="i">+			LeaveWindowMask);
+</a><a href="#h0-0-264" id="h0-0-264" class="i">+	wmh = XAllocWMHints();
+</a><a href="#h0-0-265" id="h0-0-265" class="i">+	wmh-&gt;input = False;
+</a><a href="#h0-0-266" id="h0-0-266" class="i">+	wmh-&gt;flags = InputHint;
+</a><a href="#h0-0-267" id="h0-0-267" class="i">+	XSetWMHints(dpy, win, wmh);
+</a><a href="#h0-0-268" id="h0-0-268" class="i">+	XFree(wmh);
+</a><a href="#h0-0-269" id="h0-0-269" class="i">+	XMapRaised(dpy, win);
+</a><a href="#h0-0-270" id="h0-0-270" class="i">+}
+</a><a href="#h0-0-271" id="h0-0-271" class="i">+
+</a><a href="#h0-0-272" id="h0-0-272" class="i">+int
+</a><a href="#h0-0-273" id="h0-0-273" class="i">+textnw(const char *text, unsigned int len) {
+</a><a href="#h0-0-274" id="h0-0-274" class="i">+	XRectangle r;
+</a><a href="#h0-0-275" id="h0-0-275" class="i">+
+</a><a href="#h0-0-276" id="h0-0-276" class="i">+	if(dc.font.set) {
+</a><a href="#h0-0-277" id="h0-0-277" class="i">+		XmbTextExtents(dc.font.set, text, len, NULL, &amp;r);
+</a><a href="#h0-0-278" id="h0-0-278" class="i">+		return r.width;
+</a><a href="#h0-0-279" id="h0-0-279" class="i">+	}
+</a><a href="#h0-0-280" id="h0-0-280" class="i">+	return XTextWidth(dc.font.xfont, text, len);
+</a><a href="#h0-0-281" id="h0-0-281" class="i">+}
+</a><a href="#h0-0-282" id="h0-0-282" class="i">+
+</a><a href="#h0-0-283" id="h0-0-283" class="i">+void
+</a><a href="#h0-0-284" id="h0-0-284" class="i">+updatenumlockmask(void) {
+</a><a href="#h0-0-285" id="h0-0-285" class="i">+	unsigned int i, j;
+</a><a href="#h0-0-286" id="h0-0-286" class="i">+	XModifierKeymap *modmap;
+</a><a href="#h0-0-287" id="h0-0-287" class="i">+
+</a><a href="#h0-0-288" id="h0-0-288" class="i">+	numlockmask = 0;
+</a><a href="#h0-0-289" id="h0-0-289" class="i">+	modmap = XGetModifierMapping(dpy);
+</a><a href="#h0-0-290" id="h0-0-290" class="i">+	for(i = 0; i &lt; 8; i++)
+</a><a href="#h0-0-291" id="h0-0-291" class="i">+		for(j = 0; j &lt; modmap-&gt;max_keypermod; j++)
+</a><a href="#h0-0-292" id="h0-0-292" class="i">+			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j]
+</a><a href="#h0-0-293" id="h0-0-293" class="i">+			   == XKeysymToKeycode(dpy, XK_Num_Lock))
+</a><a href="#h0-0-294" id="h0-0-294" class="i">+				numlockmask = (1 &lt;&lt; i);
+</a><a href="#h0-0-295" id="h0-0-295" class="i">+	XFreeModifiermap(modmap);
+</a><a href="#h0-0-296" id="h0-0-296" class="i">+}
+</a><a href="#h0-0-297" id="h0-0-297" class="i">+
+</a><a href="#h0-0-298" id="h0-0-298" class="i">+int
+</a><a href="#h0-0-299" id="h0-0-299" class="i">+main(int argc, char *argv[]) {
+</a><a href="#h0-0-300" id="h0-0-300" class="i">+	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+</a><a href="#h0-0-301" id="h0-0-301" class="i">+		die(&quot;tabbed-&quot;VERSION&quot;, © 2006-2008 surf engineers, see LICENSE for details\n&quot;);
+</a><a href="#h0-0-302" id="h0-0-302" class="i">+	else if(argc != 1)
+</a><a href="#h0-0-303" id="h0-0-303" class="i">+		die(&quot;usage: tabbed [surf-options]\n&quot;);
+</a><a href="#h0-0-304" id="h0-0-304" class="i">+	if(!setlocale(LC_CTYPE, &quot;&quot;) || !XSupportsLocale())
+</a><a href="#h0-0-305" id="h0-0-305" class="i">+		fprintf(stderr, &quot;warning: no locale support\n&quot;);
+</a><a href="#h0-0-306" id="h0-0-306" class="i">+	if(!(dpy = XOpenDisplay(0)))
+</a><a href="#h0-0-307" id="h0-0-307" class="i">+		die(&quot;tabbed: cannot open display\n&quot;);
+</a><a href="#h0-0-308" id="h0-0-308" class="i">+	setup();
+</a><a href="#h0-0-309" id="h0-0-309" class="i">+	run();
+</a><a href="#h0-0-310" id="h0-0-310" class="i">+	/*dummys*/
+</a><a href="#h0-0-311" id="h0-0-311" class="i">+	cleanup();
+</a><a href="#h0-0-312" id="h0-0-312" class="i">+	XCloseDisplay(dpy);
+</a><a href="#h0-0-313" id="h0-0-313" class="i">+	return 0;
+</a><a href="#h0-0-314" id="h0-0-314" class="i">+	textnw(surfexec[0], strlen(surfexec[0]));
+</a><a href="#h0-0-315" id="h0-0-315" class="i">+	updatenumlockmask();
+</a><a href="#h0-0-316" id="h0-0-316" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

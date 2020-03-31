@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>some more refactoring, bar toggle fixes - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a3bbdb1b7bb30d3f11c24bf74414ee11f745688d.html">a3bbdb1b7bb30d3f11c24bf74414ee11f745688d</a>
+<b>parent</b> <a href="../commit/d53ceee68266b0910d632b1978d8fd6371ff52b3.html">d53ceee68266b0910d632b1978d8fd6371ff52b3</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Mon, 22 Jun 2009 20:29:59 +0100
+
+some more refactoring, bar toggle fixes
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">44</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">-----------------</span></td></tr>
+</table></pre><pre>1 file changed, 27 insertions(+), 17 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -124,6 +124,7 @@ struct Monitor {
+</a> 	int screen_number;
+ 	float mfact;
+ 	int by, btx;          /* bar geometry */
+<a href="#h0-0-3" id="h0-0-3" class="i">+	int my, mh;           /* vertical screen size*/
+</a> 	int wx, wy, ww, wh;   /* window area  */
+ 	unsigned int seltags;
+ 	unsigned int sellt;
+<a href="#h0-1" id="h0-1" class="h">@@ -209,6 +210,7 @@ static void toggleview(const Arg *arg);
+</a> static void unmanage(Client *c);
+ static void unmapnotify(XEvent *e);
+ static void updategeom(void);
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void updatebarpos(Monitor *m);
+</a> static void updatebars(void);
+ static void updatenumlockmask(void);
+ static void updatesizehints(Client *c);
+<a href="#h0-2" id="h0-2" class="h">@@ -389,7 +391,7 @@ buttonpress(XEvent *e) {
+</a> 	XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+ 
+ 	click = ClkRootWin;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(ev-&gt;window == selmon-&gt;barwin) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if(ev-&gt;window == selmon-&gt;barwin &amp;&amp; ev-&gt;x &gt;= selmon-&gt;btx) {
+</a> 		i = 0;
+ 		x = selmon-&gt;btx;
+ 		do
+<a href="#h0-3" id="h0-3" class="h">@@ -597,6 +599,7 @@ die(const char *errstr, ...) {
+</a> 
+ void
+ drawbar(Monitor *m) {
+<a href="#h0-3-3" id="h0-3-3" class="i">+	char buf[2];
+</a> 	int x;
+ 	unsigned int i, occ = 0, urg = 0;
+ 	unsigned long *col;
+<a href="#h0-4" id="h0-4" class="h">@@ -613,11 +616,11 @@ drawbar(Monitor *m) {
+</a> 	dc.x = 0;
+ #ifdef XINERAMA
+ 	{
+<a href="#h0-4-3" id="h0-4-3" class="d">-		/*
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		dc.w = TEXTW(m-&gt;symbol);
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-		drawtext(NULL, selmon == m ? dc.sel : dc.norm, False);
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		buf[0] = m-&gt;screen_number + &#39;0&#39;;
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+		buf[1] = &#39;\0&#39;;
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+		dc.w = TEXTW(buf);
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+		drawtext(buf, selmon == m ? dc.sel : dc.norm, True);
+</a> 		dc.x += dc.w;
+<a href="#h0-4-11" id="h0-4-11" class="d">-		*/
+</a> 	}
+ #endif /* XINERAMA */
+ 	m-&gt;btx = dc.x;
+<a href="#h0-5" id="h0-5" class="h">@@ -1525,7 +1528,7 @@ tile(Monitor *m) {
+</a> void
+ togglebar(const Arg *arg) {
+ 	selmon-&gt;showbar = !selmon-&gt;showbar;
+<a href="#h0-5-3" id="h0-5-3" class="d">-	updategeom();
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	updatebarpos(selmon);
+</a> 	XMoveResizeWindow(dpy, selmon-&gt;barwin, selmon-&gt;wx, selmon-&gt;by, selmon-&gt;ww, bh);
+ 	arrange();
+ }
+<a href="#h0-6" id="h0-6" class="h">@@ -1615,6 +1618,19 @@ updatebars(void) {
+</a> }
+ 
+ void
+<a href="#h0-6-3" id="h0-6-3" class="i">+updatebarpos(Monitor *m) {
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	m-&gt;wy = m-&gt;my;
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+	m-&gt;wh = m-&gt;mh;
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+	if(m-&gt;showbar) {
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+		m-&gt;wh -= bh;
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+		m-&gt;by = m-&gt;topbar ? m-&gt;wy : m-&gt;wy + m-&gt;wh;
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+		m-&gt;wy = m-&gt;topbar ? m-&gt;wy + bh : m-&gt;wy;
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+	}
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+	else
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+		m-&gt;by = -bh;
+</a><a href="#h0-6-13" id="h0-6-13" class="i">+}
+</a><a href="#h0-6-14" id="h0-6-14" class="i">+
+</a><a href="#h0-6-15" id="h0-6-15" class="i">+void
+</a> updategeom(void) {
+ 	int i, n;
+ 	Client *c;
+<a href="#h0-7" id="h0-7" class="h">@@ -1639,9 +1655,9 @@ updategeom(void) {
+</a> 		for(i = 0, m = newmons; m; m = m-&gt;next, i++) {
+ 			m-&gt;screen_number = info[i].screen_number;
+ 			m-&gt;wx = info[i].x_org;
+<a href="#h0-7-3" id="h0-7-3" class="d">-			m-&gt;wy = info[i].y_org;
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+			m-&gt;my = m-&gt;wy = info[i].y_org;
+</a> 			m-&gt;ww = info[i].width;
+<a href="#h0-7-6" id="h0-7-6" class="d">-			m-&gt;wh = info[i].height;
+</a><a href="#h0-7-7" id="h0-7-7" class="i">+			m-&gt;mh = m-&gt;wh = info[i].height;
+</a> 		}
+ 		XFree(info);
+ 	}
+<a href="#h0-8" id="h0-8" class="h">@@ -1651,9 +1667,9 @@ updategeom(void) {
+</a> 	{
+ 		m-&gt;screen_number = 0;
+ 		m-&gt;wx = sx;
+<a href="#h0-8-3" id="h0-8-3" class="d">-		m-&gt;wy = sy;
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+		m-&gt;my = m-&gt;wy = sy;
+</a> 		m-&gt;ww = sw;
+<a href="#h0-8-6" id="h0-8-6" class="d">-		m-&gt;wh = sh;
+</a><a href="#h0-8-7" id="h0-8-7" class="i">+		m-&gt;mh = m-&gt;wh = sh;
+</a> 	}
+ 
+ 	/* bar geometry setup */
+<a href="#h0-9" id="h0-9" class="h">@@ -1665,13 +1681,7 @@ updategeom(void) {
+</a> 		m-&gt;mfact = mfact;
+ 		m-&gt;showbar = showbar;
+ 		m-&gt;topbar = topbar;
+<a href="#h0-9-3" id="h0-9-3" class="d">-		if(m-&gt;showbar) {
+</a><a href="#h0-9-4" id="h0-9-4" class="d">-			m-&gt;wh -= bh;
+</a><a href="#h0-9-5" id="h0-9-5" class="d">-			m-&gt;by = m-&gt;topbar ? m-&gt;wy : m-&gt;wy + m-&gt;wh;
+</a><a href="#h0-9-6" id="h0-9-6" class="d">-			m-&gt;wy = m-&gt;topbar ? m-&gt;wy + bh : m-&gt;wy;
+</a><a href="#h0-9-7" id="h0-9-7" class="d">-		}
+</a><a href="#h0-9-8" id="h0-9-8" class="d">-		else
+</a><a href="#h0-9-9" id="h0-9-9" class="d">-			m-&gt;by = -bh;
+</a><a href="#h0-9-10" id="h0-9-10" class="i">+		updatebarpos(m);
+</a> 		/* reassign all clients with same screen number */
+ 		for(c = clients; c; c = c-&gt;next)
+ 			if(c-&gt;m-&gt;screen_number == m-&gt;screen_number)
+</pre>
+</div>
+</body>
+</html>

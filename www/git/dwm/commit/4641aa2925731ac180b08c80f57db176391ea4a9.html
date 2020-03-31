@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added grid mode on Mod1Mask g - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4641aa2925731ac180b08c80f57db176391ea4a9.html">4641aa2925731ac180b08c80f57db176391ea4a9</a>
+<b>parent</b> <a href="../commit/dfd84f9bf3b9d949412a73bc62a43109b340d395.html">dfd84f9bf3b9d949412a73bc62a43109b340d395</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Wed, 12 Jul 2006 16:00:51 +0200
+
+added grid mode on Mod1Mask g
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">client.c</a></td><td> | </td><td class="num">70</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h2">cmd.c</a></td><td> | </td><td class="num">52</td><td><span class="i"></span><span class="d">----------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">kb.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">wm.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">wm.h</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>7 files changed, 97 insertions(+), 66 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-WMSRC = bar.c client.c cmd.c draw.c event.c kb.c mouse.c util.c wm.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+WMSRC = bar.c client.c draw.c event.c kb.c mouse.c util.c wm.c
+</a> WMOBJ = ${WMSRC:.c=.o}
+ MENSRC = menu.c draw.c util.c
+ MENOBJ = ${MENSRC:.c=.o}
+<b>diff --git a/<a id="h1" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -3,6 +3,7 @@
+</a>  * See LICENSE file for license details.
+  */
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+#include &lt;math.h&gt;
+</a> #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+ #include &lt;X11/Xatom.h&gt;
+<a href="#h1-1" id="h1-1" class="h">@@ -10,6 +11,73 @@
+</a> #include &quot;util.h&quot;
+ #include &quot;wm.h&quot;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+void
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+arrange(void *aux)
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+{
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	Client *c;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	int n, cols, rows, gw, gh, i, j;
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+    float rt, fd;
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+	if(!clients)
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+		return;
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+	for(n = 0, c = clients; c; c = c-&gt;next, n++);
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+	rt = sqrt(n);
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+	if(modff(rt, &amp;fd) &lt; 0.5)
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+		rows = floor(rt);
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+	else
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+		rows = ceil(rt);
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+	if(rows * rows &lt; n)
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+		cols = rows + 1;
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	else
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+		cols = rows;
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+	gw = (sw - 1)  / cols;
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+	gh = (sh - bh - 1) / rows;
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+	for(i = j = 0, c = clients; c; c = c-&gt;next) {
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+		c-&gt;x = i * gw;
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+		c-&gt;y = j * gh + bh;
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+		c-&gt;w = gw;
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+		c-&gt;h = gh;
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+		resize(c);
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+		if(++i == cols) {
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+			j++;
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+			i = 0;
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+		}
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+	}
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+}
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+
+</a><a href="#h1-1-39" id="h1-1-39" class="i">+void
+</a><a href="#h1-1-40" id="h1-1-40" class="i">+sel(void *aux)
+</a><a href="#h1-1-41" id="h1-1-41" class="i">+{
+</a><a href="#h1-1-42" id="h1-1-42" class="i">+	const char *arg = aux;
+</a><a href="#h1-1-43" id="h1-1-43" class="i">+	Client *c = NULL;
+</a><a href="#h1-1-44" id="h1-1-44" class="i">+
+</a><a href="#h1-1-45" id="h1-1-45" class="i">+	if(!arg || !stack)
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+		return;
+</a><a href="#h1-1-47" id="h1-1-47" class="i">+	if(!strncmp(arg, &quot;next&quot;, 5))
+</a><a href="#h1-1-48" id="h1-1-48" class="i">+		c = stack-&gt;snext ? stack-&gt;snext : stack;
+</a><a href="#h1-1-49" id="h1-1-49" class="i">+	else if(!strncmp(arg, &quot;prev&quot;, 5))
+</a><a href="#h1-1-50" id="h1-1-50" class="i">+		for(c = stack; c &amp;&amp; c-&gt;snext; c = c-&gt;snext);
+</a><a href="#h1-1-51" id="h1-1-51" class="i">+	if(!c)
+</a><a href="#h1-1-52" id="h1-1-52" class="i">+		c = stack;
+</a><a href="#h1-1-53" id="h1-1-53" class="i">+	raise(c);
+</a><a href="#h1-1-54" id="h1-1-54" class="i">+	focus(c);
+</a><a href="#h1-1-55" id="h1-1-55" class="i">+}
+</a><a href="#h1-1-56" id="h1-1-56" class="i">+
+</a><a href="#h1-1-57" id="h1-1-57" class="i">+void
+</a><a href="#h1-1-58" id="h1-1-58" class="i">+kill(void *aux)
+</a><a href="#h1-1-59" id="h1-1-59" class="i">+{
+</a><a href="#h1-1-60" id="h1-1-60" class="i">+	Client *c = stack;
+</a><a href="#h1-1-61" id="h1-1-61" class="i">+
+</a><a href="#h1-1-62" id="h1-1-62" class="i">+	if(!c)
+</a><a href="#h1-1-63" id="h1-1-63" class="i">+		return;
+</a><a href="#h1-1-64" id="h1-1-64" class="i">+	if(c-&gt;proto &amp; WM_PROTOCOL_DELWIN)
+</a><a href="#h1-1-65" id="h1-1-65" class="i">+		send_message(c-&gt;win, wm_atom[WMProtocols], wm_atom[WMDelete]);
+</a><a href="#h1-1-66" id="h1-1-66" class="i">+	else
+</a><a href="#h1-1-67" id="h1-1-67" class="i">+		XKillClient(dpy, c-&gt;win);
+</a><a href="#h1-1-68" id="h1-1-68" class="i">+}
+</a><a href="#h1-1-69" id="h1-1-69" class="i">+
+</a> static void
+ resize_title(Client *c)
+ {
+<a href="#h1-2" id="h1-2" class="h">@@ -113,7 +181,7 @@ focus(Client *c)
+</a> 		draw_client(old);
+ 	}
+ 	XUnmapWindow(dpy, c-&gt;title);
+<a href="#h1-2-3" id="h1-2-3" class="d">-	draw_client(old);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	draw_client(c);
+</a> 	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+ 	XFlush(dpy);
+ }
+<b>diff --git a/<a id="h2" href="../file/cmd.c.html">cmd.c</a> b/<a href="../file/cmd.c.html">cmd.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,52 +0,0 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="d">-/*
+</a><a href="#h2-0-1" id="h2-0-1" class="d">- * (C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h2-0-2" id="h2-0-2" class="d">- * See LICENSE file for license details.
+</a><a href="#h2-0-3" id="h2-0-3" class="d">- */
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-#include &quot;wm.h&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-#include &lt;stdio.h&gt;
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-#include &lt;string.h&gt;
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-void
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-run(void *aux)
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-{
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-	spawn(dpy, aux);
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-}
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-void
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-quit(void *aux)
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-{
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-	running = False;
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-}
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-
+</a><a href="#h2-0-21" id="h2-0-21" class="d">-void
+</a><a href="#h2-0-22" id="h2-0-22" class="d">-sel(void *aux)
+</a><a href="#h2-0-23" id="h2-0-23" class="d">-{
+</a><a href="#h2-0-24" id="h2-0-24" class="d">-	const char *arg = aux;
+</a><a href="#h2-0-25" id="h2-0-25" class="d">-	Client *c = NULL;
+</a><a href="#h2-0-26" id="h2-0-26" class="d">-
+</a><a href="#h2-0-27" id="h2-0-27" class="d">-	if(!arg || !stack)
+</a><a href="#h2-0-28" id="h2-0-28" class="d">-		return;
+</a><a href="#h2-0-29" id="h2-0-29" class="d">-	if(!strncmp(arg, &quot;next&quot;, 5))
+</a><a href="#h2-0-30" id="h2-0-30" class="d">-		c = stack-&gt;snext ? stack-&gt;snext : stack;
+</a><a href="#h2-0-31" id="h2-0-31" class="d">-	else if(!strncmp(arg, &quot;prev&quot;, 5))
+</a><a href="#h2-0-32" id="h2-0-32" class="d">-		for(c = stack; c &amp;&amp; c-&gt;snext; c = c-&gt;snext);
+</a><a href="#h2-0-33" id="h2-0-33" class="d">-	if(!c)
+</a><a href="#h2-0-34" id="h2-0-34" class="d">-		c = stack;
+</a><a href="#h2-0-35" id="h2-0-35" class="d">-	raise(c);
+</a><a href="#h2-0-36" id="h2-0-36" class="d">-	focus(c);
+</a><a href="#h2-0-37" id="h2-0-37" class="d">-}
+</a><a href="#h2-0-38" id="h2-0-38" class="d">-
+</a><a href="#h2-0-39" id="h2-0-39" class="d">-void
+</a><a href="#h2-0-40" id="h2-0-40" class="d">-kill(void *aux)
+</a><a href="#h2-0-41" id="h2-0-41" class="d">-{
+</a><a href="#h2-0-42" id="h2-0-42" class="d">-	Client *c = stack;
+</a><a href="#h2-0-43" id="h2-0-43" class="d">-
+</a><a href="#h2-0-44" id="h2-0-44" class="d">-	if(!c)
+</a><a href="#h2-0-45" id="h2-0-45" class="d">-		return;
+</a><a href="#h2-0-46" id="h2-0-46" class="d">-	if(c-&gt;proto &amp; WM_PROTOCOL_DELWIN)
+</a><a href="#h2-0-47" id="h2-0-47" class="d">-		send_message(c-&gt;win, wm_atom[WMProtocols], wm_atom[WMDelete]);
+</a><a href="#h2-0-48" id="h2-0-48" class="d">-	else
+</a><a href="#h2-0-49" id="h2-0-49" class="d">-		XKillClient(dpy, c-&gt;win);
+</a><a href="#h2-0-50" id="h2-0-50" class="d">-}
+</a><a href="#h2-0-51" id="h2-0-51" class="d">-
+</a><b>diff --git a/<a id="h3" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -11,7 +11,7 @@ X11LIB = /usr/X11R6/lib
+</a> VERSION = 0.0
+ 
+ # includes and libs
+<a href="#h3-0-3" id="h3-0-3" class="d">-LIBS = -L${PREFIX}/lib -L/usr/lib -lc -L${X11LIB} -lX11
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+LIBS = -L${PREFIX}/lib -L/usr/lib -lc -lm -L${X11LIB} -lX11
+</a> 
+ # Linux/BSD
+ CFLAGS = -g -Wall -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+<b>diff --git a/<a id="h4" href="../file/kb.c.html">kb.c</a> b/<a href="../file/kb.c.html">kb.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -13,16 +13,18 @@ static const char *term[] = {
+</a> };
+ 
+ static const char *proglist[] = {
+<a href="#h4-0-3" id="h4-0-3" class="d">-		&quot;sh&quot;, &quot;-c&quot;, &quot;exec `ls -lL /bin /sbin /usr/bin /usr/local/bin 2&gt;/dev/null | awk &#39;NF&gt;2 &amp;&amp; $1 ~ /^[^d].*x/ {print $NF}&#39; | sort | uniq | gridmenu`&quot;, 0
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+		&quot;sh&quot;, &quot;-c&quot;, &quot;exec `ls -lL /bin /sbin /usr/bin /usr/local/bin 2&gt;/dev/null &quot;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+		&quot;| awk &#39;NF&gt;2 &amp;&amp; $1 ~ /^[^d].*x/ {print $NF}&#39; | sort | uniq | gridmenu`&quot;, 0
+</a> };
+ 
+ static Key key[] = {
+ 	{ Mod1Mask, XK_Return, run, term },
+ 	{ Mod1Mask, XK_p, run, proglist }, 
+<a href="#h4-0-11" id="h4-0-11" class="d">-	{ Mod1Mask, XK_k, sel, &quot;prev&quot;}, 
+</a><a href="#h4-0-12" id="h4-0-12" class="d">-	{ Mod1Mask, XK_j, sel, &quot;next&quot;}, 
+</a><a href="#h4-0-13" id="h4-0-13" class="d">-	{ Mod1Mask | ShiftMask, XK_c, kill, NULL}, 
+</a><a href="#h4-0-14" id="h4-0-14" class="d">-	{ Mod1Mask | ShiftMask, XK_q, quit, NULL},
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+	{ Mod1Mask, XK_k, sel, &quot;prev&quot; }, 
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+	{ Mod1Mask, XK_j, sel, &quot;next&quot; }, 
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+	{ Mod1Mask, XK_g, arrange, NULL }, 
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	{ Mod1Mask | ShiftMask, XK_c, kill, NULL }, 
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+	{ Mod1Mask | ShiftMask, XK_q, quit, NULL },
+</a> };
+ 
+ void
+<b>diff --git a/<a id="h5" href="../file/wm.c.html">wm.c</a> b/<a href="../file/wm.c.html">wm.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -175,6 +175,18 @@ cleanup()
+</a> 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+ }
+ 
+<a href="#h5-0-3" id="h5-0-3" class="i">+void
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+run(void *aux)
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+{
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+	spawn(dpy, aux);
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+}
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+void
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+quit(void *aux)
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+{
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+	running = False;
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+}
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+
+</a> int
+ main(int argc, char *argv[])
+ {
+<b>diff --git a/<a id="h6" href="../file/wm.h.html">wm.h</a> b/<a href="../file/wm.h.html">wm.h</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -58,12 +58,6 @@ extern Client *clients, *stack;
+</a> /* bar.c */
+ extern void draw_bar();
+ 
+<a href="#h6-0-3" id="h6-0-3" class="d">-/* cmd.c */
+</a><a href="#h6-0-4" id="h6-0-4" class="d">-extern void run(void *aux);
+</a><a href="#h6-0-5" id="h6-0-5" class="d">-extern void quit(void *aux);
+</a><a href="#h6-0-6" id="h6-0-6" class="d">-extern void kill(void *aux);
+</a><a href="#h6-0-7" id="h6-0-7" class="d">-extern void sel(void *aux);
+</a><a href="#h6-0-8" id="h6-0-8" class="d">-
+</a> /* client.c */
+ extern void manage(Window w, XWindowAttributes *wa);
+ extern void unmanage(Client *c);
+<a href="#h6-1" id="h6-1" class="h">@@ -76,10 +70,15 @@ extern void update_size(Client *c);
+</a> extern Client *gettitle(Window w);
+ extern void raise(Client *c);
+ extern void lower(Client *c);
+<a href="#h6-1-3" id="h6-1-3" class="i">+extern void kill(void *aux);
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+extern void sel(void *aux);
+</a> 
+ /* event.c */
+ extern void discard_events(long even_mask);
+ 
+<a href="#h6-1-9" id="h6-1-9" class="i">+/* grid.c */
+</a><a href="#h6-1-10" id="h6-1-10" class="i">+extern void arrange();
+</a><a href="#h6-1-11" id="h6-1-11" class="i">+
+</a> /* key.c */
+ extern void update_keys();
+ extern void keypress(XEvent *e);
+<a href="#h6-2" id="h6-2" class="h">@@ -92,3 +91,5 @@ extern void mmove(Client *c);
+</a> extern int error_handler(Display *dpy, XErrorEvent *error);
+ extern void send_message(Window w, Atom a, long value);
+ extern int win_proto(Window w);
+<a href="#h6-2-3" id="h6-2-3" class="i">+extern void run(void *aux);
+</a><a href="#h6-2-4" id="h6-2-4" class="i">+extern void quit(void *aux);
+</a></pre>
+</div>
+</body>
+</html>

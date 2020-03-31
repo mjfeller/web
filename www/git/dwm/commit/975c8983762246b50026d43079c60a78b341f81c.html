@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Markus&#39; decouple color-scheme patch - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/975c8983762246b50026d43079c60a78b341f81c.html">975c8983762246b50026d43079c60a78b341f81c</a>
+<b>parent</b> <a href="../commit/a137a86a234476bc3c7128fecbf845e6fc1de995.html">a137a86a234476bc3c7128fecbf845e6fc1de995</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon,  5 Dec 2016 10:01:33 +0100
+
+applied Markus&#39; decouple color-scheme patch
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>2 files changed, 8 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -12,7 +12,7 @@ static const char col_gray2[]       = &quot;#444444&quot;;
+</a> static const char col_gray3[]       = &quot;#bbbbbb&quot;;
+ static const char col_gray4[]       = &quot;#eeeeee&quot;;
+ static const char col_cyan[]        = &quot;#005577&quot;;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static const char *colors[SchemeLast][3]      = {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static const char *colors[][3]      = {
+</a> 	/*               fg         bg         border   */
+ 	[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
+ 	[SchemeSel] =  { col_gray4, col_cyan,  col_cyan  },
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -60,7 +60,7 @@
+</a> 
+ /* enums */
+ enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
+<a href="#h1-0-3" id="h1-0-3" class="d">-enum { SchemeNorm, SchemeSel, SchemeLast }; /* color schemes */
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+enum { SchemeNorm, SchemeSel }; /* color schemes */
+</a> enum { NetSupported, NetWMName, NetWMState,
+        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
+        NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
+<a href="#h1-1" id="h1-1" class="h">@@ -263,7 +263,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> static Atom wmatom[WMLast], netatom[NetLast];
+ static int running = 1;
+ static Cur *cursor[CurLast];
+<a href="#h1-1-3" id="h1-1-3" class="d">-static Scm scheme[SchemeLast];
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+static Scm *scheme;
+</a> static Display *dpy;
+ static Drw *drw;
+ static Monitor *mons, *selmon;
+<a href="#h1-2" id="h1-2" class="h">@@ -483,7 +483,7 @@ cleanup(void)
+</a> 		cleanupmon(mons);
+ 	for (i = 0; i &lt; CurLast; i++)
+ 		drw_cur_free(drw, cursor[i]);
+<a href="#h1-2-3" id="h1-2-3" class="d">-	for (i = 0; i &lt; SchemeLast; i++)
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	for (i = 0; i &lt; LENGTH(colors); i++)
+</a> 		free(scheme[i]);
+ 	drw_free(drw);
+ 	XSync(dpy, False);
+<a href="#h1-3" id="h1-3" class="h">@@ -1549,6 +1549,7 @@ setmfact(const Arg *arg)
+</a> void
+ setup(void)
+ {
+<a href="#h1-3-3" id="h1-3-3" class="i">+	int i;
+</a> 	XSetWindowAttributes wa;
+ 
+ 	/* clean up any zombies immediately */
+<a href="#h1-4" id="h1-4" class="h">@@ -1583,8 +1584,9 @@ setup(void)
+</a> 	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
+ 	cursor[CurMove] = drw_cur_create(drw, XC_fleur);
+ 	/* init appearance */
+<a href="#h1-4-3" id="h1-4-3" class="d">-	scheme[SchemeNorm] = drw_scm_create(drw, colors[SchemeNorm], 3);
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-	scheme[SchemeSel] = drw_scm_create(drw, colors[SchemeSel], 3);
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+	scheme = ecalloc(LENGTH(colors), sizeof(Scm));
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+	for (i = 0; i &lt; LENGTH(colors); i++)
+</a><a href="#h1-4-7" id="h1-4-7" class="i">+		scheme[i] = drw_scm_create(drw, colors[i], 3);
+</a> 	/* init bars */
+ 	updatebars();
+ 	updatestatus();
+</pre>
+</div>
+</body>
+</html>

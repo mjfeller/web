@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied yiyus fgeom patch - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7f70d90219c4a33c79ff93b49fb24ee7a6f62b4d.html">7f70d90219c4a33c79ff93b49fb24ee7a6f62b4d</a>
+<b>parent</b> <a href="../commit/858251de46c50498b261b312f2df03531dd9923c.html">858251de46c50498b261b312f2df03531dd9923c</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 27 Apr 2008 18:22:52 +0100
+
+applied yiyus fgeom patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">71</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 41 insertions(+), 35 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -35,8 +35,11 @@ Geom geoms[] = {
+</a> Layout layouts[] = {
+ 	/* symbol		function	isfloating */
+ 	{ &quot;[]=&quot;,		tilev,		False }, /* first entry is default */
+<a href="#h0-0-3" id="h0-0-3" class="i">+	{ &quot;&lt;&gt;=&quot;,		tilev,		True },
+</a> 	{ &quot;[]|&quot;,		tileh,		False },
+<a href="#h0-0-5" id="h0-0-5" class="d">-	{ &quot;&gt;&lt;&gt;&quot;,		floating,	True },
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	{ &quot;&lt;&gt;|&quot;,		tileh,		True },
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	{ &quot;&gt;&lt;&gt;&quot;,		NULL,	True },
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	{ &quot;[m]&quot;,		monocle,	False },
+</a> 	{ &quot;[M]&quot;,		monocle,	True },
+ };
+ 
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -68,6 +68,7 @@ typedef struct Client Client;
+</a> struct Client {
+ 	char name[256];
+ 	int x, y, w, h;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	int fx, fy, fw, fh;
+</a> 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int minax, maxax, minay, maxay;
+ 	long flags;
+<a href="#h1-1" id="h1-1" class="h">@@ -144,7 +145,6 @@ void *emallocz(unsigned int size);
+</a> void enternotify(XEvent *e);
+ void eprint(const char *errstr, ...);
+ void expose(XEvent *e);
+<a href="#h1-1-3" id="h1-1-3" class="d">-void floating(void); /* default floating layout */
+</a> void focus(Client *c);
+ void focusin(XEvent *e);
+ void focusnext(const char *arg);
+<a href="#h1-2" id="h1-2" class="h">@@ -286,13 +286,17 @@ arrange(void) {
+</a> 	Client *c;
+ 
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h1-2-3" id="h1-2-3" class="d">-		if(isvisible(c))
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		if(isvisible(c)) {
+</a> 			unban(c);
+<a href="#h1-2-6" id="h1-2-6" class="i">+			if(lt-&gt;isfloating || c-&gt;isfloating)
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+				resize(c, c-&gt;fx, c-&gt;fy, c-&gt;fw, c-&gt;fh, True);
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+		}
+</a> 		else
+ 			ban(c);
+ 
+ 	focus(NULL);
+<a href="#h1-2-13" id="h1-2-13" class="d">-	lt-&gt;arrange();
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+	if(lt-&gt;arrange)
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+		lt-&gt;arrange();
+</a> 	restack();
+ }
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -360,7 +364,7 @@ buttonpress(XEvent *e) {
+</a> 			movemouse(c);
+ 		}
+ 		else if(ev-&gt;button == Button2) {
+<a href="#h1-3-3" id="h1-3-3" class="d">-			if((floating != lt-&gt;arrange) &amp;&amp; c-&gt;isfloating)
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+			if(!lt-&gt;isfloating &amp;&amp; c-&gt;isfloating)
+</a> 				togglefloating(NULL);
+ 			else
+ 				zoom(NULL);
+<a href="#h1-4" id="h1-4" class="h">@@ -670,15 +674,6 @@ expose(XEvent *e) {
+</a> }
+ 
+ void
+<a href="#h1-4-3" id="h1-4-3" class="d">-floating(void) { /* default floating layout */
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-	Client *c;
+</a><a href="#h1-4-5" id="h1-4-5" class="d">-
+</a><a href="#h1-4-6" id="h1-4-6" class="d">-	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h1-4-7" id="h1-4-7" class="d">-		if(isvisible(c))
+</a><a href="#h1-4-8" id="h1-4-8" class="d">-			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+</a><a href="#h1-4-9" id="h1-4-9" class="d">-}
+</a><a href="#h1-4-10" id="h1-4-10" class="d">-
+</a><a href="#h1-4-11" id="h1-4-11" class="d">-void
+</a> focus(Client *c) {
+ 	if(!c || (c &amp;&amp; !isvisible(c)))
+ 		for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+<a href="#h1-5" id="h1-5" class="h">@@ -993,8 +988,8 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	/* geometry */
+ 	c-&gt;x = wa-&gt;x;
+ 	c-&gt;y = wa-&gt;y;
+<a href="#h1-5-3" id="h1-5-3" class="d">-	c-&gt;w = wa-&gt;width;
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-	c-&gt;h = wa-&gt;height;
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+	c-&gt;w = c-&gt;fw = wa-&gt;width;
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+	c-&gt;h = c-&gt;fh = wa-&gt;height;
+</a> 	c-&gt;oldbw = wa-&gt;border_width;
+ 	if(c-&gt;w == sw &amp;&amp; c-&gt;h == sh) {
+ 		c-&gt;x = sx;
+<a href="#h1-6" id="h1-6" class="h">@@ -1010,6 +1005,8 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 		c-&gt;y = MAX(c-&gt;y, wy);
+ 		c-&gt;bw = BORDERPX;
+ 	}
+<a href="#h1-6-3" id="h1-6-3" class="i">+	c-&gt;fx = c-&gt;x;
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+	c-&gt;fy = c-&gt;y;
+</a> 
+ 	wc.border_width = c-&gt;bw;
+ 	XConfigureWindow(dpy, w, CWBorderWidth, &amp;wc);
+<a href="#h1-7" id="h1-7" class="h">@@ -1105,8 +1102,11 @@ movemouse(Client *c) {
+</a> 				ny = wy + wh - c-&gt;h - 2 * c-&gt;bw;
+ 			if(!c-&gt;isfloating &amp;&amp; !lt-&gt;isfloating &amp;&amp; (abs(nx - c-&gt;x) &gt; SNAP || abs(ny - c-&gt;y) &gt; SNAP))
+ 				togglefloating(NULL);
+<a href="#h1-7-3" id="h1-7-3" class="d">-			if((lt-&gt;isfloating) || c-&gt;isfloating)
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+			if(lt-&gt;isfloating || c-&gt;isfloating) {
+</a><a href="#h1-7-5" id="h1-7-5" class="i">+				c-&gt;fx = nx;
+</a><a href="#h1-7-6" id="h1-7-6" class="i">+				c-&gt;fy = ny;
+</a> 				resize(c, nx, ny, c-&gt;w, c-&gt;h, False);
+<a href="#h1-7-8" id="h1-7-8" class="i">+			}
+</a> 			break;
+ 		}
+ 	}
+<a href="#h1-8" id="h1-8" class="h">@@ -1261,10 +1261,16 @@ resizemouse(Client *c) {
+</a> 			XSync(dpy, False);
+ 			nw = MAX(ev.xmotion.x - ocx - 2 * c-&gt;bw + 1, 1);
+ 			nh = MAX(ev.xmotion.y - ocy - 2 * c-&gt;bw + 1, 1);
+<a href="#h1-8-3" id="h1-8-3" class="d">-			if(!c-&gt;isfloating &amp;&amp; !lt-&gt;isfloating &amp;&amp; (abs(nw - c-&gt;w) &gt; SNAP || abs(nh - c-&gt;h) &gt; SNAP))
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+			if(!c-&gt;isfloating &amp;&amp; !lt-&gt;isfloating &amp;&amp; (abs(nw - c-&gt;w) &gt; SNAP || abs(nh - c-&gt;h) &gt; SNAP)) {
+</a><a href="#h1-8-5" id="h1-8-5" class="i">+				c-&gt;fx = c-&gt;x;
+</a><a href="#h1-8-6" id="h1-8-6" class="i">+				c-&gt;fy = c-&gt;y;
+</a> 				togglefloating(NULL);
+<a href="#h1-8-8" id="h1-8-8" class="d">-			if((lt-&gt;isfloating) || c-&gt;isfloating)
+</a><a href="#h1-8-9" id="h1-8-9" class="i">+			}
+</a><a href="#h1-8-10" id="h1-8-10" class="i">+			if((lt-&gt;isfloating) || c-&gt;isfloating) {
+</a> 				resize(c, c-&gt;x, c-&gt;y, nw, nh, True);
+<a href="#h1-8-12" id="h1-8-12" class="i">+				c-&gt;fw = nw;
+</a><a href="#h1-8-13" id="h1-8-13" class="i">+				c-&gt;fh = nh;
+</a><a href="#h1-8-14" id="h1-8-14" class="i">+			}
+</a> 			break;
+ 		}
+ 	}
+<a href="#h1-9" id="h1-9" class="h">@@ -1284,16 +1290,11 @@ restack(void) {
+</a> 	if(!lt-&gt;isfloating) {
+ 		wc.stack_mode = Below;
+ 		wc.sibling = barwin;
+<a href="#h1-9-3" id="h1-9-3" class="d">-		if(!sel-&gt;isfloating) {
+</a><a href="#h1-9-4" id="h1-9-4" class="d">-			XConfigureWindow(dpy, sel-&gt;win, CWSibling|CWStackMode, &amp;wc);
+</a><a href="#h1-9-5" id="h1-9-5" class="d">-			wc.sibling = sel-&gt;win;
+</a><a href="#h1-9-6" id="h1-9-6" class="d">-		}
+</a><a href="#h1-9-7" id="h1-9-7" class="d">-		for(c = nexttiled(clients); c; c = nexttiled(c-&gt;next)) {
+</a><a href="#h1-9-8" id="h1-9-8" class="d">-			if(c == sel)
+</a><a href="#h1-9-9" id="h1-9-9" class="d">-				continue;
+</a><a href="#h1-9-10" id="h1-9-10" class="d">-			XConfigureWindow(dpy, c-&gt;win, CWSibling|CWStackMode, &amp;wc);
+</a><a href="#h1-9-11" id="h1-9-11" class="d">-			wc.sibling = c-&gt;win;
+</a><a href="#h1-9-12" id="h1-9-12" class="d">-		}
+</a><a href="#h1-9-13" id="h1-9-13" class="i">+		for(c = stack; c; c = c-&gt;snext)
+</a><a href="#h1-9-14" id="h1-9-14" class="i">+			if(!c-&gt;isfloating &amp;&amp; isvisible(c)) {
+</a><a href="#h1-9-15" id="h1-9-15" class="i">+				XConfigureWindow(dpy, c-&gt;win, CWSibling|CWStackMode, &amp;wc);
+</a><a href="#h1-9-16" id="h1-9-16" class="i">+				wc.sibling = c-&gt;win;
+</a><a href="#h1-9-17" id="h1-9-17" class="i">+			}
+</a> 	}
+ 	XSync(dpy, False);
+ 	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+<a href="#h1-10" id="h1-10" class="h">@@ -1841,6 +1842,8 @@ view(const char *arg) {
+</a> 		memcpy(seltags, tmp, TAGSZ);
+ 		arrange();
+ 	}
+<a href="#h1-10-3" id="h1-10-3" class="i">+	else
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+		viewprevtag(NULL);
+</a> }
+ 
+ void
+<a href="#h1-11" id="h1-11" class="h">@@ -1885,14 +1888,14 @@ void
+</a> zoom(const char *arg) {
+ 	Client *c = sel;
+ 
+<a href="#h1-11-3" id="h1-11-3" class="d">-	if(!sel || lt-&gt;isfloating || sel-&gt;isfloating)
+</a><a href="#h1-11-4" id="h1-11-4" class="d">-		return;
+</a> 	if(c == nexttiled(clients))
+<a href="#h1-11-6" id="h1-11-6" class="d">-		if(!(c = nexttiled(c-&gt;next)))
+</a><a href="#h1-11-7" id="h1-11-7" class="i">+		if(!c || !(c = nexttiled(c-&gt;next)))
+</a> 			return;
+<a href="#h1-11-9" id="h1-11-9" class="d">-	detach(c);
+</a><a href="#h1-11-10" id="h1-11-10" class="d">-	attach(c);
+</a><a href="#h1-11-11" id="h1-11-11" class="d">-	focus(c);
+</a><a href="#h1-11-12" id="h1-11-12" class="i">+	if(!lt-&gt;isfloating &amp;&amp; !sel-&gt;isfloating) {
+</a><a href="#h1-11-13" id="h1-11-13" class="i">+		detach(c);
+</a><a href="#h1-11-14" id="h1-11-14" class="i">+		attach(c);
+</a><a href="#h1-11-15" id="h1-11-15" class="i">+		focus(c);
+</a><a href="#h1-11-16" id="h1-11-16" class="i">+	}
+</a> 	arrange();
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

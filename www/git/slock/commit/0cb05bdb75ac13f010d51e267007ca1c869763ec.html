@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Ali Gholami Rudi&#39;s patch regarding DPMS timeout customization and persistence - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0cb05bdb75ac13f010d51e267007ca1c869763ec.html">0cb05bdb75ac13f010d51e267007ca1c869763ec</a>
+<b>parent</b> <a href="../commit/cadc8a7472f4a77b26a89e27bce4479dc12afdbe.html">cadc8a7472f4a77b26a89e27bce4479dc12afdbe</a>
+<b>Author:</b> a@null &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Fri, 12 Dec 2008 19:34:43 +0000
+
+applied Ali Gholami Rudi&#39;s patch regarding DPMS timeout customization and persistence
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">slock.c</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 10 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,5 +1,5 @@
+</a> # slock version
+<a href="#h0-0-1" id="h0-0-1" class="d">-VERSION = 0.9
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+VERSION = 1.0
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h1" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -79,6 +79,7 @@ main(int argc, char **argv) {
+</a> 	XColor black, dummy;
+ 	XEvent ev;
+ 	XSetWindowAttributes wa;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	CARD16 standby, suspend, off;
+</a> 
+ 	if((argc == 2) &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+ 		die(&quot;slock-&quot;VERSION&quot;, © 2006-2008 Anselm R Garbe\n&quot;);
+<a href="#h1-1" id="h1-1" class="h">@@ -123,12 +124,13 @@ main(int argc, char **argv) {
+</a> 	len = 0;
+ 	XSync(dpy, False);
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+	if(DPMSCapable(dpy)) { /* save and customize DPMS settings */
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		DPMSGetTimeouts(dpy, &amp;standby, &amp;suspend, &amp;off);
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+		DPMSSetTimeouts(dpy, 10, 30, 90);
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	}
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a> 	/* main event loop */
+ 	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev)) {
+<a href="#h1-1-10" id="h1-1-10" class="d">-		if(len == 0 &amp;&amp; DPMSCapable(dpy)) {
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-			DPMSEnable(dpy);
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-			DPMSForceLevel(dpy, DPMSModeOff);
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-		}
+</a> 		if(ev.type == KeyPress) {
+ 			buf[0] = 0;
+ 			num = XLookupString(&amp;ev.xkey, buf, sizeof buf, &amp;ksym, 0);
+<a href="#h1-2" id="h1-2" class="h">@@ -170,6 +172,9 @@ main(int argc, char **argv) {
+</a> 			}
+ 		}
+ 	}
+<a href="#h1-2-3" id="h1-2-3" class="i">+	if(DPMSCapable(dpy)) { /* restore DPMS settings */
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		DPMSSetTimeouts(dpy, standby, suspend, off);
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	}
+</a> 	XUngrabPointer(dpy, CurrentTime);
+ 	XFreePixmap(dpy, pmap);
+ 	XDestroyWindow(dpy, w);
+</pre>
+</div>
+</body>
+</html>

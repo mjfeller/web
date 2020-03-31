@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Arrange Makefile - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c870098b82f1dfc3cd59cd8c90cea580bd01cb47.html">c870098b82f1dfc3cd59cd8c90cea580bd01cb47</a>
+<b>parent</b> <a href="../commit/db7922f173b803d14039f286146c949ded1538cb.html">db7922f173b803d14039f286146c949ded1538cb</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sat, 29 Apr 2017 15:21:49 +0200
+
+Arrange Makefile
+
+Let the user specify his own C and LD FLAGS.
+Remove unuseful and non portable CFLAGS like pendantic and Wall.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">63</td><td><span class="i">++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">18</td><td><span class="i">+++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>2 files changed, 43 insertions(+), 38 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,61 +1,66 @@
+</a> # surf - simple browser
+ # See LICENSE file for copyright and license details.
+<a href="#h0-0-2" id="h0-0-2" class="i">+.POSIX:
+</a> 
+ include config.mk
+ 
+ SRC = surf.c
+<a href="#h0-0-7" id="h0-0-7" class="d">-OBJ = ${SRC:.c=.o}
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+OBJ = $(SRC:.c=.o)
+</a> 
+ all: options surf
+ 
+ options:
+ 	@echo surf build options:
+<a href="#h0-0-14" id="h0-0-14" class="d">-	@echo &quot;CFLAGS   = ${CFLAGS}&quot;
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-	@echo &quot;LDFLAGS  = ${LDFLAGS}&quot;
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	@echo &quot;CC       = ${CC}&quot;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	@echo &quot;CFLAGS   = $(SURF_CFLAGS)&quot;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	@echo &quot;LDFLAGS  = $(SURF_LDFLAGS)&quot;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	@echo &quot;CC       = $(CC)&quot;
+</a> 
+ .c.o:
+<a href="#h0-0-22" id="h0-0-22" class="d">-	@echo CC $&lt;
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-	@${CC} -c ${CFLAGS} $&lt;
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	@echo CC -c $&lt;
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	@$(CC) $(SURF_CFLAGS) -c $&lt;
+</a> 
+<a href="#h0-0-27" id="h0-0-27" class="d">-${OBJ}: config.h config.mk
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+$(OBJ): config.h config.mk
+</a> 
+ config.h:
+ 	@echo creating $@ from config.def.h
+ 	@cp config.def.h $@
+ 
+<a href="#h0-0-34" id="h0-0-34" class="d">-surf: ${OBJ}
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+surf: $(OBJ)
+</a> 	@echo CC -o $@
+<a href="#h0-0-37" id="h0-0-37" class="d">-	@${CC} -o $@ surf.o ${LDFLAGS}
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+	@$(CC) $(SURF_CFLAGS) -o $@ $(OBJ) $(SURF_LDFLAGS)
+</a> 
+ clean:
+ 	@echo cleaning
+<a href="#h0-0-42" id="h0-0-42" class="d">-	@rm -f surf ${OBJ} surf-${VERSION}.tar.gz
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+	@rm -f surf $(OBJ)
+</a> 
+<a href="#h0-0-45" id="h0-0-45" class="d">-dist: clean
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+distclean: clean
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+	@echo cleaning dist
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+	@rm -f config.h surf-$(VERSION).tar.gz
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+dist: distclean
+</a> 	@echo creating dist tarball
+<a href="#h0-0-52" id="h0-0-52" class="d">-	@mkdir -p surf-${VERSION}
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+	@mkdir -p surf-$(VERSION)
+</a> 	@cp -R LICENSE Makefile config.mk config.def.h README \
+<a href="#h0-0-55" id="h0-0-55" class="d">-		surf-open.sh arg.h TODO.md surf.png \
+</a><a href="#h0-0-56" id="h0-0-56" class="d">-		surf.1 ${SRC} surf-${VERSION}
+</a><a href="#h0-0-57" id="h0-0-57" class="d">-	@tar -cf surf-${VERSION}.tar surf-${VERSION}
+</a><a href="#h0-0-58" id="h0-0-58" class="d">-	@gzip surf-${VERSION}.tar
+</a><a href="#h0-0-59" id="h0-0-59" class="d">-	@rm -rf surf-${VERSION}
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+	    surf-open.sh arg.h TODO.md surf.png \
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+	    surf.1 $(SRC) surf-$(VERSION)
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+	@tar -cf surf-$(VERSION).tar surf-$(VERSION)
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+	@gzip surf-$(VERSION).tar
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+	@rm -rf surf-$(VERSION)
+</a> 
+ install: all
+<a href="#h0-0-67" id="h0-0-67" class="d">-	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-68" id="h0-0-68" class="d">-	@mkdir -p ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-69" id="h0-0-69" class="d">-	@cp -f surf ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-70" id="h0-0-70" class="d">-	@chmod 755 ${DESTDIR}${PREFIX}/bin/surf
+</a><a href="#h0-0-71" id="h0-0-71" class="d">-	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-0-72" id="h0-0-72" class="d">-	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-0-73" id="h0-0-73" class="d">-	@sed &quot;s/VERSION/${VERSION}/g&quot; &lt; surf.1 &gt; ${DESTDIR}${MANPREFIX}/man1/surf.1
+</a><a href="#h0-0-74" id="h0-0-74" class="d">-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/surf.1
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+	@echo installing executable file to $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+	@mkdir -p $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+	@cp -f surf $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-78" id="h0-0-78" class="i">+	@chmod 755 $(DESTDIR)$(PREFIX)/bin/surf
+</a><a href="#h0-0-79" id="h0-0-79" class="i">+	@echo installing manual page to $(DESTDIR)$(MANPREFIX)/man1
+</a><a href="#h0-0-80" id="h0-0-80" class="i">+	@mkdir -p $(DESTDIR)$(MANPREFIX)/man1
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+	@sed &quot;s/VERSION/$(VERSION)/g&quot; &lt; surf.1 &gt; $(DESTDIR)$(MANPREFIX)/man1/surf.1
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+	@chmod 644 $(DESTDIR)$(MANPREFIX)/man1/surf.1
+</a> 
+ uninstall:
+<a href="#h0-0-85" id="h0-0-85" class="d">-	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-86" id="h0-0-86" class="d">-	@rm -f ${DESTDIR}${PREFIX}/bin/surf
+</a><a href="#h0-0-87" id="h0-0-87" class="d">-	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-0-88" id="h0-0-88" class="d">-	@rm -f ${DESTDIR}${MANPREFIX}/man1/surf.1
+</a><a href="#h0-0-89" id="h0-0-89" class="i">+	@echo removing executable file from $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-90" id="h0-0-90" class="i">+	@rm -f $(DESTDIR)$(PREFIX)/bin/surf
+</a><a href="#h0-0-91" id="h0-0-91" class="i">+	@echo removing manual page from $(DESTDIR)$(MANPREFIX)/man1
+</a><a href="#h0-0-92" id="h0-0-92" class="i">+	@rm -f $(DESTDIR)$(MANPREFIX)/man1/surf.1
+</a> 
+ .PHONY: all options clean dist install uninstall
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -5,8 +5,8 @@ VERSION = 2.0
+</a> 
+ # paths
+ PREFIX = /usr/local
+<a href="#h1-0-3" id="h1-0-3" class="d">-MANPREFIX = ${PREFIX}/share/man
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-LIBPREFIX = ${PREFIX}/lib/surf
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+MANPREFIX = $(PREFIX)/share/man
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+LIBPREFIX = $(PREFIX)/lib/surf
+</a> 
+ X11INC = /usr/X11R6/include
+ X11LIB = /usr/X11R6/lib
+<a href="#h1-1" id="h1-1" class="h">@@ -15,17 +15,17 @@ GTKINC = `pkg-config --cflags gtk+-3.0 webkit2gtk-4.0`
+</a> GTKLIB = `pkg-config --libs gtk+-3.0 webkit2gtk-4.0`
+ 
+ # includes and libs
+<a href="#h1-1-3" id="h1-1-3" class="d">-INCS = -I. -I/usr/include -I${X11INC} ${GTKINC}
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 ${GTKLIB} -lgthread-2.0
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+INCS = -I$(X11INC) $(GTKINC)
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+LIBS = -L$(X11LIB) -lX11 $(GTKLIB) -lgthread-2.0
+</a> 
+ # flags
+ CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; -DWEBEXTDIR=\&quot;${LIBPREFIX}\&quot; -D_DEFAULT_SOURCE
+<a href="#h1-1-10" id="h1-1-10" class="d">-CFLAGS = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-LDFLAGS = -s ${LIBS}
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+SURF_CFLAGS = $(INCS) $(CPPFLAGS) $(CFLAGS)
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+SURF_LDFLAGS = $(LIBS) $(LDFLAGS)
+</a> 
+ # Solaris
+<a href="#h1-1-16" id="h1-1-16" class="d">-#CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-#LDFLAGS = ${LIBS}
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+#CFLAGS = -fast $(INCS) -DVERSION=\&quot;$(VERSION)\&quot;
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+#LDFLAGS = $(LIBS)
+</a> 
+ # compiler and linker
+<a href="#h1-1-22" id="h1-1-22" class="d">-CC = cc
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+#CC = c99
+</a></pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Unhighlight selection when selection is owner by other window - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f471a32d29ad9e5e06cf5e5d5efc8422483f535e.html">f471a32d29ad9e5e06cf5e5d5efc8422483f535e</a>
+<b>parent</b> <a href="../commit/017af76f5c89fa1acf9b54ceaad2101dcfd880a0.html">017af76f5c89fa1acf9b54ceaad2101dcfd880a0</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Wed,  5 Sep 2012 21:55:45 +0200
+
+Unhighlight selection when selection is owner by other window
+
+st marks the active selection using reverse colors in the box selection, but
+once that another window becomes owner of the selection, it is very
+confusing that st keeps highlight the old selection. Usually terminal
+emulators remove the highlight when it is not valid anymore.
+
+X sends a SelectionClear event in this situation, so we only have to add a
+callback which unhighlight the selectin box.
+---
+ st.c |    9 +++++++++
+ 1 file changed, 9 insertions(+)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -311,6 +311,7 @@ static void brelease(XEvent *);
+</a> static void bpress(XEvent *);
+ static void bmotion(XEvent *);
+ static void selnotify(XEvent *);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void selclear(XEvent *);
+</a> static void selrequest(XEvent *);
+ 
+ static void selinit(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -336,6 +337,7 @@ static void (*handler[LASTEvent])(XEvent *) = {
+</a> 	[MotionNotify] = bmotion,
+ 	[ButtonPress] = bpress,
+ 	[ButtonRelease] = brelease,
+<a href="#h0-1-3" id="h0-1-3" class="i">+	[SelectionClear] = selclear,
+</a> 	[SelectionNotify] = selnotify,
+ 	[SelectionRequest] = selrequest,
+ };
+<a href="#h0-2" id="h0-2" class="h">@@ -612,6 +614,13 @@ selpaste() {
+</a> 	XConvertSelection(xw.dpy, XA_PRIMARY, sel.xtarget, XA_PRIMARY, xw.win, CurrentTime);
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+void selclear(XEvent *e) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if(sel.bx == -1)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		return;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	sel.bx = -1;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	tsetdirt(sel.b.y, sel.e.y);
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+}
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+
+</a> void
+ selrequest(XEvent *e) {
+ 	XSelectionRequestEvent *xsre;
+</pre>
+</div>
+</body>
+</html>

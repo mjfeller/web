@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Remove &#39;xloadfontset&#39; function. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6f5f7701864e6987544cb7e7dc5f2d24db1a4537.html">6f5f7701864e6987544cb7e7dc5f2d24db1a4537</a>
+<b>parent</b> <a href="../commit/6524f022f7d1d32f43208254e12f934bf64ed559.html">6524f022f7d1d32f43208254e12f934bf64ed559</a>
+<b>Author:</b> noname &lt;<a href="mailto:noname@inventati.org">noname@inventati.org</a>&gt;
+<b>Date:</b>   Wed,  8 Apr 2015 23:24:06 +0000
+
+Remove &#39;xloadfontset&#39; function.
+
+It was used only once and its return value was ignored.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">13</td><td><span class="i">++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -419,7 +419,6 @@ static int xsetcolorname(int, const char *);
+</a> static int xgeommasktogravity(int);
+ static int xloadfont(Font *, FcPattern *);
+ static void xloadfonts(char *, double);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static int xloadfontset(Font *);
+</a> static void xsettitle(char *);
+ static void xresettitle(void);
+ static void xsetpointermotion(int);
+<a href="#h0-1" id="h0-1" class="h">@@ -3116,15 +3115,6 @@ xloadfonts(char *fontstr, double fontsize) {
+</a> 	FcPatternDestroy(pattern);
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-int
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-xloadfontset(Font *f) {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	FcResult result;
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	if(!(f-&gt;set = FcFontSort(0, f-&gt;pattern, FcTrue, 0, &amp;result)))
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-		return 1;
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	return 0;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-}
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-
+</a> void
+ xunloadfont(Font *f) {
+ 	XftFontClose(xw.dpy, f-&gt;match);
+<a href="#h0-2" id="h0-2" class="h">@@ -3472,7 +3462,8 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 		/* Nothing was found. */
+ 		if(i &gt;= frclen) {
+ 			if(!font-&gt;set)
+<a href="#h0-2-3" id="h0-2-3" class="d">-				xloadfontset(font);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+				font-&gt;set = FcFontSort(0, font-&gt;pattern,
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+				                       FcTrue, 0, &amp;fcres);
+</a> 			fcsets[0] = font-&gt;set;
+ 
+ 			/*
+</pre>
+</div>
+</body>
+</html>

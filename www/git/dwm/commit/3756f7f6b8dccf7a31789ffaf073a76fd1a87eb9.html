@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sync dmenu drw.{c,h} code: use Clr* (was Scm) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3756f7f6b8dccf7a31789ffaf073a76fd1a87eb9.html">3756f7f6b8dccf7a31789ffaf073a76fd1a87eb9</a>
+<b>parent</b> <a href="../commit/99f78fa553f9ddb23fab73e47a408d66ca7f974c.html">99f78fa553f9ddb23fab73e47a408d66ca7f974c</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Fri,  3 Nov 2017 21:20:48 +0100
+
+sync dmenu drw.{c,h} code: use Clr* (was Scm)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">drw.c</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">drw.h</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+</table></pre><pre>3 files changed, 13 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/drw.c.html">drw.c</a> b/<a href="../file/drw.c.html">drw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -180,7 +180,7 @@ drw_fontset_free(Fnt *font)
+</a> }
+ 
+ void
+<a href="#h0-0-3" id="h0-0-3" class="d">-drw_clr_create(Drw *drw, XftColor *dest, const char *clrname)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+drw_clr_create(Drw *drw, Clr *dest, const char *clrname)
+</a> {
+ 	if (!drw || !dest || !clrname)
+ 		return;
+<a href="#h0-1" id="h0-1" class="h">@@ -193,14 +193,14 @@ drw_clr_create(Drw *drw, XftColor *dest, const char *clrname)
+</a> 
+ /* Wrapper to create color schemes. The caller has to call free(3) on the
+  * returned color scheme when done using it. */
+<a href="#h0-1-3" id="h0-1-3" class="d">-Scm
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+Clr *
+</a> drw_scm_create(Drw *drw, const char *clrnames[], size_t clrcount)
+ {
+ 	size_t i;
+<a href="#h0-1-8" id="h0-1-8" class="d">-	Scm ret;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	Clr *ret;
+</a> 
+ 	/* need at least two colors for a scheme */
+<a href="#h0-1-12" id="h0-1-12" class="d">-	if (!drw || !clrnames || clrcount &lt; 2 || !(ret = ecalloc(clrcount, sizeof(XftColor))))
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	if (!drw || !clrnames || clrcount &lt; 2 || !(ret = ecalloc(clrcount, sizeof(Clr))))
+</a> 		return NULL;
+ 
+ 	for (i = 0; i &lt; clrcount; i++)
+<a href="#h0-2" id="h0-2" class="h">@@ -216,7 +216,7 @@ drw_setfontset(Drw *drw, Fnt *set)
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="d">-drw_setscheme(Drw *drw, Scm scm)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+drw_setscheme(Drw *drw, Clr *scm)
+</a> {
+ 	if (drw)
+ 		drw-&gt;scheme = scm;
+<b>diff --git a/<a id="h1" href="../file/drw.h.html">drw.h</a> b/<a href="../file/drw.h.html">drw.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -12,8 +12,8 @@ typedef struct Fnt {
+</a> 	struct Fnt *next;
+ } Fnt;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-enum { ColFg, ColBg, ColCount }; /* Scm index */
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-typedef XftColor *Scm;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+enum { ColFg, ColBg }; /* Clr scheme index */
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+typedef XftColor Clr;
+</a> 
+ typedef struct {
+ 	unsigned int w, h;
+<a href="#h1-1" id="h1-1" class="h">@@ -22,7 +22,7 @@ typedef struct {
+</a> 	Window root;
+ 	Drawable drawable;
+ 	GC gc;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	Scm scheme;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	Clr *scheme;
+</a> 	Fnt *fonts;
+ } Drw;
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -38,8 +38,8 @@ unsigned int drw_fontset_getwidth(Drw *drw, const char *text);
+</a> void drw_font_getexts(Fnt *font, const char *text, unsigned int len, unsigned int *w, unsigned int *h);
+ 
+ /* Colorscheme abstraction */
+<a href="#h1-2-3" id="h1-2-3" class="d">-void drw_clr_create(Drw *drw, XftColor *dest, const char *clrname);
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-Scm drw_scm_create(Drw *drw, const char *clrnames[], size_t clrcount);
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+void drw_clr_create(Drw *drw, Clr *dest, const char *clrname);
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+Clr *drw_scm_create(Drw *drw, const char *clrnames[], size_t clrcount);
+</a> 
+ /* Cursor abstraction */
+ Cur *drw_cur_create(Drw *drw, int shape);
+<a href="#h1-3" id="h1-3" class="h">@@ -47,7 +47,7 @@ void drw_cur_free(Drw *drw, Cur *cursor);
+</a> 
+ /* Drawing context manipulation */
+ void drw_setfontset(Drw *drw, Fnt *set);
+<a href="#h1-3-3" id="h1-3-3" class="d">-void drw_setscheme(Drw *drw, Scm scm);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+void drw_setscheme(Drw *drw, Clr *scm);
+</a> 
+ /* Drawing functions */
+ void drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h, int filled, int invert);
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -263,7 +263,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> static Atom wmatom[WMLast], netatom[NetLast];
+ static int running = 1;
+ static Cur *cursor[CurLast];
+<a href="#h2-0-3" id="h2-0-3" class="d">-static Scm *scheme;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+static Clr **scheme;
+</a> static Display *dpy;
+ static Drw *drw;
+ static Monitor *mons, *selmon;
+<a href="#h2-1" id="h2-1" class="h">@@ -1568,7 +1568,7 @@ setup(void)
+</a> 	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
+ 	cursor[CurMove] = drw_cur_create(drw, XC_fleur);
+ 	/* init appearance */
+<a href="#h2-1-3" id="h2-1-3" class="d">-	scheme = ecalloc(LENGTH(colors), sizeof(Scm));
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	scheme = ecalloc(LENGTH(colors), sizeof(Clr *));
+</a> 	for (i = 0; i &lt; LENGTH(colors); i++)
+ 		scheme[i] = drw_scm_create(drw, colors[i], 3);
+ 	/* init bars */
+</pre>
+</div>
+</body>
+</html>

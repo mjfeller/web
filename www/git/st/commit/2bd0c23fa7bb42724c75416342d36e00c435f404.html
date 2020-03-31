@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Print control codes only in graphic mode - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2bd0c23fa7bb42724c75416342d36e00c435f404.html">2bd0c23fa7bb42724c75416342d36e00c435f404</a>
+<b>parent</b> <a href="../commit/034dc71fb8227e8963f22b123f30962ec0b6bca7.html">034dc71fb8227e8963f22b123f30962ec0b6bca7</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Sat,  6 Oct 2012 19:15:30 +0200
+
+Print control codes only in graphic mode
+
+Non handled codes must be ignored, except in graphic mode. Also STR
+sequences have higher priority than control codes, so they must be handled
+before of them.
+---
+ st.c |  160 ++++++++++++++++++++++++++++++++++++------------------------------
+ 1 file changed, 87 insertions(+), 73 deletions(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">160</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 87 insertions(+), 73 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1784,56 +1784,80 @@ tputtab(bool forward) {
+</a> void
+ tputc(char *c, int len) {
+ 	uchar ascii = *c;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	bool control = ascii &lt; &#39;\x20&#39; || ascii == 0177;
+</a> 
+ 	if(iofd != -1)
+ 		write(iofd, c, len);
+<a href="#h0-0-7" id="h0-0-7" class="d">-
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	switch(ascii) {
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	case &#39;\t&#39;:	/* HT */
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-		tputtab(1);
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-		return;
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	case &#39;\b&#39;:	/* BS */
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-		tmoveto(term.c.x-1, term.c.y);
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-		return;
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-	case &#39;\r&#39;:	/* CR */
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-		tmoveto(0, term.c.y);
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-		return;
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-	case &#39;\f&#39;:	/* LF */
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-	case &#39;\v&#39;:	/* VT */
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-	case &#39;\n&#39;:	/* LF */
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-		/* go to first col if the mode is set */
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-		tnewline(IS_SET(MODE_CRLF));
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-		return;
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-	case &#39;\a&#39;:	/* BEL */
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-		if(term.esc &amp; ESC_STR)
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	/*
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	 * STR sequences must be checked before of anything
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	 * because it can use some control codes as part of the sequence
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	 */
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+	if(term.esc &amp; ESC_STR) {
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+		switch(ascii) {
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+		case &#39;\033&#39;:
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+			term.esc = ESC_START | ESC_STR_END;
+</a> 			break;
+<a href="#h0-0-35" id="h0-0-35" class="d">-		if(!(xw.state &amp; WIN_FOCUSED))
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-			xseturgency(1);
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-		return;
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-	case &#39;\033&#39;:	/* ESC */
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-		csireset();
+</a><a href="#h0-0-40" id="h0-0-40" class="d">-		term.esc = ESC_START;
+</a><a href="#h0-0-41" id="h0-0-41" class="d">-		return;
+</a><a href="#h0-0-42" id="h0-0-42" class="d">-	case &#39;\016&#39;:	/* SO */
+</a><a href="#h0-0-43" id="h0-0-43" class="d">-		term.c.attr.mode |= ATTR_GFX;
+</a><a href="#h0-0-44" id="h0-0-44" class="d">-		break;
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-	case &#39;\017&#39;:	/* SI */
+</a><a href="#h0-0-46" id="h0-0-46" class="d">-		term.c.attr.mode &amp;= ~ATTR_GFX;
+</a><a href="#h0-0-47" id="h0-0-47" class="d">-		return;
+</a><a href="#h0-0-48" id="h0-0-48" class="d">-	case &#39;\032&#39;:	/* SUB */
+</a><a href="#h0-0-49" id="h0-0-49" class="d">-	case &#39;\030&#39;:	/* CAN */
+</a><a href="#h0-0-50" id="h0-0-50" class="d">-		csireset();
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+		case &#39;\a&#39;: /* backwards compatibility to xterm */
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+			term.esc = 0;
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+			strhandle();
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+			break;
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+		default:
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+			strescseq.buf[strescseq.len++] = ascii;
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+			if(strescseq.len+1 &gt;= STR_BUF_SIZ) {
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+				term.esc = 0;
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+				strhandle();
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+			}
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+		}
+</a> 		return;
+<a href="#h0-0-63" id="h0-0-63" class="d">-	default:
+</a><a href="#h0-0-64" id="h0-0-64" class="d">-	/* case &#39;\005&#39;:	ENQ (IGNORED) */
+</a><a href="#h0-0-65" id="h0-0-65" class="d">-	/* case &#39;\000&#39;:	NUL (IGNORED) */
+</a><a href="#h0-0-66" id="h0-0-66" class="d">-	/* case &#39;\021&#39;:	XON (IGNORED) */
+</a><a href="#h0-0-67" id="h0-0-67" class="d">-	/* case &#39;\023&#39;:	XOFF (IGNORED) */
+</a><a href="#h0-0-68" id="h0-0-68" class="d">-	/* case 0177:	DEL (IGNORED) */
+</a><a href="#h0-0-69" id="h0-0-69" class="d">-		break;
+</a> 	}
+<a href="#h0-0-71" id="h0-0-71" class="d">-
+</a><a href="#h0-0-72" id="h0-0-72" class="d">-	if(term.esc &amp; ESC_START) {
+</a><a href="#h0-0-73" id="h0-0-73" class="i">+	/*
+</a><a href="#h0-0-74" id="h0-0-74" class="i">+	 * Actions of control codes must be performed as soon they arrive
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+	 * because they can be embedded inside a control sequence, and
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+	 * they must not cause conflicts with sequences.
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+	 */
+</a><a href="#h0-0-78" id="h0-0-78" class="i">+	if(control) {
+</a><a href="#h0-0-79" id="h0-0-79" class="i">+		switch(ascii) {
+</a><a href="#h0-0-80" id="h0-0-80" class="i">+		case &#39;\t&#39;:	/* HT */
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+			tputtab(1);
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+			return;
+</a><a href="#h0-0-83" id="h0-0-83" class="i">+		case &#39;\b&#39;:	/* BS */
+</a><a href="#h0-0-84" id="h0-0-84" class="i">+			tmoveto(term.c.x-1, term.c.y);
+</a><a href="#h0-0-85" id="h0-0-85" class="i">+			return;
+</a><a href="#h0-0-86" id="h0-0-86" class="i">+		case &#39;\r&#39;:	/* CR */
+</a><a href="#h0-0-87" id="h0-0-87" class="i">+			tmoveto(0, term.c.y);
+</a><a href="#h0-0-88" id="h0-0-88" class="i">+			return;
+</a><a href="#h0-0-89" id="h0-0-89" class="i">+		case &#39;\f&#39;:	/* LF */
+</a><a href="#h0-0-90" id="h0-0-90" class="i">+		case &#39;\v&#39;:	/* VT */
+</a><a href="#h0-0-91" id="h0-0-91" class="i">+		case &#39;\n&#39;:	/* LF */
+</a><a href="#h0-0-92" id="h0-0-92" class="i">+			/* go to first col if the mode is set */
+</a><a href="#h0-0-93" id="h0-0-93" class="i">+			tnewline(IS_SET(MODE_CRLF));
+</a><a href="#h0-0-94" id="h0-0-94" class="i">+			return;
+</a><a href="#h0-0-95" id="h0-0-95" class="i">+		case &#39;\a&#39;:	/* BEL */
+</a><a href="#h0-0-96" id="h0-0-96" class="i">+			if(!(xw.state &amp; WIN_FOCUSED))
+</a><a href="#h0-0-97" id="h0-0-97" class="i">+				xseturgency(1);
+</a><a href="#h0-0-98" id="h0-0-98" class="i">+			return;
+</a><a href="#h0-0-99" id="h0-0-99" class="i">+		case &#39;\033&#39;:	/* ESC */
+</a><a href="#h0-0-100" id="h0-0-100" class="i">+			csireset();
+</a><a href="#h0-0-101" id="h0-0-101" class="i">+			term.esc = ESC_START;
+</a><a href="#h0-0-102" id="h0-0-102" class="i">+			return;
+</a><a href="#h0-0-103" id="h0-0-103" class="i">+		case &#39;\016&#39;:	/* SO */
+</a><a href="#h0-0-104" id="h0-0-104" class="i">+			term.c.attr.mode |= ATTR_GFX;
+</a><a href="#h0-0-105" id="h0-0-105" class="i">+			return;
+</a><a href="#h0-0-106" id="h0-0-106" class="i">+		case &#39;\017&#39;:	/* SI */
+</a><a href="#h0-0-107" id="h0-0-107" class="i">+			term.c.attr.mode &amp;= ~ATTR_GFX;
+</a><a href="#h0-0-108" id="h0-0-108" class="i">+			return;
+</a><a href="#h0-0-109" id="h0-0-109" class="i">+		case &#39;\032&#39;:	/* SUB */
+</a><a href="#h0-0-110" id="h0-0-110" class="i">+		case &#39;\030&#39;:	/* CAN */
+</a><a href="#h0-0-111" id="h0-0-111" class="i">+			csireset();
+</a><a href="#h0-0-112" id="h0-0-112" class="i">+			return;
+</a><a href="#h0-0-113" id="h0-0-113" class="i">+		 case &#39;\005&#39;:	/* ENQ (IGNORED) */
+</a><a href="#h0-0-114" id="h0-0-114" class="i">+		 case &#39;\000&#39;:	/* NUL (IGNORED) */
+</a><a href="#h0-0-115" id="h0-0-115" class="i">+		 case &#39;\021&#39;:	/* XON (IGNORED) */
+</a><a href="#h0-0-116" id="h0-0-116" class="i">+		 case &#39;\023&#39;:	/* XOFF (IGNORED) */
+</a><a href="#h0-0-117" id="h0-0-117" class="i">+		 case 0177:	/* DEL (IGNORED) */
+</a><a href="#h0-0-118" id="h0-0-118" class="i">+			return;
+</a><a href="#h0-0-119" id="h0-0-119" class="i">+		}
+</a><a href="#h0-0-120" id="h0-0-120" class="i">+	} else if(term.esc &amp; ESC_START) {
+</a> 		if(term.esc &amp; ESC_CSI) {
+ 			csiescseq.buf[csiescseq.len++] = ascii;
+ 			if(BETWEEN(ascii, 0x40, 0x7E)
+<a href="#h0-1" id="h0-1" class="h">@@ -1841,22 +1865,6 @@ tputc(char *c, int len) {
+</a> 				term.esc = 0;
+ 				csiparse(), csihandle();
+ 			}
+<a href="#h0-1-3" id="h0-1-3" class="d">-		} else if(term.esc &amp; ESC_STR) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			switch(ascii) {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-			case &#39;\033&#39;:
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-				term.esc = ESC_START | ESC_STR_END;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-				break;
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-			case &#39;\a&#39;: /* backwards compatibility to xterm */
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-				term.esc = 0;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-				strhandle();
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-				break;
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-			default:
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-				strescseq.buf[strescseq.len++] = ascii;
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-				if(strescseq.len+1 &gt;= STR_BUF_SIZ) {
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-					term.esc = 0;
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-					strhandle();
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-				}
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-			}
+</a> 		} else if(term.esc &amp; ESC_STR_END) {
+ 			term.esc = 0;
+ 			if(ascii == &#39;\\&#39;)
+<a href="#h0-2" id="h0-2" class="h">@@ -1955,20 +1963,26 @@ tputc(char *c, int len) {
+</a> 				term.esc = 0;
+ 			}
+ 		}
+<a href="#h0-2-3" id="h0-2-3" class="d">-	} else {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		if(sel.bx != -1 &amp;&amp; BETWEEN(term.c.y, sel.by, sel.ey))
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-			sel.bx = -1;
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-		if(ascii &gt;= &#39;\020&#39; || term.c.attr.mode &amp; ATTR_GFX) {
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-			if(IS_SET(MODE_WRAP) &amp;&amp; term.c.state &amp; CURSOR_WRAPNEXT)
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-				tnewline(1); /* always go to first col */
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-			tsetchar(c);
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-			if(term.c.x+1 &lt; term.col) {
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-				tmoveto(term.c.x+1, term.c.y);
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-			} else {
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-				term.c.state |= CURSOR_WRAPNEXT;
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-			}
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-		}
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+		/*
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+		 * All characters which forms part of a sequence are not
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+		 * printed
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+		 */
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+		return;
+</a> 	}
+<a href="#h0-2-22" id="h0-2-22" class="i">+	/*
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+	 * Display control codes only if we are in graphic mode
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+	 */
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+	if(control &amp;&amp; !(term.c.attr.mode &amp; ATTR_GFX))
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+		return;
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+	if(sel.bx != -1 &amp;&amp; BETWEEN(term.c.y, sel.by, sel.ey))
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+		sel.bx = -1;
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+	if(IS_SET(MODE_WRAP) &amp;&amp; term.c.state &amp; CURSOR_WRAPNEXT)
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+		tnewline(1); /* always go to first col */
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+	tsetchar(c);
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+	if(term.c.x+1 &lt; term.col)
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+		tmoveto(term.c.x+1, term.c.y);
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+	else
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+		term.c.state |= CURSOR_WRAPNEXT;
+</a> }
+ 
+ int
+</pre>
+</div>
+</body>
+</html>

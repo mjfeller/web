@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>reorganized - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d094ebea968e3d08b985a754aa9df30f56f649c6.html">d094ebea968e3d08b985a754aa9df30f56f649c6</a>
+<b>parent</b> <a href="../commit/ccf4d7166fa6c70c6bfef3d8094e018b78ee4df7.html">ccf4d7166fa6c70c6bfef3d8094e018b78ee4df7</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 17 Sep 2007 20:53:14 +0200
+
+reorganized
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">587</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 299 insertions(+), 288 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -40,134 +40,55 @@ struct Item {
+</a> };
+ 
+ /* forward declarations */
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void *emalloc(unsigned int size);
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-static void eprint(const char *errstr, ...);
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-static char *estrdup(const char *str);
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-static void drawtext(const char *text, unsigned long col[ColLast]);
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-static unsigned int textw(const char *text);
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-static unsigned int textnw(const char *text, unsigned int len);
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-static void calcoffsets(void);
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-static void drawmenu(void);
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-static Bool grabkeyboard(void);
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-static unsigned long getcolor(const char *colstr);
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-static void initfont(const char *fontstr);
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-static int strido(const char *text, const char *pattern);
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-static void match(char *pattern);
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-static void kpress(XKeyEvent * e);
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-static char *readstdin(void);
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-static void usage(void);
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-/* variables */
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-static int screen;
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-static Display *dpy;
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-static DC dc = {0};
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-static char text[4096];
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-static char *prompt = NULL;
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-static int mw, mh;
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-static int ret = 0;
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-static int nitem = 0;
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-static unsigned int cmdw = 0;
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-static unsigned int promptw = 0;
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-static unsigned int numlockmask = 0;
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-static Bool running = True;
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-static Item *allitems = NULL;	/* first of all items */
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-static Item *item = NULL;	/* first of pattern matching items */
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-static Item *sel = NULL;
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-static Item *next = NULL;
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-static Item *prev = NULL;
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-static Item *curr = NULL;
+</a><a href="#h0-0-40" id="h0-0-40" class="d">-static Window root;
+</a><a href="#h0-0-41" id="h0-0-41" class="d">-static Window win;
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+void calcoffsets(void);
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+void cleanup(void);
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+void drawmenu(void);
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+void drawtext(const char *text, unsigned long col[ColLast]);
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+void *emalloc(unsigned int size);
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+void eprint(const char *errstr, ...);
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+char *estrdup(const char *str);
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+unsigned long getcolor(const char *colstr);
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+Bool grabkeyboard(void);
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+void initfont(const char *fontstr);
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+void kpress(XKeyEvent * e);
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+void match(char *pattern);
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+void readstdin(void);
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+void run(void);
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+void setup(Bool bottom);
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+int strido(const char *text, const char *pattern);
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+unsigned int textnw(const char *text, unsigned int len);
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+unsigned int textw(const char *text);
+</a> 
+ #include &quot;config.h&quot;
+ 
+<a href="#h0-0-63" id="h0-0-63" class="d">-static void *
+</a><a href="#h0-0-64" id="h0-0-64" class="d">-emalloc(unsigned int size) {
+</a><a href="#h0-0-65" id="h0-0-65" class="d">-	void *res = malloc(size);
+</a><a href="#h0-0-66" id="h0-0-66" class="d">-
+</a><a href="#h0-0-67" id="h0-0-67" class="d">-	if(!res)
+</a><a href="#h0-0-68" id="h0-0-68" class="d">-		eprint(&quot;fatal: could not malloc() %u bytes\n&quot;, size);
+</a><a href="#h0-0-69" id="h0-0-69" class="d">-	return res;
+</a><a href="#h0-0-70" id="h0-0-70" class="d">-}
+</a><a href="#h0-0-71" id="h0-0-71" class="d">-
+</a><a href="#h0-0-72" id="h0-0-72" class="d">-static void
+</a><a href="#h0-0-73" id="h0-0-73" class="d">-eprint(const char *errstr, ...) {
+</a><a href="#h0-0-74" id="h0-0-74" class="d">-	va_list ap;
+</a><a href="#h0-0-75" id="h0-0-75" class="d">-
+</a><a href="#h0-0-76" id="h0-0-76" class="d">-	va_start(ap, errstr);
+</a><a href="#h0-0-77" id="h0-0-77" class="d">-	vfprintf(stderr, errstr, ap);
+</a><a href="#h0-0-78" id="h0-0-78" class="d">-	va_end(ap);
+</a><a href="#h0-0-79" id="h0-0-79" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h0-0-80" id="h0-0-80" class="d">-}
+</a><a href="#h0-0-81" id="h0-0-81" class="d">-
+</a><a href="#h0-0-82" id="h0-0-82" class="d">-static char *
+</a><a href="#h0-0-83" id="h0-0-83" class="d">-estrdup(const char *str) {
+</a><a href="#h0-0-84" id="h0-0-84" class="d">-	void *res = strdup(str);
+</a><a href="#h0-0-85" id="h0-0-85" class="d">-
+</a><a href="#h0-0-86" id="h0-0-86" class="d">-	if(!res)
+</a><a href="#h0-0-87" id="h0-0-87" class="d">-		eprint(&quot;fatal: could not malloc() %u bytes\n&quot;, strlen(str));
+</a><a href="#h0-0-88" id="h0-0-88" class="d">-	return res;
+</a><a href="#h0-0-89" id="h0-0-89" class="d">-}
+</a><a href="#h0-0-90" id="h0-0-90" class="d">-
+</a><a href="#h0-0-91" id="h0-0-91" class="d">-
+</a><a href="#h0-0-92" id="h0-0-92" class="d">-static void
+</a><a href="#h0-0-93" id="h0-0-93" class="d">-drawtext(const char *text, unsigned long col[ColLast]) {
+</a><a href="#h0-0-94" id="h0-0-94" class="d">-	int x, y, w, h;
+</a><a href="#h0-0-95" id="h0-0-95" class="d">-	static char buf[256];
+</a><a href="#h0-0-96" id="h0-0-96" class="d">-	unsigned int len, olen;
+</a><a href="#h0-0-97" id="h0-0-97" class="d">-	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+</a><a href="#h0-0-98" id="h0-0-98" class="d">-
+</a><a href="#h0-0-99" id="h0-0-99" class="d">-	XSetForeground(dpy, dc.gc, col[ColBG]);
+</a><a href="#h0-0-100" id="h0-0-100" class="d">-	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h0-0-101" id="h0-0-101" class="d">-	if(!text)
+</a><a href="#h0-0-102" id="h0-0-102" class="d">-		return;
+</a><a href="#h0-0-103" id="h0-0-103" class="d">-	w = 0;
+</a><a href="#h0-0-104" id="h0-0-104" class="d">-	olen = len = strlen(text);
+</a><a href="#h0-0-105" id="h0-0-105" class="d">-	if(len &gt;= sizeof buf)
+</a><a href="#h0-0-106" id="h0-0-106" class="d">-		len = sizeof buf - 1;
+</a><a href="#h0-0-107" id="h0-0-107" class="d">-	memcpy(buf, text, len);
+</a><a href="#h0-0-108" id="h0-0-108" class="d">-	buf[len] = 0;
+</a><a href="#h0-0-109" id="h0-0-109" class="d">-	h = dc.font.ascent + dc.font.descent;
+</a><a href="#h0-0-110" id="h0-0-110" class="d">-	y = dc.y + (dc.h / 2) - (h / 2) + dc.font.ascent;
+</a><a href="#h0-0-111" id="h0-0-111" class="d">-	x = dc.x + (h / 2);
+</a><a href="#h0-0-112" id="h0-0-112" class="d">-	/* shorten text if necessary */
+</a><a href="#h0-0-113" id="h0-0-113" class="d">-	while(len &amp;&amp; (w = textnw(buf, len)) &gt; dc.w - h)
+</a><a href="#h0-0-114" id="h0-0-114" class="d">-		buf[--len] = 0;
+</a><a href="#h0-0-115" id="h0-0-115" class="d">-	if(len &lt; olen) {
+</a><a href="#h0-0-116" id="h0-0-116" class="d">-		if(len &gt; 1)
+</a><a href="#h0-0-117" id="h0-0-117" class="d">-			buf[len - 1] = &#39;.&#39;;
+</a><a href="#h0-0-118" id="h0-0-118" class="d">-		if(len &gt; 2)
+</a><a href="#h0-0-119" id="h0-0-119" class="d">-			buf[len - 2] = &#39;.&#39;;
+</a><a href="#h0-0-120" id="h0-0-120" class="d">-		if(len &gt; 3)
+</a><a href="#h0-0-121" id="h0-0-121" class="d">-			buf[len - 3] = &#39;.&#39;;
+</a><a href="#h0-0-122" id="h0-0-122" class="d">-	}
+</a><a href="#h0-0-123" id="h0-0-123" class="d">-	if(w &gt; dc.w)
+</a><a href="#h0-0-124" id="h0-0-124" class="d">-		return; /* too long */
+</a><a href="#h0-0-125" id="h0-0-125" class="d">-	XSetForeground(dpy, dc.gc, col[ColFG]);
+</a><a href="#h0-0-126" id="h0-0-126" class="d">-	if(dc.font.set)
+</a><a href="#h0-0-127" id="h0-0-127" class="d">-		XmbDrawString(dpy, dc.drawable, dc.font.set, dc.gc, x, y, buf, len);
+</a><a href="#h0-0-128" id="h0-0-128" class="d">-	else
+</a><a href="#h0-0-129" id="h0-0-129" class="d">-		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+</a><a href="#h0-0-130" id="h0-0-130" class="d">-}
+</a><a href="#h0-0-131" id="h0-0-131" class="d">-
+</a><a href="#h0-0-132" id="h0-0-132" class="d">-static unsigned int
+</a><a href="#h0-0-133" id="h0-0-133" class="d">-textw(const char *text) {
+</a><a href="#h0-0-134" id="h0-0-134" class="d">-	return textnw(text, strlen(text)) + dc.font.height;
+</a><a href="#h0-0-135" id="h0-0-135" class="d">-}
+</a><a href="#h0-0-136" id="h0-0-136" class="d">-
+</a><a href="#h0-0-137" id="h0-0-137" class="d">-static unsigned int
+</a><a href="#h0-0-138" id="h0-0-138" class="d">-textnw(const char *text, unsigned int len) {
+</a><a href="#h0-0-139" id="h0-0-139" class="d">-	XRectangle r;
+</a><a href="#h0-0-140" id="h0-0-140" class="d">-
+</a><a href="#h0-0-141" id="h0-0-141" class="d">-	if(dc.font.set) {
+</a><a href="#h0-0-142" id="h0-0-142" class="d">-		XmbTextExtents(dc.font.set, text, len, NULL, &amp;r);
+</a><a href="#h0-0-143" id="h0-0-143" class="d">-		return r.width;
+</a><a href="#h0-0-144" id="h0-0-144" class="d">-	}
+</a><a href="#h0-0-145" id="h0-0-145" class="d">-	return XTextWidth(dc.font.xfont, text, len);
+</a><a href="#h0-0-146" id="h0-0-146" class="d">-}
+</a><a href="#h0-0-147" id="h0-0-147" class="d">-
+</a><a href="#h0-0-148" id="h0-0-148" class="d">-static void
+</a><a href="#h0-0-149" id="h0-0-149" class="i">+/* variables */
+</a><a href="#h0-0-150" id="h0-0-150" class="i">+char *font = FONT;
+</a><a href="#h0-0-151" id="h0-0-151" class="i">+char *maxname = NULL;
+</a><a href="#h0-0-152" id="h0-0-152" class="i">+char *normbg = NORMBGCOLOR;
+</a><a href="#h0-0-153" id="h0-0-153" class="i">+char *normfg = NORMFGCOLOR;
+</a><a href="#h0-0-154" id="h0-0-154" class="i">+char *prompt = NULL;
+</a><a href="#h0-0-155" id="h0-0-155" class="i">+char *selbg = SELBGCOLOR;
+</a><a href="#h0-0-156" id="h0-0-156" class="i">+char *selfg = SELFGCOLOR;
+</a><a href="#h0-0-157" id="h0-0-157" class="i">+char text[4096];
+</a><a href="#h0-0-158" id="h0-0-158" class="i">+int screen;
+</a><a href="#h0-0-159" id="h0-0-159" class="i">+int ret = 0;
+</a><a href="#h0-0-160" id="h0-0-160" class="i">+unsigned int cmdw = 0;
+</a><a href="#h0-0-161" id="h0-0-161" class="i">+unsigned int mw, mh;
+</a><a href="#h0-0-162" id="h0-0-162" class="i">+unsigned int promptw = 0;
+</a><a href="#h0-0-163" id="h0-0-163" class="i">+unsigned int nitem = 0;
+</a><a href="#h0-0-164" id="h0-0-164" class="i">+unsigned int numlockmask = 0;
+</a><a href="#h0-0-165" id="h0-0-165" class="i">+Bool running = True;
+</a><a href="#h0-0-166" id="h0-0-166" class="i">+Display *dpy;
+</a><a href="#h0-0-167" id="h0-0-167" class="i">+DC dc = {0};
+</a><a href="#h0-0-168" id="h0-0-168" class="i">+Item *allitems = NULL;	/* first of all items */
+</a><a href="#h0-0-169" id="h0-0-169" class="i">+Item *item = NULL;	/* first of pattern matching items */
+</a><a href="#h0-0-170" id="h0-0-170" class="i">+Item *sel = NULL;
+</a><a href="#h0-0-171" id="h0-0-171" class="i">+Item *next = NULL;
+</a><a href="#h0-0-172" id="h0-0-172" class="i">+Item *prev = NULL;
+</a><a href="#h0-0-173" id="h0-0-173" class="i">+Item *curr = NULL;
+</a><a href="#h0-0-174" id="h0-0-174" class="i">+Window root, win;
+</a><a href="#h0-0-175" id="h0-0-175" class="i">+
+</a><a href="#h0-0-176" id="h0-0-176" class="i">+void
+</a> calcoffsets(void) {
+ 	unsigned int tw, w;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -193,7 +114,27 @@ calcoffsets(void) {
+</a> 	}
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+void
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+cleanup(void) {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	Item *itm;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	while(allitems) {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		itm = allitems-&gt;next;
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		free(allitems-&gt;text);
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		free(allitems);
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		allitems = itm;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	}
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	if(dc.font.set)
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+		XFreeFontSet(dpy, dc.font.set);
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	else
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		XFreeFont(dpy, dc.font.xfont);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	XFreePixmap(dpy, dc.drawable);
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	XFreeGC(dpy, dc.gc);
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	XDestroyWindow(dpy, win);
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	XUngrabKeyboard(dpy, CurrentTime);
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+}
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+void
+</a> drawmenu(void) {
+ 	Item *i;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -234,20 +175,75 @@ drawmenu(void) {
+</a> 	XFlush(dpy);
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-static Bool
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-grabkeyboard(void) {
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	unsigned int len;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+void
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+drawtext(const char *text, unsigned long col[ColLast]) {
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	int x, y, w, h;
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	static char buf[256];
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	unsigned int len, olen;
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+</a> 
+<a href="#h0-2-13" id="h0-2-13" class="d">-	for(len = 1000; len; len--) {
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-		if(XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-			== GrabSuccess)
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-			break;
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-		usleep(1000);
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+	XSetForeground(dpy, dc.gc, col[ColBG]);
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+	if(!text)
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+		return;
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+	w = 0;
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+	olen = len = strlen(text);
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+	if(len &gt;= sizeof buf)
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+		len = sizeof buf - 1;
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+	memcpy(buf, text, len);
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+	buf[len] = 0;
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+	h = dc.font.ascent + dc.font.descent;
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+	y = dc.y + (dc.h / 2) - (h / 2) + dc.font.ascent;
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+	x = dc.x + (h / 2);
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+	/* shorten text if necessary */
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+	while(len &amp;&amp; (w = textnw(buf, len)) &gt; dc.w - h)
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+		buf[--len] = 0;
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+	if(len &lt; olen) {
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+		if(len &gt; 1)
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+			buf[len - 1] = &#39;.&#39;;
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+		if(len &gt; 2)
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+			buf[len - 2] = &#39;.&#39;;
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+		if(len &gt; 3)
+</a><a href="#h0-2-40" id="h0-2-40" class="i">+			buf[len - 3] = &#39;.&#39;;
+</a> 	}
+<a href="#h0-2-42" id="h0-2-42" class="d">-	return len &gt; 0;
+</a><a href="#h0-2-43" id="h0-2-43" class="i">+	if(w &gt; dc.w)
+</a><a href="#h0-2-44" id="h0-2-44" class="i">+		return; /* too long */
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+	XSetForeground(dpy, dc.gc, col[ColFG]);
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+	if(dc.font.set)
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+		XmbDrawString(dpy, dc.drawable, dc.font.set, dc.gc, x, y, buf, len);
+</a><a href="#h0-2-48" id="h0-2-48" class="i">+	else
+</a><a href="#h0-2-49" id="h0-2-49" class="i">+		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+</a><a href="#h0-2-50" id="h0-2-50" class="i">+}
+</a><a href="#h0-2-51" id="h0-2-51" class="i">+
+</a><a href="#h0-2-52" id="h0-2-52" class="i">+void *
+</a><a href="#h0-2-53" id="h0-2-53" class="i">+emalloc(unsigned int size) {
+</a><a href="#h0-2-54" id="h0-2-54" class="i">+	void *res = malloc(size);
+</a><a href="#h0-2-55" id="h0-2-55" class="i">+
+</a><a href="#h0-2-56" id="h0-2-56" class="i">+	if(!res)
+</a><a href="#h0-2-57" id="h0-2-57" class="i">+		eprint(&quot;fatal: could not malloc() %u bytes\n&quot;, size);
+</a><a href="#h0-2-58" id="h0-2-58" class="i">+	return res;
+</a><a href="#h0-2-59" id="h0-2-59" class="i">+}
+</a><a href="#h0-2-60" id="h0-2-60" class="i">+
+</a><a href="#h0-2-61" id="h0-2-61" class="i">+void
+</a><a href="#h0-2-62" id="h0-2-62" class="i">+eprint(const char *errstr, ...) {
+</a><a href="#h0-2-63" id="h0-2-63" class="i">+	va_list ap;
+</a><a href="#h0-2-64" id="h0-2-64" class="i">+
+</a><a href="#h0-2-65" id="h0-2-65" class="i">+	va_start(ap, errstr);
+</a><a href="#h0-2-66" id="h0-2-66" class="i">+	vfprintf(stderr, errstr, ap);
+</a><a href="#h0-2-67" id="h0-2-67" class="i">+	va_end(ap);
+</a><a href="#h0-2-68" id="h0-2-68" class="i">+	exit(EXIT_FAILURE);
+</a><a href="#h0-2-69" id="h0-2-69" class="i">+}
+</a><a href="#h0-2-70" id="h0-2-70" class="i">+
+</a><a href="#h0-2-71" id="h0-2-71" class="i">+char *
+</a><a href="#h0-2-72" id="h0-2-72" class="i">+estrdup(const char *str) {
+</a><a href="#h0-2-73" id="h0-2-73" class="i">+	void *res = strdup(str);
+</a><a href="#h0-2-74" id="h0-2-74" class="i">+
+</a><a href="#h0-2-75" id="h0-2-75" class="i">+	if(!res)
+</a><a href="#h0-2-76" id="h0-2-76" class="i">+		eprint(&quot;fatal: could not malloc() %u bytes\n&quot;, strlen(str));
+</a><a href="#h0-2-77" id="h0-2-77" class="i">+	return res;
+</a> }
+ 
+<a href="#h0-2-80" id="h0-2-80" class="d">-static unsigned long
+</a><a href="#h0-2-81" id="h0-2-81" class="i">+unsigned long
+</a> getcolor(const char *colstr) {
+ 	Colormap cmap = DefaultColormap(dpy, screen);
+ 	XColor color;
+<a href="#h0-3" id="h0-3" class="h">@@ -257,7 +253,20 @@ getcolor(const char *colstr) {
+</a> 	return color.pixel;
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-static void
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+Bool
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+grabkeyboard(void) {
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	unsigned int len;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	for(len = 1000; len; len--) {
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+		if(XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+			== GrabSuccess)
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+			break;
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+		usleep(1000);
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+	}
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+	return len &gt; 0;
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+}
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+void
+</a> initfont(const char *fontstr) {
+ 	char *def, **missing;
+ 	int i, n;
+<a href="#h0-4" id="h0-4" class="h">@@ -299,65 +308,7 @@ initfont(const char *fontstr) {
+</a> 	dc.font.height = dc.font.ascent + dc.font.descent;
+ }
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-static int
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-strido(const char *text, const char *pattern) {
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-	for(; *text &amp;&amp; *pattern; text++)
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-		if (*text == *pattern)
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-			pattern++;
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-	return !*pattern;
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-}                                  
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-static void
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-match(char *pattern) {
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-	unsigned int plen;
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-	Item *i, *j;
+</a><a href="#h0-4-15" id="h0-4-15" class="d">-
+</a><a href="#h0-4-16" id="h0-4-16" class="d">-	if(!pattern)
+</a><a href="#h0-4-17" id="h0-4-17" class="d">-		return;
+</a><a href="#h0-4-18" id="h0-4-18" class="d">-	plen = strlen(pattern);
+</a><a href="#h0-4-19" id="h0-4-19" class="d">-	item = j = NULL;
+</a><a href="#h0-4-20" id="h0-4-20" class="d">-	nitem = 0;
+</a><a href="#h0-4-21" id="h0-4-21" class="d">-	for(i = allitems; i; i=i-&gt;next)
+</a><a href="#h0-4-22" id="h0-4-22" class="d">-		if(!plen || !strncmp(pattern, i-&gt;text, plen)) {
+</a><a href="#h0-4-23" id="h0-4-23" class="d">-			if(!j)
+</a><a href="#h0-4-24" id="h0-4-24" class="d">-				item = i;
+</a><a href="#h0-4-25" id="h0-4-25" class="d">-			else
+</a><a href="#h0-4-26" id="h0-4-26" class="d">-				j-&gt;right = i;
+</a><a href="#h0-4-27" id="h0-4-27" class="d">-			i-&gt;left = j;
+</a><a href="#h0-4-28" id="h0-4-28" class="d">-			i-&gt;right = NULL;
+</a><a href="#h0-4-29" id="h0-4-29" class="d">-			j = i;
+</a><a href="#h0-4-30" id="h0-4-30" class="d">-			nitem++;
+</a><a href="#h0-4-31" id="h0-4-31" class="d">-		}
+</a><a href="#h0-4-32" id="h0-4-32" class="d">-	for(i = allitems; i; i=i-&gt;next)
+</a><a href="#h0-4-33" id="h0-4-33" class="d">-		if(plen &amp;&amp; strncmp(pattern, i-&gt;text, plen)
+</a><a href="#h0-4-34" id="h0-4-34" class="d">-				&amp;&amp; strstr(i-&gt;text, pattern)) {
+</a><a href="#h0-4-35" id="h0-4-35" class="d">-			if(!j)                               
+</a><a href="#h0-4-36" id="h0-4-36" class="d">-				item = i;                              
+</a><a href="#h0-4-37" id="h0-4-37" class="d">-			else                                     
+</a><a href="#h0-4-38" id="h0-4-38" class="d">-				j-&gt;right = i;                          
+</a><a href="#h0-4-39" id="h0-4-39" class="d">-			i-&gt;left = j;      
+</a><a href="#h0-4-40" id="h0-4-40" class="d">-			i-&gt;right = NULL;                         
+</a><a href="#h0-4-41" id="h0-4-41" class="d">-			j = i;                                      
+</a><a href="#h0-4-42" id="h0-4-42" class="d">-			nitem++;                                       
+</a><a href="#h0-4-43" id="h0-4-43" class="d">-		}                                              
+</a><a href="#h0-4-44" id="h0-4-44" class="d">-	for(i = allitems; i; i=i-&gt;next)                            
+</a><a href="#h0-4-45" id="h0-4-45" class="d">-		if(plen &amp;&amp; strncmp(pattern, i-&gt;text, plen)             
+</a><a href="#h0-4-46" id="h0-4-46" class="d">-				&amp;&amp; !strstr(i-&gt;text, pattern)          
+</a><a href="#h0-4-47" id="h0-4-47" class="d">-				&amp;&amp; strido(i-&gt;text,pattern)) { 
+</a><a href="#h0-4-48" id="h0-4-48" class="d">-			if(!j)
+</a><a href="#h0-4-49" id="h0-4-49" class="d">-				item = i;
+</a><a href="#h0-4-50" id="h0-4-50" class="d">-			else
+</a><a href="#h0-4-51" id="h0-4-51" class="d">-				j-&gt;right = i;
+</a><a href="#h0-4-52" id="h0-4-52" class="d">-			i-&gt;left = j;
+</a><a href="#h0-4-53" id="h0-4-53" class="d">-			i-&gt;right = NULL;
+</a><a href="#h0-4-54" id="h0-4-54" class="d">-			j = i;
+</a><a href="#h0-4-55" id="h0-4-55" class="d">-			nitem++;
+</a><a href="#h0-4-56" id="h0-4-56" class="d">-		}
+</a><a href="#h0-4-57" id="h0-4-57" class="d">-	curr = prev = next = sel = item;
+</a><a href="#h0-4-58" id="h0-4-58" class="d">-	calcoffsets();
+</a><a href="#h0-4-59" id="h0-4-59" class="d">-}
+</a><a href="#h0-4-60" id="h0-4-60" class="d">-
+</a><a href="#h0-4-61" id="h0-4-61" class="d">-static void
+</a><a href="#h0-4-62" id="h0-4-62" class="i">+void
+</a> kpress(XKeyEvent * e) {
+ 	char buf[32];
+ 	int i, num;
+<a href="#h0-5" id="h0-5" class="h">@@ -528,9 +479,58 @@ kpress(XKeyEvent * e) {
+</a> 	drawmenu();
+ }
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-static char *
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+void
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+match(char *pattern) {
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+	unsigned int plen;
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	Item *i, *j;
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+	if(!pattern)
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+		return;
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+	plen = strlen(pattern);
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+	item = j = NULL;
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+	nitem = 0;
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+	for(i = allitems; i; i=i-&gt;next)
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+		if(!plen || !strncmp(pattern, i-&gt;text, plen)) {
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+			if(!j)
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+				item = i;
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+			else
+</a><a href="#h0-5-19" id="h0-5-19" class="i">+				j-&gt;right = i;
+</a><a href="#h0-5-20" id="h0-5-20" class="i">+			i-&gt;left = j;
+</a><a href="#h0-5-21" id="h0-5-21" class="i">+			i-&gt;right = NULL;
+</a><a href="#h0-5-22" id="h0-5-22" class="i">+			j = i;
+</a><a href="#h0-5-23" id="h0-5-23" class="i">+			nitem++;
+</a><a href="#h0-5-24" id="h0-5-24" class="i">+		}
+</a><a href="#h0-5-25" id="h0-5-25" class="i">+	for(i = allitems; i; i=i-&gt;next)
+</a><a href="#h0-5-26" id="h0-5-26" class="i">+		if(plen &amp;&amp; strncmp(pattern, i-&gt;text, plen)
+</a><a href="#h0-5-27" id="h0-5-27" class="i">+				&amp;&amp; strstr(i-&gt;text, pattern)) {
+</a><a href="#h0-5-28" id="h0-5-28" class="i">+			if(!j)                               
+</a><a href="#h0-5-29" id="h0-5-29" class="i">+				item = i;                              
+</a><a href="#h0-5-30" id="h0-5-30" class="i">+			else                                     
+</a><a href="#h0-5-31" id="h0-5-31" class="i">+				j-&gt;right = i;                          
+</a><a href="#h0-5-32" id="h0-5-32" class="i">+			i-&gt;left = j;      
+</a><a href="#h0-5-33" id="h0-5-33" class="i">+			i-&gt;right = NULL;                         
+</a><a href="#h0-5-34" id="h0-5-34" class="i">+			j = i;                                      
+</a><a href="#h0-5-35" id="h0-5-35" class="i">+			nitem++;                                       
+</a><a href="#h0-5-36" id="h0-5-36" class="i">+		}                                              
+</a><a href="#h0-5-37" id="h0-5-37" class="i">+	for(i = allitems; i; i=i-&gt;next)                            
+</a><a href="#h0-5-38" id="h0-5-38" class="i">+		if(plen &amp;&amp; strncmp(pattern, i-&gt;text, plen)             
+</a><a href="#h0-5-39" id="h0-5-39" class="i">+				&amp;&amp; !strstr(i-&gt;text, pattern)          
+</a><a href="#h0-5-40" id="h0-5-40" class="i">+				&amp;&amp; strido(i-&gt;text,pattern)) { 
+</a><a href="#h0-5-41" id="h0-5-41" class="i">+			if(!j)
+</a><a href="#h0-5-42" id="h0-5-42" class="i">+				item = i;
+</a><a href="#h0-5-43" id="h0-5-43" class="i">+			else
+</a><a href="#h0-5-44" id="h0-5-44" class="i">+				j-&gt;right = i;
+</a><a href="#h0-5-45" id="h0-5-45" class="i">+			i-&gt;left = j;
+</a><a href="#h0-5-46" id="h0-5-46" class="i">+			i-&gt;right = NULL;
+</a><a href="#h0-5-47" id="h0-5-47" class="i">+			j = i;
+</a><a href="#h0-5-48" id="h0-5-48" class="i">+			nitem++;
+</a><a href="#h0-5-49" id="h0-5-49" class="i">+		}
+</a><a href="#h0-5-50" id="h0-5-50" class="i">+	curr = prev = next = sel = item;
+</a><a href="#h0-5-51" id="h0-5-51" class="i">+	calcoffsets();
+</a><a href="#h0-5-52" id="h0-5-52" class="i">+}
+</a><a href="#h0-5-53" id="h0-5-53" class="i">+
+</a><a href="#h0-5-54" id="h0-5-54" class="i">+void
+</a> readstdin(void) {
+<a href="#h0-5-56" id="h0-5-56" class="d">-	static char *maxname = NULL;
+</a> 	char *p, buf[1024];
+ 	unsigned int len = 0, max = 0;
+ 	Item *i, *new;
+<a href="#h0-6" id="h0-6" class="h">@@ -554,88 +554,50 @@ readstdin(void) {
+</a> 			i-&gt;next = new;
+ 		i = new;
+ 	}
+<a href="#h0-6-3" id="h0-6-3" class="d">-
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-	return maxname;
+</a> }
+ 
+<a href="#h0-6-7" id="h0-6-7" class="d">-static void
+</a><a href="#h0-6-8" id="h0-6-8" class="d">-usage(void) {
+</a><a href="#h0-6-9" id="h0-6-9" class="d">-	eprint(&quot;usage: dmenu [-b] [-fn &lt;font&gt;] [-nb &lt;color&gt;] [-nf &lt;color&gt;]\n&quot;
+</a><a href="#h0-6-10" id="h0-6-10" class="d">-		&quot;             [-p &lt;prompt&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-v]\n&quot;);
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+void
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+run(void) {
+</a><a href="#h0-6-13" id="h0-6-13" class="i">+	XEvent ev;
+</a><a href="#h0-6-14" id="h0-6-14" class="i">+
+</a><a href="#h0-6-15" id="h0-6-15" class="i">+	/* main event loop */
+</a><a href="#h0-6-16" id="h0-6-16" class="i">+	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev))
+</a><a href="#h0-6-17" id="h0-6-17" class="i">+		switch (ev.type) {
+</a><a href="#h0-6-18" id="h0-6-18" class="i">+		default:	/* ignore all crap */
+</a><a href="#h0-6-19" id="h0-6-19" class="i">+			break;
+</a><a href="#h0-6-20" id="h0-6-20" class="i">+		case KeyPress:
+</a><a href="#h0-6-21" id="h0-6-21" class="i">+			kpress(&amp;ev.xkey);
+</a><a href="#h0-6-22" id="h0-6-22" class="i">+			break;
+</a><a href="#h0-6-23" id="h0-6-23" class="i">+		case Expose:
+</a><a href="#h0-6-24" id="h0-6-24" class="i">+			if(ev.xexpose.count == 0)
+</a><a href="#h0-6-25" id="h0-6-25" class="i">+				drawmenu();
+</a><a href="#h0-6-26" id="h0-6-26" class="i">+			break;
+</a><a href="#h0-6-27" id="h0-6-27" class="i">+		}
+</a> }
+ 
+<a href="#h0-6-30" id="h0-6-30" class="d">-int
+</a><a href="#h0-6-31" id="h0-6-31" class="d">-main(int argc, char *argv[]) {
+</a><a href="#h0-6-32" id="h0-6-32" class="d">-	Bool bottom = False;
+</a><a href="#h0-6-33" id="h0-6-33" class="d">-	char *font = FONT;
+</a><a href="#h0-6-34" id="h0-6-34" class="d">-	char *maxname;
+</a><a href="#h0-6-35" id="h0-6-35" class="d">-	char *normbg = NORMBGCOLOR;
+</a><a href="#h0-6-36" id="h0-6-36" class="d">-	char *normfg = NORMFGCOLOR;
+</a><a href="#h0-6-37" id="h0-6-37" class="d">-	char *selbg = SELBGCOLOR;
+</a><a href="#h0-6-38" id="h0-6-38" class="d">-	char *selfg = SELFGCOLOR;
+</a><a href="#h0-6-39" id="h0-6-39" class="d">-	int i, j;
+</a><a href="#h0-6-40" id="h0-6-40" class="d">-	Item *itm;
+</a><a href="#h0-6-41" id="h0-6-41" class="d">-	XEvent ev;
+</a><a href="#h0-6-42" id="h0-6-42" class="i">+void
+</a><a href="#h0-6-43" id="h0-6-43" class="i">+setup(Bool bottom) {
+</a><a href="#h0-6-44" id="h0-6-44" class="i">+	unsigned int i, j;
+</a> 	XModifierKeymap *modmap;
+ 	XSetWindowAttributes wa;
+ 
+<a href="#h0-6-48" id="h0-6-48" class="d">-	/* command line args */
+</a><a href="#h0-6-49" id="h0-6-49" class="d">-	for(i = 1; i &lt; argc; i++)
+</a><a href="#h0-6-50" id="h0-6-50" class="d">-		if(!strcmp(argv[i], &quot;-b&quot;)) {
+</a><a href="#h0-6-51" id="h0-6-51" class="d">-			bottom = True;
+</a><a href="#h0-6-52" id="h0-6-52" class="d">-		}
+</a><a href="#h0-6-53" id="h0-6-53" class="d">-		else if(!strcmp(argv[i], &quot;-fn&quot;)) {
+</a><a href="#h0-6-54" id="h0-6-54" class="d">-			if(++i &lt; argc) font = argv[i];
+</a><a href="#h0-6-55" id="h0-6-55" class="d">-		}
+</a><a href="#h0-6-56" id="h0-6-56" class="d">-		else if(!strcmp(argv[i], &quot;-nb&quot;)) {
+</a><a href="#h0-6-57" id="h0-6-57" class="d">-			if(++i &lt; argc) normbg = argv[i];
+</a><a href="#h0-6-58" id="h0-6-58" class="d">-		}
+</a><a href="#h0-6-59" id="h0-6-59" class="d">-		else if(!strcmp(argv[i], &quot;-nf&quot;)) {
+</a><a href="#h0-6-60" id="h0-6-60" class="d">-			if(++i &lt; argc) normfg = argv[i];
+</a><a href="#h0-6-61" id="h0-6-61" class="d">-		}
+</a><a href="#h0-6-62" id="h0-6-62" class="d">-		else if(!strcmp(argv[i], &quot;-p&quot;)) {
+</a><a href="#h0-6-63" id="h0-6-63" class="d">-			if(++i &lt; argc) prompt = argv[i];
+</a><a href="#h0-6-64" id="h0-6-64" class="d">-		}
+</a><a href="#h0-6-65" id="h0-6-65" class="d">-		else if(!strcmp(argv[i], &quot;-sb&quot;)) {
+</a><a href="#h0-6-66" id="h0-6-66" class="d">-			if(++i &lt; argc) selbg = argv[i];
+</a><a href="#h0-6-67" id="h0-6-67" class="d">-		}
+</a><a href="#h0-6-68" id="h0-6-68" class="d">-		else if(!strcmp(argv[i], &quot;-sf&quot;)) {
+</a><a href="#h0-6-69" id="h0-6-69" class="d">-			if(++i &lt; argc) selfg = argv[i];
+</a><a href="#h0-6-70" id="h0-6-70" class="d">-		}
+</a><a href="#h0-6-71" id="h0-6-71" class="d">-		else if(!strcmp(argv[i], &quot;-v&quot;))
+</a><a href="#h0-6-72" id="h0-6-72" class="d">-			eprint(&quot;dmenu-&quot;VERSION&quot;, © 2006-2007 Anselm R. Garbe, Sander van Dijk\n&quot;);
+</a><a href="#h0-6-73" id="h0-6-73" class="d">-		else
+</a><a href="#h0-6-74" id="h0-6-74" class="d">-			usage();
+</a><a href="#h0-6-75" id="h0-6-75" class="d">-	setlocale(LC_CTYPE, &quot;&quot;);
+</a><a href="#h0-6-76" id="h0-6-76" class="d">-	dpy = XOpenDisplay(0);
+</a><a href="#h0-6-77" id="h0-6-77" class="d">-	if(!dpy)
+</a><a href="#h0-6-78" id="h0-6-78" class="d">-		eprint(&quot;dmenu: cannot open display\n&quot;);
+</a><a href="#h0-6-79" id="h0-6-79" class="d">-	screen = DefaultScreen(dpy);
+</a><a href="#h0-6-80" id="h0-6-80" class="d">-	root = RootWindow(dpy, screen);
+</a><a href="#h0-6-81" id="h0-6-81" class="d">-	if(isatty(STDIN_FILENO)) {
+</a><a href="#h0-6-82" id="h0-6-82" class="d">-		maxname = readstdin();
+</a><a href="#h0-6-83" id="h0-6-83" class="d">-		running = grabkeyboard();
+</a><a href="#h0-6-84" id="h0-6-84" class="d">-	}
+</a><a href="#h0-6-85" id="h0-6-85" class="d">-	else { /* prevent keypress loss */
+</a><a href="#h0-6-86" id="h0-6-86" class="d">-		running = grabkeyboard();
+</a><a href="#h0-6-87" id="h0-6-87" class="d">-		maxname = readstdin();
+</a><a href="#h0-6-88" id="h0-6-88" class="d">-	}
+</a> 	/* init modifier map */
+ 	modmap = XGetModifierMapping(dpy);
+<a href="#h0-6-91" id="h0-6-91" class="d">-	for (i = 0; i &lt; 8; i++) {
+</a><a href="#h0-6-92" id="h0-6-92" class="d">-		for (j = 0; j &lt; modmap-&gt;max_keypermod; j++) {
+</a><a href="#h0-6-93" id="h0-6-93" class="i">+	for(i = 0; i &lt; 8; i++)
+</a><a href="#h0-6-94" id="h0-6-94" class="i">+		for(j = 0; j &lt; modmap-&gt;max_keypermod; j++) {
+</a> 			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j]
+ 			== XKeysymToKeycode(dpy, XK_Num_Lock))
+ 				numlockmask = (1 &lt;&lt; i);
+ 		}
+<a href="#h0-6-99" id="h0-6-99" class="d">-	}
+</a> 	XFreeModifiermap(modmap);
+<a href="#h0-6-101" id="h0-6-101" class="i">+
+</a> 	/* style */
+ 	dc.norm[ColBG] = getcolor(normbg);
+ 	dc.norm[ColFG] = getcolor(normfg);
+ 	dc.sel[ColBG] = getcolor(selbg);
+ 	dc.sel[ColFG] = getcolor(selfg);
+ 	initfont(font);
+<a href="#h0-6-108" id="h0-6-108" class="i">+
+</a> 	/* menu window */
+ 	wa.override_redirect = 1;
+ 	wa.background_pixmap = ParentRelative;
+<a href="#h0-7" id="h0-7" class="h">@@ -647,6 +609,7 @@ main(int argc, char *argv[]) {
+</a> 			DefaultDepth(dpy, screen), CopyFromParent,
+ 			DefaultVisual(dpy, screen),
+ 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+<a href="#h0-7-3" id="h0-7-3" class="i">+
+</a> 	/* pixmap */
+ 	dc.drawable = XCreatePixmap(dpy, root, mw, mh, DefaultDepth(dpy, screen));
+ 	dc.gc = XCreateGC(dpy, root, 0, 0);
+<a href="#h0-8" id="h0-8" class="h">@@ -664,38 +627,86 @@ main(int argc, char *argv[]) {
+</a> 	text[0] = 0;
+ 	match(text);
+ 	XMapRaised(dpy, win);
+<a href="#h0-8-3" id="h0-8-3" class="d">-	drawmenu();
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-	XSync(dpy, False);
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+}
+</a> 
+<a href="#h0-8-7" id="h0-8-7" class="d">-	/* main event loop */
+</a><a href="#h0-8-8" id="h0-8-8" class="d">-	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev))
+</a><a href="#h0-8-9" id="h0-8-9" class="d">-		switch (ev.type) {
+</a><a href="#h0-8-10" id="h0-8-10" class="d">-		default:	/* ignore all crap */
+</a><a href="#h0-8-11" id="h0-8-11" class="d">-			break;
+</a><a href="#h0-8-12" id="h0-8-12" class="d">-		case KeyPress:
+</a><a href="#h0-8-13" id="h0-8-13" class="d">-			kpress(&amp;ev.xkey);
+</a><a href="#h0-8-14" id="h0-8-14" class="d">-			break;
+</a><a href="#h0-8-15" id="h0-8-15" class="d">-		case Expose:
+</a><a href="#h0-8-16" id="h0-8-16" class="d">-			if(ev.xexpose.count == 0)
+</a><a href="#h0-8-17" id="h0-8-17" class="d">-				drawmenu();
+</a><a href="#h0-8-18" id="h0-8-18" class="d">-			break;
+</a><a href="#h0-8-19" id="h0-8-19" class="i">+int
+</a><a href="#h0-8-20" id="h0-8-20" class="i">+strido(const char *text, const char *pattern) {
+</a><a href="#h0-8-21" id="h0-8-21" class="i">+	for(; *text &amp;&amp; *pattern; text++)
+</a><a href="#h0-8-22" id="h0-8-22" class="i">+		if (*text == *pattern)
+</a><a href="#h0-8-23" id="h0-8-23" class="i">+			pattern++;
+</a><a href="#h0-8-24" id="h0-8-24" class="i">+	return !*pattern;
+</a><a href="#h0-8-25" id="h0-8-25" class="i">+}                                  
+</a><a href="#h0-8-26" id="h0-8-26" class="i">+
+</a><a href="#h0-8-27" id="h0-8-27" class="i">+unsigned int
+</a><a href="#h0-8-28" id="h0-8-28" class="i">+textnw(const char *text, unsigned int len) {
+</a><a href="#h0-8-29" id="h0-8-29" class="i">+	XRectangle r;
+</a><a href="#h0-8-30" id="h0-8-30" class="i">+
+</a><a href="#h0-8-31" id="h0-8-31" class="i">+	if(dc.font.set) {
+</a><a href="#h0-8-32" id="h0-8-32" class="i">+		XmbTextExtents(dc.font.set, text, len, NULL, &amp;r);
+</a><a href="#h0-8-33" id="h0-8-33" class="i">+		return r.width;
+</a><a href="#h0-8-34" id="h0-8-34" class="i">+	}
+</a><a href="#h0-8-35" id="h0-8-35" class="i">+	return XTextWidth(dc.font.xfont, text, len);
+</a><a href="#h0-8-36" id="h0-8-36" class="i">+}
+</a><a href="#h0-8-37" id="h0-8-37" class="i">+
+</a><a href="#h0-8-38" id="h0-8-38" class="i">+unsigned int
+</a><a href="#h0-8-39" id="h0-8-39" class="i">+textw(const char *text) {
+</a><a href="#h0-8-40" id="h0-8-40" class="i">+	return textnw(text, strlen(text)) + dc.font.height;
+</a><a href="#h0-8-41" id="h0-8-41" class="i">+}
+</a><a href="#h0-8-42" id="h0-8-42" class="i">+
+</a><a href="#h0-8-43" id="h0-8-43" class="i">+int
+</a><a href="#h0-8-44" id="h0-8-44" class="i">+main(int argc, char *argv[]) {
+</a><a href="#h0-8-45" id="h0-8-45" class="i">+	Bool bottom = False;
+</a><a href="#h0-8-46" id="h0-8-46" class="i">+	unsigned int i;
+</a><a href="#h0-8-47" id="h0-8-47" class="i">+
+</a><a href="#h0-8-48" id="h0-8-48" class="i">+	/* command line args */
+</a><a href="#h0-8-49" id="h0-8-49" class="i">+	for(i = 1; i &lt; argc; i++)
+</a><a href="#h0-8-50" id="h0-8-50" class="i">+		if(!strcmp(argv[i], &quot;-b&quot;)) {
+</a><a href="#h0-8-51" id="h0-8-51" class="i">+			bottom = True;
+</a><a href="#h0-8-52" id="h0-8-52" class="i">+		}
+</a><a href="#h0-8-53" id="h0-8-53" class="i">+		else if(!strcmp(argv[i], &quot;-fn&quot;)) {
+</a><a href="#h0-8-54" id="h0-8-54" class="i">+			if(++i &lt; argc) font = argv[i];
+</a><a href="#h0-8-55" id="h0-8-55" class="i">+		}
+</a><a href="#h0-8-56" id="h0-8-56" class="i">+		else if(!strcmp(argv[i], &quot;-nb&quot;)) {
+</a><a href="#h0-8-57" id="h0-8-57" class="i">+			if(++i &lt; argc) normbg = argv[i];
+</a><a href="#h0-8-58" id="h0-8-58" class="i">+		}
+</a><a href="#h0-8-59" id="h0-8-59" class="i">+		else if(!strcmp(argv[i], &quot;-nf&quot;)) {
+</a><a href="#h0-8-60" id="h0-8-60" class="i">+			if(++i &lt; argc) normfg = argv[i];
+</a><a href="#h0-8-61" id="h0-8-61" class="i">+		}
+</a><a href="#h0-8-62" id="h0-8-62" class="i">+		else if(!strcmp(argv[i], &quot;-p&quot;)) {
+</a><a href="#h0-8-63" id="h0-8-63" class="i">+			if(++i &lt; argc) prompt = argv[i];
+</a><a href="#h0-8-64" id="h0-8-64" class="i">+		}
+</a><a href="#h0-8-65" id="h0-8-65" class="i">+		else if(!strcmp(argv[i], &quot;-sb&quot;)) {
+</a><a href="#h0-8-66" id="h0-8-66" class="i">+			if(++i &lt; argc) selbg = argv[i];
+</a><a href="#h0-8-67" id="h0-8-67" class="i">+		}
+</a><a href="#h0-8-68" id="h0-8-68" class="i">+		else if(!strcmp(argv[i], &quot;-sf&quot;)) {
+</a><a href="#h0-8-69" id="h0-8-69" class="i">+			if(++i &lt; argc) selfg = argv[i];
+</a> 		}
+<a href="#h0-8-71" id="h0-8-71" class="i">+		else if(!strcmp(argv[i], &quot;-v&quot;))
+</a><a href="#h0-8-72" id="h0-8-72" class="i">+			eprint(&quot;dmenu-&quot;VERSION&quot;, © 2006-2007 Anselm R. Garbe, Sander van Dijk\n&quot;);
+</a><a href="#h0-8-73" id="h0-8-73" class="i">+		else
+</a><a href="#h0-8-74" id="h0-8-74" class="i">+			eprint(&quot;usage: dmenu [-b] [-fn &lt;font&gt;] [-nb &lt;color&gt;] [-nf &lt;color&gt;]\n&quot;
+</a><a href="#h0-8-75" id="h0-8-75" class="i">+			&quot;             [-p &lt;prompt&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-v]\n&quot;);
+</a><a href="#h0-8-76" id="h0-8-76" class="i">+	setlocale(LC_CTYPE, &quot;&quot;);
+</a><a href="#h0-8-77" id="h0-8-77" class="i">+	dpy = XOpenDisplay(0);
+</a><a href="#h0-8-78" id="h0-8-78" class="i">+	if(!dpy)
+</a><a href="#h0-8-79" id="h0-8-79" class="i">+		eprint(&quot;dmenu: cannot open display\n&quot;);
+</a><a href="#h0-8-80" id="h0-8-80" class="i">+	screen = DefaultScreen(dpy);
+</a><a href="#h0-8-81" id="h0-8-81" class="i">+	root = RootWindow(dpy, screen);
+</a> 
+<a href="#h0-8-83" id="h0-8-83" class="d">-	/* cleanup */
+</a><a href="#h0-8-84" id="h0-8-84" class="d">-	while(allitems) {
+</a><a href="#h0-8-85" id="h0-8-85" class="d">-		itm = allitems-&gt;next;
+</a><a href="#h0-8-86" id="h0-8-86" class="d">-		free(allitems-&gt;text);
+</a><a href="#h0-8-87" id="h0-8-87" class="d">-		free(allitems);
+</a><a href="#h0-8-88" id="h0-8-88" class="d">-		allitems = itm;
+</a><a href="#h0-8-89" id="h0-8-89" class="i">+	if(isatty(STDIN_FILENO)) {
+</a><a href="#h0-8-90" id="h0-8-90" class="i">+		readstdin();
+</a><a href="#h0-8-91" id="h0-8-91" class="i">+		running = grabkeyboard();
+</a> 	}
+<a href="#h0-8-93" id="h0-8-93" class="d">-	if(dc.font.set)
+</a><a href="#h0-8-94" id="h0-8-94" class="d">-		XFreeFontSet(dpy, dc.font.set);
+</a><a href="#h0-8-95" id="h0-8-95" class="d">-	else
+</a><a href="#h0-8-96" id="h0-8-96" class="d">-		XFreeFont(dpy, dc.font.xfont);
+</a><a href="#h0-8-97" id="h0-8-97" class="d">-	XFreePixmap(dpy, dc.drawable);
+</a><a href="#h0-8-98" id="h0-8-98" class="d">-	XFreeGC(dpy, dc.gc);
+</a><a href="#h0-8-99" id="h0-8-99" class="d">-	XDestroyWindow(dpy, win);
+</a><a href="#h0-8-100" id="h0-8-100" class="d">-	XUngrabKeyboard(dpy, CurrentTime);
+</a><a href="#h0-8-101" id="h0-8-101" class="i">+	else { /* prevent keypress loss */
+</a><a href="#h0-8-102" id="h0-8-102" class="i">+		running = grabkeyboard();
+</a><a href="#h0-8-103" id="h0-8-103" class="i">+		readstdin();
+</a><a href="#h0-8-104" id="h0-8-104" class="i">+	}
+</a><a href="#h0-8-105" id="h0-8-105" class="i">+
+</a><a href="#h0-8-106" id="h0-8-106" class="i">+	setup(bottom);
+</a><a href="#h0-8-107" id="h0-8-107" class="i">+	drawmenu();
+</a><a href="#h0-8-108" id="h0-8-108" class="i">+	XSync(dpy, False);
+</a><a href="#h0-8-109" id="h0-8-109" class="i">+	run();
+</a><a href="#h0-8-110" id="h0-8-110" class="i">+	cleanup();
+</a> 	XCloseDisplay(dpy);
+ 	return ret;
+ }
+</pre>
+</div>
+</body>
+</html>

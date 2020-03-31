@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>simplified buttonpress - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6d22782e8f991a99f9adef56b2b729e5ab5454d2.html">6d22782e8f991a99f9adef56b2b729e5ab5454d2</a>
+<b>parent</b> <a href="../commit/1836b6740d7fc1a2e7fa0343aa7de657592ebfeb.html">1836b6740d7fc1a2e7fa0343aa7de657592ebfeb</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Fri,  1 Sep 2006 15:31:59 +0200
+
+simplified buttonpress
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">event.c</a></td><td> | </td><td class="num">35</td><td><span class="i">++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 23 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -109,19 +109,17 @@ buttonpress(XEvent *e)
+</a> 		for(a.i = 0; a.i &lt; ntags; a.i++) {
+ 			x += textw(tags[a.i]);
+ 			if(ev-&gt;x &lt; x) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-				switch(ev-&gt;button) {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-				case Button1:
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+				if(ev-&gt;button == Button1) {
+</a> 					if(ev-&gt;state &amp; MODKEY)
+ 						tag(&amp;a);
+ 					else
+ 						view(&amp;a);
+<a href="#h0-0-10" id="h0-0-10" class="d">-					break;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-				case Button3:
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+				}
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+				else if(ev-&gt;button == Button3) {
+</a> 					if(ev-&gt;state &amp; MODKEY)
+ 						toggletag(&amp;a);
+ 					else
+ 						toggleview(&amp;a);
+<a href="#h0-0-18" id="h0-0-18" class="d">-					break;
+</a> 				}
+ 				return;
+ 			}
+<a href="#h0-1" id="h0-1" class="h">@@ -133,26 +131,17 @@ buttonpress(XEvent *e)
+</a> 	}
+ 	else if((c = getclient(ev-&gt;window))) {
+ 		focus(c);
+<a href="#h0-1-3" id="h0-1-3" class="d">-		if(CLEANMASK(ev-&gt;state) != MODKEY)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		if(c-&gt;ismax || CLEANMASK(ev-&gt;state) != MODKEY)
+</a> 			return;
+<a href="#h0-1-6" id="h0-1-6" class="d">-		switch(ev-&gt;button) {
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		default:
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-			break;
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-		case Button1:
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-			if(!c-&gt;ismax &amp;&amp; (arrange == dofloat || c-&gt;isfloat)) {
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-				restack(c);
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-				movemouse(c);
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-			}
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-			break;
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-		case Button2:
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+		if((ev-&gt;button == Button1) &amp;&amp; ((arrange == dofloat) || c-&gt;isfloat)) {
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+			restack(c);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+			movemouse(c);
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+		}
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+		else if(ev-&gt;button == Button2)
+</a> 			zoom(NULL);
+<a href="#h0-1-22" id="h0-1-22" class="d">-			break;
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-		case Button3:
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-			if(!c-&gt;ismax &amp;&amp; (arrange == dofloat || c-&gt;isfloat)) {
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-				restack(c);
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-				resizemouse(c);
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-			}
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-			break;
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+		else if(ev-&gt;button == Button3 &amp;&amp; ((arrange == dofloat) || c-&gt;isfloat)) {
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+			restack(c);
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+			resizemouse(c);
+</a> 		}
+ 	}
+ }
+</pre>
+</div>
+</body>
+</html>

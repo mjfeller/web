@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Applying the patch of Roberto Caballero to set WINDOWID and all the pwuid() - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6d4e525ed95fbddc38be441394a02dc9233b157d.html">6d4e525ed95fbddc38be441394a02dc9233b157d</a>
+<b>parent</b> <a href="../commit/35421371ca150b6bd0fd1330e7b30a99029dbce1.html">35421371ca150b6bd0fd1330e7b30a99029dbce1</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sun, 28 Oct 2012 06:54:08 +0100
+
+Applying the patch of Roberto Caballero to set WINDOWID and all the pwuid()
+
+variables. Thanks! xinit() and ttynew() had to be switched in their
+call-appearance. Otherwise xw.win is not set.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">15</td><td><span class="i">++++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 14 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -5,6 +5,7 @@
+</a> #include &lt;fcntl.h&gt;
+ #include &lt;limits.h&gt;
+ #include &lt;locale.h&gt;
+<a href="#h0-0-3" id="h0-0-3" class="i">+#include &lt;pwd.h&gt;
+</a> #include &lt;stdarg.h&gt;
+ #include &lt;stdbool.h&gt;
+ #include &lt;stdio.h&gt;
+<a href="#h0-1" id="h0-1" class="h">@@ -881,11 +882,23 @@ void
+</a> execsh(void) {
+ 	char **args;
+ 	char *envshell = getenv(&quot;SHELL&quot;);
+<a href="#h0-1-3" id="h0-1-3" class="i">+	const struct passwd *pass = getpwuid(getuid());
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	char buf[sizeof(long) * 8 + 1];
+</a> 
+ 	unsetenv(&quot;COLUMNS&quot;);
+ 	unsetenv(&quot;LINES&quot;);
+ 	unsetenv(&quot;TERMCAP&quot;);
+ 
+<a href="#h0-1-10" id="h0-1-10" class="i">+	if(pass) {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		setenv(&quot;LOGNAME&quot;, pass-&gt;pw_name, 1);
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		setenv(&quot;USER&quot;, pass-&gt;pw_name, 1);
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+		setenv(&quot;SHELL&quot;, pass-&gt;pw_shell, 0);
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+		setenv(&quot;HOME&quot;, pass-&gt;pw_dir, 0);
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	}
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	snprintf(buf, sizeof(buf), &quot;%lu&quot;, xw.win);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	setenv(&quot;WINDOWID&quot;, buf, 1);
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+
+</a> 	signal(SIGCHLD, SIG_DFL);
+ 	signal(SIGHUP, SIG_DFL);
+ 	signal(SIGINT, SIG_DFL);
+<a href="#h0-2" id="h0-2" class="h">@@ -2795,8 +2808,8 @@ main(int argc, char *argv[]) {
+</a> run:
+ 	setlocale(LC_CTYPE, &quot;&quot;);
+ 	tnew(80, 24);
+<a href="#h0-2-3" id="h0-2-3" class="d">-	ttynew();
+</a> 	xinit();
+<a href="#h0-2-5" id="h0-2-5" class="i">+	ttynew();
+</a> 	selinit();
+ 	run();
+ 	return 0;
+</pre>
+</div>
+</body>
+</html>

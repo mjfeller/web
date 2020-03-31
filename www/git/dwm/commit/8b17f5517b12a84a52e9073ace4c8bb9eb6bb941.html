@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>some cleanups - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8b17f5517b12a84a52e9073ace4c8bb9eb6bb941.html">8b17f5517b12a84a52e9073ace4c8bb9eb6bb941</a>
+<b>parent</b> <a href="../commit/cd96232f7e97726413baeb0d411cc5f537575f0e.html">cd96232f7e97726413baeb0d411cc5f537575f0e</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Thu,  2 Jul 2009 20:56:23 +0100
+
+some cleanups
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -237,7 +237,7 @@ static void zoom(const Arg *arg);
+</a> /* variables */
+ static char stext[256];
+ static int screen;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static int sw, sh;   /* X display screen geometry x, y, width, height */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static int sw, sh;           /* X display screen geometry x, y, width, height */
+</a> static int bh, blw = 0;      /* bar geometry */
+ static int (*xerrorxlib)(Display *, XErrorEvent *);
+ static unsigned int numlockmask = 0;
+<a href="#h0-1" id="h0-1" class="h">@@ -264,6 +264,7 @@ static DC dc;
+</a> static Layout *lt[] = { NULL, NULL };
+ static Monitor *mons = NULL, *selmon = NULL;
+ static Window root;
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a> /* configuration, allows nested code to access above variables */
+ #include &quot;config.h&quot;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -284,7 +285,8 @@ applyrules(Client *c) {
+</a> 			r = &amp;rules[i];
+ 			if((!r-&gt;title || strstr(c-&gt;name, r-&gt;title))
+ 			&amp;&amp; (!r-&gt;class || (ch.res_class &amp;&amp; strstr(ch.res_class, r-&gt;class)))
+<a href="#h0-2-3" id="h0-2-3" class="d">-			&amp;&amp; (!r-&gt;instance || (ch.res_name &amp;&amp; strstr(ch.res_name, r-&gt;instance)))) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			&amp;&amp; (!r-&gt;instance || (ch.res_name &amp;&amp; strstr(ch.res_name, r-&gt;instance))))
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+			{
+</a> 				c-&gt;isfloating = r-&gt;isfloating;
+ 				c-&gt;tags |= r-&gt;tags;
+ 			}
+<a href="#h0-3" id="h0-3" class="h">@@ -305,7 +307,6 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, Bool interact) {
+</a> 	/* set minimum possible */
+ 	*w = MAX(1, *w);
+ 	*h = MAX(1, *h);
+<a href="#h0-3-3" id="h0-3-3" class="d">-
+</a> 	if(interact) {
+ 		if(*x &gt; sw)
+ 			*x = sw - WIDTH(c);
+<a href="#h0-4" id="h0-4" class="h">@@ -903,7 +904,8 @@ gettextprop(Window w, Atom atom, char *text, unsigned int size) {
+</a> 		strncpy(text, (char *)name.value, size - 1);
+ 	else {
+ 		if(XmbTextPropertyToTextList(dpy, &amp;name, &amp;list, &amp;n) &gt;= Success
+<a href="#h0-4-3" id="h0-4-3" class="d">-		&amp;&amp; n &gt; 0 &amp;&amp; *list) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		&amp;&amp; n &gt; 0 &amp;&amp; *list)
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+		{
+</a> 			strncpy(text, *list, size - 1);
+ 			XFreeStringList(list);
+ 		}
+<a href="#h0-5" id="h0-5" class="h">@@ -928,7 +930,8 @@ grabbuttons(Client *c, Bool focused) {
+</a> 						            buttons[i].mask | modifiers[j],
+ 						            c-&gt;win, False, BUTTONMASK,
+ 						            GrabModeAsync, GrabModeSync, None, None);
+<a href="#h0-5-3" id="h0-5-3" class="d">-		} else
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		}
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+		else
+</a> 			XGrabButton(dpy, AnyButton, AnyModifier, c-&gt;win, False,
+ 			            BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+ 	}
+<a href="#h0-6" id="h0-6" class="h">@@ -1385,7 +1388,7 @@ sendmon(Client *c, Monitor *m) {
+</a> 
+ void
+ setclientstate(Client *c, long state) {
+<a href="#h0-6-3" id="h0-6-3" class="d">-	long data[] = {state, None};
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	long data[] = { state, None };
+</a> 
+ 	XChangeProperty(dpy, c-&gt;win, wmatom[WMState], wmatom[WMState], 32,
+ 			PropModeReplace, (unsigned char *)data, 2);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>made barclick to select the specific tag - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6458d72572a30d2cc4af3385755033b2cca93057.html">6458d72572a30d2cc4af3385755033b2cca93057</a>
+<b>parent</b> <a href="../commit/9cd686c93a80b4095d4ee0960bef320ccd9ea02c.html">9cd686c93a80b4095d4ee0960bef320ccd9ea02c</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Fri, 14 Jul 2006 10:34:07 +0200
+
+made barclick to select the specific tag
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bar.c</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dwm.html</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">main.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>6 files changed, 36 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bar.c.html">bar.c</a> b/<a href="../file/bar.c.html">bar.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,6 +6,20 @@
+</a> #include &quot;dwm.h&quot;
+ 
+ void
+<a href="#h0-0-3" id="h0-0-3" class="i">+barclick(XButtonPressedEvent *e)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+{
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	int x = 0;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	Arg a;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	for(a.i = 0; a.i &lt; TLast; a.i++) {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		x += textw(tags[a.i]) + dc.font.height;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+		if(e-&gt;x &lt; x) {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+			view(&amp;a);
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+			return;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		}
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+}
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+void
+</a> draw_bar()
+ {
+ 	int i;
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -12,6 +12,9 @@ is a dynamic window manager for X11.
+</a> .TP
+ .B \-v
+ prints version information to stdout, then exits.
+<a href="#h1-0-3" id="h1-0-3" class="i">+.SS Status text
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+.B dwm
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+reads from stdin to display status text if provided.
+</a> .SS Default Key Bindings
+ .TP 16
+ .I Key	
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -103,6 +103,7 @@ extern Client *clients, *sel;
+</a> 
+ /* bar.c */
+ extern void draw_bar();
+<a href="#h2-0-3" id="h2-0-3" class="i">+extern void barclick(XButtonPressedEvent *e);
+</a> 
+ /* client.c */
+ extern void manage(Window w, XWindowAttributes *wa);
+<b>diff --git a/<a id="h3" href="../file/dwm.html.html">dwm.html</a> b/<a href="../file/dwm.html.html">dwm.html</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -39,7 +39,7 @@
+</a> 		&lt;/p&gt;
+ 		&lt;ul&gt;
+ 			&lt;li&gt;
+<a href="#h3-0-3" id="h3-0-3" class="d">-			dwm has no 9P support, no status bar, no menu, no editable tagbars,
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+			dwm has no 9P support, no menu, no editable tagbars,
+</a> 			no shell-based configuration and remote control and comes without
+ 			any additional tools like printing the selection or warping the
+ 			mouse.
+<a href="#h3-1" id="h3-1" class="h">@@ -69,6 +69,11 @@
+</a> 			clients.
+ 			&lt;/li&gt;
+ 			&lt;li&gt;
+<a href="#h3-1-3" id="h3-1-3" class="i">+			dwm reads from &lt;b&gt;stdin&lt;/b&gt; to print arbirary status text (like the
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+			date, load, battery charge). That&#39;s much simpler than larsremote,
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+			wmiir and what not...
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+			&lt;/li&gt;
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+			&lt;li&gt;
+</a> 			garbeam &lt;b&gt;does not&lt;/b&gt; want any feedback to dwm. If you ask for support,
+ 			feature requests, or if you report bugs, they will be &lt;b&gt;ignored&lt;/b&gt;
+ 			with a high chance. dwm is only intended to fit garbeams needs.
+<a href="#h3-2" id="h3-2" class="h">@@ -87,6 +92,13 @@
+</a> 		&lt;p&gt;
+ 		&lt;code&gt;hg clone http://wmii.de/cgi-bin/hgwebdir.cgi/dwm&lt;/code&gt;
+ 		&lt;/p&gt;
+<a href="#h3-2-3" id="h3-2-3" class="d">-		&lt;p&gt;--Anselm (20060713)&lt;/p&gt;
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+		&lt;h3&gt;Download&lt;/h3&gt;
+</a><a href="#h3-2-5" id="h3-2-5" class="i">+		&lt;p&gt;There is no release yet.&lt;/p&gt;
+</a><a href="#h3-2-6" id="h3-2-6" class="i">+		&lt;h3&gt;Miscellaneous&lt;/h3&gt;
+</a><a href="#h3-2-7" id="h3-2-7" class="i">+		&lt;p&gt;
+</a><a href="#h3-2-8" id="h3-2-8" class="i">+		You can purchase this &lt;a href=&quot;https://www.spreadshirt.net/shop.php?op=article&amp;article_id=3298632&amp;view=403&quot;&gt;tricot&lt;/a&gt;
+</a><a href="#h3-2-9" id="h3-2-9" class="i">+		if you like dwm and the dwm logo, which has been designed by garbeam.
+</a><a href="#h3-2-10" id="h3-2-10" class="i">+		&lt;/p&gt;
+</a><a href="#h3-2-11" id="h3-2-11" class="i">+		&lt;p&gt;&lt;small&gt;--Anselm (20060714)&lt;/small&gt;&lt;/p&gt;
+</a> 	&lt;/body&gt;
+ &lt;/html&gt;
+<b>diff --git a/<a id="h4" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -50,7 +50,9 @@ buttonpress(XEvent *e)
+</a> 	XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+ 	Client *c;
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-	if((c = getclient(ev-&gt;window))) {
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	if(barwin == ev-&gt;window)
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+		barclick(ev);
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+	else if((c = getclient(ev-&gt;window))) {
+</a> 		craise(c);
+ 		switch(ev-&gt;button) {
+ 		default:
+<b>diff --git a/<a id="h5" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -252,7 +252,7 @@ main(int argc, char *argv[])
+</a> 
+ 	wa.override_redirect = 1;
+ 	wa.background_pixmap = ParentRelative;
+<a href="#h5-0-3" id="h5-0-3" class="d">-	wa.event_mask = ExposureMask;
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	wa.event_mask = ButtonPressMask | ExposureMask;
+</a> 
+ 	bx = by = 0;
+ 	bw = sw;
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>improve example scripts, add to build (Makefile) - stagit - static site generate for git repositories
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="stagit Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>stagit</h1><span class="desc">static site generate for git repositories
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bdcf38baa40fd508a9b890afb0a75e53f0819a37.html">bdcf38baa40fd508a9b890afb0a75e53f0819a37</a>
+<b>parent</b> <a href="../commit/4e307d3076d88b0a8e096e23df8c78077542ab3e.html">4e307d3076d88b0a8e096e23df8c78077542ab3e</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Sun, 30 Jul 2017 17:21:42 +0200
+
+improve example scripts, add to build (Makefile)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">8</td><td><span class="i">+++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">README</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h2">example.sh</a></td><td> | </td><td class="num">43</td><td><span class="i"></span><span class="d">-------------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">example_create.sh</a></td><td> | </td><td class="num">43</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">example_post-receive.sh</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++</span><span class="d">----------</span></td></tr>
+</table></pre><pre>5 files changed, 60 insertions(+), 57 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -40,7 +40,7 @@ dist:
+</a> 	mkdir -p ${NAME}-${VERSION}
+ 	cp -f ${MAN1} ${HDR} ${SCRIPTS} ${SRC} ${COMPATSRC} ${DOC} \
+ 		Makefile config.mk favicon.png logo.png style.css \
+<a href="#h0-0-3" id="h0-0-3" class="d">-		example.sh \
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		example_create.sh example_post-receive.sh \
+</a> 		${NAME}-${VERSION}
+ 	# make tarball
+ 	tar -cf - ${NAME}-${VERSION} | \
+<a href="#h0-1" id="h0-1" class="h">@@ -68,7 +68,8 @@ install: all
+</a> 	cp -f style.css\
+ 		favicon.png\
+ 		logo.png\
+<a href="#h0-1-3" id="h0-1-3" class="d">-		example.sh\
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		example_create.sh\
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		example_post-receive.sh\
+</a> 		README\
+ 		${DESTDIR}${PREFIX}/share/${NAME}
+ 	# installing manual pages.
+<a href="#h0-2" id="h0-2" class="h">@@ -84,7 +85,8 @@ uninstall:
+</a> 		${DESTDIR}${PREFIX}/share/${NAME}/style.css\
+ 		${DESTDIR}${PREFIX}/share/${NAME}/favicon.png\
+ 		${DESTDIR}${PREFIX}/share/${NAME}/logo.png\
+<a href="#h0-2-3" id="h0-2-3" class="d">-		${DESTDIR}${PREFIX}/share/${NAME}/example.sh\
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		${DESTDIR}${PREFIX}/share/${NAME}/example_create.sh\
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		${DESTDIR}${PREFIX}/share/${NAME}/example_post-receive.sh\
+</a> 		${DESTDIR}${PREFIX}/share/${NAME}/README
+ 	-rmdir ${DESTDIR}${PREFIX}/share/${NAME}
+ 	# removing manual pages.
+<b>diff --git a/<a id="h1" href="../file/README.html">README</a> b/<a href="../file/README.html">README</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -114,7 +114,7 @@ git post-receive hook (repo/.git/hooks/post-receive):
+</a> 	# ...
+ 	#fi
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-	# see example.sh for normal creation of the files.
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	# see example_create.sh for normal creation of the files.
+</a> 
+ 
+ Create .tar.gz archives by tag
+<b>diff --git a/<a id="h2" href="../file/example.sh.html">example.sh</a> b/<a href="../file/example.sh.html">example.sh</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,43 +0,0 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="d">-#!/bin/sh
+</a><a href="#h2-0-1" id="h2-0-1" class="d">-# - Makes index for repositories in a single directory.
+</a><a href="#h2-0-2" id="h2-0-2" class="d">-# - Makes static pages for each repository directory.
+</a><a href="#h2-0-3" id="h2-0-3" class="d">-#
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-# NOTE, things to do manually (once) before running this script:
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-# - copy style.css, logo.png and favicon.png manually, a style.css example
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-#   is included.
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-#
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-# - write clone url, for example &quot;git://git.codemadness.org/dir&quot; to the &quot;url&quot;
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-#   file for each repo.
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-# - write owner of repo to the &quot;owner&quot; file.
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-# - write description in &quot;description&quot; file.
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-#
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-# Usage:
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-# - mkdir -p htmldir &amp;&amp; cd htmldir
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-# - sh example.sh
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-# path must be absolute.
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-reposdir=&quot;/var/www/domains/git.codemadness.nl/home/src&quot;
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-curdir=$(pwd)
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-
+</a><a href="#h2-0-21" id="h2-0-21" class="d">-# make index.
+</a><a href="#h2-0-22" id="h2-0-22" class="d">-stagit-index &quot;${reposdir}/&quot;*/ &gt; &quot;${curdir}/index.html&quot;
+</a><a href="#h2-0-23" id="h2-0-23" class="d">-
+</a><a href="#h2-0-24" id="h2-0-24" class="d">-# make files per repo.
+</a><a href="#h2-0-25" id="h2-0-25" class="d">-for dir in &quot;${reposdir}/&quot;*/; do
+</a><a href="#h2-0-26" id="h2-0-26" class="d">-	# strip .git suffix.
+</a><a href="#h2-0-27" id="h2-0-27" class="d">-	r=$(basename &quot;${dir}&quot;)
+</a><a href="#h2-0-28" id="h2-0-28" class="d">-	d=$(basename &quot;${dir}&quot; &quot;.git&quot;)
+</a><a href="#h2-0-29" id="h2-0-29" class="d">-	printf &quot;%s... &quot; &quot;${d}&quot;
+</a><a href="#h2-0-30" id="h2-0-30" class="d">-
+</a><a href="#h2-0-31" id="h2-0-31" class="d">-	mkdir -p &quot;${curdir}/${d}&quot;
+</a><a href="#h2-0-32" id="h2-0-32" class="d">-	cd &quot;${curdir}/${d}&quot;
+</a><a href="#h2-0-33" id="h2-0-33" class="d">-	stagit -c &quot;.cache&quot; &quot;${reposdir}/${r}&quot;
+</a><a href="#h2-0-34" id="h2-0-34" class="d">-
+</a><a href="#h2-0-35" id="h2-0-35" class="d">-	# symlinks
+</a><a href="#h2-0-36" id="h2-0-36" class="d">-	ln -sf log.html index.html
+</a><a href="#h2-0-37" id="h2-0-37" class="d">-	ln -sf ../style.css style.css
+</a><a href="#h2-0-38" id="h2-0-38" class="d">-	ln -sf ../logo.png logo.png
+</a><a href="#h2-0-39" id="h2-0-39" class="d">-	ln -sf ../favicon.png favicon.png
+</a><a href="#h2-0-40" id="h2-0-40" class="d">-
+</a><a href="#h2-0-41" id="h2-0-41" class="d">-	printf &quot;done\n&quot;
+</a><a href="#h2-0-42" id="h2-0-42" class="d">-done
+</a><b>diff --git a/<a id="h3" href="../file/example_create.sh.html">example_create.sh</a> b/<a href="../file/example_create.sh.html">example_create.sh</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,43 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+#!/bin/sh
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+# - Makes index for repositories in a single directory.
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+# - Makes static pages for each repository directory.
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+#
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+# NOTE, things to do manually (once) before running this script:
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+# - copy style.css, logo.png and favicon.png manually, a style.css example
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+#   is included.
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+#
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+# - write clone url, for example &quot;git://git.codemadness.org/dir&quot; to the &quot;url&quot;
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+#   file for each repo.
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+# - write owner of repo to the &quot;owner&quot; file.
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+# - write description in &quot;description&quot; file.
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+#
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+# Usage:
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+# - mkdir -p htmldir &amp;&amp; cd htmldir
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+# - sh example_create.sh
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+# path must be absolute.
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+reposdir=&quot;/var/www/domains/git.codemadness.nl/home/src&quot;
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+curdir=&quot;$(pwd)&quot;
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+# make index.
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+stagit-index &quot;${reposdir}/&quot;*/ &gt; &quot;${curdir}/index.html&quot;
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+# make files per repo.
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+for dir in &quot;${reposdir}/&quot;*/; do
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+	# strip .git suffix.
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+	r=$(basename &quot;${dir}&quot;)
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+	d=$(basename &quot;${dir}&quot; &quot;.git&quot;)
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+	printf &quot;%s... &quot; &quot;${d}&quot;
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+	mkdir -p &quot;${curdir}/${d}&quot;
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+	cd &quot;${curdir}/${d}&quot;
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+	stagit -c &quot;.cache&quot; &quot;${reposdir}/${r}&quot;
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+	# symlinks
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	ln -sf log.html index.html
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+	ln -sf ../style.css style.css
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+	ln -sf ../logo.png logo.png
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+	ln -sf ../favicon.png favicon.png
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+	echo &quot;done&quot;
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+done
+</a><b>diff --git a/<a id="h4" href="../file/example_post-receive.sh.html">example_post-receive.sh</a> b/<a href="../file/example_post-receive.sh.html">example_post-receive.sh</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -9,8 +9,8 @@
+</a> # this is the directory of the repo when called from the post-receive script.
+ 
+ name=&quot;$1&quot;
+<a href="#h4-0-3" id="h4-0-3" class="d">-if test &quot;$name&quot; = &quot;&quot;; then
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-	name=&quot;$(basename $(pwd))&quot;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+if test &quot;${name}&quot; = &quot;&quot;; then
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+	name=$(basename $(pwd))
+</a> fi
+ 
+ # config
+<a href="#h4-1" id="h4-1" class="h">@@ -23,17 +23,17 @@ destdir=&quot;${htmldir}${stagitdir}&quot;
+</a> cachefile=&quot;.htmlcache&quot;
+ # /config
+ 
+<a href="#h4-1-3" id="h4-1-3" class="d">-if ! test -d &quot;$dir&quot;; then
+</a><a href="#h4-1-4" id="h4-1-4" class="d">-	echo &quot;$dir does not exist&quot; &gt;&amp;2
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+if ! test -d &quot;${dir}&quot;; then
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+	echo &quot;${dir} does not exist&quot; &gt;&amp;2
+</a> 	exit 1
+ fi
+<a href="#h4-1-9" id="h4-1-9" class="d">-cd &quot;$dir&quot; || exit 1
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+cd &quot;${dir}&quot; || exit 1
+</a> 
+ # detect git push -f
+ force=0
+ while read -r old new ref; do
+<a href="#h4-1-15" id="h4-1-15" class="d">-	hasrevs=$(git rev-list &quot;$old&quot; &quot;^$new&quot; | sed 1q)
+</a><a href="#h4-1-16" id="h4-1-16" class="d">-	if test -n &quot;$hasrevs&quot;; then
+</a><a href="#h4-1-17" id="h4-1-17" class="i">+	hasrevs=$(git rev-list &quot;${old}&quot; &quot;^${new}&quot; | sed 1q)
+</a><a href="#h4-1-18" id="h4-1-18" class="i">+	if test -n &quot;${hasrevs}&quot;; then
+</a> 		force=1
+ 		break
+ 	fi
+<a href="#h4-2" id="h4-2" class="h">@@ -47,14 +47,15 @@ printf &quot;[%s] stagit HTML pages... &quot; &quot;${d}&quot;
+</a> mkdir -p &quot;${destdir}/${d}&quot;
+ cd &quot;${destdir}/${d}&quot; || exit 1
+ 
+<a href="#h4-2-3" id="h4-2-3" class="d">-# remove commits and $cachefile on git push -f, this recreated later on.
+</a><a href="#h4-2-4" id="h4-2-4" class="d">-if test &quot;$force&quot; = &quot;1&quot;; then
+</a><a href="#h4-2-5" id="h4-2-5" class="i">+# remove commits and ${cachefile} on git push -f, this recreated later on.
+</a><a href="#h4-2-6" id="h4-2-6" class="i">+if test &quot;${force}&quot; = &quot;1&quot;; then
+</a> 	rm -f &quot;${cachefile}&quot;
+ 	rm -rf &quot;commit&quot;
+ fi
+ 
+ # make index.
+ stagit-index &quot;${reposdir}/&quot;*/ &gt; &quot;${destdir}/index.html&quot;
+<a href="#h4-2-13" id="h4-2-13" class="i">+
+</a> # make pages.
+ stagit -c &quot;${cachefile}&quot; &quot;${reposdir}/${r}&quot;
+ 
+<a href="#h4-3" id="h4-3" class="h">@@ -62,4 +63,4 @@ ln -sf log.html index.html
+</a> ln -sf ../style.css style.css
+ ln -sf ../logo.png logo.png
+ 
+<a href="#h4-3-3" id="h4-3-3" class="d">-printf &quot;done\n&quot;
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+echo &quot;done&quot;
+</a></pre>
+</div>
+</body>
+</html>

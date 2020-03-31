@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Reduce visibility wherever possible - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e0215d53770a9b6bc6e5d7b9a603ecd34dbd7100.html">e0215d53770a9b6bc6e5d7b9a603ecd34dbd7100</a>
+<b>parent</b> <a href="../commit/30683c70ab62fd37b5921cf72077b9aef2cb842e.html">30683c70ab62fd37b5921cf72077b9aef2cb842e</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 24 Feb 2018 16:32:20 -0600
+
+Reduce visibility wherever possible
+
+When possible, declare functions/variables static and move struct
+definitions out of headers.  In order to allow utf8decode to become
+internal, use codepoint for DECSCUSR extension directly.
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">31</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.h</a></td><td> | </td><td class="num">40</td><td><span class="i"></span><span class="d">----------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">win.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">x.c</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>4 files changed, 43 insertions(+), 44 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -36,6 +36,7 @@
+</a> 
+ /* Arbitrary sizes */
+ #define UTF_INVALID   0xFFFD
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define UTF_SIZ       4
+</a> #define ESC_BUF_SIZ   (128*UTF_SIZ)
+ #define ESC_ARG_SIZ   16
+ #define STR_BUF_SIZ   ESC_BUF_SIZ
+<a href="#h0-1" id="h0-1" class="h">@@ -95,6 +96,31 @@ enum escape_state {
+</a> 	ESC_DCS        =128,
+ };
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+typedef struct {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	Glyph attr; /* current char attributes */
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	int x;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	int y;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	char state;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+} TCursor;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+typedef struct {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	int mode;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	int type;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	int snap;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	/*
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	 * Selection variables:
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	 * nb – normalized coordinates of the beginning of the selection
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	 * ne – normalized coordinates of the end of the selection
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	 * ob – original coordinates of the beginning of the selection
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	 * oe – original coordinates of the end of the selection
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	 */
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	struct {
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+		int x, y;
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	} nb, ne, ob, oe;
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	int alt;
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+} Selection;
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+
+</a> /* Internal representation of the screen */
+ typedef struct {
+ 	int row;      /* nb row */
+<a href="#h0-2" id="h0-2" class="h">@@ -187,15 +213,18 @@ static void tstrsequence(uchar);
+</a> 
+ static void drawregion(int, int, int, int);
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+static void selnormalize(void);
+</a> static void selscroll(int, int);
+ static void selsnap(int *, int *, int);
+ 
+<a href="#h0-2-7" id="h0-2-7" class="i">+static size_t utf8decode(const char *, Rune *, size_t);
+</a> static Rune utf8decodebyte(char, size_t *);
+ static char utf8encodebyte(Rune, size_t);
+<a href="#h0-2-10" id="h0-2-10" class="d">-static char *utf8strchr(char *s, Rune u);
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+static char *utf8strchr(char *, Rune);
+</a> static size_t utf8validate(Rune *, size_t);
+ 
+ static char *base64dec(const char *);
+<a href="#h0-2-15" id="h0-2-15" class="i">+static char base64dec_getc(const char **);
+</a> 
+ static ssize_t xwrite(int, const char *, size_t);
+ 
+<b>diff --git a/<a id="h1" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,8 +1,5 @@
+</a> /* See LICENSE for license details. */
+ 
+<a href="#h1-0-2" id="h1-0-2" class="d">-/* Arbitrary sizes */
+</a><a href="#h1-0-3" id="h1-0-3" class="d">-#define UTF_SIZ       4
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-
+</a> /* macros */
+ #define MIN(a, b)		((a) &lt; (b) ? (a) : (b))
+ #define MAX(a, b)		((a) &lt; (b) ? (b) : (a))
+<a href="#h1-1" id="h1-1" class="h">@@ -69,41 +66,6 @@ typedef struct {
+</a> 
+ typedef Glyph *Line;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-typedef struct {
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	Glyph attr; /* current char attributes */
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	int x;
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	int y;
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-	char state;
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-} TCursor;
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-/* Purely graphic info */
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-typedef struct {
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-	int tw, th; /* tty width and height */
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-	int w, h; /* window width and height */
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-	int ch; /* char height */
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-	int cw; /* char width  */
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-	int mode; /* window state/mode flags */
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-	int cursor; /* cursor style */
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-} TermWindow;
+</a><a href="#h1-1-19" id="h1-1-19" class="d">-
+</a><a href="#h1-1-20" id="h1-1-20" class="d">-typedef struct {
+</a><a href="#h1-1-21" id="h1-1-21" class="d">-	int mode;
+</a><a href="#h1-1-22" id="h1-1-22" class="d">-	int type;
+</a><a href="#h1-1-23" id="h1-1-23" class="d">-	int snap;
+</a><a href="#h1-1-24" id="h1-1-24" class="d">-	/*
+</a><a href="#h1-1-25" id="h1-1-25" class="d">-	 * Selection variables:
+</a><a href="#h1-1-26" id="h1-1-26" class="d">-	 * nb – normalized coordinates of the beginning of the selection
+</a><a href="#h1-1-27" id="h1-1-27" class="d">-	 * ne – normalized coordinates of the end of the selection
+</a><a href="#h1-1-28" id="h1-1-28" class="d">-	 * ob – original coordinates of the beginning of the selection
+</a><a href="#h1-1-29" id="h1-1-29" class="d">-	 * oe – original coordinates of the end of the selection
+</a><a href="#h1-1-30" id="h1-1-30" class="d">-	 */
+</a><a href="#h1-1-31" id="h1-1-31" class="d">-	struct {
+</a><a href="#h1-1-32" id="h1-1-32" class="d">-		int x, y;
+</a><a href="#h1-1-33" id="h1-1-33" class="d">-	} nb, ne, ob, oe;
+</a><a href="#h1-1-34" id="h1-1-34" class="d">-
+</a><a href="#h1-1-35" id="h1-1-35" class="d">-	int alt;
+</a><a href="#h1-1-36" id="h1-1-36" class="d">-} Selection;
+</a><a href="#h1-1-37" id="h1-1-37" class="d">-
+</a> typedef union {
+ 	int i;
+ 	uint ui;
+<a href="#h1-2" id="h1-2" class="h">@@ -137,11 +99,9 @@ void selclear(void);
+</a> void selinit(void);
+ void selstart(int, int, int);
+ void selextend(int, int, int, int);
+<a href="#h1-2-3" id="h1-2-3" class="d">-void selnormalize(void);
+</a> int selected(int, int);
+ char *getsel(void);
+ 
+<a href="#h1-2-7" id="h1-2-7" class="d">-size_t utf8decode(const char *, Rune *, size_t);
+</a> size_t utf8encode(Rune, char *);
+ 
+ void *xmalloc(size_t);
+<b>diff --git a/<a id="h2" href="../file/win.h.html">win.h</a> b/<a href="../file/win.h.html">win.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -27,7 +27,6 @@ void xbell(void);
+</a> void xclipcopy(void);
+ void xdrawcursor(int, int, Glyph, int, int, Glyph);
+ void xdrawline(Line, int, int, int);
+<a href="#h2-0-3" id="h2-0-3" class="d">-void xhints(void);
+</a> void xfinishdraw(void);
+ void xloadcols(void);
+ int xsetcolorname(int, const char *);
+<b>diff --git a/<a id="h3" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -76,6 +76,15 @@ typedef XftGlyphFontSpec GlyphFontSpec;
+</a> 
+ /* Purely graphic info */
+ typedef struct {
+<a href="#h3-0-3" id="h3-0-3" class="i">+	int tw, th; /* tty width and height */
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	int w, h; /* window width and height */
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+	int ch; /* char height */
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+	int cw; /* char width  */
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	int mode; /* window state/mode flags */
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	int cursor; /* cursor style */
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+} TermWindow;
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+typedef struct {
+</a> 	Display *dpy;
+ 	Colormap cmap;
+ 	Window win;
+<a href="#h3-1" id="h3-1" class="h">@@ -133,6 +142,8 @@ static int xgeommasktogravity(int);
+</a> static void xinit(int, int);
+ static void cresize(int, int);
+ static void xresize(int, int);
+<a href="#h3-1-3" id="h3-1-3" class="i">+static void xhints(void);
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+static int xloadcolor(int, const char *, Color *);
+</a> static int xloadfont(Font *, FcPattern *);
+ static void xloadfonts(char *, double);
+ static void xunloadfont(Font *);
+<a href="#h3-2" id="h3-2" class="h">@@ -1430,8 +1441,8 @@ xdrawcursor(int cx, int cy, Glyph g, int ox, int oy, Glyph og)
+</a> 	/* draw the new one */
+ 	if (IS_SET(MODE_FOCUSED)) {
+ 		switch (win.cursor) {
+<a href="#h3-2-3" id="h3-2-3" class="d">-		case 7: /* st extension: snowman */
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-			utf8decode(&quot;☃&quot;, &amp;g.u, UTF_SIZ);
+</a><a href="#h3-2-5" id="h3-2-5" class="i">+		case 7: /* st extension: snowman (U+2603) */
+</a><a href="#h3-2-6" id="h3-2-6" class="i">+			g.u = 0x2603;
+</a> 		case 0: /* Blinking Block */
+ 		case 1: /* Blinking Block (Default) */
+ 		case 2: /* Steady Block */
+</pre>
+</div>
+</body>
+</html>

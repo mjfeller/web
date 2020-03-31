@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>improve documentation - stagit - static site generate for git repositories
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="stagit Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>stagit</h1><span class="desc">static site generate for git repositories
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8eabe24bdda7003453bbd034d82ebc479e2c76bc.html">8eabe24bdda7003453bbd034d82ebc479e2c76bc</a>
+<b>parent</b> <a href="../commit/e9e7978381a2b3567902420d5ea1539d3c695b31.html">e9e7978381a2b3567902420d5ea1539d3c695b31</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Sat, 22 Apr 2017 14:38:39 +0200
+
+improve documentation
+
+- add example to README to extract gitweb.owner from a git config.
+  this is used in gitweb and some cgit configurations.
+- fix (new) mandoc warnings (new sentence on each line).
+- improve some texts in the man pages, sort / structure some list items.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">README</a></td><td> | </td><td class="num">19</td><td><span class="i">++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">stagit-index.1</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">stagit.1</a></td><td> | </td><td class="num">47</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>3 files changed, 52 insertions(+), 27 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/README.html">README</a> b/<a href="../file/README.html">README</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -61,6 +61,23 @@ make
+</a> make install
+ 
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+Extract owner field from git config
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+-----------------------------------
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+A (hacky) way to extract the gitweb owner for example in the format:
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	[gitweb]
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+		owner = Name here
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+Script:
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	#!/bin/sh
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	awk &#39;/^[ 	]*owner[ 	]=/ {
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		sub(/^[^=]*=[ 	]*/, &quot;&quot;);
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		print $0;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	}&#39;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+
+</a> Features
+ --------
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -86,7 +103,7 @@ Cons
+</a> - Not suitable for repositories with many branches, a quite linear history is
+   assumed (from HEAD).
+ - Relatively slow to run the first time (about 3 seconds for sbase,
+<a href="#h0-1-3" id="h0-1-3" class="d">-  1500+ commits), incremental updates after it are faster.
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+  1500+ commits), incremental updates are faster.
+</a> - Does not support some of the dynamic features cgit has, like:
+   - snapshot tarballs.
+   - file tree per commit.
+<b>diff --git a/<a id="h1" href="../file/stagit-index.1.html">stagit-index.1</a> b/<a href="../file/stagit-index.1.html">stagit-index.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -10,13 +10,14 @@
+</a> .Sh DESCRIPTION
+ .Nm
+ will create an index HTML page for the repositories specified and writes
+<a href="#h1-0-3" id="h1-0-3" class="d">-the HTML data to stdout. The repos in the index are in the same order as
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-the arguments
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+the HTML data to stdout.
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+The repos in the index are in the same order as the arguments
+</a> .Ar repodir
+ specified.
+ .Pp
+<a href="#h1-0-10" id="h1-0-10" class="d">-The basename of the directory is used as the name. The suffix &quot;.git&quot; is
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-removed from the basename, this is commonly used for &quot;bare&quot; repos.
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+The basename of the directory is used as the repository name.
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+The suffix &quot;.git&quot; is removed from the basename, this suffix is commonly used
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+for &quot;bare&quot; repos.
+</a> .Pp
+ The content of the follow files specifies the meta data for each repository:
+ .Bl -tag -width Ds
+<a href="#h1-1" id="h1-1" class="h">@@ -28,10 +29,10 @@ owner of repository
+</a> .Pp
+ For changing the style of the page you can use the following files:
+ .Bl -tag -width Ds
+<a href="#h1-1-3" id="h1-1-3" class="d">-.It logo.png
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-32x32 logo.
+</a> .It favicon.png
+ favicon image.
+<a href="#h1-1-7" id="h1-1-7" class="i">+.It logo.png
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+32x32 logo.
+</a> .It style.css
+ CSS stylesheet.
+ .El
+<b>diff --git a/<a id="h2" href="../file/stagit.1.html">stagit.1</a> b/<a href="../file/stagit.1.html">stagit.1</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -14,51 +14,58 @@ writes HTML pages for the repository
+</a> .Ar repodir
+ to the current directory.
+ .Pp
+<a href="#h2-0-3" id="h2-0-3" class="d">-Optionally the
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-.Fl c Ar cachefile
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-option can be used to cache the entries of the log page up to the point of
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-the last commit. The
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+The options are as follows:
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+.Bl -tag -width Ds
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+.It Fl c Ar cachefile
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+Cache the entries of the log page up to the point of
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+the last commit.
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+The
+</a> .Ar cachefile
+<a href="#h2-0-14" id="h2-0-14" class="d">-will store the last commit id and the entries in the HTML table. It is up
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-to the user to make sure the state of the
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+will store the last commit id and the entries in the HTML table.
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+It is up to the user to make sure the state of the
+</a> .Ar cachefile
+ is in sync with the history of the repository.
+<a href="#h2-0-20" id="h2-0-20" class="i">+.El
+</a> .Pp
+ The following files will be written:
+ .Bl -tag -width Ds
+ .It atom.xml
+ Atom XML feed
+ .It files.html
+<a href="#h2-0-27" id="h2-0-27" class="d">-List of files in the latest HEAD commit, linking to the file.
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+List of files in the latest tree, linking to the file.
+</a> .It log.html
+ List of commits in order of most recent to old of the commits (top to bottom),
+<a href="#h2-0-31" id="h2-0-31" class="d">-each commit links to a page with a diff and diffstat of the commit.
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+each commit links to a page with a diffstat and diff of the commit.
+</a> .It refs.html
+ Lists references of the repository such as branches and tags.
+ .El
+ .Pp
+ For each entry in HEAD a file will be written in the format:
+<a href="#h2-0-38" id="h2-0-38" class="d">-file/filepath.html. This file will contain the textual data of the file
+</a><a href="#h2-0-39" id="h2-0-39" class="d">-prefixed by line numbers. The file will have the string &quot;Binary file&quot;
+</a><a href="#h2-0-40" id="h2-0-40" class="d">-if the data is considered to be non-textual.
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+file/filepath.html.
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+This file will contain the textual data of the file prefixed by line numbers.
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+The file will have the string &quot;Binary file&quot; if the data is considered to be
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+non-textual.
+</a> .Pp
+ For each commit a file will be written in the format:
+<a href="#h2-0-47" id="h2-0-47" class="d">-commit/commitid.html. This file will contain the diff and diffstat of the
+</a><a href="#h2-0-48" id="h2-0-48" class="d">-commit. It will write the string &quot;Binary files differ&quot; if the data is
+</a><a href="#h2-0-49" id="h2-0-49" class="d">-considered to be non-textual. Too large diffs will be suppressed and a string
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+commit/commitid.html.
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+This file will contain the diffstat and diff of the commit.
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+It will write the string &quot;Binary files differ&quot; if the data is considered to
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+be non-textual.
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+Too large diffs will be suppressed and a string
+</a> &quot;Diff is too large, output suppressed&quot; will be written.
+ .Pp
+ When a commit HTML file exists it won&#39;t be overwritten again, note that if
+ you&#39;ve changed
+ .Nm
+ or changed one of the metadata files of the repository it is recommended to
+<a href="#h2-0-61" id="h2-0-61" class="d">-recreate all the output files because it will contain old data. To do this
+</a><a href="#h2-0-62" id="h2-0-62" class="d">-remove the output directory and
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+recreate all the output files because it will contain old data.
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+To do this remove the output directory and
+</a> .Ar cachefile ,
+ then recreate the files.
+ .Pp
+<a href="#h2-0-68" id="h2-0-68" class="d">-The basename of the directory is used as the name. The suffix &quot;.git&quot; is
+</a><a href="#h2-0-69" id="h2-0-69" class="d">-removed from the basename, this is commonly used for &quot;bare&quot; repos.
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+The basename of the directory is used as the repository name.
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+The suffix &quot;.git&quot; is removed from the basename, this suffix is commonly used
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+for &quot;bare&quot; repos.
+</a> .Pp
+ The content of the follow files specifies the metadata for each repository:
+ .Bl -tag -width Ds
+<a href="#h2-1" id="h2-1" class="h">@@ -75,10 +82,10 @@ exists in HEAD a direct link in the menu is made.
+</a> .Pp
+ For changing the style of the page you can use the following files:
+ .Bl -tag -width Ds
+<a href="#h2-1-3" id="h2-1-3" class="d">-.It logo.png
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-32x32 logo.
+</a> .It favicon.png
+ favicon image.
+<a href="#h2-1-7" id="h2-1-7" class="i">+.It logo.png
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+32x32 logo.
+</a> .It style.css
+ CSS stylesheet.
+ .El
+</pre>
+</div>
+</body>
+</html>

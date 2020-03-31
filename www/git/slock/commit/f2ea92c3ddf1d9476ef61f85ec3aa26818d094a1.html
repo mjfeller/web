@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Blank the screen with color 0, add third color for failed logins - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f2ea92c3ddf1d9476ef61f85ec3aa26818d094a1.html">f2ea92c3ddf1d9476ef61f85ec3aa26818d094a1</a>
+<b>parent</b> <a href="../commit/a31b9191111572dafaa8366415b89a4472aa4626.html">a31b9191111572dafaa8366415b89a4472aa4626</a>
+<b>Author:</b> David Phillips &lt;<a href="mailto:dbphillipsnz@gmail.com">dbphillipsnz@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 12 Feb 2015 11:56:35 +1300
+
+Blank the screen with color 0, add third color for failed logins
+
+- Adds another color in config.def.h, COLOR_INIT
+- Renames the colours from numerical ones to ones with meaningful names;
+  COLOR_INPUT for when there is content in the input buffer and COLOR_EMPTY
+  for when the input buffer has been cleared (backspaced or a failed attempt).
+- Ensures XFreeColors frees the right number of colours. This is now derived
+  from the size of `Lock-&gt;colors` rather than being an integer literal.
+- Makes slock exhibit the behaviour described by Markus
+
+The default colours are the same as the ones slock currently uses, with the
+exception of the new color, which I have set to red, as it indicates someone
+has either failed an attempt to unlock, or that they have entered input and
+erased it all.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">slock.c</a></td><td> | </td><td class="num">27</td><td><span class="i">++++++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>2 files changed, 23 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,2 +1,5 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="d">-#define COLOR1 &quot;black&quot;
+</a><a href="#h0-0-1" id="h0-0-1" class="d">-#define COLOR2 &quot;#005577&quot;
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+static const char *colorname[NUMCOLS] = {
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+	&quot;black&quot;,     /* after initialization */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;#005577&quot;,   /* during input */
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	&quot;#CC3333&quot;,   /* failed/cleared the input */
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+};
+</a><b>diff --git a/<a id="h1" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -22,13 +22,20 @@
+</a> #include &lt;bsd_auth.h&gt;
+ #endif
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+enum {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	INIT,
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	INPUT,
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	EMPTY,
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	NUMCOLS
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+};
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+
+</a> #include &quot;config.h&quot;
+ 
+ typedef struct {
+ 	int screen;
+ 	Window root, win;
+ 	Pixmap pmap;
+<a href="#h1-0-16" id="h1-0-16" class="d">-	unsigned long colors[2];
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	unsigned long colors[NUMCOLS];
+</a> } Lock;
+ 
+ static Lock **locks;
+<a href="#h1-1" id="h1-1" class="h">@@ -162,12 +169,12 @@ readpw(Display *dpy, const char *pws)
+</a> 			}
+ 			if (llen == 0 &amp;&amp; len != 0) {
+ 				for (screen = 0; screen &lt; nscreens; screen++) {
+<a href="#h1-1-3" id="h1-1-3" class="d">-					XSetWindowBackground(dpy, locks[screen]-&gt;win, locks[screen]-&gt;colors[1]);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+					XSetWindowBackground(dpy, locks[screen]-&gt;win, locks[screen]-&gt;colors[INPUT]);
+</a> 					XClearWindow(dpy, locks[screen]-&gt;win);
+ 				}
+ 			} else if (llen != 0 &amp;&amp; len == 0) {
+ 				for (screen = 0; screen &lt; nscreens; screen++) {
+<a href="#h1-1-9" id="h1-1-9" class="d">-					XSetWindowBackground(dpy, locks[screen]-&gt;win, locks[screen]-&gt;colors[0]);
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+					XSetWindowBackground(dpy, locks[screen]-&gt;win, locks[screen]-&gt;colors[EMPTY]);
+</a> 					XClearWindow(dpy, locks[screen]-&gt;win);
+ 				}
+ 			}
+<a href="#h1-2" id="h1-2" class="h">@@ -185,7 +192,7 @@ unlockscreen(Display *dpy, Lock *lock)
+</a> 		return;
+ 
+ 	XUngrabPointer(dpy, CurrentTime);
+<a href="#h1-2-3" id="h1-2-3" class="d">-	XFreeColors(dpy, DefaultColormap(dpy, lock-&gt;screen), lock-&gt;colors, 2, 0);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	XFreeColors(dpy, DefaultColormap(dpy, lock-&gt;screen), lock-&gt;colors, NUMCOLS, 0);
+</a> 	XFreePixmap(dpy, lock-&gt;pmap);
+ 	XDestroyWindow(dpy, lock-&gt;win);
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -197,6 +204,7 @@ lockscreen(Display *dpy, int screen)
+</a> {
+ 	char curs[] = {0, 0, 0, 0, 0, 0, 0, 0};
+ 	unsigned int len;
+<a href="#h1-3-3" id="h1-3-3" class="i">+	int i;
+</a> 	Lock *lock;
+ 	XColor color, dummy;
+ 	XSetWindowAttributes wa;
+<a href="#h1-4" id="h1-4" class="h">@@ -213,16 +221,17 @@ lockscreen(Display *dpy, int screen)
+</a> 
+ 	lock-&gt;root = RootWindow(dpy, lock-&gt;screen);
+ 
+<a href="#h1-4-3" id="h1-4-3" class="i">+	for (i = 0; i &lt; NUMCOLS; i++) {
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		XAllocNamedColor(dpy, DefaultColormap(dpy, lock-&gt;screen), colorname[i], &amp;color, &amp;dummy);
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+		lock-&gt;colors[i] = color.pixel;
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+	}
+</a><a href="#h1-4-7" id="h1-4-7" class="i">+
+</a> 	/* init */
+ 	wa.override_redirect = 1;
+<a href="#h1-4-10" id="h1-4-10" class="d">-	wa.background_pixel = BlackPixel(dpy, lock-&gt;screen);
+</a><a href="#h1-4-11" id="h1-4-11" class="i">+	wa.background_pixel = lock-&gt;colors[INIT];
+</a> 	lock-&gt;win = XCreateWindow(dpy, lock-&gt;root, 0, 0, DisplayWidth(dpy, lock-&gt;screen), DisplayHeight(dpy, lock-&gt;screen),
+ 	                          0, DefaultDepth(dpy, lock-&gt;screen), CopyFromParent,
+ 	                          DefaultVisual(dpy, lock-&gt;screen), CWOverrideRedirect | CWBackPixel, &amp;wa);
+<a href="#h1-4-15" id="h1-4-15" class="d">-	XAllocNamedColor(dpy, DefaultColormap(dpy, lock-&gt;screen), COLOR2, &amp;color, &amp;dummy);
+</a><a href="#h1-4-16" id="h1-4-16" class="d">-	lock-&gt;colors[1] = color.pixel;
+</a><a href="#h1-4-17" id="h1-4-17" class="d">-	XAllocNamedColor(dpy, DefaultColormap(dpy, lock-&gt;screen), COLOR1, &amp;color, &amp;dummy);
+</a><a href="#h1-4-18" id="h1-4-18" class="d">-	lock-&gt;colors[0] = color.pixel;
+</a> 	lock-&gt;pmap = XCreateBitmapFromData(dpy, lock-&gt;win, curs, 8, 8);
+ 	invisible = XCreatePixmapCursor(dpy, lock-&gt;pmap, lock-&gt;pmap, &amp;color, &amp;color, 0, 0);
+ 	XDefineCursor(dpy, lock-&gt;win, invisible);
+</pre>
+</div>
+</body>
+</html>

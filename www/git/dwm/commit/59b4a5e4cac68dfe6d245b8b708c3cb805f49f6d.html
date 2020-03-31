@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>draw bar on exposure ;) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/59b4a5e4cac68dfe6d245b8b708c3cb805f49f6d.html">59b4a5e4cac68dfe6d245b8b708c3cb805f49f6d</a>
+<b>parent</b> <a href="../commit/82384e385ee19fc553148f7aa73fafdcbe40461b.html">82384e385ee19fc553148f7aa73fafdcbe40461b</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Fri, 14 Jul 2006 18:46:12 +0200
+
+draw bar on exposure ;)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+</table></pre><pre>3 files changed, 9 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -29,7 +29,7 @@ dwm: ${OBJ}
+</a> 	@${CC} -o $@ ${OBJ} ${LDFLAGS}
+ 
+ clean:
+<a href="#h0-0-3" id="h0-0-3" class="d">-	rm -f dwm *.o core
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	rm -f dwm *.o core dwm-${VERSION}.tar.gz
+</a> 
+ dist: clean
+ 	mkdir -p dwm-${VERSION}
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -14,12 +14,12 @@ VERSION = 0.1
+</a> LIBS = -L${PREFIX}/lib -L/usr/lib -lc -L${X11LIB} -lX11
+ 
+ # Linux/BSD
+<a href="#h1-0-3" id="h1-0-3" class="d">-CFLAGS = -Os -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	-DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-LDFLAGS = ${LIBS}
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-#CFLAGS = -g -Wall -O2 -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+#CFLAGS = -Os -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+</a> #	-DVERSION=\&quot;${VERSION}\&quot;
+<a href="#h1-0-9" id="h1-0-9" class="d">-#LDFLAGS = -g ${LIBS}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+#LDFLAGS = ${LIBS}
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+CFLAGS = -g -Wall -O2 -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	-DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+LDFLAGS = -g ${LIBS}
+</a> 
+ 
+ # Solaris
+<b>diff --git a/<a id="h2" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -142,7 +142,9 @@ expose(XEvent *e)
+</a> 	Client *c;
+ 
+ 	if(ev-&gt;count == 0) {
+<a href="#h2-0-3" id="h2-0-3" class="d">-		if((c = gettitle(ev-&gt;window)))
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+		if(barwin == ev-&gt;window)
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+			draw_bar();
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		else if((c = gettitle(ev-&gt;window)))
+</a> 			draw_client(c);
+ 	}
+ }
+</pre>
+</div>
+</body>
+</html>

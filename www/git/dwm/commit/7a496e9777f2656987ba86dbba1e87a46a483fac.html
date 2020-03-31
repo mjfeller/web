@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed wrong tagging stuff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7a496e9777f2656987ba86dbba1e87a46a483fac.html">7a496e9777f2656987ba86dbba1e87a46a483fac</a>
+<b>parent</b> <a href="../commit/308f95ae5ad6c00fcf15aa26481a9962ceabb796.html">308f95ae5ad6c00fcf15aa26481a9962ceabb796</a>
+<b>Author:</b> anselm@anselm1 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Sat, 22 Dec 2007 12:49:04 +0000
+
+fixed wrong tagging stuff
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>2 files changed, 14 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -13,7 +13,7 @@
+</a> 
+ /* tagging */
+ const char tags[][MAXTAGLEN] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;www&quot; };
+<a href="#h0-0-3" id="h0-0-3" class="d">-Bool seltags[LENGTH(tags)] = {[0] = True};
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+Bool initags[LENGTH(tags)] = {[0] = True};
+</a> Rule rules[] = {
+ 	/* class:instance:title regex	tags regex	isfloating */
+ 	{ &quot;Firefox&quot;,			&quot;www&quot;,		False },
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -297,7 +297,7 @@ applyrules(Client *c) {
+</a> 	if(ch.res_name)
+ 		XFree(ch.res_name);
+ 	if(!matched_tag)
+<a href="#h1-0-3" id="h1-0-3" class="d">-		memcpy(c-&gt;tags, monitors[monitorat(-1, -1)].seltags, sizeof seltags);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		memcpy(c-&gt;tags, monitors[monitorat(-1, -1)].seltags, sizeof initags);
+</a> 	if (!matched_monitor)
+ 		c-&gt;monitor = monitorat(-1, -1);
+ }
+<a href="#h1-1" id="h1-1" class="h">@@ -1056,7 +1056,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	XWindowChanges wc;
+ 
+ 	c = emallocz(sizeof(Client));
+<a href="#h1-1-3" id="h1-1-3" class="d">-	c-&gt;tags = emallocz(sizeof seltags);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	c-&gt;tags = emallocz(sizeof initags);
+</a> 	c-&gt;win = w;
+ 
+ 	applyrules(c);
+<a href="#h1-2" id="h1-2" class="h">@@ -1100,7 +1100,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	if((rettrans = XGetTransientForHint(dpy, w, &amp;trans) == Success))
+ 		for(t = clients; t &amp;&amp; t-&gt;win != trans; t = t-&gt;next);
+ 	if(t)
+<a href="#h1-2-3" id="h1-2-3" class="d">-		memcpy(c-&gt;tags, t-&gt;tags, sizeof seltags);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		memcpy(c-&gt;tags, t-&gt;tags, sizeof initags);
+</a> 	if(!c-&gt;isfloating)
+ 		c-&gt;isfloating = (rettrans == Success) || c-&gt;isfixed;
+ 	attach(c);
+<a href="#h1-3" id="h1-3" class="h">@@ -1181,7 +1181,7 @@ movemouse(Client *c) {
+</a> 			else if(abs((m-&gt;way + m-&gt;wah) - (ny + c-&gt;h + 2 * c-&gt;border)) &lt; SNAP)
+ 				ny = m-&gt;way + m-&gt;wah - c-&gt;h - 2 * c-&gt;border;
+ 			resize(c, nx, ny, c-&gt;w, c-&gt;h, False);
+<a href="#h1-3-3" id="h1-3-3" class="d">-			memcpy(c-&gt;tags, monitors[monitorat(nx, ny)].seltags, sizeof seltags);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+			memcpy(c-&gt;tags, monitors[monitorat(nx, ny)].seltags, sizeof initags);
+</a> 			break;
+ 		}
+ 	}
+<a href="#h1-4" id="h1-4" class="h">@@ -1591,11 +1591,11 @@ setup(void) {
+</a> 		}
+ 
+ 		monitors[i].id = i;
+<a href="#h1-4-3" id="h1-4-3" class="d">-		monitors[i].seltags = emallocz(LENGTH(tags)*sizeof(char*));
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-		monitors[i].prevtags = emallocz(LENGTH(tags)*sizeof(char*));
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+		monitors[i].seltags = emallocz(sizeof initags);
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+		monitors[i].prevtags = emallocz(sizeof initags);
+</a> 
+<a href="#h1-4-8" id="h1-4-8" class="d">-		memcpy(monitors[i].seltags, seltags, sizeof seltags);
+</a><a href="#h1-4-9" id="h1-4-9" class="d">-		memcpy(monitors[i].prevtags, seltags, sizeof seltags);
+</a><a href="#h1-4-10" id="h1-4-10" class="i">+		memcpy(monitors[i].seltags, initags, sizeof initags);
+</a><a href="#h1-4-11" id="h1-4-11" class="i">+		memcpy(monitors[i].prevtags, initags, sizeof initags);
+</a> 
+ 		/* init appearance */
+ 		monitors[i].dc.norm[ColBorder] = getcolor(NORMBORDERCOLOR);
+<a href="#h1-5" id="h1-5" class="h">@@ -1950,7 +1950,7 @@ view(const char *arg) {
+</a> 
+ 	Monitor *m = &amp;monitors[monitorat(-1, -1)];
+ 
+<a href="#h1-5-3" id="h1-5-3" class="d">-	memcpy(m-&gt;prevtags, seltags, sizeof seltags);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	memcpy(m-&gt;prevtags, m-&gt;seltags, sizeof initags);
+</a> 	for(i = 0; i &lt; LENGTH(tags); i++)
+ 		m-&gt;seltags[i] = (NULL == arg);
+ 	m-&gt;seltags[idxoftag(arg)] = True;
+<a href="#h1-6" id="h1-6" class="h">@@ -1963,9 +1963,9 @@ viewprevtag(const char *arg) {
+</a> 
+ 	Monitor *m = &amp;monitors[monitorat(-1, -1)];
+ 
+<a href="#h1-6-3" id="h1-6-3" class="d">-	memcpy(tmp, m-&gt;seltags, sizeof seltags);
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-	memcpy(m-&gt;seltags, m-&gt;prevtags, sizeof seltags);
+</a><a href="#h1-6-5" id="h1-6-5" class="d">-	memcpy(m-&gt;prevtags, tmp, sizeof seltags);
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+	memcpy(tmp, m-&gt;seltags, sizeof initags);
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+	memcpy(m-&gt;seltags, m-&gt;prevtags, sizeof initags);
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+	memcpy(m-&gt;prevtags, tmp, sizeof initags);
+</a> 	arrange();
+ }
+ 
+<a href="#h1-7" id="h1-7" class="h">@@ -2011,7 +2011,7 @@ movetomonitor(const char *arg) {
+</a> 	if (sel) {
+ 		sel-&gt;monitor = arg ? atoi(arg) : (sel-&gt;monitor+1) % mcount;
+ 
+<a href="#h1-7-3" id="h1-7-3" class="d">-		memcpy(sel-&gt;tags, monitors[sel-&gt;monitor].seltags, sizeof seltags);
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+		memcpy(sel-&gt;tags, monitors[sel-&gt;monitor].seltags, sizeof initags);
+</a> 		resize(sel, monitors[sel-&gt;monitor].wax, monitors[sel-&gt;monitor].way, sel-&gt;w, sel-&gt;h, True);
+ 		arrange();
+ 	}
+</pre>
+</div>
+</body>
+</html>

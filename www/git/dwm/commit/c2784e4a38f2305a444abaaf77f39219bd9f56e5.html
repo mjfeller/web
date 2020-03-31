@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied noviewprev.diff, fix.diff and unusedflags.diff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c2784e4a38f2305a444abaaf77f39219bd9f56e5.html">c2784e4a38f2305a444abaaf77f39219bd9f56e5</a>
+<b>parent</b> <a href="../commit/6e9387793b06980b2420bf64106044cabf63e490.html">6e9387793b06980b2420bf64106044cabf63e490</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sun,  1 Jun 2008 10:54:02 +0100
+
+applied noviewprev.diff, fix.diff and unusedflags.diff
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>2 files changed, 17 insertions(+), 24 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -51,7 +51,7 @@ Key keys[] = {
+</a> 	{ MODKEY,                       XK_l,      setmfact,       (double[]){+0.05} },
+ 	{ MODKEY,                       XK_m,      togglemax,      NULL },
+ 	{ MODKEY,                       XK_Return, zoom,           NULL },
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ MODKEY,                       XK_Tab,    viewprevtag,    NULL },
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	{ MODKEY,                       XK_Tab,    view,           NULL },
+</a> 	{ MODKEY|ShiftMask,             XK_c,      killclient,     NULL },
+ 	{ MODKEY,                       XK_space,  togglelayout,   NULL },
+ 	{ MODKEY|ShiftMask,             XK_space,  togglefloating, NULL },
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -69,7 +69,6 @@ struct Client {
+</a> 	int x, y, w, h;
+ 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int minax, maxax, minay, maxay;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	long flags;
+</a> 	int bw, oldbw;
+ 	Bool isbanned, isfixed, isfloating, ismoved, isurgent;
+ 	uint tags;
+<a href="#h1-1" id="h1-1" class="h">@@ -183,7 +182,6 @@ void updatesizehints(Client *c);
+</a> void updatetitle(Client *c);
+ void updatewmhints(Client *c);
+ void view(const void *arg);
+<a href="#h1-1-3" id="h1-1-3" class="d">-void viewprevtag(const void *arg);
+</a> int xerror(Display *dpy, XErrorEvent *ee);
+ int xerrordummy(Display *dpy, XErrorEvent *ee);
+ int xerrorstart(Display *dpy, XErrorEvent *ee);
+<a href="#h1-2" id="h1-2" class="h">@@ -419,7 +417,9 @@ configurerequest(XEvent *e) {
+</a> 	if((c = getclient(ev-&gt;window))) {
+ 		if(ev-&gt;value_mask &amp; CWBorderWidth)
+ 			c-&gt;bw = ev-&gt;border_width;
+<a href="#h1-2-3" id="h1-2-3" class="d">-		if(c-&gt;isfixed || c-&gt;isfloating || !lt-&gt;arrange) {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		if(ismax &amp;&amp; !c-&gt;isbanned &amp;&amp; !c-&gt;isfixed)
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+			XMoveResizeWindow(dpy, c-&gt;win, wx, wy, ww - 2 * c-&gt;bw, wh + 2 * c-&gt;bw);
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+		else if(c-&gt;isfloating || !lt-&gt;arrange) {
+</a> 			if(ev-&gt;value_mask &amp; CWX)
+ 				c-&gt;x = sx + ev-&gt;x;
+ 			if(ev-&gt;value_mask &amp; CWY)
+<a href="#h1-3" id="h1-3" class="h">@@ -946,6 +946,8 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 		applyrules(c);
+ 	if(!c-&gt;isfloating)
+ 		c-&gt;isfloating = (rettrans == Success) || c-&gt;isfixed;
+<a href="#h1-3-3" id="h1-3-3" class="i">+	if(c-&gt;isfloating)
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		XRaiseWindow(dpy, c-&gt;win);
+</a> 	attach(c);
+ 	attachstack(c);
+ 	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h); /* some windows require this */
+<a href="#h1-4" id="h1-4" class="h">@@ -1124,7 +1126,7 @@ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> 	if(w &lt; bh)
+ 		w = bh;
+ 	if(c-&gt;x != x || c-&gt;y != y || c-&gt;w != w || c-&gt;h != h || c-&gt;ismoved) {
+<a href="#h1-4-3" id="h1-4-3" class="d">-		c-&gt;isbanned = c-&gt;ismoved = False;
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		c-&gt;ismoved = False;
+</a> 		c-&gt;x = wc.x = x;
+ 		c-&gt;y = wc.y = y;
+ 		c-&gt;w = wc.width = w;
+<a href="#h1-5" id="h1-5" class="h">@@ -1601,42 +1603,40 @@ updatesizehints(Client *c) {
+</a> 	long msize;
+ 	XSizeHints size;
+ 
+<a href="#h1-5-3" id="h1-5-3" class="d">-	if(!XGetWMNormalHints(dpy, c-&gt;win, &amp;size, &amp;msize) || !size.flags)
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-		size.flags = PSize;
+</a><a href="#h1-5-5" id="h1-5-5" class="d">-	c-&gt;flags = size.flags;
+</a><a href="#h1-5-6" id="h1-5-6" class="d">-	if(c-&gt;flags &amp; PBaseSize) {
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+	XGetWMNormalHints(dpy, c-&gt;win, &amp;size, &amp;msize);
+</a><a href="#h1-5-8" id="h1-5-8" class="i">+	if(size.flags &amp; PBaseSize) {
+</a> 		c-&gt;basew = size.base_width;
+ 		c-&gt;baseh = size.base_height;
+ 	}
+<a href="#h1-5-12" id="h1-5-12" class="d">-	else if(c-&gt;flags &amp; PMinSize) {
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+	else if(size.flags &amp; PMinSize) {
+</a> 		c-&gt;basew = size.min_width;
+ 		c-&gt;baseh = size.min_height;
+ 	}
+ 	else
+ 		c-&gt;basew = c-&gt;baseh = 0;
+<a href="#h1-5-19" id="h1-5-19" class="d">-	if(c-&gt;flags &amp; PResizeInc) {
+</a><a href="#h1-5-20" id="h1-5-20" class="i">+	if(size.flags &amp; PResizeInc) {
+</a> 		c-&gt;incw = size.width_inc;
+ 		c-&gt;inch = size.height_inc;
+ 	}
+ 	else
+ 		c-&gt;incw = c-&gt;inch = 0;
+<a href="#h1-5-26" id="h1-5-26" class="d">-	if(c-&gt;flags &amp; PMaxSize) {
+</a><a href="#h1-5-27" id="h1-5-27" class="i">+	if(size.flags &amp; PMaxSize) {
+</a> 		c-&gt;maxw = size.max_width;
+ 		c-&gt;maxh = size.max_height;
+ 	}
+ 	else
+ 		c-&gt;maxw = c-&gt;maxh = 0;
+<a href="#h1-5-33" id="h1-5-33" class="d">-	if(c-&gt;flags &amp; PMinSize) {
+</a><a href="#h1-5-34" id="h1-5-34" class="i">+	if(size.flags &amp; PMinSize) {
+</a> 		c-&gt;minw = size.min_width;
+ 		c-&gt;minh = size.min_height;
+ 	}
+<a href="#h1-5-38" id="h1-5-38" class="d">-	else if(c-&gt;flags &amp; PBaseSize) {
+</a><a href="#h1-5-39" id="h1-5-39" class="i">+	else if(size.flags &amp; PBaseSize) {
+</a> 		c-&gt;minw = size.base_width;
+ 		c-&gt;minh = size.base_height;
+ 	}
+ 	else
+ 		c-&gt;minw = c-&gt;minh = 0;
+<a href="#h1-5-45" id="h1-5-45" class="d">-	if(c-&gt;flags &amp; PAspect) {
+</a><a href="#h1-5-46" id="h1-5-46" class="i">+	if(size.flags &amp; PAspect) {
+</a> 		c-&gt;minax = size.min_aspect.x;
+ 		c-&gt;maxax = size.max_aspect.x;
+ 		c-&gt;minay = size.min_aspect.y;
+<a href="#h1-6" id="h1-6" class="h">@@ -1669,16 +1669,9 @@ updatewmhints(Client *c) {
+</a> 
+ void
+ view(const void *arg) {
+<a href="#h1-6-3" id="h1-6-3" class="d">-	if(*(int *)arg &amp; TAGMASK) {
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-		seltags ^= 1; /* toggle sel tagset */
+</a><a href="#h1-6-5" id="h1-6-5" class="d">-		tagset[seltags] = *(int *)arg &amp; TAGMASK;
+</a><a href="#h1-6-6" id="h1-6-6" class="d">-		arrange();
+</a><a href="#h1-6-7" id="h1-6-7" class="d">-	}
+</a><a href="#h1-6-8" id="h1-6-8" class="d">-}
+</a><a href="#h1-6-9" id="h1-6-9" class="d">-
+</a><a href="#h1-6-10" id="h1-6-10" class="d">-void
+</a><a href="#h1-6-11" id="h1-6-11" class="d">-viewprevtag(const void *arg) {
+</a> 	seltags ^= 1; /* toggle sel tagset */
+<a href="#h1-6-13" id="h1-6-13" class="i">+	if(arg &amp;&amp; (*(int *)arg &amp; TAGMASK))
+</a><a href="#h1-6-14" id="h1-6-14" class="i">+		tagset[seltags] = *(int *)arg &amp; TAGMASK;
+</a> 	arrange();
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>simplifications - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/caf524626894bdee3756c4065bca44152d0efe9a.html">caf524626894bdee3756c4065bca44152d0efe9a</a>
+<b>parent</b> <a href="../commit/93af72e116a528baac490e528b416dee65c79d3e.html">93af72e116a528baac490e528b416dee65c79d3e</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Tue, 10 Aug 2010 13:38:49 +0100
+
+simplifications
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">32</td><td><span class="i">++++++++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>2 files changed, 14 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -7,7 +7,6 @@ VERSION = 4.2
+</a> PREFIX = /usr/local
+ MANPREFIX = ${PREFIX}/share/man
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-# Xlib
+</a> X11INC = /usr/X11R6/include
+ X11LIB = /usr/X11R6/lib
+ 
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -4,8 +4,8 @@
+</a> #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+ #include &lt;unistd.h&gt;
+<a href="#h1-0-3" id="h1-0-3" class="d">-#include &lt;X11/Xatom.h&gt;
+</a> #include &lt;X11/Xlib.h&gt;
+<a href="#h1-0-5" id="h1-0-5" class="i">+#include &lt;X11/Xatom.h&gt;
+</a> #include &lt;X11/Xutil.h&gt;
+ #ifdef XINERAMA
+ #include &lt;X11/extensions/Xinerama.h&gt;
+<a href="#h1-1" id="h1-1" class="h">@@ -13,6 +13,7 @@
+</a> #include &lt;draw.h&gt;
+ 
+ #define INRECT(x,y,rx,ry,rw,rh) ((x) &gt;= (rx) &amp;&amp; (x) &lt; (rx)+(rw) &amp;&amp; (y) &gt;= (ry) &amp;&amp; (y) &lt; (ry)+(rh))
+<a href="#h1-1-3" id="h1-1-3" class="i">+#define LINEH                   (dc-&gt;font.height + 2)
+</a> #define MIN(a,b)                ((a) &lt; (b) ? (a) : (b))
+ #define MAX(a,b)                ((a) &gt; (b) ? (a) : (b))
+ #define UTF8_CODEPOINT(c)       (((c) &amp; 0xc0) != 0x80)
+<a href="#h1-2" id="h1-2" class="h">@@ -38,7 +39,7 @@ static void run(void);
+</a> static void setup(void);
+ static void usage(void);
+ 
+<a href="#h1-2-3" id="h1-2-3" class="d">-static char text[4096];
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+static char text[BUFSIZ];
+</a> static size_t cursor = 0;
+ static const char *prompt = NULL;
+ static const char *normbgcolor = &quot;#cccccc&quot;;
+<a href="#h1-3" id="h1-3" class="h">@@ -74,21 +75,18 @@ appenditem(Item *item, Item **list, Item **last) {
+</a> 
+ void
+ calcoffsets(void) {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	unsigned int h, i, n;
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	unsigned int i, n;
+</a> 
+<a href="#h1-3-6" id="h1-3-6" class="d">-	h = dc-&gt;font.height+2;
+</a> 	if(lines &gt; 0)
+<a href="#h1-3-8" id="h1-3-8" class="d">-		n = lines * h;
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+		n = lines * LINEH;
+</a> 	else
+ 		n = mw - (promptw + inputw + textw(dc, &quot;&lt;&quot;) + textw(dc, &quot;&gt;&quot;));
+ 
+<a href="#h1-3-13" id="h1-3-13" class="d">-	prev = next = curr;
+</a><a href="#h1-3-14" id="h1-3-14" class="d">-	for(i = 0; next; next = next-&gt;right)
+</a><a href="#h1-3-15" id="h1-3-15" class="d">-		if((i += (lines &gt; 0) ? h : MIN(textw(dc, next-&gt;text), mw/3)) &gt; n)
+</a><a href="#h1-3-16" id="h1-3-16" class="d">-			break;
+</a><a href="#h1-3-17" id="h1-3-17" class="d">-	for(i = 0; prev &amp;&amp; prev-&gt;left; prev = prev-&gt;left)
+</a><a href="#h1-3-18" id="h1-3-18" class="d">-		if((i += (lines &gt; 0) ? h : MIN(textw(dc, prev-&gt;left-&gt;text), mw/3)) &gt; n)
+</a><a href="#h1-3-19" id="h1-3-19" class="d">-			break;
+</a><a href="#h1-3-20" id="h1-3-20" class="i">+	for(i = 0, next = curr; i &lt;= n &amp;&amp; next; next = next-&gt;right)
+</a><a href="#h1-3-21" id="h1-3-21" class="i">+		i += (lines &gt; 0) ? LINEH : MIN(textw(dc, next-&gt;text), mw/3);
+</a><a href="#h1-3-22" id="h1-3-22" class="i">+
+</a><a href="#h1-3-23" id="h1-3-23" class="i">+	for(i = 0, prev = curr; i &lt;= n &amp;&amp; prev &amp;&amp; prev-&gt;left; prev = prev-&gt;left)
+</a><a href="#h1-3-24" id="h1-3-24" class="i">+		i += (lines &gt; 0) ? LINEH : MIN(textw(dc, prev-&gt;left-&gt;text), mw/3);
+</a> }
+ 
+ char *
+<a href="#h1-4" id="h1-4" class="h">@@ -108,9 +106,8 @@ drawmenu(void) {
+</a> 
+ 	dc-&gt;x = 0;
+ 	dc-&gt;y = 0;
+<a href="#h1-4-3" id="h1-4-3" class="i">+	dc-&gt;h = LINEH;
+</a> 	drawrect(dc, 0, 0, mw, mh, BG(dc, normcol));
+<a href="#h1-4-5" id="h1-4-5" class="d">-	dc-&gt;h = dc-&gt;font.height + 2;
+</a><a href="#h1-4-6" id="h1-4-6" class="d">-	dc-&gt;y = topbar ? 0 : mh - dc-&gt;h;
+</a> 
+ 	if(prompt) {
+ 		dc-&gt;w = promptw;
+<a href="#h1-5" id="h1-5" class="h">@@ -123,11 +120,10 @@ drawmenu(void) {
+</a> 		drawrect(dc, curpos, 2, 1, dc-&gt;h - 4, FG(dc, normcol));
+ 
+ 	if(lines &gt; 0) {
+<a href="#h1-5-3" id="h1-5-3" class="d">-		dc-&gt;y = topbar ? dc-&gt;h : 0;
+</a> 		dc-&gt;w = mw - dc-&gt;x;
+ 		for(item = curr; item != next; item = item-&gt;right) {
+<a href="#h1-5-6" id="h1-5-6" class="d">-			drawtext(dc, item-&gt;text, (item == sel) ? selcol : normcol);
+</a> 			dc-&gt;y += dc-&gt;h;
+<a href="#h1-5-8" id="h1-5-8" class="i">+			drawtext(dc, item-&gt;text, (item == sel) ? selcol : normcol);
+</a> 		}
+ 	}
+ 	else if(matches) {
+<a href="#h1-6" id="h1-6" class="h">@@ -237,7 +233,7 @@ keypress(XKeyEvent *ev) {
+</a> 	}
+ 	switch(ksym) {
+ 	default:
+<a href="#h1-6-3" id="h1-6-3" class="d">-		if(!iscntrl((int)*buf))
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+		if(isprint(*buf))
+</a> 			insert(buf, MIN(strlen(buf), sizeof text - cursor));
+ 		break;
+ 	case XK_BackSpace:
+<a href="#h1-7" id="h1-7" class="h">@@ -451,7 +447,7 @@ setup(void) {
+</a> 	selcol[ColFG] = getcolor(dc, selfgcolor);
+ 
+ 	/* menu geometry */
+<a href="#h1-7-3" id="h1-7-3" class="d">-	mh = (dc-&gt;font.height + 2) * (lines + 1);
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	mh = (lines + 1) * LINEH;
+</a> #ifdef XINERAMA
+ 	if((info = XineramaQueryScreens(dc-&gt;dpy, &amp;n))) {
+ 		int i, di;
+</pre>
+</div>
+</body>
+</html>

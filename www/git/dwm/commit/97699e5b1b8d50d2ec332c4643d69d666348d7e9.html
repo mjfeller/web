@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Martin Hurton&#39;s drawtext() patch - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/97699e5b1b8d50d2ec332c4643d69d666348d7e9.html">97699e5b1b8d50d2ec332c4643d69d666348d7e9</a>
+<b>parent</b> <a href="../commit/2dc7f42fd7fc8f1fc8d837265221654e8565eb6b.html">2dc7f42fd7fc8f1fc8d837265221654e8565eb6b</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 18 Aug 2008 09:55:36 +0100
+
+applied Martin Hurton&#39;s drawtext() patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">5</td><td><span class="i">++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -577,15 +577,14 @@ drawtext(const char *text, unsigned long col[ColLast], Bool invert) {
+</a> 	if(!text)
+ 		return;
+ 	olen = strlen(text);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	len = MIN(olen, sizeof buf);
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	memcpy(buf, text, len);
+</a> 	h = dc.font.ascent + dc.font.descent;
+ 	y = dc.y + (dc.h / 2) - (h / 2) + dc.font.ascent;
+ 	x = dc.x + (h / 2);
+ 	/* shorten text if necessary */
+<a href="#h0-0-9" id="h0-0-9" class="d">-	for(; len &amp;&amp; (i = textnw(buf, len)) &gt; dc.w - h; len--);
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	for(len = MIN(olen, sizeof buf); len &amp;&amp; (i = textnw(buf, len)) &gt; dc.w - h; len--);
+</a> 	if(!len)
+ 		return;
+<a href="#h0-0-13" id="h0-0-13" class="i">+	memcpy(buf, text, len);
+</a> 	if(len &lt; olen)
+ 		for(i = len; i &amp;&amp; i &gt; len - 3; buf[--i] = &#39;.&#39;);
+ 	XSetForeground(dpy, dc.gc, col[invert ? ColBG : ColFG]);
+</pre>
+</div>
+</body>
+</html>

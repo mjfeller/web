@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>No need for usage() - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a6dc051e3744ce5b14c54d2d246d3e8258207e76.html">a6dc051e3744ce5b14c54d2d246d3e8258207e76</a>
+<b>parent</b> <a href="../commit/bdcbeab0d8ac0963c61ae1d9d1ed57d3effb8ec3.html">bdcbeab0d8ac0963c61ae1d9d1ed57d3effb8ec3</a>
+<b>Author:</b> FRIGN &lt;<a href="mailto:dev@frign.de">dev@frign.de</a>&gt;
+<b>Date:</b>   Sun, 14 Feb 2016 01:48:48 +0100
+
+No need for usage()
+
+There are 2 arguments why -v and -h are broken:
+
+	1) if you are running off git, -v will show the last stable
+           release, effectively making this option useless.
+           people running stable versions leave open an attack surface
+           this way in case there are vulnerabilities found.
+           99% of the people are also using package managers to keep
+           their software up to date, instead of running $TOOL -v to
+           check how old it is.
+        2) -h is a sad excuse for not just looking at the manual page
+           (man 1 slock). Given we accept a post_lock_command, we can&#39;t
+           be as liberal and just intercept certain flags.
+
+I changed the manpage to reflect this change.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.1</a></td><td> | </td><td class="num">24</td><td><span class="i">+++++++</span><span class="d">-----------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">slock.c</a></td><td> | </td><td class="num">16</td><td><span class="i">++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>2 files changed, 9 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.1.html">slock.1</a> b/<a href="../file/slock.1.html">slock.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,29 +1,19 @@
+</a> .TH SLOCK 1 slock\-VERSION
+ .SH NAME
+<a href="#h0-0-2" id="h0-0-2" class="d">-slock \- simple X display locker
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+slock \- simple X screen locker
+</a> .SH SYNOPSIS
+ .B slock
+<a href="#h0-0-6" id="h0-0-6" class="d">-.RB [ \-v
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-|
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-.IR post_lock_command ]
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+.RB [
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+.IR cmd
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+]
+</a> .SH DESCRIPTION
+ .B slock
+<a href="#h0-0-14" id="h0-0-14" class="d">-is a screen locker for X. If provided, the
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-.IR post_lock_command
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-will be executed when the screen is locked.
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-.SH OPTIONS
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-.TP
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-.B \-v
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-prints version information to stdout, then exits.
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+is an X screen locker. If provided,
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+.IR cmd
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+is executed after the screen has been locked.
+</a> .SH EXAMPLES
+ $ slock /usr/sbin/s2ram
+ .SH CUSTOMIZATION
+ .B slock
+ can be customized by creating a custom config.h and (re)compiling the source
+ code. This keeps it fast, secure and simple.
+<a href="#h0-0-30" id="h0-0-30" class="d">-.SH AUTHORS
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-See the LICENSE file for the authors.
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-.SH LICENSE
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-See the LICENSE file for the terms of redistribution.
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-.SH BUGS
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-Please report them.
+</a><b>diff --git a/<a id="h1" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -272,27 +272,15 @@ lockscreen(Display *dpy, int screen)
+</a> 	return NULL;
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-static void
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-usage(void)
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-{
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-	fprintf(stderr, &quot;usage: slock [-v|POST_LOCK_CMD]\n&quot;);
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-	exit(1);
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-}
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-
+</a> int
+<a href="#h1-0-11" id="h1-0-11" class="d">-main(int argc, char **argv) {
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+main(int argc, char **argv)
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+{
+</a> #ifndef HAVE_BSD_AUTH
+ 	const char *pws;
+ #endif
+ 	Display *dpy;
+ 	int screen;
+ 
+<a href="#h1-0-20" id="h1-0-20" class="d">-	if ((argc == 2) &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-		die(&quot;slock-%s, © 2006-2016 slock engineers\n&quot;, VERSION);
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-	if ((argc == 2) &amp;&amp; !strcmp(&quot;-h&quot;, argv[1]))
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-		usage();
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-
+</a> #ifdef __linux__
+ 	dontkillme();
+ #endif
+</pre>
+</div>
+</body>
+</html>

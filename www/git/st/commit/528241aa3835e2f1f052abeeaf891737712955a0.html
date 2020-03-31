@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Use XftFontMatch in place of FcFontMatch. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/528241aa3835e2f1f052abeeaf891737712955a0.html">528241aa3835e2f1f052abeeaf891737712955a0</a>
+<b>parent</b> <a href="../commit/60aeb37edb8c5280d31b6b3c801d09c7a5fdca76.html">60aeb37edb8c5280d31b6b3c801d09c7a5fdca76</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Fri,  3 Jun 2016 15:02:32 +0200
+
+Use XftFontMatch in place of FcFontMatch.
+
+git am -s didn&#39;t like your patch:
+
+From: Mark Edgar &lt;medgar123@gmail.com&gt;
+
+XftFontMatch calls XftDefaultSubstitute which configures various match
+properties according to the user&#39;s configured Xft defaults (xrdb) as well as
+according to the current display and screen. Most importantly, the screen DPI
+is computed [1]. Without this, st uses a &quot;default&quot; DPI of 75 [2].
+
+[1]: https://cgit.freedesktop.org/xorg/lib/libXft/tree/src/xftdpy.c?id=libXft-2.3.2#n535
+[2]: https://cgit.freedesktop.org/fontconfig/tree/src/fcdefault.c?id=2.11.1#n255
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">5</td><td><span class="i">+</span><span class="d">----</span></td></tr>
+</table></pre><pre>1 file changed, 1 insertion(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3279,7 +3279,7 @@ xloadfont(Font *f, FcPattern *pattern)
+</a> 	FcResult result;
+ 	XGlyphInfo extents;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	match = FcFontMatch(NULL, pattern, &amp;result);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	match = XftFontMatch(xw.dpy, xw.scr, pattern, &amp;result);
+</a> 	if (!match)
+ 		return 1;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -3345,9 +3345,6 @@ xloadfonts(char *fontstr, double fontsize)
+</a> 		defaultfontsize = usedfontsize;
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	FcConfigSubstitute(0, pattern, FcMatchPattern);
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	FcDefaultSubstitute(pattern);
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-
+</a> 	if (xloadfont(&amp;dc.font, pattern))
+ 		die(&quot;st: can&#39;t open font %s\n&quot;, fontstr);
+ 
+</pre>
+</div>
+</body>
+</html>

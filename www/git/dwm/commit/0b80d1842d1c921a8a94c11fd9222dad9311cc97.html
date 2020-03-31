@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>experimental version which allows master clients being increased/decreased - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0b80d1842d1c921a8a94c11fd9222dad9311cc97.html">0b80d1842d1c921a8a94c11fd9222dad9311cc97</a>
+<b>parent</b> <a href="../commit/d7ec23a5db32eb00ee90e60bef35010639498cab.html">d7ec23a5db32eb00ee90e60bef35010639498cab</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Fri,  5 Jan 2007 12:50:39 +0100
+
+experimental version which allows master clients being increased/decreased
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dwm.h</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">main.c</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">view.c</a></td><td> | </td><td class="num">55</td><td><span class="i">++++++++++++++++++++++++++++++++++</span><span class="d">---------------------</span></td></tr>
+</table></pre><pre>6 files changed, 45 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -19,6 +19,7 @@ const char *tags[] = { &quot;dev&quot;, &quot;work&quot;, &quot;net&quot;, &quot;fnord&quot;, NULL };
+</a> 
+ #define MASTER			600		/* per thousand */
+ #define MODKEY			Mod1Mask
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define NMASTER			1		/* clients in master area */
+</a> #define SNAP			40		/* pixel */
+ 
+ #define KEYS \
+<a href="#h0-1" id="h0-1" class="h">@@ -30,10 +31,12 @@ static Key key[] = { \
+</a> 		{ .cmd = &quot;exe=\&quot;$(lsx `echo $PATH | sed &#39;s/:/ /g&#39;` | sort -u &quot; \
+ 			&quot; | dmenu -fn &#39;&quot;FONT&quot;&#39; -nb &#39;&quot;NORMBGCOLOR&quot;&#39; -nf &#39;&quot;NORMFGCOLOR&quot;&#39; &quot; \
+ 			&quot;-sb &#39;&quot;SELBGCOLOR&quot;&#39; -sf &#39;&quot;SELFGCOLOR&quot;&#39;)\&quot; &amp;&amp; exec $exe&quot; } }, \
+<a href="#h0-1-3" id="h0-1-3" class="i">+	{ MODKEY,			XK_d,		incnmaster,	{ .i = -1 } }, \
+</a> 	{ MODKEY,			XK_j,		focusnext,	{ 0 } }, \
+ 	{ MODKEY,			XK_k,		focusprev,	{ 0 } }, \
+ 	{ MODKEY,			XK_Return,	zoom,		{ 0 } }, \
+ 	{ MODKEY,			XK_g,		resizemaster,	{ .i = 15 } }, \
+<a href="#h0-1-8" id="h0-1-8" class="i">+	{ MODKEY,			XK_i,		incnmaster,	{ .i = 1 } }, \
+</a> 	{ MODKEY,			XK_s,		resizemaster,	{ .i = -15 } }, \
+ 	{ MODKEY|ShiftMask,		XK_0,		tag,		{ .i = -1 } }, \
+ 	{ MODKEY|ShiftMask,		XK_1,		tag,		{ .i = 0 } }, \
+<b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -19,6 +19,7 @@ const char *tags[] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, NULL };
+</a> 
+ #define MASTER			600		/* per thousand */
+ #define MODKEY			Mod1Mask
+<a href="#h1-0-3" id="h1-0-3" class="i">+#define NMASTER			1		/* clients in master area */
+</a> #define SNAP			20		/* pixel */
+ 
+ #define KEYS \
+<b>diff --git a/<a id="h2" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -17,8 +17,8 @@ LIBS = -L/usr/lib -lc -L${X11LIB} -lX11
+</a> # flags
+ CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+ LDFLAGS = ${LIBS}
+<a href="#h2-0-3" id="h2-0-3" class="d">-#CFLAGS = -g -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-#LDFLAGS = -g ${LIBS}
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+CFLAGS = -g -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+LDFLAGS = -g ${LIBS}
+</a> 
+ # Solaris
+ #CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+<b>diff --git a/<a id="h3" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -96,7 +96,8 @@ extern char stext[1024];			/* status text */
+</a> extern int bx, by, bw, bh, bmw;			/* bar geometry, bar mode label width */
+ extern int screen, sx, sy, sw, sh;		/* screen geometry */
+ extern int wax, way, wah, waw;			/* windowarea geometry */
+<a href="#h3-0-3" id="h3-0-3" class="d">-extern unsigned int master, ntags, numlockmask;	/* master percent, number of tags, dynamic lock mask */
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+extern unsigned int master, nmaster;		/* master percent, number of master clients */
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+extern unsigned int ntags, numlockmask;		/* number of tags, dynamic lock mask */
+</a> extern void (*handler[LASTEvent])(XEvent *);	/* event handler */
+ extern void (*arrange)(void);			/* arrange function, indicates mode  */
+ extern Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h3-1" id="h3-1" class="h">@@ -159,6 +160,7 @@ extern void dofloat(void);			/* arranges all windows floating */
+</a> extern void dotile(void);			/* arranges all windows tiled */
+ extern void focusnext(Arg *arg);		/* focuses next visible client, arg is ignored  */
+ extern void focusprev(Arg *arg);		/* focuses previous visible client, arg is ignored */
+<a href="#h3-1-3" id="h3-1-3" class="i">+extern void incnmaster(Arg *arg);		/* increments nmaster with arg&#39;s index value */
+</a> extern Bool isvisible(Client *c);		/* returns True if client is visible */
+ extern void resizemaster(Arg *arg);		/* resizes the master percent with arg&#39;s index value */
+ extern void restack(void);			/* restores z layers of all clients */
+<b>diff --git a/<a id="h4" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -20,7 +20,7 @@
+</a> char stext[1024];
+ Bool *seltag;
+ int bx, by, bw, bh, bmw, masterd, screen, sx, sy, sw, sh, wax, way, waw, wah;
+<a href="#h4-0-3" id="h4-0-3" class="d">-unsigned int master, ntags, numlockmask;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+unsigned int master, nmaster, ntags, numlockmask;
+</a> Atom wmatom[WMLast], netatom[NetLast];
+ Bool running = True;
+ Bool issel = True;
+<a href="#h4-1" id="h4-1" class="h">@@ -133,6 +133,7 @@ setup(void) {
+</a> 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+ 	master = MASTER;
+<a href="#h4-1-3" id="h4-1-3" class="i">+	nmaster = NMASTER;
+</a> 	/* bar */
+ 	bx = sx;
+ 	by = sy;
+<b>diff --git a/<a id="h5" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -69,12 +69,16 @@ dofloat(void) {
+</a> 
+ void
+ dotile(void) {
+<a href="#h5-0-3" id="h5-0-3" class="d">-	unsigned int i, n, mpw, th;
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	unsigned int i, n, mw, mh, tw, th;
+</a> 	Client *c;
+ 
+ 	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+ 		n++;
+<a href="#h5-0-9" id="h5-0-9" class="d">-	mpw = (waw * master) / 1000;
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+	/* window geoms */
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+	mw = (n &gt; nmaster) ? (waw * master) / 1000 : waw;
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+	mh = (n &gt; nmaster) ? wah / nmaster : wah / (n &gt; 0 ? n : 1);
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+	tw = waw - mw;
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+	th = (n &gt; nmaster) ? wah / (n - nmaster) : 0;
+</a> 
+ 	for(i = 0, c = clients; c; c = c-&gt;next)
+ 		if(isvisible(c)) {
+<a href="#h5-1" id="h5-1" class="h">@@ -85,20 +89,16 @@ dotile(void) {
+</a> 			c-&gt;ismax = False;
+ 			c-&gt;x = wax;
+ 			c-&gt;y = way;
+<a href="#h5-1-3" id="h5-1-3" class="d">-			if(n == 1) { /* only 1 window */
+</a><a href="#h5-1-4" id="h5-1-4" class="d">-				c-&gt;w = waw - 2 * BORDERPX;
+</a><a href="#h5-1-5" id="h5-1-5" class="d">-				c-&gt;h = wah - 2 * BORDERPX;
+</a><a href="#h5-1-6" id="h5-1-6" class="d">-			}
+</a><a href="#h5-1-7" id="h5-1-7" class="d">-			else if(i == 0) { /* master window */
+</a><a href="#h5-1-8" id="h5-1-8" class="d">-				c-&gt;w = mpw - 2 * BORDERPX;
+</a><a href="#h5-1-9" id="h5-1-9" class="d">-				c-&gt;h = wah - 2 * BORDERPX;
+</a><a href="#h5-1-10" id="h5-1-10" class="d">-				th = wah / (n - 1);
+</a><a href="#h5-1-11" id="h5-1-11" class="i">+			if(i &lt; nmaster) {
+</a><a href="#h5-1-12" id="h5-1-12" class="i">+				c-&gt;y += i * mh;
+</a><a href="#h5-1-13" id="h5-1-13" class="i">+				c-&gt;w = mw - 2 * BORDERPX;
+</a><a href="#h5-1-14" id="h5-1-14" class="i">+				c-&gt;h = mh - 2 * BORDERPX;
+</a> 			}
+ 			else {  /* tile window */
+<a href="#h5-1-17" id="h5-1-17" class="d">-				c-&gt;x += mpw;
+</a><a href="#h5-1-18" id="h5-1-18" class="d">-				c-&gt;w = (waw - mpw) - 2 * BORDERPX;
+</a><a href="#h5-1-19" id="h5-1-19" class="i">+				c-&gt;x += mw;
+</a><a href="#h5-1-20" id="h5-1-20" class="i">+				c-&gt;w = tw - 2 * BORDERPX;
+</a> 				if(th &gt; bh) {
+<a href="#h5-1-22" id="h5-1-22" class="d">-					c-&gt;y += (i - 1) * th;
+</a><a href="#h5-1-23" id="h5-1-23" class="i">+					c-&gt;y += (i - nmaster) * th;
+</a> 					c-&gt;h = th - 2 * BORDERPX;
+ 				}
+ 				else /* fallback if th &lt; bh */
+<a href="#h5-2" id="h5-2" class="h">@@ -147,6 +147,14 @@ focusprev(Arg *arg) {
+</a> 	}
+ }
+ 
+<a href="#h5-2-3" id="h5-2-3" class="i">+void
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+incnmaster(Arg *arg) {
+</a><a href="#h5-2-5" id="h5-2-5" class="i">+	if(nmaster + arg-&gt;i &lt; 1)
+</a><a href="#h5-2-6" id="h5-2-6" class="i">+		return;
+</a><a href="#h5-2-7" id="h5-2-7" class="i">+	nmaster += arg-&gt;i;
+</a><a href="#h5-2-8" id="h5-2-8" class="i">+	arrange();
+</a><a href="#h5-2-9" id="h5-2-9" class="i">+}
+</a><a href="#h5-2-10" id="h5-2-10" class="i">+
+</a> Bool
+ isvisible(Client *c) {
+ 	unsigned int i;
+<a href="#h5-3" id="h5-3" class="h">@@ -240,7 +248,7 @@ view(Arg *arg) {
+</a> 
+ void
+ zoom(Arg *arg) {
+<a href="#h5-3-3" id="h5-3-3" class="d">-	unsigned int n;
+</a><a href="#h5-3-4" id="h5-3-4" class="i">+	unsigned int i, n;
+</a> 	Client *c;
+ 
+ 	if(!sel)
+<a href="#h5-4" id="h5-4" class="h">@@ -249,14 +257,19 @@ zoom(Arg *arg) {
+</a> 		togglemax(sel);
+ 		return;
+ 	}
+<a href="#h5-4-3" id="h5-4-3" class="d">-	for(n = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h5-4-4" id="h5-4-4" class="d">-		if(isvisible(c) &amp;&amp; !c-&gt;isfloat)
+</a><a href="#h5-4-5" id="h5-4-5" class="d">-			n++;
+</a><a href="#h5-4-6" id="h5-4-6" class="d">-	if(n &lt; 2 || (arrange == dofloat))
+</a><a href="#h5-4-7" id="h5-4-7" class="i">+	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+</a><a href="#h5-4-8" id="h5-4-8" class="i">+		n++;
+</a><a href="#h5-4-9" id="h5-4-9" class="i">+	if(n &lt;= nmaster || (arrange == dofloat))
+</a> 		return;
+<a href="#h5-4-11" id="h5-4-11" class="d">-	if((c = sel) == nexttiled(clients))
+</a><a href="#h5-4-12" id="h5-4-12" class="d">-		if(!(c = nexttiled(c-&gt;next)))
+</a><a href="#h5-4-13" id="h5-4-13" class="d">-			return;
+</a><a href="#h5-4-14" id="h5-4-14" class="i">+
+</a><a href="#h5-4-15" id="h5-4-15" class="i">+	for(c = nexttiled(clients), i = 0; c &amp;&amp; (c != sel) &amp;&amp; i &lt; nmaster; c = nexttiled(c-&gt;next))
+</a><a href="#h5-4-16" id="h5-4-16" class="i">+		i++;
+</a><a href="#h5-4-17" id="h5-4-17" class="i">+	if(c == sel &amp;&amp; i &lt; nmaster)
+</a><a href="#h5-4-18" id="h5-4-18" class="i">+		for(; c &amp;&amp; i &lt; nmaster; c = nexttiled(c-&gt;next))
+</a><a href="#h5-4-19" id="h5-4-19" class="i">+			i++;
+</a><a href="#h5-4-20" id="h5-4-20" class="i">+	if(!c)
+</a><a href="#h5-4-21" id="h5-4-21" class="i">+		return;
+</a><a href="#h5-4-22" id="h5-4-22" class="i">+
+</a> 	detach(c);
+ 	if(clients)
+ 		clients-&gt;prev = c;
+</pre>
+</div>
+</body>
+</html>

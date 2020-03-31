@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Move X-specific selection info into XSelection - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5683b1f80c5ac274adf98517ce2217b4d4896243.html">5683b1f80c5ac274adf98517ce2217b4d4896243</a>
+<b>parent</b> <a href="../commit/138caf294ea4d7968df36ead9d5ff5fc49f6215f.html">138caf294ea4d7968df36ead9d5ff5fc49f6215f</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 21 Feb 2018 22:56:02 -0600
+
+Move X-specific selection info into XSelection
+
+Data about PRIMARY/CLIPBOARD and clicks are part of the front-end, not
+the terminal.
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">4</td><td><span class="i"></span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.h</a></td><td> | </td><td class="num">5</td><td><span class="i"></span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">x.c</a></td><td> | </td><td class="num">31</td><td><span class="i">+++++++++++++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>3 files changed, 19 insertions(+), 21 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -365,13 +365,9 @@ base64dec(const char *src)
+</a> void
+ selinit(void)
+ {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	clock_gettime(CLOCK_MONOTONIC, &amp;sel.tclick1);
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	clock_gettime(CLOCK_MONOTONIC, &amp;sel.tclick2);
+</a> 	sel.mode = SEL_IDLE;
+ 	sel.snap = 0;
+ 	sel.ob.x = -1;
+<a href="#h0-0-8" id="h0-0-8" class="d">-	sel.primary = NULL;
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	sel.clipboard = NULL;
+</a> }
+ 
+ int
+<b>diff --git a/<a id="h1" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -149,12 +149,7 @@ typedef struct {
+</a> 		int x, y;
+ 	} nb, ne, ob, oe;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-	char *primary, *clipboard;
+</a> 	int alt;
+<a href="#h1-0-5" id="h1-0-5" class="d">-	struct timespec tclick1;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-	struct timespec tclick2;
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	//Atom xtarget;
+</a> } Selection;
+ 
+ typedef union {
+<b>diff --git a/<a id="h2" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -94,6 +94,9 @@ typedef struct {
+</a> 
+ typedef struct {
+ 	Atom xtarget;
+<a href="#h2-0-3" id="h2-0-3" class="i">+	char *primary, *clipboard;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	struct timespec tclick1;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	struct timespec tclick2;
+</a> } XSelection;
+ 
+ /* Font structure */
+<a href="#h2-1" id="h2-1" class="h">@@ -234,11 +237,11 @@ clipcopy(const Arg *dummy)
+</a> {
+ 	Atom clipboard;
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-	if (sel.clipboard != NULL)
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-		free(sel.clipboard);
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	if (xsel.clipboard != NULL)
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+		free(xsel.clipboard);
+</a> 
+<a href="#h2-1-8" id="h2-1-8" class="d">-	if (sel.primary != NULL) {
+</a><a href="#h2-1-9" id="h2-1-9" class="d">-		sel.clipboard = xstrdup(sel.primary);
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+	if (xsel.primary != NULL) {
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+		xsel.clipboard = xstrdup(xsel.primary);
+</a> 		clipboard = XInternAtom(xw.dpy, &quot;CLIPBOARD&quot;, 0);
+ 		XSetSelectionOwner(xw.dpy, clipboard, xw.win, CurrentTime);
+ 	}
+<a href="#h2-2" id="h2-2" class="h">@@ -427,9 +430,9 @@ bpress(XEvent *e)
+</a> 		 * If the user clicks below predefined timeouts specific
+ 		 * snapping behaviour is exposed.
+ 		 */
+<a href="#h2-2-3" id="h2-2-3" class="d">-		if (TIMEDIFF(now, sel.tclick2) &lt;= tripleclicktimeout) {
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+		if (TIMEDIFF(now, xsel.tclick2) &lt;= tripleclicktimeout) {
+</a> 			sel.snap = SNAP_LINE;
+<a href="#h2-2-6" id="h2-2-6" class="d">-		} else if (TIMEDIFF(now, sel.tclick1) &lt;= doubleclicktimeout) {
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+		} else if (TIMEDIFF(now, xsel.tclick1) &lt;= doubleclicktimeout) {
+</a> 			sel.snap = SNAP_WORD;
+ 		} else {
+ 			sel.snap = 0;
+<a href="#h2-3" id="h2-3" class="h">@@ -439,8 +442,8 @@ bpress(XEvent *e)
+</a> 		if (sel.snap != 0)
+ 			sel.mode = SEL_READY;
+ 		tsetdirt(sel.nb.y, sel.ne.y);
+<a href="#h2-3-3" id="h2-3-3" class="d">-		sel.tclick2 = sel.tclick1;
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-		sel.tclick1 = now;
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+		xsel.tclick2 = xsel.tclick1;
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+		xsel.tclick1 = now;
+</a> 	}
+ }
+ 
+<a href="#h2-4" id="h2-4" class="h">@@ -594,9 +597,9 @@ selrequest(XEvent *e)
+</a> 		 */
+ 		clipboard = XInternAtom(xw.dpy, &quot;CLIPBOARD&quot;, 0);
+ 		if (xsre-&gt;selection == XA_PRIMARY) {
+<a href="#h2-4-3" id="h2-4-3" class="d">-			seltext = sel.primary;
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+			seltext = xsel.primary;
+</a> 		} else if (xsre-&gt;selection == clipboard) {
+<a href="#h2-4-6" id="h2-4-6" class="d">-			seltext = sel.clipboard;
+</a><a href="#h2-4-7" id="h2-4-7" class="i">+			seltext = xsel.clipboard;
+</a> 		} else {
+ 			fprintf(stderr,
+ 				&quot;Unhandled clipboard selection 0x%lx\n&quot;,
+<a href="#h2-5" id="h2-5" class="h">@@ -620,8 +623,8 @@ selrequest(XEvent *e)
+</a> void
+ setsel(char *str, Time t)
+ {
+<a href="#h2-5-3" id="h2-5-3" class="d">-	free(sel.primary);
+</a><a href="#h2-5-4" id="h2-5-4" class="d">-	sel.primary = str;
+</a><a href="#h2-5-5" id="h2-5-5" class="i">+	free(xsel.primary);
+</a><a href="#h2-5-6" id="h2-5-6" class="i">+	xsel.primary = str;
+</a> 
+ 	XSetSelectionOwner(xw.dpy, XA_PRIMARY, xw.win, t);
+ 	if (XGetSelectionOwner(xw.dpy, XA_PRIMARY) != xw.win)
+<a href="#h2-6" id="h2-6" class="h">@@ -1127,6 +1130,10 @@ xinit(void)
+</a> 	xhints();
+ 	XSync(xw.dpy, False);
+ 
+<a href="#h2-6-3" id="h2-6-3" class="i">+	clock_gettime(CLOCK_MONOTONIC, &amp;xsel.tclick1);
+</a><a href="#h2-6-4" id="h2-6-4" class="i">+	clock_gettime(CLOCK_MONOTONIC, &amp;xsel.tclick2);
+</a><a href="#h2-6-5" id="h2-6-5" class="i">+	xsel.primary = NULL;
+</a><a href="#h2-6-6" id="h2-6-6" class="i">+	xsel.clipboard = NULL;
+</a> 	xsel.xtarget = XInternAtom(xw.dpy, &quot;UTF8_STRING&quot;, 0);
+ 	if (xsel.xtarget == None)
+ 		xsel.xtarget = XA_STRING;
+</pre>
+</div>
+</body>
+</html>

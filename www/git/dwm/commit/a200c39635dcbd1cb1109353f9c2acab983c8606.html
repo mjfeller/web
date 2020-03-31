@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>made tile simplier - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a200c39635dcbd1cb1109353f9c2acab983c8606.html">a200c39635dcbd1cb1109353f9c2acab983c8606</a>
+<b>parent</b> <a href="../commit/77044e876511f51c34bde379d89e2de754707ee6.html">77044e876511f51c34bde379d89e2de754707ee6</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 13 Aug 2007 19:19:38 +0200
+
+made tile simplier
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tile.c</a></td><td> | </td><td class="num">43</td><td><span class="i">++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>1 file changed, 20 insertions(+), 23 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tile.c.html">tile.c</a> b/<a href="../file/tile.c.html">tile.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -39,31 +39,28 @@ tile(void) {
+</a> 
+ 	nx = wax;
+ 	ny = way;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	for(i = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		if(isvisible(c)) {
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-			if(c-&gt;isfloating)
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-				continue;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-			c-&gt;ismax = False;
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-			if(i == 0) { /* master */
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-				nw = mw - 2 * c-&gt;border;
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-				nh = wah - 2 * c-&gt;border;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-			}
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-			else {  /* tile window */
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-				if(i == 1) {
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-					ny = way;
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-					nx += mw;
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-				}
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-				nw = waw - mw - 2 * c-&gt;border;
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-				if(i + 1 == n) /* remainder */
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-					nh = (way + wah) - ny - 2 * c-&gt;border;
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-				else
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-					nh = th - 2 * c-&gt;border;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	for(i = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next)) {
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		c-&gt;ismax = False;
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+		if(i == 0) { /* master */
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+			nw = mw - 2 * c-&gt;border;
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+			nh = wah - 2 * c-&gt;border;
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+		}
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		else {  /* tile window */
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+			if(i == 1) {
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+				ny = way;
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+				nx += mw;
+</a> 			}
+<a href="#h0-0-33" id="h0-0-33" class="d">-			resize(c, nx, ny, nw, nh, False);
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-			if(n &gt; 1 &amp;&amp; th != wah)
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-				ny += nh + 2 * c-&gt;border;
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-			i++;
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+			nw = waw - mw - 2 * c-&gt;border;
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+			if(i + 1 == n) /* remainder */
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+				nh = (way + wah) - ny - 2 * c-&gt;border;
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+			else
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+				nh = th - 2 * c-&gt;border;
+</a> 		}
+<a href="#h0-0-43" id="h0-0-43" class="i">+		resize(c, nx, ny, nw, nh, False);
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+		if(n &gt; 1 &amp;&amp; th != wah)
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+			ny += nh + 2 * c-&gt;border;
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+		i++;
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+	}
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

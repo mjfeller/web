@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed initags -- we autoselect the first tag in each view instead - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f1719ac2de2aba270c2460807eacae137d3aeadf.html">f1719ac2de2aba270c2460807eacae137d3aeadf</a>
+<b>parent</b> <a href="../commit/d99ec6148258bd7933f3359ba05080e95f9ecb71.html">d99ec6148258bd7933f3359ba05080e95f9ecb71</a>
+<b>Author:</b> anselm@anselm1 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Thu, 28 Feb 2008 20:02:57 +0000
+
+removed initags -- we autoselect the first tag in each view instead
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">55</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 31 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -14,7 +14,6 @@
+</a> /* old */
+ const char tags[][MAXTAGLEN]     = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;nil&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;www&quot; };
+ unsigned int vtags[LENGTH(tags)] = {  0 ,  0 ,  0 ,  0 ,   0  ,  1 ,  1 ,  1 ,   1   };
+<a href="#h0-0-3" id="h0-0-3" class="d">-Bool initags[LENGTH(tags)]       = { [0] = True, [5] = True };
+</a> 
+ Rule rules[] = {
+ 	/* class:instance:title substr	tags ref	isfloating */
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -227,7 +227,6 @@ void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[UnmapNotify] = unmapnotify
+ };
+ Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h1-0-3" id="h1-0-3" class="d">-Bool isxinerama = False;
+</a> Bool domwfact = True;
+ Bool dozoom = True;
+ Bool otherwm, readin;
+<a href="#h1-1" id="h1-1" class="h">@@ -246,6 +245,7 @@ Window root;
+</a> 
+ /* configuration, allows nested code to access above variables */
+ #include &quot;config.h&quot;
+<a href="#h1-1-3" id="h1-1-3" class="i">+#define TAGSZ (LENGTH(tags) * sizeof(Bool))
+</a> 
+ /* function implementations */
+ void
+<a href="#h1-2" id="h1-2" class="h">@@ -286,7 +286,7 @@ applyrules(Client *c) {
+</a> 	if(ch.res_name)
+ 		XFree(ch.res_name);
+ 	if(!matched) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-		memcpy(c-&gt;tags, seltags, sizeof initags);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		memcpy(c-&gt;tags, seltags, TAGSZ);
+</a> 		c-&gt;view = selview;
+ 	}
+ }
+<a href="#h1-3" id="h1-3" class="h">@@ -654,10 +654,8 @@ enternotify(XEvent *e) {
+</a> 	Client *c;
+ 	XCrossingEvent *ev = &amp;e-&gt;xcrossing;
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-	if(ev-&gt;mode != NotifyNormal || ev-&gt;detail == NotifyInferior) {
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-		if(!isxinerama || ev-&gt;window != root)
+</a><a href="#h1-3-5" id="h1-3-5" class="d">-			return;
+</a><a href="#h1-3-6" id="h1-3-6" class="d">-	}
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+	if((ev-&gt;mode != NotifyNormal || ev-&gt;detail == NotifyInferior) &amp;&amp; ev-&gt;window != root)
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+		return;
+</a> 	if((c = getclient(ev-&gt;window)))
+ 		focus(c);
+ 	else
+<a href="#h1-4" id="h1-4" class="h">@@ -1042,7 +1040,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	XWindowChanges wc;
+ 
+ 	c = emallocz(sizeof(Client));
+<a href="#h1-4-3" id="h1-4-3" class="d">-	c-&gt;tags = emallocz(sizeof initags);
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+	c-&gt;tags = emallocz(TAGSZ);
+</a> 	c-&gt;win = w;
+ 
+ 	applyrules(c);
+<a href="#h1-5" id="h1-5" class="h">@@ -1082,7 +1080,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	if((rettrans = XGetTransientForHint(dpy, w, &amp;trans) == Success))
+ 		for(t = clients; t &amp;&amp; t-&gt;win != trans; t = t-&gt;next);
+ 	if(t)
+<a href="#h1-5-3" id="h1-5-3" class="d">-		memcpy(c-&gt;tags, t-&gt;tags, sizeof initags);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		memcpy(c-&gt;tags, t-&gt;tags, TAGSZ);
+</a> 	if(!c-&gt;isfloating)
+ 		c-&gt;isfloating = (rettrans == Success) || c-&gt;isfixed;
+ 	attach(c);
+<a href="#h1-6" id="h1-6" class="h">@@ -1501,7 +1499,7 @@ setmwfact(const char *arg) {
+</a> 
+ void
+ setup(void) {
+<a href="#h1-6-3" id="h1-6-3" class="d">-	unsigned int i;
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+	unsigned int i, j;
+</a> 	View *v;
+ 	XSetWindowAttributes wa;
+ 	XineramaScreenInfo *info = NULL;
+<a href="#h1-7" id="h1-7" class="h">@@ -1519,10 +1517,10 @@ setup(void) {
+</a> 	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
+ 	cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
+ 
+<a href="#h1-7-3" id="h1-7-3" class="d">-	if((isxinerama = XineramaIsActive(dpy)))
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	if(XineramaIsActive(dpy))
+</a> 		info = XineramaQueryScreens(dpy, &amp;nviews);
+<a href="#h1-7-6" id="h1-7-6" class="i">+
+</a> #if defined(AIM_XINERAMA)
+<a href="#h1-7-8" id="h1-7-8" class="d">-isxinerama = True;
+</a> nviews = 2; /* aim Xinerama */
+ #endif
+ 	views = emallocz(nviews * sizeof(View));
+<a href="#h1-8" id="h1-8" class="h">@@ -1551,16 +1549,27 @@ nviews = 2; /* aim Xinerama */
+</a> 			blw = i;
+ 	}
+ 
+<a href="#h1-8-3" id="h1-8-3" class="d">-	seltags = emallocz(sizeof initags);
+</a><a href="#h1-8-4" id="h1-8-4" class="d">-	prevtags = emallocz(sizeof initags);
+</a><a href="#h1-8-5" id="h1-8-5" class="d">-	memcpy(seltags, initags, sizeof initags);
+</a><a href="#h1-8-6" id="h1-8-6" class="d">-	memcpy(prevtags, initags, sizeof initags);
+</a><a href="#h1-8-7" id="h1-8-7" class="i">+	seltags = emallocz(TAGSZ);
+</a><a href="#h1-8-8" id="h1-8-8" class="i">+	prevtags = emallocz(TAGSZ);
+</a><a href="#h1-8-9" id="h1-8-9" class="i">+
+</a><a href="#h1-8-10" id="h1-8-10" class="i">+	/* check, if vtags need assistance, because there is only 1 view */
+</a><a href="#h1-8-11" id="h1-8-11" class="i">+	if(nviews == 1)
+</a><a href="#h1-8-12" id="h1-8-12" class="i">+		for(i = 0; i &lt; LENGTH(tags); i++)
+</a><a href="#h1-8-13" id="h1-8-13" class="i">+			vtags[i] = 0;
+</a> 
+ 	for(i = 0; i &lt; nviews; i++) {
+ 		/* init geometry */
+ 		v = &amp;views[i];
+ 
+<a href="#h1-8-19" id="h1-8-19" class="d">-		if(nviews != 1 &amp;&amp; isxinerama) {
+</a><a href="#h1-8-20" id="h1-8-20" class="i">+		/* select first tag in each view */
+</a><a href="#h1-8-21" id="h1-8-21" class="i">+		for(j = 0; j &lt; LENGTH(tags); j++)
+</a><a href="#h1-8-22" id="h1-8-22" class="i">+			if(vtags[j] == i) {
+</a><a href="#h1-8-23" id="h1-8-23" class="i">+				seltags[j] = prevtags[j] = True; 
+</a><a href="#h1-8-24" id="h1-8-24" class="i">+				break;
+</a><a href="#h1-8-25" id="h1-8-25" class="i">+			}
+</a><a href="#h1-8-26" id="h1-8-26" class="i">+
+</a><a href="#h1-8-27" id="h1-8-27" class="i">+
+</a><a href="#h1-8-28" id="h1-8-28" class="i">+		if(info) {
+</a> 
+ #if defined(AIM_XINERAMA)
+ v-&gt;w = DisplayWidth(dpy, screen) / 2;
+<a href="#h1-9" id="h1-9" class="h">@@ -1693,8 +1702,6 @@ tile(View *v) {
+</a> 
+ 	for(i = 0, c = mc = nexttiled(clients, v); c; c = nexttiled(c-&gt;next, v)) {
+ 		if(i == 0) { /* master */
+<a href="#h1-9-3" id="h1-9-3" class="d">-			nx = v-&gt;wax;
+</a><a href="#h1-9-4" id="h1-9-4" class="d">-			ny = v-&gt;way;
+</a> 			nw = mw - 2 * c-&gt;border;
+ 			nh = v-&gt;wah - 2 * c-&gt;border;
+ 		}
+<a href="#h1-10" id="h1-10" class="h">@@ -1908,9 +1915,9 @@ view(const char *arg) {
+</a> 		tmp[i] = (NULL == arg);
+ 	tmp[idxoftag(arg)] = True;
+ 
+<a href="#h1-10-3" id="h1-10-3" class="d">-	if(memcmp(seltags, tmp, sizeof initags) != 0) {
+</a><a href="#h1-10-4" id="h1-10-4" class="d">-		memcpy(prevtags, seltags, sizeof initags);
+</a><a href="#h1-10-5" id="h1-10-5" class="d">-		memcpy(seltags, tmp, sizeof initags);
+</a><a href="#h1-10-6" id="h1-10-6" class="i">+	if(memcmp(seltags, tmp, TAGSZ) != 0) {
+</a><a href="#h1-10-7" id="h1-10-7" class="i">+		memcpy(prevtags, seltags, TAGSZ);
+</a><a href="#h1-10-8" id="h1-10-8" class="i">+		memcpy(seltags, tmp, TAGSZ);
+</a> 		arrange();
+ 	}
+ }
+<a href="#h1-11" id="h1-11" class="h">@@ -1934,9 +1941,9 @@ void
+</a> viewprevtag(const char *arg) {
+ 	static Bool tmp[LENGTH(tags)];
+ 
+<a href="#h1-11-3" id="h1-11-3" class="d">-	memcpy(tmp, seltags, sizeof initags);
+</a><a href="#h1-11-4" id="h1-11-4" class="d">-	memcpy(seltags, prevtags, sizeof initags);
+</a><a href="#h1-11-5" id="h1-11-5" class="d">-	memcpy(prevtags, tmp, sizeof initags);
+</a><a href="#h1-11-6" id="h1-11-6" class="i">+	memcpy(tmp, seltags, TAGSZ);
+</a><a href="#h1-11-7" id="h1-11-7" class="i">+	memcpy(seltags, prevtags, TAGSZ);
+</a><a href="#h1-11-8" id="h1-11-8" class="i">+	memcpy(prevtags, tmp, TAGSZ);
+</a> 	arrange();
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

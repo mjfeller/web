@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Make strdump(), csidump(), print to stderr - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/902a392b905107c7b8a318c103837c54e47a068e.html">902a392b905107c7b8a318c103837c54e47a068e</a>
+<b>parent</b> <a href="../commit/8c99915608beee03eca3bae6ed92264a0da87e2f.html">8c99915608beee03eca3bae6ed92264a0da87e2f</a>
+<b>Author:</b> pl@ninthfloor.org &lt;<a href="mailto:pl@ninthfloor.org">pl@ninthfloor.org</a>&gt;
+<b>Date:</b>   Fri, 11 Nov 2016 17:45:52 +0100
+
+Make strdump(), csidump(), print to stderr
+
+The two functions strdump(), csidump() are called to show errors and
+their output is introduced by a message printed to stderr. Thus, it it
+more consistent to have them print to stderr.
+
+Moreover stderr is unbuffered (at least on Linux), making problems
+immediately visible.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">29</td><td><span class="i">+++++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 15 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2490,22 +2490,22 @@ csidump(void)
+</a> 	int i;
+ 	uint c;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	printf(&quot;ESC[&quot;);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	fprintf(stderr, &quot;ESC[&quot;);
+</a> 	for (i = 0; i &lt; csiescseq.len; i++) {
+ 		c = csiescseq.buf[i] &amp; 0xff;
+ 		if (isprint(c)) {
+<a href="#h0-0-8" id="h0-0-8" class="d">-			putchar(c);
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+			putc(c, stderr);
+</a> 		} else if (c == &#39;\n&#39;) {
+<a href="#h0-0-11" id="h0-0-11" class="d">-			printf(&quot;(\\n)&quot;);
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+			fprintf(stderr, &quot;(\\n)&quot;);
+</a> 		} else if (c == &#39;\r&#39;) {
+<a href="#h0-0-14" id="h0-0-14" class="d">-			printf(&quot;(\\r)&quot;);
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+			fprintf(stderr, &quot;(\\r)&quot;);
+</a> 		} else if (c == 0x1b) {
+<a href="#h0-0-17" id="h0-0-17" class="d">-			printf(&quot;(\\e)&quot;);
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+			fprintf(stderr, &quot;(\\e)&quot;);
+</a> 		} else {
+<a href="#h0-0-20" id="h0-0-20" class="d">-			printf(&quot;(%02x)&quot;, c);
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+			fprintf(stderr, &quot;(%02x)&quot;, c);
+</a> 		}
+ 	}
+<a href="#h0-0-24" id="h0-0-24" class="d">-	putchar(&#39;\n&#39;);
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	putc(&#39;\n&#39;, stderr);
+</a> }
+ 
+ void
+<a href="#h0-1" id="h0-1" class="h">@@ -2594,24 +2594,25 @@ strdump(void)
+</a> 	int i;
+ 	uint c;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	printf(&quot;ESC%c&quot;, strescseq.type);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	fprintf(stderr, &quot;ESC%c&quot;, strescseq.type);
+</a> 	for (i = 0; i &lt; strescseq.len; i++) {
+ 		c = strescseq.buf[i] &amp; 0xff;
+ 		if (c == &#39;\0&#39;) {
+<a href="#h0-1-8" id="h0-1-8" class="i">+			putc(&#39;\n&#39;, stderr);
+</a> 			return;
+ 		} else if (isprint(c)) {
+<a href="#h0-1-11" id="h0-1-11" class="d">-			putchar(c);
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+			putc(c, stderr);
+</a> 		} else if (c == &#39;\n&#39;) {
+<a href="#h0-1-14" id="h0-1-14" class="d">-			printf(&quot;(\\n)&quot;);
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+			fprintf(stderr, &quot;(\\n)&quot;);
+</a> 		} else if (c == &#39;\r&#39;) {
+<a href="#h0-1-17" id="h0-1-17" class="d">-			printf(&quot;(\\r)&quot;);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+			fprintf(stderr, &quot;(\\r)&quot;);
+</a> 		} else if (c == 0x1b) {
+<a href="#h0-1-20" id="h0-1-20" class="d">-			printf(&quot;(\\e)&quot;);
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+			fprintf(stderr, &quot;(\\e)&quot;);
+</a> 		} else {
+<a href="#h0-1-23" id="h0-1-23" class="d">-			printf(&quot;(%02x)&quot;, c);
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+			fprintf(stderr, &quot;(%02x)&quot;, c);
+</a> 		}
+ 	}
+<a href="#h0-1-27" id="h0-1-27" class="d">-	printf(&quot;ESC\\\n&quot;);
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+	fprintf(stderr, &quot;ESC\\\n&quot;);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

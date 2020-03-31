@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sander1 proposal - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6458803d213aa0d083f4c350e5fc813a9a095045.html">6458803d213aa0d083f4c350e5fc813a9a095045</a>
+<b>parent</b> <a href="../commit/6e72d781f71dd38fffae1f34cb0c9930b40e74d6.html">6e72d781f71dd38fffae1f34cb0c9930b40e74d6</a>
+<b>Author:</b> arg@mig29 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Fri,  1 Dec 2006 17:36:37 +0100
+
+sander1 proposal
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">draw.c</a></td><td> | </td><td class="num">22</td><td><span class="i">+++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 15 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -30,12 +30,13 @@ textnw(const char *text, unsigned int len) {
+</a> }
+ 
+ static void
+<a href="#h0-0-3" id="h0-0-3" class="d">-drawtext(const char *text, unsigned long col[ColLast], Bool hborder, Bool vborder) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+drawtext(const char *text, unsigned long col[ColLast], Bool dot, Bool corner) {
+</a> 	int x, y, w, h;
+ 	static char buf[256];
+ 	unsigned int len, olen;
+ 	XGCValues gcv;
+ 	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+<a href="#h0-0-10" id="h0-0-10" class="i">+	XPoint pt[3];
+</a> 
+ 	XSetForeground(dpy, dc.gc, col[ColBG]);
+ 	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+<a href="#h0-1" id="h0-1" class="h">@@ -73,13 +74,20 @@ drawtext(const char *text, unsigned long col[ColLast], Bool hborder, Bool vborde
+</a> 		XChangeGC(dpy, dc.gc, GCForeground | GCFont, &amp;gcv);
+ 		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+ 	}
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(vborder) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		XDrawLine(dpy, dc.drawable, dc.gc, dc.x + 1, dc.y + 1, dc.x + 1, dc.y + dc.h - 1);
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		XDrawLine(dpy, dc.drawable, dc.gc, dc.x + dc.w - 2, dc.y + 1, dc.x + dc.w - 2, dc.y + dc.h - 1);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	if(dot) {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		r.x = dc.x + 2;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+		r.y = dc.y + 2;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		r.width = r.height = (h + 2) / 4;
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a> 	}
+<a href="#h0-1-12" id="h0-1-12" class="d">-	if(hborder) {
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-		XDrawLine(dpy, dc.drawable, dc.gc, dc.x + 1, dc.y + 1, dc.x + dc.w - 2, dc.y + 1);
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-		XDrawLine(dpy, dc.drawable, dc.gc, dc.x + 1, dc.y + dc.h - 2, dc.x + dc.w - 2, dc.y + dc.h - 2);
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	if(corner) {
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+		pt[0].x = dc.x + 1;
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		pt[0].y = dc.y + dc.h / 2 + 1;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		pt[1].x = 0;
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+		pt[1].y = - dc.h / 2;
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+		pt[2].x = dc.h / 2;
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+		pt[2].y = 0;
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+		XDrawLines(dpy, dc.drawable, dc.gc, pt, 3, CoordModePrevious);
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

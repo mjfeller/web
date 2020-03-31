@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed Layout-&gt;isfloating - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a785a0d71213c2ab628778727c4354ad5bb517fb.html">a785a0d71213c2ab628778727c4354ad5bb517fb</a>
+<b>parent</b> <a href="../commit/489ac07e83f5dabd23d494630c7bb61690bb56e0.html">489ac07e83f5dabd23d494630c7bb61690bb56e0</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 17 May 2008 14:17:18 +0100
+
+removed Layout-&gt;isfloating
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">44</td><td><span class="i">+++++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 21 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -24,10 +24,10 @@ Rule rules[] = {
+</a> #define SNAP        32    /* snap pixel */
+ 
+ Layout layouts[] = {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	/* symbol     function    isfloating */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ &quot;[]=&quot;,      tilev,      False }, /* first entry is default */
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	{ &quot;&gt;&lt;&gt;&quot;,      NULL,       True },
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	{ &quot;&lt;M&gt;&quot;,      monocle,    True },
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	/* symbol     function */
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	{ &quot;[]=&quot;,      tilev   }, /* first entry is default */
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	{ &quot;&gt;&lt;&gt;&quot;,      NULL    }, /* no layout function means floating behavior */
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	{ &quot;&lt;M&gt;&quot;,      monocle }, /* TODO: remove this */
+</a> };
+ 
+ /* key definitions */
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -60,7 +60,6 @@ typedef struct Client Client;
+</a> struct Client {
+ 	char name[256];
+ 	int x, y, w, h;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	int fx, fy, fw, fh;
+</a> 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int minax, maxax, minay, maxay;
+ 	long flags;
+<a href="#h1-1" id="h1-1" class="h">@@ -98,7 +97,6 @@ typedef struct {
+</a> typedef struct {
+ 	const char *symbol;
+ 	void (*arrange)(void);
+<a href="#h1-1-3" id="h1-1-3" class="d">-	Bool isfloating;
+</a> } Layout;
+ 
+ typedef struct {
+<a href="#h1-2" id="h1-2" class="h">@@ -273,8 +271,8 @@ arrange(void) {
+</a> 	for(c = clients; c; c = c-&gt;next)
+ 		if(isvisible(c, NULL)) {
+ 			unban(c);
+<a href="#h1-2-3" id="h1-2-3" class="d">-			if(lt-&gt;isfloating || c-&gt;isfloating)
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-				resize(c, c-&gt;fx, c-&gt;fy, c-&gt;fw, c-&gt;fh, True);
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+			if(!lt-&gt;arrange || c-&gt;isfloating)
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+				resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+</a> 		}
+ 		else
+ 			ban(c);
+<a href="#h1-3" id="h1-3" class="h">@@ -345,7 +343,7 @@ buttonpress(XEvent *e) {
+</a> 			movemouse(c);
+ 		}
+ 		else if(ev-&gt;button == Button2) {
+<a href="#h1-3-3" id="h1-3-3" class="d">-			if(!lt-&gt;isfloating &amp;&amp; c-&gt;isfloating)
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+			if(lt-&gt;arrange &amp;&amp; c-&gt;isfloating)
+</a> 				togglefloating(NULL);
+ 			else
+ 				zoom(NULL);
+<a href="#h1-4" id="h1-4" class="h">@@ -435,7 +433,7 @@ configurerequest(XEvent *e) {
+</a> 	if((c = getclient(ev-&gt;window))) {
+ 		if(ev-&gt;value_mask &amp; CWBorderWidth)
+ 			c-&gt;bw = ev-&gt;border_width;
+<a href="#h1-4-3" id="h1-4-3" class="d">-		if(c-&gt;isfixed || c-&gt;isfloating || lt-&gt;isfloating) {
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		if(c-&gt;isfixed || c-&gt;isfloating || !lt-&gt;arrange) {
+</a> 			if(ev-&gt;value_mask &amp; CWX)
+ 				c-&gt;x = sx + ev-&gt;x;
+ 			if(ev-&gt;value_mask &amp; CWY)
+<a href="#h1-5" id="h1-5" class="h">@@ -968,8 +966,8 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	/* geometry */
+ 	c-&gt;x = wa-&gt;x;
+ 	c-&gt;y = wa-&gt;y;
+<a href="#h1-5-3" id="h1-5-3" class="d">-	c-&gt;w = c-&gt;fw = wa-&gt;width;
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-	c-&gt;h = c-&gt;fh = wa-&gt;height;
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+	c-&gt;w = wa-&gt;width;
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+	c-&gt;h = wa-&gt;height;
+</a> 	c-&gt;oldbw = wa-&gt;border_width;
+ 	if(c-&gt;w == sw &amp;&amp; c-&gt;h == sh) {
+ 		c-&gt;x = sx;
+<a href="#h1-6" id="h1-6" class="h">@@ -985,8 +983,6 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 		c-&gt;y = MAX(c-&gt;y, wy);
+ 		c-&gt;bw = BORDERPX;
+ 	}
+<a href="#h1-6-3" id="h1-6-3" class="d">-	c-&gt;fx = c-&gt;x;
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-	c-&gt;fy = c-&gt;y;
+</a> 
+ 	wc.border_width = c-&gt;bw;
+ 	XConfigureWindow(dpy, w, CWBorderWidth, &amp;wc);
+<a href="#h1-7" id="h1-7" class="h">@@ -1040,7 +1036,7 @@ monocle(void) {
+</a> 	Client *c;
+ 
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h1-7-3" id="h1-7-3" class="d">-		if((lt-&gt;isfloating || !c-&gt;isfloating) &amp;&amp; isvisible(c, NULL))
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+		if(!c-&gt;isfloating &amp;&amp; isvisible(c, NULL))
+</a> 			resize(c, wx, wy, ww - 2 * c-&gt;bw, wh - 2 * c-&gt;bw, RESIZEHINTS);
+ }
+ 
+<a href="#h1-8" id="h1-8" class="h">@@ -1080,13 +1076,10 @@ movemouse(Client *c) {
+</a> 				ny = wy;
+ 			else if(abs((wy + wh) - (ny + c-&gt;h + 2 * c-&gt;bw)) &lt; SNAP)
+ 				ny = wy + wh - c-&gt;h - 2 * c-&gt;bw;
+<a href="#h1-8-3" id="h1-8-3" class="d">-			if(!c-&gt;isfloating &amp;&amp; !lt-&gt;isfloating &amp;&amp; (abs(nx - c-&gt;x) &gt; SNAP || abs(ny - c-&gt;y) &gt; SNAP))
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+			if(!c-&gt;isfloating &amp;&amp; lt-&gt;arrange &amp;&amp; (abs(nx - c-&gt;x) &gt; SNAP || abs(ny - c-&gt;y) &gt; SNAP))
+</a> 				togglefloating(NULL);
+<a href="#h1-8-6" id="h1-8-6" class="d">-			if(lt-&gt;isfloating || c-&gt;isfloating) {
+</a><a href="#h1-8-7" id="h1-8-7" class="d">-				c-&gt;fx = nx;
+</a><a href="#h1-8-8" id="h1-8-8" class="d">-				c-&gt;fy = ny;
+</a><a href="#h1-8-9" id="h1-8-9" class="i">+			if(!lt-&gt;arrange || c-&gt;isfloating)
+</a> 				resize(c, nx, ny, c-&gt;w, c-&gt;h, False);
+<a href="#h1-8-11" id="h1-8-11" class="d">-			}
+</a> 			break;
+ 		}
+ 	}
+<a href="#h1-9" id="h1-9" class="h">@@ -1229,16 +1222,11 @@ resizemouse(Client *c) {
+</a> 			XSync(dpy, False);
+ 			nw = MAX(ev.xmotion.x - ocx - 2 * c-&gt;bw + 1, 1);
+ 			nh = MAX(ev.xmotion.y - ocy - 2 * c-&gt;bw + 1, 1);
+<a href="#h1-9-3" id="h1-9-3" class="d">-			if(!c-&gt;isfloating &amp;&amp; !lt-&gt;isfloating &amp;&amp; (abs(nw - c-&gt;w) &gt; SNAP || abs(nh - c-&gt;h) &gt; SNAP)) {
+</a><a href="#h1-9-4" id="h1-9-4" class="d">-				c-&gt;fx = c-&gt;x;
+</a><a href="#h1-9-5" id="h1-9-5" class="d">-				c-&gt;fy = c-&gt;y;
+</a><a href="#h1-9-6" id="h1-9-6" class="i">+			if(!c-&gt;isfloating &amp;&amp; lt-&gt;arrange &amp;&amp; (abs(nw - c-&gt;w) &gt; SNAP || abs(nh - c-&gt;h) &gt; SNAP)) {
+</a> 				togglefloating(NULL);
+ 			}
+<a href="#h1-9-9" id="h1-9-9" class="d">-			if((lt-&gt;isfloating) || c-&gt;isfloating) {
+</a><a href="#h1-9-10" id="h1-9-10" class="i">+			if(!lt-&gt;arrange || c-&gt;isfloating)
+</a> 				resize(c, c-&gt;x, c-&gt;y, nw, nh, True);
+<a href="#h1-9-12" id="h1-9-12" class="d">-				c-&gt;fw = nw;
+</a><a href="#h1-9-13" id="h1-9-13" class="d">-				c-&gt;fh = nh;
+</a><a href="#h1-9-14" id="h1-9-14" class="d">-			}
+</a> 			break;
+ 		}
+ 	}
+<a href="#h1-10" id="h1-10" class="h">@@ -1253,9 +1241,9 @@ restack(void) {
+</a> 	drawbar();
+ 	if(!sel)
+ 		return;
+<a href="#h1-10-3" id="h1-10-3" class="d">-	if(sel-&gt;isfloating || lt-&gt;isfloating)
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+	if(sel-&gt;isfloating || !lt-&gt;arrange)
+</a> 		XRaiseWindow(dpy, sel-&gt;win);
+<a href="#h1-10-6" id="h1-10-6" class="d">-	if(!lt-&gt;isfloating) {
+</a><a href="#h1-10-7" id="h1-10-7" class="i">+	if(lt-&gt;arrange) {
+</a> 		wc.stack_mode = Below;
+ 		wc.sibling = barwin;
+ 		for(c = stack; c; c = c-&gt;snext)
+<a href="#h1-11" id="h1-11" class="h">@@ -1363,11 +1351,12 @@ setclientstate(Client *c, long state) {
+</a> 			PropModeReplace, (unsigned char *)data, 2);
+ }
+ 
+<a href="#h1-11-3" id="h1-11-3" class="i">+/* TODO: move this into tile.c */
+</a> void
+ setmfact(const char *arg) {
+ 	double d;
+ 
+<a href="#h1-11-8" id="h1-11-8" class="d">-	if(lt-&gt;isfloating)
+</a><a href="#h1-11-9" id="h1-11-9" class="i">+	if(!lt-&gt;arrange) /* TODO: check this against the actual tile() function */
+</a> 		return;
+ 	if(!arg)
+ 		mfact = MFACT;
+<a href="#h1-12" id="h1-12" class="h">@@ -1842,6 +1831,7 @@ xerrorstart(Display *dpy, XErrorEvent *ee) {
+</a> 	return -1;
+ }
+ 
+<a href="#h1-12-3" id="h1-12-3" class="i">+/* TODO: move this into tile.c */
+</a> void
+ zoom(const char *arg) {
+ 	Client *c = sel;
+<a href="#h1-13" id="h1-13" class="h">@@ -1849,7 +1839,7 @@ zoom(const char *arg) {
+</a> 	if(c == nexttiled(clients))
+ 		if(!c || !(c = nexttiled(c-&gt;next)))
+ 			return;
+<a href="#h1-13-3" id="h1-13-3" class="d">-	if(!lt-&gt;isfloating &amp;&amp; !sel-&gt;isfloating) {
+</a><a href="#h1-13-4" id="h1-13-4" class="i">+	if(lt-&gt;arrange &amp;&amp; !sel-&gt;isfloating) { /* TODO: check this against tile() */
+</a> 		detach(c);
+ 		attach(c);
+ 		focus(c);
+</pre>
+</div>
+</body>
+</html>

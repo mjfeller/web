@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>atexit cleanup - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d9c24564d2f46312a9ed94539e0299a9859e87d9.html">d9c24564d2f46312a9ed94539e0299a9859e87d9</a>
+<b>parent</b> <a href="../commit/6ba5103df4552a330ba29fdac88ae3a2897b94cf.html">6ba5103df4552a330ba29fdac88ae3a2897b94cf</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Fri,  2 Jul 2010 03:44:01 +0100
+
+atexit cleanup
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dinput.c</a></td><td> | </td><td class="num">35</td><td><span class="i">+++++++++++++++</span><span class="d">--------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">47</td><td><span class="i">+++++++++++++++++++++</span><span class="d">--------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 36 insertions(+), 46 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dinput.c.html">dinput.c</a> b/<a href="../file/dinput.c.html">dinput.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -26,7 +26,7 @@ static void drawinput(void);
+</a> static Bool grabkeyboard(void);
+ static void kpress(XKeyEvent *e);
+ static void run(void);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void setup(Bool topbar);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void setup(void);
+</a> 
+ #include &quot;config.h&quot;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -34,14 +34,13 @@ static void setup(Bool topbar);
+</a> static char *prompt = NULL;
+ static char text[4096];
+ static int promptw = 0;
+<a href="#h0-1-3" id="h0-1-3" class="d">-static int ret = 0;
+</a> static int screen;
+ static unsigned int cursor = 0;
+ static unsigned int numlockmask = 0;
+ static unsigned int mw, mh;
+ static unsigned long normcol[ColLast];
+ static unsigned long selcol[ColLast];
+<a href="#h0-1-10" id="h0-1-10" class="d">-static Bool running = True;
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+static Bool topbar = True;
+</a> static DC dc;
+ static Display *dpy;
+ static Window win, root;
+<a href="#h0-2" id="h0-2" class="h">@@ -51,6 +50,7 @@ cleanup(void) {
+</a> 	cleanupdraw(&amp;dc);
+ 	XDestroyWindow(dpy, win);
+ 	XUngrabKeyboard(dpy, CurrentTime);
+<a href="#h0-2-3" id="h0-2-3" class="i">+	XCloseDisplay(dpy);
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -81,7 +81,6 @@ drawinput(void)
+</a> 	drawtext(&amp;dc, *text ? text : NULL, normcol, False);
+ 	drawcursor();
+ 	XCopyArea(dpy, dc.drawable, win, dc.gc, 0, 0, mw, mh, 0, 0);
+<a href="#h0-3-3" id="h0-3-3" class="d">-	XFlush(dpy);
+</a> }
+ 
+ Bool
+<a href="#h0-4" id="h0-4" class="h">@@ -200,9 +199,7 @@ kpress(XKeyEvent *e) {
+</a> 		cursor = len;
+ 		break;
+ 	case XK_Escape:
+<a href="#h0-4-3" id="h0-4-3" class="d">-		ret = 1;
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		running = False;
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-		return;
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		exit(EXIT_FAILURE);
+</a> 	case XK_Home:
+ 		cursor = 0;
+ 		break;
+<a href="#h0-5" id="h0-5" class="h">@@ -214,8 +211,7 @@ kpress(XKeyEvent *e) {
+</a> 	case XK_Return:
+ 		fprintf(stdout, &quot;%s&quot;, text);
+ 		fflush(stdout);
+<a href="#h0-5-3" id="h0-5-3" class="d">-		running = False;
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-		return;
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+		exit(EXIT_SUCCESS);
+</a> 	case XK_Right:
+ 		if(cursor == len)
+ 			return;
+<a href="#h0-6" id="h0-6" class="h">@@ -230,7 +226,8 @@ run(void) {
+</a> 	XEvent ev;
+ 
+ 	/* main event loop */
+<a href="#h0-6-3" id="h0-6-3" class="d">-	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev))
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	XSync(dpy, False);
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+	while(!XNextEvent(dpy, &amp;ev))
+</a> 		switch(ev.type) {
+ 		case KeyPress:
+ 			kpress(&amp;ev.xkey);
+<a href="#h0-7" id="h0-7" class="h">@@ -240,14 +237,15 @@ run(void) {
+</a> 				drawinput();
+ 			break;
+ 		case VisibilityNotify:
+<a href="#h0-7-3" id="h0-7-3" class="d">-			if (ev.xvisibility.state != VisibilityUnobscured)
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+			if(ev.xvisibility.state != VisibilityUnobscured)
+</a> 				XRaiseWindow(dpy, win);
+ 			break;
+ 		}
+<a href="#h0-7-8" id="h0-7-8" class="i">+	exit(EXIT_FAILURE);
+</a> }
+ 
+ void
+<a href="#h0-7-12" id="h0-7-12" class="d">-setup(Bool topbar) {
+</a><a href="#h0-7-13" id="h0-7-13" class="i">+setup(void) {
+</a> 	int i, j, x, y;
+ #if XINERAMA
+ 	int n;
+<a href="#h0-8" id="h0-8" class="h">@@ -320,7 +318,6 @@ setup(Bool topbar) {
+</a> int
+ main(int argc, char *argv[]) {
+ 	unsigned int i;
+<a href="#h0-8-3" id="h0-8-3" class="d">-	Bool topbar = True;
+</a> 
+ 	/* command line args */
+ 	progname = &quot;dinput&quot;;
+<a href="#h0-9" id="h0-9" class="h">@@ -364,15 +361,13 @@ main(int argc, char *argv[]) {
+</a> 		fprintf(stderr, &quot;dinput: warning: no locale support\n&quot;);
+ 	if(!(dpy = XOpenDisplay(NULL)))
+ 		eprint(&quot;cannot open display\n&quot;);
+<a href="#h0-9-3" id="h0-9-3" class="i">+	if(atexit(&amp;cleanup) != 0)
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+		eprint(&quot;cannot register cleanup\n&quot;);
+</a> 	screen = DefaultScreen(dpy);
+ 	root = RootWindow(dpy, screen);
+ 
+<a href="#h0-9-8" id="h0-9-8" class="d">-	running = grabkeyboard();
+</a><a href="#h0-9-9" id="h0-9-9" class="d">-	setup(topbar);
+</a><a href="#h0-9-10" id="h0-9-10" class="d">-	drawinput();
+</a><a href="#h0-9-11" id="h0-9-11" class="d">-	XSync(dpy, False);
+</a><a href="#h0-9-12" id="h0-9-12" class="i">+	grabkeyboard();
+</a><a href="#h0-9-13" id="h0-9-13" class="i">+	setup();
+</a> 	run();
+<a href="#h0-9-15" id="h0-9-15" class="d">-	cleanup();
+</a><a href="#h0-9-16" id="h0-9-16" class="d">-	XCloseDisplay(dpy);
+</a><a href="#h0-9-17" id="h0-9-17" class="d">-	return ret;
+</a><a href="#h0-9-18" id="h0-9-18" class="i">+	return 0;
+</a> }
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -36,7 +36,7 @@ static void dinput(void);
+</a> static void drawmenu(void);
+ static void drawmenuh(void);
+ static void drawmenuv(void);
+<a href="#h1-0-3" id="h1-0-3" class="d">-static Bool grabkeyboard(void);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+static void grabkeyboard(void);
+</a> static void kpress(XKeyEvent *e);
+ static void match(char *pattern);
+ static void readstdin(void);
+<a href="#h1-1" id="h1-1" class="h">@@ -52,14 +52,12 @@ static char *prompt = NULL;
+</a> static char text[4096];
+ static int cmdw = 0;
+ static int promptw = 0;
+<a href="#h1-1-3" id="h1-1-3" class="d">-static int ret = 0;
+</a> static int screen;
+ static unsigned int lines = 0;
+ static unsigned int numlockmask = 0;
+ static unsigned int mw, mh;
+ static unsigned long normcol[ColLast];
+ static unsigned long selcol[ColLast];
+<a href="#h1-1-10" id="h1-1-10" class="d">-static Bool running = True;
+</a> static Bool topbar = True;
+ static DC dc;
+ static Display *dpy;
+<a href="#h1-2" id="h1-2" class="h">@@ -87,15 +85,15 @@ appenditem(Item *i, Item **list, Item **last) {
+</a> 
+ void
+ calcoffsetsh(void) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-	unsigned int w;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	unsigned int x;
+</a> 
+<a href="#h1-2-6" id="h1-2-6" class="d">-	w = promptw + cmdw + (2 * spaceitem);
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+	x = promptw + cmdw + (2 * spaceitem);
+</a> 	for(next = curr; next; next = next-&gt;right)
+<a href="#h1-2-9" id="h1-2-9" class="d">-		if((w += MIN(textw(&amp;dc, next-&gt;text), mw / 3)) &gt; mw)
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+		if((x += MIN(textw(&amp;dc, next-&gt;text), mw / 3)) &gt; mw)
+</a> 			break;
+<a href="#h1-2-12" id="h1-2-12" class="d">-	w = promptw + cmdw + (2 * spaceitem);
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+	x = promptw + cmdw + (2 * spaceitem);
+</a> 	for(prev = curr; prev &amp;&amp; prev-&gt;left; prev = prev-&gt;left)
+<a href="#h1-2-15" id="h1-2-15" class="d">-		if((w += MIN(textw(&amp;dc, prev-&gt;left-&gt;text), mw / 3)) &gt; mw)
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+		if((x += MIN(textw(&amp;dc, prev-&gt;left-&gt;text), mw / 3)) &gt; mw)
+</a> 			break;
+ }
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -146,6 +144,7 @@ cleanup(void) {
+</a> 	cleanupdraw(&amp;dc);
+ 	XDestroyWindow(dpy, win);
+ 	XUngrabKeyboard(dpy, CurrentTime);
+<a href="#h1-3-3" id="h1-3-3" class="i">+	XCloseDisplay(dpy);
+</a> }
+ 
+ void
+<a href="#h1-4" id="h1-4" class="h">@@ -182,7 +181,6 @@ drawmenu(void) {
+</a> 	else if(curr)
+ 		drawmenuh();
+ 	XCopyArea(dpy, dc.drawable, win, dc.gc, 0, 0, mw, mh, 0, 0);
+<a href="#h1-4-3" id="h1-4-3" class="d">-	XFlush(dpy);
+</a> }
+ 
+ void
+<a href="#h1-5" id="h1-5" class="h">@@ -219,7 +217,7 @@ drawmenuv(void) {
+</a> 	XMoveResizeWindow(dpy, win, wa.x, wa.y + (topbar ? 0 : wa.height - mh), mw, mh);
+ }
+ 
+<a href="#h1-5-3" id="h1-5-3" class="d">-Bool
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+void
+</a> grabkeyboard(void) {
+ 	unsigned int len;
+ 
+<a href="#h1-6" id="h1-6" class="h">@@ -229,7 +227,8 @@ grabkeyboard(void) {
+</a> 			break;
+ 		usleep(1000);
+ 	}
+<a href="#h1-6-3" id="h1-6-3" class="d">-	return len &gt; 0;
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+	if(!len)
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+		exit(EXIT_FAILURE);
+</a> }
+ 
+ void
+<a href="#h1-7" id="h1-7" class="h">@@ -326,9 +325,7 @@ kpress(XKeyEvent *e) {
+</a> 			sel = sel-&gt;right;
+ 		break;
+ 	case XK_Escape:
+<a href="#h1-7-3" id="h1-7-3" class="d">-		ret = 1;
+</a><a href="#h1-7-4" id="h1-7-4" class="d">-		running = False;
+</a><a href="#h1-7-5" id="h1-7-5" class="d">-		return;
+</a><a href="#h1-7-6" id="h1-7-6" class="i">+		exit(EXIT_FAILURE);
+</a> 	case XK_Home:
+ 		sel = curr = item;
+ 		calcoffsets();
+<a href="#h1-8" id="h1-8" class="h">@@ -360,8 +357,7 @@ kpress(XKeyEvent *e) {
+</a> 			dinput();
+ 		fprintf(stdout, &quot;%s&quot;, sel ? sel-&gt;text : text);
+ 		fflush(stdout);
+<a href="#h1-8-3" id="h1-8-3" class="d">-		running = False;
+</a><a href="#h1-8-4" id="h1-8-4" class="d">-		return;
+</a><a href="#h1-8-5" id="h1-8-5" class="i">+		exit(EXIT_SUCCESS);
+</a> 	case XK_Right:
+ 	case XK_Down:
+ 		if(!sel || !sel-&gt;right)
+<a href="#h1-9" id="h1-9" class="h">@@ -454,7 +450,8 @@ run(void) {
+</a> 	XEvent ev;
+ 
+ 	/* main event loop */
+<a href="#h1-9-3" id="h1-9-3" class="d">-	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev))
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+	XSync(dpy, False);
+</a><a href="#h1-9-5" id="h1-9-5" class="i">+	while(!XNextEvent(dpy, &amp;ev))
+</a> 		switch(ev.type) {
+ 		case KeyPress:
+ 			kpress(&amp;ev.xkey);
+<a href="#h1-10" id="h1-10" class="h">@@ -464,10 +461,11 @@ run(void) {
+</a> 				drawmenu();
+ 			break;
+ 		case VisibilityNotify:
+<a href="#h1-10-3" id="h1-10-3" class="d">-			if (ev.xvisibility.state != VisibilityUnobscured)
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+			if(ev.xvisibility.state != VisibilityUnobscured)
+</a> 				XRaiseWindow(dpy, win);
+ 			break;
+ 		}
+<a href="#h1-10-8" id="h1-10-8" class="i">+	exit(EXIT_FAILURE);
+</a> }
+ 
+ void
+<a href="#h1-11" id="h1-11" class="h">@@ -586,13 +584,15 @@ main(int argc, char *argv[]) {
+</a> 		}
+ 		else {
+ 			fputs(&quot;usage: dmenu [-i] [-b] [-l &lt;lines&gt;] [-fn &lt;font&gt;] [-nb &lt;color&gt;]\n&quot;
+<a href="#h1-11-3" id="h1-11-3" class="d">-			       &quot;             [-nf &lt;color&gt;] [-p &lt;prompt&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-v]\n&quot;, stderr);
+</a><a href="#h1-11-4" id="h1-11-4" class="i">+			      &quot;             [-nf &lt;color&gt;] [-p &lt;prompt&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-v]\n&quot;, stderr);
+</a> 			exit(EXIT_FAILURE);
+ 		}
+ 	if(!setlocale(LC_CTYPE, &quot;&quot;) || !XSupportsLocale())
+ 		fprintf(stderr, &quot;dmenu: warning: no locale support\n&quot;);
+ 	if(!(dpy = XOpenDisplay(NULL)))
+ 		eprint(&quot;cannot open display\n&quot;);
+<a href="#h1-11-11" id="h1-11-11" class="i">+	if(atexit(&amp;cleanup) != 0)
+</a><a href="#h1-11-12" id="h1-11-12" class="i">+		eprint(&quot;cannot register cleanup\n&quot;);
+</a> 	screen = DefaultScreen(dpy);
+ 	root = RootWindow(dpy, screen);
+ 	if(!(argp = malloc(sizeof *argp * (argc+2))))
+<a href="#h1-12" id="h1-12" class="h">@@ -600,13 +600,8 @@ main(int argc, char *argv[]) {
+</a> 	memcpy(argp + 2, argv + 1, sizeof *argp * argc);
+ 
+ 	readstdin();
+<a href="#h1-12-3" id="h1-12-3" class="d">-	running = grabkeyboard();
+</a><a href="#h1-12-4" id="h1-12-4" class="d">-
+</a><a href="#h1-12-5" id="h1-12-5" class="i">+	grabkeyboard();
+</a> 	setup();
+<a href="#h1-12-7" id="h1-12-7" class="d">-	drawmenu();
+</a><a href="#h1-12-8" id="h1-12-8" class="d">-	XSync(dpy, False);
+</a> 	run();
+<a href="#h1-12-10" id="h1-12-10" class="d">-	cleanup();
+</a><a href="#h1-12-11" id="h1-12-11" class="d">-	XCloseDisplay(dpy);
+</a><a href="#h1-12-12" id="h1-12-12" class="d">-	return ret;
+</a><a href="#h1-12-13" id="h1-12-13" class="i">+	return 0;
+</a> }
+</pre>
+</div>
+</body>
+</html>

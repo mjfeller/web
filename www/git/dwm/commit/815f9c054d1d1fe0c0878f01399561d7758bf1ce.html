@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>merged merge - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/815f9c054d1d1fe0c0878f01399561d7758bf1ce.html">815f9c054d1d1fe0c0878f01399561d7758bf1ce</a>
+<b>parent</b> <a href="../commit/ec11a3470c2775a75df00e3b69ee6ef60a467e34.html">ec11a3470c2775a75df00e3b69ee6ef60a467e34</a>
+<b>Author:</b> arg@localhost.localdomain &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Mon,  1 Sep 2008 08:22:11 +0000
+
+merged merge
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">35</td><td><span class="i">++++++++++++++++</span><span class="d">-------------------</span></td></tr>
+</table></pre><pre>1 file changed, 16 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -61,7 +61,7 @@
+</a> enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+ enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
+ enum { NetSupported, NetWMName, NetLast };              /* EWMH atoms */
+<a href="#h0-0-3" id="h0-0-3" class="d">-enum { WMProtocols, WMDelete, WMName, WMState, WMLast };/* default atoms */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+enum { WMProtocols, WMDelete, WMState, WMLast };        /* default atoms */
+</a> enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
+        ClkClientWin, ClkRootWin, ClkLast };             /* clicks */
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -233,7 +233,7 @@ static Client *sel = NULL;
+</a> static Client *stack = NULL;
+ static Cursor cursor[CurLast];
+ static Display *dpy;
+<a href="#h0-1-3" id="h0-1-3" class="d">-static DC dc = {0};
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static DC dc;
+</a> static Layout *lt[] = { NULL, NULL };
+ static Window root, barwin;
+ /* configuration, allows nested code to access above variables */
+<a href="#h0-2" id="h0-2" class="h">@@ -250,20 +250,21 @@ applyrules(Client *c) {
+</a> 	XClassHint ch = { 0 };
+ 
+ 	/* rule matching */
+<a href="#h0-2-3" id="h0-2-3" class="d">-	XGetClassHint(dpy, c-&gt;win, &amp;ch);
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	for(i = 0; i &lt; LENGTH(rules); i++) {
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-		r = &amp;rules[i];
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-		if((!r-&gt;title || strstr(c-&gt;name, r-&gt;title))
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-		&amp;&amp; (!r-&gt;class || (ch.res_class &amp;&amp; strstr(ch.res_class, r-&gt;class)))
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-		&amp;&amp; (!r-&gt;instance || (ch.res_name &amp;&amp; strstr(ch.res_name, r-&gt;instance)))) {
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-			c-&gt;isfloating = r-&gt;isfloating;
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-			c-&gt;tags |= r-&gt;tags &amp; TAGMASK;
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	if(XGetClassHint(dpy, c-&gt;win, &amp;ch)) {
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+		for(i = 0; i &lt; LENGTH(rules); i++) {
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+			r = &amp;rules[i];
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+			if((!r-&gt;title || strstr(c-&gt;name, r-&gt;title))
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+			&amp;&amp; (!r-&gt;class || (ch.res_class &amp;&amp; strstr(ch.res_class, r-&gt;class)))
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+			&amp;&amp; (!r-&gt;instance || (ch.res_name &amp;&amp; strstr(ch.res_name, r-&gt;instance)))) {
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+				c-&gt;isfloating = r-&gt;isfloating;
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+				c-&gt;tags |= r-&gt;tags &amp; TAGMASK;
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+			}
+</a> 		}
+<a href="#h0-2-21" id="h0-2-21" class="i">+		if(ch.res_class)
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+			XFree(ch.res_class);
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+		if(ch.res_name)
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+			XFree(ch.res_name);
+</a> 	}
+<a href="#h0-2-26" id="h0-2-26" class="d">-	if(ch.res_class)
+</a><a href="#h0-2-27" id="h0-2-27" class="d">-		XFree(ch.res_class);
+</a><a href="#h0-2-28" id="h0-2-28" class="d">-	if(ch.res_name)
+</a><a href="#h0-2-29" id="h0-2-29" class="d">-		XFree(ch.res_name);
+</a> 	if(!c-&gt;tags)
+ 		c-&gt;tags = tagset[seltags];
+ }
+<a href="#h0-3" id="h0-3" class="h">@@ -796,9 +797,6 @@ initfont(const char *fontstr) {
+</a> 		}
+ 	}
+ 	else {
+<a href="#h0-3-3" id="h0-3-3" class="d">-		if(dc.font.xfont)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-			XFreeFont(dpy, dc.font.xfont);
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-		dc.font.xfont = NULL;
+</a> 		if(!(dc.font.xfont = XLoadQueryFont(dpy, fontstr))
+ 		&amp;&amp; !(dc.font.xfont = XLoadQueryFont(dpy, &quot;fixed&quot;)))
+ 			die(&quot;error, cannot load font: &#39;%s&#39;\n&quot;, fontstr);
+<a href="#h0-4" id="h0-4" class="h">@@ -1326,7 +1324,6 @@ setup(void) {
+</a> 	/* init atoms */
+ 	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+ 	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+<a href="#h0-4-3" id="h0-4-3" class="d">-	wmatom[WMName] = XInternAtom(dpy, &quot;WM_NAME&quot;, False);
+</a> 	wmatom[WMState] = XInternAtom(dpy, &quot;WM_STATE&quot;, False);
+ 	netatom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+ 	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+<a href="#h0-5" id="h0-5" class="h">@@ -1634,7 +1631,7 @@ updatesizehints(Client *c) {
+</a> void
+ updatetitle(Client *c) {
+ 	if(!gettextprop(c-&gt;win, netatom[NetWMName], c-&gt;name, sizeof c-&gt;name))
+<a href="#h0-5-3" id="h0-5-3" class="d">-		gettextprop(c-&gt;win, wmatom[WMName], c-&gt;name, sizeof c-&gt;name);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		gettextprop(c-&gt;win, XA_WM_NAME, c-&gt;name, sizeof c-&gt;name);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Added xft support - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3c79bcb40808c31a9f8f47538f4f8d5c489b7f60.html">3c79bcb40808c31a9f8f47538f4f8d5c489b7f60</a>
+<b>parent</b> <a href="../commit/8920c1ba196df53a8ca06c179a3aa3ee260a6935.html">8920c1ba196df53a8ca06c179a3aa3ee260a6935</a>
+<b>Author:</b> Lucas Gabriel Vuotto &lt;<a href="mailto:l.vuotto92@gmail.com">l.vuotto92@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 13 Feb 2016 18:42:14 -0300
+
+Added xft support
+
+Based on xft tabbed patch from the wiki.
+
+Signed-off-by: Lucas Gabriel Vuotto &lt;l.vuotto92@gmail.com&gt;
+Signed-off-by: Christoph Lohmann &lt;20h@r-36.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">tabbed.c</a></td><td> | </td><td class="num">99</td><td><span class="i">++++++++++++++++++++++</span><span class="d">---------------------------------------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 30 insertions(+), 75 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,7 +1,7 @@
+</a> /* See LICENSE file for copyright and license details. */
+ 
+ /* appearance */
+<a href="#h0-0-3" id="h0-0-3" class="d">-static const char font[]        = &quot;-*-*-medium-*-*-*-14-*-*-*-*-*-*-*&quot;;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static const char font[]        = &quot;monospace:size=9&quot;;
+</a> static const char* normbgcolor  = &quot;#222222&quot;;
+ static const char* normfgcolor  = &quot;#cccccc&quot;;
+ static const char* selbgcolor   = &quot;#555555&quot;;
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -8,8 +8,8 @@ PREFIX = /usr/local
+</a> MANPREFIX = ${PREFIX}/share/man
+ 
+ # includes and libs
+<a href="#h1-0-3" id="h1-0-3" class="d">-INCS = -I. -I/usr/include
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-LIBS = -L/usr/lib -lc -lX11
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+INCS = -I. -I/usr/include -I/usr/include/freetype2
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+LIBS = -L/usr/lib -lc -lX11 -lfontconfig -lXft
+</a> 
+ # flags
+ CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; -D_DEFAULT_SOURCE
+<b>diff --git a/<a id="h2" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -15,6 +15,7 @@
+</a> #include &lt;X11/Xproto.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+ #include &lt;X11/XKBlib.h&gt;
+<a href="#h2-0-3" id="h2-0-3" class="i">+#include &lt;X11/Xft/Xft.h&gt;
+</a> 
+ #include &quot;arg.h&quot;
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -64,17 +65,16 @@ typedef struct {
+</a> 
+ typedef struct {
+ 	int x, y, w, h;
+<a href="#h2-1-3" id="h2-1-3" class="d">-	unsigned long norm[ColLast];
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	unsigned long sel[ColLast];
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-	unsigned long urg[ColLast];
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+	XftColor norm[ColLast];
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+	XftColor sel[ColLast];
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+	XftColor urg[ColLast];
+</a> 	Drawable drawable;
+ 	GC gc;
+ 	struct {
+ 		int ascent;
+ 		int descent;
+ 		int height;
+<a href="#h2-1-15" id="h2-1-15" class="d">-		XFontSet set;
+</a><a href="#h2-1-16" id="h2-1-16" class="d">-		XFontStruct *xfont;
+</a><a href="#h2-1-17" id="h2-1-17" class="i">+		XftFont *xfont;
+</a> 	} font;
+ } DC; /* draw context */
+ 
+<a href="#h2-2" id="h2-2" class="h">@@ -96,7 +96,7 @@ static void createnotify(const XEvent *e);
+</a> static void destroynotify(const XEvent *e);
+ static void die(const char *errstr, ...);
+ static void drawbar(void);
+<a href="#h2-2-3" id="h2-2-3" class="d">-static void drawtext(const char *text, unsigned long col[ColLast]);
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+static void drawtext(const char *text, XftColor col[ColLast]);
+</a> static void *ecalloc(size_t n, size_t size);
+ static void *erealloc(void *o, size_t size);
+ static void expose(const XEvent *e);
+<a href="#h2-3" id="h2-3" class="h">@@ -107,7 +107,7 @@ static void focusurgent(const Arg *arg);
+</a> static void fullscreen(const Arg *arg);
+ static char *getatom(int a);
+ static int getclient(Window w);
+<a href="#h2-3-3" id="h2-3-3" class="d">-static unsigned long getcolor(const char *colstr);
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+static XftColor getcolor(const char *colstr);
+</a> static int getfirsttab(void);
+ static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+ static void initfont(const char *fontstr);
+<a href="#h2-4" id="h2-4" class="h">@@ -223,11 +223,6 @@ cleanup(void)
+</a> 	free(clients);
+ 	clients = NULL;
+ 
+<a href="#h2-4-3" id="h2-4-3" class="d">-	if (dc.font.set)
+</a><a href="#h2-4-4" id="h2-4-4" class="d">-		XFreeFontSet(dpy, dc.font.set);
+</a><a href="#h2-4-5" id="h2-4-5" class="d">-	else
+</a><a href="#h2-4-6" id="h2-4-6" class="d">-		XFreeFont(dpy, dc.font.xfont);
+</a><a href="#h2-4-7" id="h2-4-7" class="d">-
+</a> 	XFreePixmap(dpy, dc.drawable);
+ 	XFreeGC(dpy, dc.gc);
+ 	XDestroyWindow(dpy, win);
+<a href="#h2-5" id="h2-5" class="h">@@ -314,7 +309,7 @@ die(const char *errstr, ...)
+</a> void
+ drawbar(void)
+ {
+<a href="#h2-5-3" id="h2-5-3" class="d">-	unsigned long *col;
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+	XftColor *col;
+</a> 	int c, cc, fc, width;
+ 	char *name = NULL;
+ 
+<a href="#h2-6" id="h2-6" class="h">@@ -367,13 +362,14 @@ drawbar(void)
+</a> }
+ 
+ void
+<a href="#h2-6-3" id="h2-6-3" class="d">-drawtext(const char *text, unsigned long col[ColLast])
+</a><a href="#h2-6-4" id="h2-6-4" class="i">+drawtext(const char *text, XftColor col[ColLast])
+</a> {
+ 	int i, j, x, y, h, len, olen;
+ 	char buf[256];
+<a href="#h2-6-8" id="h2-6-8" class="i">+	XftDraw *d;
+</a> 	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+ 
+<a href="#h2-6-11" id="h2-6-11" class="d">-	XSetForeground(dpy, dc.gc, col[ColBG]);
+</a><a href="#h2-6-12" id="h2-6-12" class="i">+	XSetForeground(dpy, dc.gc, col[ColBG].pixel);
+</a> 	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+ 	if (!text)
+ 		return;
+<a href="#h2-7" id="h2-7" class="h">@@ -397,12 +393,9 @@ drawtext(const char *text, unsigned long col[ColLast])
+</a> 			;
+ 	}
+ 
+<a href="#h2-7-3" id="h2-7-3" class="d">-	XSetForeground(dpy, dc.gc, col[ColFG]);
+</a><a href="#h2-7-4" id="h2-7-4" class="d">-	if (dc.font.set)
+</a><a href="#h2-7-5" id="h2-7-5" class="d">-		XmbDrawString(dpy, dc.drawable, dc.font.set,
+</a><a href="#h2-7-6" id="h2-7-6" class="d">-		              dc.gc, x, y, buf, len);
+</a><a href="#h2-7-7" id="h2-7-7" class="d">-	else
+</a><a href="#h2-7-8" id="h2-7-8" class="d">-		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+</a><a href="#h2-7-9" id="h2-7-9" class="i">+	d = XftDrawCreate(dpy, dc.drawable, DefaultVisual(dpy, screen), DefaultColormap(dpy, screen));
+</a><a href="#h2-7-10" id="h2-7-10" class="i">+	XftDrawStringUtf8(d, &amp;col[ColFG], dc.font.xfont, x, y, (XftChar8 *) buf, len);
+</a><a href="#h2-7-11" id="h2-7-11" class="i">+	XftDrawDestroy(d);
+</a> }
+ 
+ void *
+<a href="#h2-8" id="h2-8" class="h">@@ -560,16 +553,15 @@ getclient(Window w)
+</a> 	return -1;
+ }
+ 
+<a href="#h2-8-3" id="h2-8-3" class="d">-unsigned long
+</a><a href="#h2-8-4" id="h2-8-4" class="i">+XftColor
+</a> getcolor(const char *colstr)
+ {
+<a href="#h2-8-7" id="h2-8-7" class="d">-	Colormap cmap = DefaultColormap(dpy, screen);
+</a><a href="#h2-8-8" id="h2-8-8" class="d">-	XColor color;
+</a><a href="#h2-8-9" id="h2-8-9" class="i">+	XftColor color;
+</a> 
+<a href="#h2-8-11" id="h2-8-11" class="d">-	if (!XAllocNamedColor(dpy, cmap, colstr, &amp;color, &amp;color))
+</a><a href="#h2-8-12" id="h2-8-12" class="i">+	if (!XftColorAllocName(dpy, DefaultVisual(dpy, screen), DefaultColormap(dpy, screen), colstr, &amp;color))
+</a> 		die(&quot;%s: cannot allocate color &#39;%s&#39;\n&quot;, argv0, colstr);
+ 
+<a href="#h2-8-15" id="h2-8-15" class="d">-	return color.pixel;
+</a><a href="#h2-8-16" id="h2-8-16" class="i">+	return color;
+</a> }
+ 
+ int
+<a href="#h2-9" id="h2-9" class="h">@@ -621,42 +613,12 @@ gettextprop(Window w, Atom atom, char *text, unsigned int size)
+</a> void
+ initfont(const char *fontstr)
+ {
+<a href="#h2-9-3" id="h2-9-3" class="d">-	char *def, **missing, **font_names;
+</a><a href="#h2-9-4" id="h2-9-4" class="d">-	XFontStruct **xfonts;
+</a><a href="#h2-9-5" id="h2-9-5" class="d">-	int i, n;
+</a><a href="#h2-9-6" id="h2-9-6" class="d">-
+</a><a href="#h2-9-7" id="h2-9-7" class="d">-	missing = NULL;
+</a><a href="#h2-9-8" id="h2-9-8" class="d">-	if (dc.font.set)
+</a><a href="#h2-9-9" id="h2-9-9" class="d">-		XFreeFontSet(dpy, dc.font.set);
+</a><a href="#h2-9-10" id="h2-9-10" class="d">-
+</a><a href="#h2-9-11" id="h2-9-11" class="d">-	dc.font.set = XCreateFontSet(dpy, fontstr, &amp;missing, &amp;n, &amp;def);
+</a><a href="#h2-9-12" id="h2-9-12" class="d">-	if (missing) {
+</a><a href="#h2-9-13" id="h2-9-13" class="d">-		while (n--)
+</a><a href="#h2-9-14" id="h2-9-14" class="d">-			fprintf(stderr, &quot;%s: missing fontset: %s\n&quot;,
+</a><a href="#h2-9-15" id="h2-9-15" class="d">-			        argv0, missing[n]);
+</a><a href="#h2-9-16" id="h2-9-16" class="d">-		XFreeStringList(missing);
+</a><a href="#h2-9-17" id="h2-9-17" class="d">-	}
+</a><a href="#h2-9-18" id="h2-9-18" class="i">+	if (!(dc.font.xfont = XftFontOpenName(dpy, screen, fontstr))
+</a><a href="#h2-9-19" id="h2-9-19" class="i">+	    &amp;&amp; !(dc.font.xfont = XftFontOpenName(dpy, screen, &quot;fixed&quot;)))
+</a><a href="#h2-9-20" id="h2-9-20" class="i">+		die(&quot;error, cannot load font: &#39;%s&#39;\n&quot;, fontstr);
+</a> 
+<a href="#h2-9-22" id="h2-9-22" class="d">-	if (dc.font.set) {
+</a><a href="#h2-9-23" id="h2-9-23" class="d">-		dc.font.ascent = dc.font.descent = 0;
+</a><a href="#h2-9-24" id="h2-9-24" class="d">-		n = XFontsOfFontSet(dc.font.set, &amp;xfonts, &amp;font_names);
+</a><a href="#h2-9-25" id="h2-9-25" class="d">-		for (i = 0, dc.font.ascent = 0, dc.font.descent = 0;
+</a><a href="#h2-9-26" id="h2-9-26" class="d">-		     i &lt; n; i++) {
+</a><a href="#h2-9-27" id="h2-9-27" class="d">-			dc.font.ascent = MAX(dc.font.ascent, (*xfonts)-&gt;ascent);
+</a><a href="#h2-9-28" id="h2-9-28" class="d">-			dc.font.descent = MAX(dc.font.descent,(*xfonts)-&gt;descent);
+</a><a href="#h2-9-29" id="h2-9-29" class="d">-			xfonts++;
+</a><a href="#h2-9-30" id="h2-9-30" class="d">-		}
+</a><a href="#h2-9-31" id="h2-9-31" class="d">-	} else {
+</a><a href="#h2-9-32" id="h2-9-32" class="d">-		if (dc.font.xfont)
+</a><a href="#h2-9-33" id="h2-9-33" class="d">-			XFreeFont(dpy, dc.font.xfont);
+</a><a href="#h2-9-34" id="h2-9-34" class="d">-		dc.font.xfont = NULL;
+</a><a href="#h2-9-35" id="h2-9-35" class="d">-		if (!(dc.font.xfont = XLoadQueryFont(dpy, fontstr)) &amp;&amp;
+</a><a href="#h2-9-36" id="h2-9-36" class="d">-		    !(dc.font.xfont = XLoadQueryFont(dpy, &quot;fixed&quot;)))
+</a><a href="#h2-9-37" id="h2-9-37" class="d">-			die(&quot;%s: cannot load font: &#39;%s&#39;\n&quot;, argv0, fontstr);
+</a><a href="#h2-9-38" id="h2-9-38" class="d">-
+</a><a href="#h2-9-39" id="h2-9-39" class="d">-		dc.font.ascent = dc.font.xfont-&gt;ascent;
+</a><a href="#h2-9-40" id="h2-9-40" class="d">-		dc.font.descent = dc.font.xfont-&gt;descent;
+</a><a href="#h2-9-41" id="h2-9-41" class="d">-	}
+</a><a href="#h2-9-42" id="h2-9-42" class="i">+	dc.font.ascent = dc.font.xfont-&gt;ascent;
+</a><a href="#h2-9-43" id="h2-9-43" class="i">+	dc.font.descent = dc.font.xfont-&gt;descent;
+</a> 	dc.font.height = dc.font.ascent + dc.font.descent;
+ }
+ 
+<a href="#h2-10" id="h2-10" class="h">@@ -1057,11 +1019,9 @@ setup(void)
+</a> 	dc.drawable = XCreatePixmap(dpy, root, ww, wh,
+ 	                            DefaultDepth(dpy, screen));
+ 	dc.gc = XCreateGC(dpy, root, 0, 0);
+<a href="#h2-10-3" id="h2-10-3" class="d">-	if (!dc.font.set)
+</a><a href="#h2-10-4" id="h2-10-4" class="d">-		XSetFont(dpy, dc.gc, dc.font.xfont-&gt;fid);
+</a> 
+ 	win = XCreateSimpleWindow(dpy, root, wx, wy, ww, wh, 0,
+<a href="#h2-10-7" id="h2-10-7" class="d">-	                          dc.norm[ColFG], dc.norm[ColBG]);
+</a><a href="#h2-10-8" id="h2-10-8" class="i">+	                          dc.norm[ColFG].pixel, dc.norm[ColBG].pixel);
+</a> 	XMapRaised(dpy, win);
+ 	XSelectInput(dpy, win, SubstructureNotifyMask | FocusChangeMask |
+ 	             ButtonPressMask | ExposureMask | KeyPressMask |
+<a href="#h2-11" id="h2-11" class="h">@@ -1131,14 +1091,9 @@ spawn(const Arg *arg)
+</a> int
+ textnw(const char *text, unsigned int len)
+ {
+<a href="#h2-11-3" id="h2-11-3" class="d">-	XRectangle r;
+</a><a href="#h2-11-4" id="h2-11-4" class="d">-
+</a><a href="#h2-11-5" id="h2-11-5" class="d">-	if (dc.font.set) {
+</a><a href="#h2-11-6" id="h2-11-6" class="d">-		XmbTextExtents(dc.font.set, text, len, NULL, &amp;r);
+</a><a href="#h2-11-7" id="h2-11-7" class="d">-		return r.width;
+</a><a href="#h2-11-8" id="h2-11-8" class="d">-	}
+</a><a href="#h2-11-9" id="h2-11-9" class="d">-
+</a><a href="#h2-11-10" id="h2-11-10" class="d">-	return XTextWidth(dc.font.xfont, text, len);
+</a><a href="#h2-11-11" id="h2-11-11" class="i">+	XGlyphInfo ext;
+</a><a href="#h2-11-12" id="h2-11-12" class="i">+	XftTextExtentsUtf8(dpy, dc.font.xfont, (XftChar8 *) text, len, &amp;ext);
+</a><a href="#h2-11-13" id="h2-11-13" class="i">+	return ext.xOff;
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

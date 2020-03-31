@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adapt JavaScript functions - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d9cecc89329dee3eb48bb6cc38d2bc38796c2e8b.html">d9cecc89329dee3eb48bb6cc38d2bc38796c2e8b</a>
+<b>parent</b> <a href="../commit/72905b8bfc0f91cd3b6d0ac845c5cae92f8e35db.html">72905b8bfc0f91cd3b6d0ac845c5cae92f8e35db</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Thu, 19 Nov 2015 17:14:29 +0100
+
+Adapt JavaScript functions
+
+Removed eval(), evalscript() is now sufficient and can directly execute
+passed JavaScript string.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">42</td><td><span class="i">+++++++++++++++++</span><span class="d">-------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 17 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -124,7 +124,8 @@ static void closeview(WebKitWebView *v, Client *c);
+</a> static void destroyclient(Client *c);
+ static void destroywin(GtkWidget* w, Client *c);
+ static void die(const char *errstr, ...);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void eval(Client *c, const Arg *arg);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void evalscript(Client *c, const char *jsstr, ...);
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static void runscript(Client *c);
+</a> static void find(Client *c, const Arg *arg);
+ static void fullscreen(Client *c, const Arg *arg);
+ static gboolean permissionrequested(WebKitWebView *v,
+<a href="#h0-1" id="h0-1" class="h">@@ -336,29 +337,28 @@ cookiepolicy_set(const WebKitCookieAcceptPolicy ep)
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="d">-evalscript(JSContextRef js, char *script, char* scriptname)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+evalscript(Client *c, const char *jsstr, ...)
+</a> {
+<a href="#h0-1-6" id="h0-1-6" class="d">-	JSStringRef jsscript, jsscriptname;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	JSValueRef exception = NULL;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	va_list ap;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	gchar *script;
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	va_start(ap, jsstr);
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	script = g_strdup_vprintf(jsstr, ap);
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	va_end(ap);
+</a> 
+<a href="#h0-1-15" id="h0-1-15" class="d">-	jsscript = JSStringCreateWithUTF8CString(script);
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-	jsscriptname = JSStringCreateWithUTF8CString(scriptname);
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-	JSEvaluateScript(js, jsscript, JSContextGetGlobalObject(js),
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-	                 jsscriptname, 0, &amp;exception);
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-	JSStringRelease(jsscript);
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-	JSStringRelease(jsscriptname);
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	webkit_web_view_run_javascript(c-&gt;view, script, NULL, NULL, NULL);
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	g_free(script);
+</a> }
+ 
+ void
+<a href="#h0-1-26" id="h0-1-26" class="d">-runscript(WebKitWebFrame *frame)
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+runscript(Client *c)
+</a> {
+<a href="#h0-1-29" id="h0-1-29" class="d">-	char *script;
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-	GError *error;
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+	gchar *script;
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+	gsize l;
+</a> 
+<a href="#h0-1-34" id="h0-1-34" class="d">-	if (g_file_get_contents(scriptfile, &amp;script, NULL, &amp;error)) {
+</a><a href="#h0-1-35" id="h0-1-35" class="d">-		evalscript(webkit_web_frame_get_global_context(frame), script,
+</a><a href="#h0-1-36" id="h0-1-36" class="d">-		           scriptfile);
+</a><a href="#h0-1-37" id="h0-1-37" class="d">-	}
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+	if (g_file_get_contents(scriptfile, &amp;script, &amp;l, NULL) &amp;&amp; l)
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+		evalscript(c, script);
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+	g_free(script);
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -1319,14 +1319,6 @@ spawn(Client *c, const Arg *arg)
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="d">-eval(Client *c, const Arg *arg)
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-{
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	WebKitWebFrame *frame = webkit_web_view_get_main_frame(c-&gt;view);
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-	evalscript(webkit_web_frame_get_global_context(frame),
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-	           ((char **)arg-&gt;v)[0], &quot;&quot;);
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-}
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-void
+</a> stop(Client *c, const Arg *arg)
+ {
+ 	webkit_web_view_stop_loading(c-&gt;view);
+</pre>
+</div>
+</body>
+</html>

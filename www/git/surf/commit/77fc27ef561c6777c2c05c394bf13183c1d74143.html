@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>merge, download fixing. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/77fc27ef561c6777c2c05c394bf13183c1d74143.html">77fc27ef561c6777c2c05c394bf13183c1d74143</a>
+<b>parent</b> <a href="../commit/9ec6fbda904fa577afe81eddecf8903ecff60eae.html">9ec6fbda904fa577afe81eddecf8903ecff60eae</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Fri,  4 Sep 2009 13:20:48 +0200
+
+merge, download fixing.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 4 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -109,9 +109,6 @@ download(WebKitDownload *o, GParamSpec *pspec, Client *c) {
+</a> 	if(status == WEBKIT_DOWNLOAD_STATUS_STARTED || status == WEBKIT_DOWNLOAD_STATUS_CREATED) {
+ 		c-&gt;progress = (int)(webkit_download_get_progress(c-&gt;download)*100);
+ 	}
+<a href="#h0-0-3" id="h0-0-3" class="d">-	else {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		stop(c);
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	}
+</a> 	updatetitle(c, NULL);
+ }
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -277,8 +274,6 @@ loadcommit(WebKitWebView *view, WebKitWebFrame *f, Client *c) {
+</a> 
+ void
+ loadstart(WebKitWebView *view, WebKitWebFrame *f, Client *c) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(c-&gt;download)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		stop(c);
+</a> 	c-&gt;progress = 0;
+ 	updatetitle(c, NULL);
+ }
+<a href="#h0-2" id="h0-2" class="h">@@ -317,7 +312,7 @@ loadfile(Client *c, const gchar *f) {
+</a> void
+ loaduri(Client *c, const gchar *uri) {
+ 	gchar *u;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	u = g_strrstr(uri, &quot;:&quot;) ? g_strdup(uri)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	u = g_strrstr(uri, &quot;://&quot;) ? g_strdup(uri)
+</a> 		: g_strdup_printf(&quot;http://%s&quot;, uri);
+ 	webkit_web_view_load_uri(c-&gt;view, u);
+ 	c-&gt;progress = 0;
+<a href="#h0-3" id="h0-3" class="h">@@ -409,8 +404,8 @@ newwindow(WebKitWebView  *v, WebKitWebFrame *f, Client *c) {
+</a>  
+ void
+ pasteurl(GtkClipboard *clipboard, const gchar *text, gpointer d) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(text!=NULL)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		loaduri((Client *)d, text);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if(text != NULL)
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		loaduri((Client *) d, text);
+</a> }
+ 
+ GdkFilterReturn
+<a href="#h0-4" id="h0-4" class="h">@@ -421,6 +416,7 @@ processx(GdkXEvent *e, GdkEvent *event, gpointer d) {
+</a> 	int idummy;
+ 	unsigned long ldummy;
+ 	unsigned char *buf = NULL;
+<a href="#h0-4-3" id="h0-4-3" class="i">+
+</a> 	if(((XEvent *)e)-&gt;type == PropertyNotify) {
+ 		ev = &amp;((XEvent *)e)-&gt;xproperty;
+ 		if(ev-&gt;atom == urlprop &amp;&amp; ev-&gt;state == PropertyNewValue) {
+</pre>
+</div>
+</body>
+</html>

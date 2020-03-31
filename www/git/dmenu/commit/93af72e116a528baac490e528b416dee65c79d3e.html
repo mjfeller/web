@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cursor fix + style - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/93af72e116a528baac490e528b416dee65c79d3e.html">93af72e116a528baac490e528b416dee65c79d3e</a>
+<b>parent</b> <a href="../commit/0b8072a5a93cfa6869983748932f9e5679fbfe2d.html">0b8072a5a93cfa6869983748932f9e5679fbfe2d</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Mon,  9 Aug 2010 11:54:46 +0100
+
+cursor fix + style
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">44</td><td><span class="i">+++++++++++++++++++</span><span class="d">-------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 19 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -30,7 +30,7 @@ static char *cistrstr(const char *s, const char *sub);
+</a> static void drawmenu(void);
+ static void grabkeyboard(void);
+ static void insert(const char *s, ssize_t n);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void keypress(XKeyEvent *e);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void keypress(XKeyEvent *ev);
+</a> static void match(void);
+ static void paste(void);
+ static void readstdin(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -73,8 +73,7 @@ appenditem(Item *item, Item **list, Item **last) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="d">-calcoffsets(void)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-{
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+calcoffsets(void) {
+</a> 	unsigned int h, i, n;
+ 
+ 	h = dc-&gt;font.height+2;
+<a href="#h0-2" id="h0-2" class="h">@@ -104,26 +103,24 @@ cistrstr(const char *s, const char *sub) {
+</a> 
+ void
+ drawmenu(void) {
+<a href="#h0-2-3" id="h0-2-3" class="i">+	int curpos;
+</a> 	Item *item;
+ 
+ 	dc-&gt;x = 0;
+ 	dc-&gt;y = 0;
+ 	drawrect(dc, 0, 0, mw, mh, BG(dc, normcol));
+<a href="#h0-2-9" id="h0-2-9" class="d">-
+</a> 	dc-&gt;h = dc-&gt;font.height + 2;
+ 	dc-&gt;y = topbar ? 0 : mh - dc-&gt;h;
+<a href="#h0-2-12" id="h0-2-12" class="d">-	/* print prompt? */
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+
+</a> 	if(prompt) {
+ 		dc-&gt;w = promptw;
+ 		drawtext(dc, prompt, selcol);
+ 		dc-&gt;x = dc-&gt;w;
+ 	}
+<a href="#h0-2-19" id="h0-2-19" class="d">-	dc-&gt;w = mw - dc-&gt;x;
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-	/* print input field */
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-	if(matches &amp;&amp; lines == 0 &amp;&amp; textw(dc, text) &lt;= inputw)
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-		dc-&gt;w = inputw;
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+	dc-&gt;w = (lines &gt; 0 || !matches) ? mw - dc-&gt;x : inputw;
+</a> 	drawtext(dc, text, normcol);
+<a href="#h0-2-25" id="h0-2-25" class="d">-	drawrect(dc, textnw(dc, text, cursor) + dc-&gt;h/2 - 2, 2, 1, dc-&gt;h - 4, FG(dc, normcol));
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+	if((curpos = textnw(dc, text, cursor) + dc-&gt;h/2 - 2) &lt; dc-&gt;w)
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+		drawrect(dc, curpos, 2, 1, dc-&gt;h - 4, FG(dc, normcol));
+</a> 
+ 	if(lines &gt; 0) {
+ 		dc-&gt;y = topbar ? dc-&gt;h : 0;
+<a href="#h0-3" id="h0-3" class="h">@@ -133,7 +130,7 @@ drawmenu(void) {
+</a> 			dc-&gt;y += dc-&gt;h;
+ 		}
+ 	}
+<a href="#h0-3-3" id="h0-3-3" class="d">-	else if(curr &amp;&amp; (dc-&gt;w == inputw || curr-&gt;next)) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	else if(matches) {
+</a> 		dc-&gt;x += inputw;
+ 		dc-&gt;w = textw(dc, &quot;&lt;&quot;);
+ 		if(curr-&gt;left)
+<a href="#h0-4" id="h0-4" class="h">@@ -173,15 +170,15 @@ insert(const char *s, ssize_t n) {
+</a> }
+ 
+ void
+<a href="#h0-4-3" id="h0-4-3" class="d">-keypress(XKeyEvent *e) {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	char buf[sizeof text];
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+keypress(XKeyEvent *ev) {
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+	char buf[32];
+</a> 	int n;
+ 	size_t len;
+ 	KeySym ksym;
+ 
+ 	len = strlen(text);
+<a href="#h0-4-12" id="h0-4-12" class="d">-	XLookupString(e, buf, sizeof buf, &amp;ksym, NULL);
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-	if(e-&gt;state &amp; ControlMask) {
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+	XLookupString(ev, buf, sizeof buf, &amp;ksym, NULL);
+</a><a href="#h0-4-15" id="h0-4-15" class="i">+	if(ev-&gt;state &amp; ControlMask) {
+</a> 		switch(tolower(ksym)) {
+ 		default:
+ 			return;
+<a href="#h0-5" id="h0-5" class="h">@@ -235,7 +232,6 @@ keypress(XKeyEvent *e) {
+</a> 			break;
+ 		case XK_y:  /* paste selection */
+ 			XConvertSelection(dc-&gt;dpy, XA_PRIMARY, utf8, None, win, CurrentTime);
+<a href="#h0-5-3" id="h0-5-3" class="d">-			/* causes SelectionNotify event */
+</a> 			return;
+ 		}
+ 	}
+<a href="#h0-6" id="h0-6" class="h">@@ -289,8 +285,7 @@ keypress(XKeyEvent *e) {
+</a> 	case XK_Up:
+ 		if(!sel || !sel-&gt;left)
+ 			return;
+<a href="#h0-6-3" id="h0-6-3" class="d">-		sel = sel-&gt;left;
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-		if(sel-&gt;right == curr) {
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+		if((sel = sel-&gt;left)-&gt;right == curr) {
+</a> 			curr = prev;
+ 			calcoffsets();
+ 		}
+<a href="#h0-7" id="h0-7" class="h">@@ -309,7 +304,7 @@ keypress(XKeyEvent *e) {
+</a> 		break;
+ 	case XK_Return:
+ 	case XK_KP_Enter:
+<a href="#h0-7-3" id="h0-7-3" class="d">-		fputs((sel &amp;&amp; !(e-&gt;state &amp; ShiftMask)) ? sel-&gt;text : text, stdout);
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+		fputs((sel &amp;&amp; !(ev-&gt;state &amp; ShiftMask)) ? sel-&gt;text : text, stdout);
+</a> 		fflush(stdout);
+ 		exit(EXIT_SUCCESS);
+ 	case XK_Right:
+<a href="#h0-8" id="h0-8" class="h">@@ -322,8 +317,7 @@ keypress(XKeyEvent *e) {
+</a> 	case XK_Down:
+ 		if(!sel || !sel-&gt;right)
+ 			return;
+<a href="#h0-8-3" id="h0-8-3" class="d">-		sel = sel-&gt;right;
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-		if(sel == next) {
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+		if((sel = sel-&gt;right) == next) {
+</a> 			curr = next;
+ 			calcoffsets();
+ 		}
+<a href="#h0-9" id="h0-9" class="h">@@ -404,7 +398,7 @@ readstdin(void) {
+</a> 		if(!(new = malloc(sizeof *new)))
+ 			eprintf(&quot;cannot malloc %u bytes\n&quot;, sizeof *new);
+ 		if(!(new-&gt;text = strdup(buf)))
+<a href="#h0-9-3" id="h0-9-3" class="d">-			eprintf(&quot;cannot strdup %u bytes\n&quot;, strlen(buf));
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+			eprintf(&quot;cannot strdup %u bytes\n&quot;, strlen(buf)+1);
+</a> 		inputw = MAX(inputw, textw(dc, new-&gt;text));
+ 		new-&gt;next = new-&gt;left = new-&gt;right = NULL;
+ 		if(item)
+<a href="#h0-10" id="h0-10" class="h">@@ -485,9 +479,9 @@ setup(void) {
+</a> 	wa.background_pixmap = ParentRelative;
+ 	wa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
+ 	win = XCreateWindow(dc-&gt;dpy, root, x, y, mw, mh, 0,
+<a href="#h0-10-3" id="h0-10-3" class="d">-			DefaultDepth(dc-&gt;dpy, screen), CopyFromParent,
+</a><a href="#h0-10-4" id="h0-10-4" class="d">-			DefaultVisual(dc-&gt;dpy, screen),
+</a><a href="#h0-10-5" id="h0-10-5" class="d">-			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+</a><a href="#h0-10-6" id="h0-10-6" class="i">+	                    DefaultDepth(dc-&gt;dpy, screen), CopyFromParent,
+</a><a href="#h0-10-7" id="h0-10-7" class="i">+	                    DefaultVisual(dc-&gt;dpy, screen),
+</a><a href="#h0-10-8" id="h0-10-8" class="i">+	                    CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+</a> 
+ 	grabkeyboard();
+ 	setcanvas(dc, mw, mh);
+</pre>
+</div>
+</body>
+</html>

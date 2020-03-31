@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fixing bad highlighting on first SNAP_WORD multiline select. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8315dc417982936186837edfac24420d0d0e516e.html">8315dc417982936186837edfac24420d0d0e516e</a>
+<b>parent</b> <a href="../commit/b5144100a59956b5bf69614a077bd4d252d7dc6c.html">b5144100a59956b5bf69614a077bd4d252d7dc6c</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sat,  1 Jun 2013 12:23:55 +0200
+
+Fixing bad highlighting on first SNAP_WORD multiline select.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">5</td><td><span class="i">++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -780,7 +780,7 @@ getbuttoninfo(XEvent *e) {
+</a> 	sel.oe.x = x2col(e-&gt;xbutton.x);
+ 	sel.oe.y = y2row(e-&gt;xbutton.y);
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if (sel.ob.y &lt; sel.oe.y
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if(sel.ob.y &lt; sel.oe.y
+</a> 			|| (sel.ob.y == sel.oe.y &amp;&amp; sel.ob.x &lt; sel.oe.x)) {
+ 		selsnap(sel.snap, &amp;sel.ob.x, &amp;sel.ob.y, -1);
+ 		selsnap(sel.snap, &amp;sel.oe.x, &amp;sel.oe.y, +1);
+<a href="#h0-1" id="h0-1" class="h">@@ -788,7 +788,6 @@ getbuttoninfo(XEvent *e) {
+</a> 		selsnap(sel.snap, &amp;sel.oe.x, &amp;sel.oe.y, -1);
+ 		selsnap(sel.snap, &amp;sel.ob.x, &amp;sel.ob.y, +1);
+ 	}
+<a href="#h0-1-3" id="h0-1-3" class="d">-
+</a> 	selsort();
+ 
+ 	sel.type = SEL_REGULAR;
+<a href="#h0-2" id="h0-2" class="h">@@ -1099,7 +1098,7 @@ brelease(XEvent *e) {
+</a> 			selcopy();
+ 		}
+ 		sel.mode = 0;
+<a href="#h0-2-3" id="h0-2-3" class="d">-		term.dirty[sel.oe.y] = 1;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		tsetdirt(sel.nb.y, sel.ne.y);
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>renamed drawtitle into drawclient - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/184471b4bbd1736794a76d2b703659de0339322b.html">184471b4bbd1736794a76d2b703659de0339322b</a>
+<b>parent</b> <a href="../commit/21898c6049ea66dae34a660598684a7babec1097.html">21898c6049ea66dae34a660598684a7babec1097</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Thu,  4 Jan 2007 14:17:25 +0100
+
+renamed drawtitle into drawclient
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">draw.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+</table></pre><pre>4 files changed, 7 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -96,7 +96,7 @@ focus(Client *c) {
+</a> 		sel = c;
+ 		if(old) {
+ 			grabbuttons(old, False);
+<a href="#h0-0-3" id="h0-0-3" class="d">-			drawtitle(old);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			drawclient(old);
+</a> 		}
+ 	}
+ 	if(c) {
+<a href="#h0-1" id="h0-1" class="h">@@ -104,7 +104,7 @@ focus(Client *c) {
+</a> 		c-&gt;snext = stack;
+ 		stack = c;
+ 		grabbuttons(c, True);
+<a href="#h0-1-3" id="h0-1-3" class="d">-		drawtitle(c);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		drawclient(c);
+</a> 		XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+ 	}
+ 	else
+<b>diff --git a/<a id="h1" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -102,7 +102,7 @@ drawall(void) {
+</a> 	Client *c;
+ 
+ 	for(c = clients; c; c = getnext(c-&gt;next))
+<a href="#h1-0-3" id="h1-0-3" class="d">-		drawtitle(c);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		drawclient(c);
+</a> 	drawstatus();
+ }
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -138,7 +138,7 @@ drawstatus(void) {
+</a> }
+ 
+ void
+<a href="#h1-1-3" id="h1-1-3" class="d">-drawtitle(Client *c) {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+drawclient(Client *c) {
+</a> 	if(c == sel &amp;&amp; issel) {
+ 		drawstatus();
+ 		XUnmapWindow(dpy, c-&gt;twin);
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -124,7 +124,7 @@ extern void unmanage(Client *c);		/* destroy c */
+</a> /* draw.c */
+ extern void drawall(void);			/* draw all visible client titles and the bar */
+ extern void drawstatus(void);			/* draw the bar */
+<a href="#h2-0-3" id="h2-0-3" class="d">-extern void drawtitle(Client *c);		/* draw title of c */
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+extern void drawclient(Client *c);		/* draw title of c */
+</a> extern unsigned long getcolor(const char *colstr);	/* return color of colstr */
+ extern void setfont(const char *fontstr);	/* set the font for DC */
+ extern unsigned int textw(const char *text);	/* return the width of text in px*/
+<b>diff --git a/<a id="h3" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -236,7 +236,7 @@ expose(XEvent *e) {
+</a> 		if(barwin == ev-&gt;window)
+ 			drawstatus();
+ 		else if((c = getctitle(ev-&gt;window)))
+<a href="#h3-0-3" id="h3-0-3" class="d">-			drawtitle(c);
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+			drawclient(c);
+</a> 	}
+ }
+ 
+<a href="#h3-1" id="h3-1" class="h">@@ -320,7 +320,7 @@ propertynotify(XEvent *e) {
+</a> 		if(ev-&gt;atom == XA_WM_NAME || ev-&gt;atom == netatom[NetWMName]) {
+ 			updatetitle(c);
+ 			resizetitle(c);
+<a href="#h3-1-3" id="h3-1-3" class="d">-			drawtitle(c);
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+			drawclient(c);
+</a> 		}
+ 	}
+ }
+</pre>
+</div>
+</body>
+</html>

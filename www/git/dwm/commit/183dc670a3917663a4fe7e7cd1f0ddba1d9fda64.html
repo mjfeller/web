@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed order of transient monitor applicaion and rule application - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/183dc670a3917663a4fe7e7cd1f0ddba1d9fda64.html">183dc670a3917663a4fe7e7cd1f0ddba1d9fda64</a>
+<b>parent</b> <a href="../commit/25947bcfdbef9e9bd937be0e07437c67c037516c.html">25947bcfdbef9e9bd937be0e07437c67c037516c</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Tue, 30 Jun 2009 19:56:19 +0100
+
+fixed order of transient monitor applicaion and rule application
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">40</td><td><span class="i">++++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>1 file changed, 22 insertions(+), 18 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1046,28 +1046,38 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 		die(&quot;fatal: could not malloc() %u bytes\n&quot;, sizeof(Client));
+ 	*c = cz;
+ 	c-&gt;win = w;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	c-&gt;mon = selmon;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	if(XGetTransientForHint(dpy, w, &amp;trans))
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		t = wintoclient(trans);
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	if(t) {
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		c-&gt;mon = t-&gt;mon;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+		c-&gt;tags = t-&gt;tags;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	}
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	else {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		c-&gt;mon = selmon;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		applyrules(c);
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	}
+</a> 
+ 	/* geometry */
+<a href="#h0-0-17" id="h0-0-17" class="d">-	c-&gt;x = wa-&gt;x + selmon-&gt;wx;
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-	c-&gt;y = wa-&gt;y + selmon-&gt;wy;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	c-&gt;x = wa-&gt;x + c-&gt;mon-&gt;wx;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	c-&gt;y = wa-&gt;y + c-&gt;mon-&gt;wy;
+</a> 	c-&gt;w = wa-&gt;width;
+ 	c-&gt;h = wa-&gt;height;
+ 	c-&gt;oldbw = wa-&gt;border_width;
+<a href="#h0-0-24" id="h0-0-24" class="d">-	if(c-&gt;w == selmon-&gt;mw &amp;&amp; c-&gt;h == selmon-&gt;mh) {
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-		c-&gt;x = selmon-&gt;mx;
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-		c-&gt;y = selmon-&gt;my;
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	if(c-&gt;w == c-&gt;mon-&gt;mw &amp;&amp; c-&gt;h == c-&gt;mon-&gt;mh) {
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		c-&gt;x = c-&gt;mon-&gt;mx;
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+		c-&gt;y = c-&gt;mon-&gt;my;
+</a> 		c-&gt;bw = 0;
+ 	}
+ 	else {
+<a href="#h0-0-33" id="h0-0-33" class="d">-		if(c-&gt;x + WIDTH(c) &gt; selmon-&gt;mx + selmon-&gt;mw)
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-			c-&gt;x = selmon-&gt;mx + selmon-&gt;mw - WIDTH(c);
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-		if(c-&gt;y + HEIGHT(c) &gt; selmon-&gt;my + selmon-&gt;mh)
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-			c-&gt;y = selmon-&gt;my + selmon-&gt;mh - HEIGHT(c);
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-		c-&gt;x = MAX(c-&gt;x, selmon-&gt;mx);
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+		if(c-&gt;x + WIDTH(c) &gt; c-&gt;mon-&gt;mx + c-&gt;mon-&gt;mw)
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+			c-&gt;x = c-&gt;mon-&gt;mx + c-&gt;mon-&gt;mw - WIDTH(c);
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+		if(c-&gt;y + HEIGHT(c) &gt; c-&gt;mon-&gt;my + c-&gt;mon-&gt;mh)
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+			c-&gt;y = c-&gt;mon-&gt;my + c-&gt;mon-&gt;mh - HEIGHT(c);
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+		c-&gt;x = MAX(c-&gt;x, c-&gt;mon-&gt;mx);
+</a> 		/* only fix client y-offset, if the client center might cover the bar */
+ 		c-&gt;y = MAX(c-&gt;y, ((c-&gt;mon-&gt;by == 0) &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &gt;= c-&gt;mon-&gt;wx)
+<a href="#h0-0-45" id="h0-0-45" class="d">-		           &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &lt; c-&gt;mon-&gt;wx + c-&gt;mon-&gt;ww)) ? bh : selmon-&gt;my);
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+		           &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &lt; c-&gt;mon-&gt;wx + c-&gt;mon-&gt;ww)) ? bh : c-&gt;mon-&gt;my);
+</a> 		c-&gt;bw = borderpx;
+ 	}
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -1079,12 +1089,6 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+ 	grabbuttons(c, False);
+ 	updatetitle(c);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(XGetTransientForHint(dpy, w, &amp;trans))
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		t = wintoclient(trans);
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	if(t)
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-		c-&gt;tags = t-&gt;tags;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	else
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-		applyrules(c);
+</a> 	if(!c-&gt;isfloating)
+ 		c-&gt;isfloating = trans != None || c-&gt;isfixed;
+ 	if(c-&gt;isfloating)
+</pre>
+</div>
+</body>
+</html>

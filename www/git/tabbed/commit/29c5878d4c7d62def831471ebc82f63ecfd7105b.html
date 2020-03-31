@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding fullscreen mode to tabbed. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/29c5878d4c7d62def831471ebc82f63ecfd7105b.html">29c5878d4c7d62def831471ebc82f63ecfd7105b</a>
+<b>parent</b> <a href="../commit/e70d87e83bdc49b24c302131f281fe0c6eac0634.html">e70d87e83bdc49b24c302131f281fe0c6eac0634</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Mon,  3 Dec 2012 21:28:02 +0100
+
+Adding fullscreen mode to tabbed.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.1</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">tabbed.c</a></td><td> | </td><td class="num">21</td><td><span class="i">++++++++++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>3 files changed, 28 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -16,11 +16,13 @@ static Key keys[] = { \
+</a> 	/* modifier                     key        function        argument */
+ 	{ MODKEY|ShiftMask,             XK_Return, focusonce,      { 0 } },
+ 	{ MODKEY|ShiftMask,             XK_Return, spawn,          { 0 } },
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a> 	{ MODKEY|ShiftMask,             XK_l,      rotate,         { .i = +1 } },
+ 	{ MODKEY|ShiftMask,             XK_h,      rotate,         { .i = -1 } },
+ 	{ MODKEY|ShiftMask,             XK_j,      movetab,        { .i = -1 } },
+ 	{ MODKEY|ShiftMask,             XK_k,      movetab,        { .i = +1 } },
+ 	{ MODKEY,                       XK_Tab,    rotate,         { .i = 0 } },
+<a href="#h0-0-9" id="h0-0-9" class="i">+
+</a> 	{ MODKEY,                       XK_1,      move,           { .i = 0 } },
+ 	{ MODKEY,                       XK_2,      move,           { .i = 1 } },
+ 	{ MODKEY,                       XK_3,      move,           { .i = 2 } },
+<a href="#h0-1" id="h0-1" class="h">@@ -31,6 +33,9 @@ static Key keys[] = { \
+</a> 	{ MODKEY,                       XK_8,      move,           { .i = 7 } },
+ 	{ MODKEY,                       XK_9,      move,           { .i = 8 } },
+ 	{ MODKEY,                       XK_0,      move,           { .i = 9 } },
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a> 	{ MODKEY,                       XK_q,      killclient,     { 0 } },
+<a href="#h0-1-5" id="h0-1-5" class="i">+
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	{ 0,                            XK_F11,    fullscreen,     { 0 } },
+</a> };
+ 
+<b>diff --git a/<a id="h1" href="../file/tabbed.1.html">tabbed.1</a> b/<a href="../file/tabbed.1.html">tabbed.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -72,6 +72,9 @@ close tab
+</a> .TP
+ .B Ctrl\-[0..9]
+ jumps to nth tab
+<a href="#h1-0-3" id="h1-0-3" class="i">+.TP
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+.B F11
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+Toggle fullscreen mode.
+</a> .SH EXAMPLES
+ $ tabbed surf -e
+ .TP
+<b>diff --git a/<a id="h2" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -49,7 +49,8 @@
+</a> #define TEXTW(x)                 (textnw(x, strlen(x)) + dc.font.height)
+ 
+ enum { ColFG, ColBG, ColLast };                         /* color */
+<a href="#h2-0-3" id="h2-0-3" class="d">-enum { WMProtocols, WMDelete, WMName, XEmbed, WMLast }; /* default atoms */
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+enum { WMProtocols, WMDelete, WMName, WMState, WMFullscreen,
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	XEmbed, WMLast };                               /* default atoms */
+</a> 
+ typedef union {
+ 	int i;
+<a href="#h2-1" id="h2-1" class="h">@@ -103,6 +104,7 @@ static void expose(const XEvent *e);
+</a> static void focus(int c);
+ static void focusin(const XEvent *e);
+ static void focusonce(const Arg *arg);
+<a href="#h2-1-3" id="h2-1-3" class="i">+static void fullscreen(const Arg *arg);
+</a> static int getclient(Window w);
+ static unsigned long getcolor(const char *colstr);
+ static int getfirsttab(void);
+<a href="#h2-2" id="h2-2" class="h">@@ -463,6 +465,20 @@ focusonce(const Arg *arg) {
+</a> 	nextfocus = True;
+ }
+ 
+<a href="#h2-2-3" id="h2-2-3" class="i">+void
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+fullscreen(const Arg *arg) {
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+	XEvent e;
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+	e.type = ClientMessage;
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+	e.xclient.window = win;
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+	e.xclient.message_type = wmatom[WMState];
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+	e.xclient.format = 32;
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+	e.xclient.data.l[0] = 2;
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+	e.xclient.data.l[1] = wmatom[WMFullscreen];
+</a><a href="#h2-2-13" id="h2-2-13" class="i">+	e.xclient.data.l[2] = 0;
+</a><a href="#h2-2-14" id="h2-2-14" class="i">+	XSendEvent(dpy, root, False, SubstructureNotifyMask, &amp;e);
+</a><a href="#h2-2-15" id="h2-2-15" class="i">+}
+</a><a href="#h2-2-16" id="h2-2-16" class="i">+
+</a> int
+ getclient(Window w) {
+ 	int i;
+<a href="#h2-3" id="h2-3" class="h">@@ -839,6 +855,9 @@ setup(void) {
+</a> 	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+ 	wmatom[XEmbed] = XInternAtom(dpy, &quot;_XEMBED&quot;, False);
+ 	wmatom[WMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+<a href="#h2-3-3" id="h2-3-3" class="i">+	wmatom[WMState] = XInternAtom(dpy, &quot;_NET_WM_STATE&quot;, False);
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+	wmatom[WMFullscreen] = XInternAtom(dpy, &quot;_NET_WM_STATE_FULLSCREEN&quot;,
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+			False);
+</a> 
+ 	/* init appearance */
+ 	wx = 0;
+</pre>
+</div>
+</body>
+</html>

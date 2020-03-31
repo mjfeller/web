@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add a few configuration options - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4c41d363b761999a8af864b4e20218f0625d940f.html">4c41d363b761999a8af864b4e20218f0625d940f</a>
+<b>parent</b> <a href="../commit/5a02d3e500c7b8d22f00a214eb5a4e7244e4c6f5.html">5a02d3e500c7b8d22f00a214eb5a4e7244e4c6f5</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Tue,  5 Jul 2016 17:26:54 +0200
+
+Add a few configuration options
+
+“enable-accelerated-2d-canvas”
+“media-playback-requires-user-gesture”
+“enable-site-specific-quirks”
+
+Lookup those at
+https://webkitgtk.org/reference/webkit2gtk/stable/WebKitSettings.html
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 18 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,6 +8,7 @@ static char *cookiefile     = &quot;~/.surf/cookies.txt&quot;;
+</a> 
+ /* Webkit default features */
+ static Parameter defconfig[ParameterLast] = {
+<a href="#h0-0-3" id="h0-0-3" class="i">+	SETB(AcceleratedCanvas,  1),
+</a> 	SETB(CaretBrowsing,      0),
+ 	SETV(CookiePolicies,     &quot;@Aa&quot;),
+ 	SETB(DiskCache,          1),
+<a href="#h0-1" id="h0-1" class="h">@@ -20,11 +21,13 @@ static Parameter defconfig[ParameterLast] = {
+</a> 	SETB(JavaScript,         1),
+ 	SETB(KioskMode,          0),
+ 	SETB(LoadImages,         1),
+<a href="#h0-1-3" id="h0-1-3" class="i">+	SETB(MediaManualPlay,    0),
+</a> 	SETB(Plugins,            1),
+ 	SETV(PreferredLanguages, ((char *[]){ NULL })),
+ 	SETB(RunInFullscreen,    0),
+ 	SETB(ScrollBars,         1),
+ 	SETB(ShowIndicators,     1),
+<a href="#h0-1-9" id="h0-1-9" class="i">+	SETB(SiteQuirks,         1),
+</a> 	SETB(SpellChecking,      0),
+ 	SETV(SpellLanguages,     ((char *[]){ &quot;en_US&quot;, NULL })),
+ 	SETB(StrictSSL,          0),
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -58,6 +58,7 @@ enum {
+</a> };
+ 
+ typedef enum {
+<a href="#h1-0-3" id="h1-0-3" class="i">+	AcceleratedCanvas,
+</a> 	CaretBrowsing,
+ 	CookiePolicies,
+ 	DiskCache,
+<a href="#h1-1" id="h1-1" class="h">@@ -70,11 +71,13 @@ typedef enum {
+</a> 	JavaScript,
+ 	KioskMode,
+ 	LoadImages,
+<a href="#h1-1-3" id="h1-1-3" class="i">+	MediaManualPlay,
+</a> 	Plugins,
+ 	PreferredLanguages,
+ 	RunInFullscreen,
+ 	ScrollBars,
+ 	ShowIndicators,
+<a href="#h1-1-9" id="h1-1-9" class="i">+	SiteQuirks,
+</a> 	SpellChecking,
+ 	SpellLanguages,
+ 	StrictSSL,
+<a href="#h1-2" id="h1-2" class="h">@@ -611,6 +614,9 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a> 	WebKitSettings *s = webkit_web_view_get_settings(c-&gt;view);
+ 
+ 	switch (p) {
+<a href="#h1-2-3" id="h1-2-3" class="i">+	case AcceleratedCanvas:
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		webkit_settings_set_enable_accelerated_2d_canvas(s, a-&gt;b);
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		break;
+</a> 	case CaretBrowsing:
+ 		webkit_settings_set_enable_caret_browsing(s, a-&gt;b);
+ 		refresh = 0;
+<a href="#h1-3" id="h1-3" class="h">@@ -655,6 +661,9 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a> 	case LoadImages:
+ 		webkit_settings_set_auto_load_images(s, a-&gt;b);
+ 		break;
+<a href="#h1-3-3" id="h1-3-3" class="i">+	case MediaManualPlay:
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		webkit_settings_set_media_playback_requires_user_gesture(s, a-&gt;b);
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+		break;
+</a> 	case Plugins:
+ 		webkit_settings_set_enable_plugins(s, a-&gt;b);
+ 		break;
+<a href="#h1-4" id="h1-4" class="h">@@ -672,6 +681,9 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a> 		return; /* do not update */
+ 	case ShowIndicators:
+ 		break;
+<a href="#h1-4-3" id="h1-4-3" class="i">+	case SiteQuirks:
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		webkit_settings_set_enable_site_specific_quirks(s, a-&gt;b);
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+		break;
+</a> 	case SpellChecking:
+ 		webkit_web_context_set_spell_checking_enabled(
+ 		    webkit_web_view_get_context(c-&gt;view), a-&gt;b);
+<a href="#h1-5" id="h1-5" class="h">@@ -900,6 +912,9 @@ newview(Client *c, WebKitWebView *rv)
+</a> 		   &quot;enable-html5-local-storage&quot;, curconfig[DiskCache].val.b,
+ 		   &quot;enable-javascript&quot;, curconfig[JavaScript].val.b,
+ 		   &quot;enable-plugins&quot;, curconfig[Plugins].val.b,
+<a href="#h1-5-3" id="h1-5-3" class="i">+		   &quot;enable-accelerated-2d-canvas&quot;, curconfig[AcceleratedCanvas].val.b,
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		   &quot;enable-site-specific-quirks&quot;, curconfig[SiteQuirks].val.b,
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+		   &quot;media-playback-requires-user-gesture&quot;, curconfig[MediaManualPlay].val.b,
+</a> 		   NULL);
+ /* For mor interesting settings, have a look at
+  * http://webkitgtk.org/reference/webkit2gtk/stable/WebKitSettings.html */
+</pre>
+</div>
+</body>
+</html>

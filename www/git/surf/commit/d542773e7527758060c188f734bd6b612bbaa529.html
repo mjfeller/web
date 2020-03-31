@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Remove contextmenu() and menuactivate() for &quot;context-menu&quot; signal - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d542773e7527758060c188f734bd6b612bbaa529.html">d542773e7527758060c188f734bd6b612bbaa529</a>
+<b>parent</b> <a href="../commit/f6a35e5fbfb4a5e9f92a126dae0cca103727d9d4.html">f6a35e5fbfb4a5e9f92a126dae0cca103727d9d4</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Thu, 19 Nov 2015 13:40:35 +0100
+
+Remove contextmenu() and menuactivate() for &quot;context-menu&quot; signal
+
+Those were added because “right click menu to copy the link URI will now
+work” (would not work) in 2013. It&#39;s been a while since that works without
+intervention.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">54</td><td><span class="i"></span><span class="d">------------------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 0 insertions(+), 54 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -166,10 +166,6 @@ static WebKitWebView *newview(Client *c, WebKitWebView *rv);
+</a> static void showview(WebKitWebView *v, Client *c);
+ static void newwindow(Client *c, const Arg *arg, gboolean noembed);
+ static void pasteuri(GtkClipboard *clipboard, const char *text, gpointer d);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static gboolean contextmenu(WebKitWebView *view, GtkWidget *menu,
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-                            WebKitHitTestResult *target, gboolean keyboard,
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-			    Client *c);
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-static void menuactivate(GtkMenuItem *item, Client *c);
+</a> static void print(Client *c, const Arg *arg);
+ static GdkFilterReturn processx(GdkXEvent *xevent, GdkEvent *event,
+                                 gpointer d);
+<a href="#h0-1" id="h0-1" class="h">@@ -1016,9 +1012,6 @@ newview(Client *c, WebKitWebView *rv)
+</a> 	                 &quot;button-release-event&quot;,
+ 			 G_CALLBACK(buttonreleased), c);
+ 	g_signal_connect(G_OBJECT(v),
+<a href="#h0-1-3" id="h0-1-3" class="d">-	                 &quot;context-menu&quot;,
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			 G_CALLBACK(contextmenu), c);
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	g_signal_connect(G_OBJECT(v),
+</a> 	                 &quot;resource-request-starting&quot;,
+ 			 G_CALLBACK(beforerequest), c);
+ 	g_signal_connect(G_OBJECT(v),
+<a href="#h0-2" id="h0-2" class="h">@@ -1146,53 +1139,6 @@ newwindow(Client *c, const Arg *arg, gboolean noembed)
+</a> 	spawn(NULL, &amp;a);
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-gboolean
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-contextmenu(WebKitWebView *view, GtkWidget *menu, WebKitHitTestResult *target,
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-            gboolean keyboard, Client *c)
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-{
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-	GList *items = gtk_container_get_children(GTK_CONTAINER(GTK_MENU(menu)));
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-	for (GList *l = items; l; l = l-&gt;next)
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-		g_signal_connect(l-&gt;data, &quot;activate&quot;, G_CALLBACK(menuactivate), c);
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-	g_list_free(items);
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-	return FALSE;
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-}
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-void
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-menuactivate(GtkMenuItem *item, Client *c)
+</a><a href="#h0-2-18" id="h0-2-18" class="d">-{
+</a><a href="#h0-2-19" id="h0-2-19" class="d">-	/*
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-	 * context-menu-action-2000 open link
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-	 * context-menu-action-1    open link in window
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-	 * context-menu-action-2    download linked file
+</a><a href="#h0-2-23" id="h0-2-23" class="d">-	 * context-menu-action-3    copy link location
+</a><a href="#h0-2-24" id="h0-2-24" class="d">-	 * context-menu-action-7    copy image address
+</a><a href="#h0-2-25" id="h0-2-25" class="d">-	 * context-menu-action-13   reload
+</a><a href="#h0-2-26" id="h0-2-26" class="d">-	 * context-menu-action-10   back
+</a><a href="#h0-2-27" id="h0-2-27" class="d">-	 * context-menu-action-11   forward
+</a><a href="#h0-2-28" id="h0-2-28" class="d">-	 * context-menu-action-12   stop
+</a><a href="#h0-2-29" id="h0-2-29" class="d">-	 */
+</a><a href="#h0-2-30" id="h0-2-30" class="d">-
+</a><a href="#h0-2-31" id="h0-2-31" class="d">-	const gchar *name, *uri;
+</a><a href="#h0-2-32" id="h0-2-32" class="d">-	GtkClipboard *prisel, *clpbrd;
+</a><a href="#h0-2-33" id="h0-2-33" class="d">-
+</a><a href="#h0-2-34" id="h0-2-34" class="d">-	name = gtk_actionable_get_action_name(GTK_ACTIONABLE(item));
+</a><a href="#h0-2-35" id="h0-2-35" class="d">-	if (name == NULL)
+</a><a href="#h0-2-36" id="h0-2-36" class="d">-		return;
+</a><a href="#h0-2-37" id="h0-2-37" class="d">-
+</a><a href="#h0-2-38" id="h0-2-38" class="d">-	if (!g_strcmp0(name, &quot;context-menu-action-3&quot;)) {
+</a><a href="#h0-2-39" id="h0-2-39" class="d">-		prisel = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
+</a><a href="#h0-2-40" id="h0-2-40" class="d">-		gtk_clipboard_set_text(prisel, c-&gt;linkhover, -1);
+</a><a href="#h0-2-41" id="h0-2-41" class="d">-	} else if (!g_strcmp0(name, &quot;context-menu-action-7&quot;)) {
+</a><a href="#h0-2-42" id="h0-2-42" class="d">-		prisel = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
+</a><a href="#h0-2-43" id="h0-2-43" class="d">-		clpbrd = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+</a><a href="#h0-2-44" id="h0-2-44" class="d">-		uri = gtk_clipboard_wait_for_text(clpbrd);
+</a><a href="#h0-2-45" id="h0-2-45" class="d">-		if (uri)
+</a><a href="#h0-2-46" id="h0-2-46" class="d">-			gtk_clipboard_set_text(prisel, uri, -1);
+</a><a href="#h0-2-47" id="h0-2-47" class="d">-	}
+</a><a href="#h0-2-48" id="h0-2-48" class="d">-}
+</a><a href="#h0-2-49" id="h0-2-49" class="d">-
+</a> void
+ pasteuri(GtkClipboard *clipboard, const char *text, gpointer d)
+ {
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed useless cursor init. and renamed xcursor() to xdrawcursor(). - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/188293c828033fd7ff74d753239b3a5052b372a2.html">188293c828033fd7ff74d753239b3a5052b372a2</a>
+<b>parent</b> <a href="../commit/7d88cf88d05c5f5fffbe096da9fac79d7d8957f9.html">7d88cf88d05c5f5fffbe096da9fac79d7d8957f9</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 30 Aug 2010 01:45:57 +0200
+
+removed useless cursor init. and renamed xcursor() to xdrawcursor().
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">11</td><td><span class="i">++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 4 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -165,7 +165,7 @@ static void xbell(void);
+</a> static void xdraws(char *, Glyph, int, int, int);
+ static void xhints(void);
+ static void xclear(int, int, int, int);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void xcursor(void);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void xdrawcursor(void);
+</a> static void xinit(void);
+ static void xloadcols(void);
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -1071,9 +1071,6 @@ xinit(void) {
+</a> 	/* colors */
+ 	xloadcols();
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	term.c.attr.fg = DefaultFG;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	term.c.attr.bg = DefaultBG;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	term.c.attr.mode = ATTR_NULL;
+</a> 	/* windows */
+ 	xw.h = term.row * xw.ch + 2*BORDER;
+ 	xw.w = term.col * xw.cw + 2*BORDER;
+<a href="#h0-2" id="h0-2" class="h">@@ -1118,7 +1115,7 @@ xdraws(char *s, Glyph base, int x, int y, int len) {
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="d">-xcursor(void) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+xdrawcursor(void) {
+</a> 	static int oldx = 0;
+ 	static int oldy = 0;
+ 	Glyph g = {&#39; &#39;, ATTR_NULL, DefaultBG, DefaultCS, 0};
+<a href="#h0-3" id="h0-3" class="h">@@ -1163,7 +1160,7 @@ draw(int dummy) {
+</a> 			if(term.line[y][x].state &amp; GLYPH_SET)
+ 				xdrawc(x, y, term.line[y][x]);
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	xcursor();
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	xdrawcursor();
+</a> 	XCopyArea(xw.dis, xw.buf, xw.win, dc.gc, 0, 0, xw.bufw, xw.bufh, BORDER, BORDER);
+ 	XFlush(xw.dis);
+ }
+<a href="#h0-4" id="h0-4" class="h">@@ -1199,7 +1196,7 @@ draw(int redraw_all) {
+</a> 		if(i &gt; 0)
+ 			xdraws(buf, base, ox, y, i);
+ 	}
+<a href="#h0-4-3" id="h0-4-3" class="d">-	xcursor();
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	xdrawcursor();
+</a> 	XCopyArea(xw.dis, xw.buf, xw.win, dc.gc, 0, 0, xw.bufw, xw.bufh, BORDER, BORDER);
+ 	XFlush(xw.dis);
+ }
+</pre>
+</div>
+</body>
+</html>

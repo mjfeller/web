@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add cleanup() to do free(locks) + XCloseDisplay() - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1f66885fbf36c726b7615060d3c98cbf74218d13.html">1f66885fbf36c726b7615060d3c98cbf74218d13</a>
+<b>parent</b> <a href="../commit/137f0076c2986306109d637599b885bdaf92cd58.html">137f0076c2986306109d637599b885bdaf92cd58</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Thu,  1 Sep 2016 13:46:19 +0200
+
+Add cleanup() to do free(locks) + XCloseDisplay()
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 10 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -230,6 +230,13 @@ unlockscreen(Display *dpy, Lock *lock)
+</a> 	free(lock);
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+cleanup(Display *dpy)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+{
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	free(locks);
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	XCloseDisplay(dpy);
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a> static Lock *
+ lockscreen(Display *dpy, int screen)
+ {
+<a href="#h0-1" id="h0-1" class="h">@@ -349,8 +356,7 @@ main(int argc, char **argv) {
+</a> 	/* did we actually manage to lock anything? */
+ 	if (nlocks == 0) {
+ 		/* nothing to protect */
+<a href="#h0-1-3" id="h0-1-3" class="d">-		free(locks);
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		XCloseDisplay(dpy);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		cleanup(dpy);
+</a> 		return 1;
+ 	}
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -358,8 +364,7 @@ main(int argc, char **argv) {
+</a> 	if (argc &gt; 0) {
+ 		switch (fork()) {
+ 		case -1:
+<a href="#h0-2-3" id="h0-2-3" class="d">-			free(locks);
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-			XCloseDisplay(dpy);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+			cleanup(dpy);
+</a> 			die(&quot;slock: fork failed: %s\n&quot;, strerror(errno));
+ 		case 0:
+ 			if (close(ConnectionNumber(dpy)) &lt; 0)
+<a href="#h0-3" id="h0-3" class="h">@@ -382,8 +387,7 @@ main(int argc, char **argv) {
+</a> 	for (s = 0; s &lt; nscreens; s++)
+ 		unlockscreen(dpy, locks[s]);
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	free(locks);
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	XCloseDisplay(dpy);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	cleanup(dpy);
+</a> 
+ 	return 0;
+ }
+</pre>
+</div>
+</body>
+</html>

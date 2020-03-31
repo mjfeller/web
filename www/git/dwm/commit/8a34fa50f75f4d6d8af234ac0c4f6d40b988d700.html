@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added new stuff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8a34fa50f75f4d6d8af234ac0c4f6d40b988d700.html">8a34fa50f75f4d6d8af234ac0c4f6d40b988d700</a>
+<b>parent</b> <a href="../commit/dbf7e03996032a6def3b8e97468b78d6da9e8c88.html">dbf7e03996032a6def3b8e97468b78d6da9e8c88</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Mon, 10 Jul 2006 18:35:39 +0200
+
+added new stuff
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++</span><span class="d">------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">config.h</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">+</span><span class="d">---</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">draw.c</a></td><td> | </td><td class="num">163</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">draw.h</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">font.c</a></td><td> | </td><td class="num">81</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">gridmenu.1</a></td><td> | </td><td class="num">16</td><td><span class="i"></span><span class="d">----------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h7">util.c</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h8">util.h</a></td><td> | </td><td class="num">41</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">wm.c</a></td><td> | </td><td class="num">9</td><td><span class="i"></span><span class="d">---------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">wm.h</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+</table></pre><pre>11 files changed, 328 insertions(+), 36 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,8 +3,8 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = wm.c
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-OBJ = ${SRC:.c=.o}
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+WMSRC = wm.c draw.c util.c
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+WMOBJ = ${WMSRC:.c=.o}
+</a> MAN = gridwm.1
+ BIN = gridwm gridmenu     
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -22,18 +22,18 @@ config:
+</a> 	@echo CC $&lt;
+ 	@${CC} -c ${CFLAGS} $&lt;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-${OBJ}: wm.h
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+${WMOBJ}: wm.h draw.h config.h
+</a> 
+<a href="#h0-1-6" id="h0-1-6" class="d">-gridwm: ${OBJ}
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+gridwm: ${WMOBJ}
+</a> 	@echo LD $@
+<a href="#h0-1-9" id="h0-1-9" class="d">-	@${CC} -o $@ ${OBJ} ${X11LDFLAGS}
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	@${CC} -o $@ ${WMOBJ} ${LDFLAGS}
+</a> 
+ clean:
+ 	rm -f gridwm *.o
+ 
+ dist: clean
+ 	mkdir -p gridwm-${VERSION}
+<a href="#h0-1-17" id="h0-1-17" class="d">-	cp -R Makefile README LICENSE config.mk ${SRC} ${MAN} gridwm-${VERSION}
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	cp -R Makefile README LICENSE config.mk ${WMSRC} ${MAN} gridwm-${VERSION}
+</a> 	tar -cf gridwm-${VERSION}.tar gridwm-${VERSION}
+ 	gzip gridwm-${VERSION}.tar
+ 	rm -rf gridwm-${VERSION}
+<b>diff --git a/<a id="h1" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,9 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+/*
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+ * (C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+ * See LICENSE file for license details.
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+ */
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+#define FONT	&quot;fixed&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+#define FGCOLOR	&quot;#000000&quot;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+#define BGCOLOR	&quot;#ffaa00&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#define BOCOLOR	&quot;#000000&quot;
+</a><b>diff --git a/<a id="h2" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -11,14 +11,12 @@ X11LIB = /usr/X11R6/lib
+</a> VERSION = 0.0
+ 
+ # includes and libs
+<a href="#h2-0-3" id="h2-0-3" class="d">-LIBS = -L${PREFIX}/lib -L/usr/lib -lc
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-X11LIBS = -L${X11LIB} -lX11
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+LIBS = -L${PREFIX}/lib -L/usr/lib -lc -L${X11LIB} -lX11
+</a> 
+ # Linux/BSD
+ CFLAGS = -g -Wall -I. -I${PREFIX}/include -I/usr/include -I${X11INC} \
+ 	-DVERSION=\&quot;${VERSION}\&quot;
+ LDFLAGS = -g ${LIBS}
+<a href="#h2-0-11" id="h2-0-11" class="d">-X11LDFLAGS = ${LDFLAGS} ${X11LIBS}
+</a> 
+ # Solaris
+ #CFLAGS = -fast -xtarget=ultra ${INCLUDES} -DVERSION=\&quot;${VERSION}\&quot;
+<b>diff --git a/<a id="h3" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,163 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+/*
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+ * (C)opyright MMIV-MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+ * See LICENSE file for license details.
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+ */
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+#include &lt;string.h&gt;
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+#include &quot;draw.h&quot;
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+#include &quot;util.h&quot;
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+static void
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+drawborder(Display *dpy, Brush *b)
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+{
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	XPoint points[5];
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	XSetLineAttributes(dpy, b-&gt;gc, 1, LineSolid, CapButt, JoinMiter);
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+	XSetForeground(dpy, b-&gt;gc, b-&gt;color.border);
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+	points[0].x = b-&gt;rect.x;
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+	points[0].y = b-&gt;rect.y;
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+	points[1].x = b-&gt;rect.width - 1;
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+	points[1].y = 0;
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+	points[2].x = 0;
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+	points[2].y = b-&gt;rect.height - 1;
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+	points[3].x = -(b-&gt;rect.width - 1);
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+	points[3].y = 0;
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+	points[4].x = 0;
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+	points[4].y = -(b-&gt;rect.height - 1);
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+	XDrawLines(dpy, b-&gt;drawable, b-&gt;gc, points, 5, CoordModePrevious);
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+}
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+void
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+draw(Display *dpy, Brush *b)
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+{
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+	unsigned int x, y, w, h, len;
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+	static char buf[256];
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+	XGCValues gcv;
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+	XSetForeground(dpy, b-&gt;gc, b-&gt;color.bg);
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+	XFillRectangles(dpy, b-&gt;drawable, b-&gt;gc, &amp;b-&gt;rect, 1);
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+	if(b-&gt;border)
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+		drawborder(dpy, b);
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+	if(!b-&gt;text)
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+		return;
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+	len = strlen(b-&gt;text);
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+	if(len &gt;= sizeof(buf))
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+		len = sizeof(buf) - 1;
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+	memcpy(buf, b-&gt;text, len);
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+	buf[len] = 0;
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+	h = b-&gt;font-&gt;ascent + b-&gt;font-&gt;descent;
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+	y = b-&gt;rect.y + (b-&gt;rect.height / 2) - (h / 2) + b-&gt;font-&gt;ascent;
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+	x = b-&gt;rect.x + (h / 2);
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+	/* shorten text if necessary */
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+	while(len &amp;&amp; (w = textwidth_l(b-&gt;font, buf, len)) &gt; b-&gt;rect.width - h)
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+		buf[--len] = 0;
+</a><a href="#h3-0-59" id="h3-0-59" class="i">+
+</a><a href="#h3-0-60" id="h3-0-60" class="i">+	if(w &gt; b-&gt;rect.width)
+</a><a href="#h3-0-61" id="h3-0-61" class="i">+		return; /* too long */
+</a><a href="#h3-0-62" id="h3-0-62" class="i">+
+</a><a href="#h3-0-63" id="h3-0-63" class="i">+	gcv.foreground = b-&gt;color.fg;
+</a><a href="#h3-0-64" id="h3-0-64" class="i">+	gcv.background = b-&gt;color.bg;
+</a><a href="#h3-0-65" id="h3-0-65" class="i">+	if(b-&gt;font-&gt;set) {
+</a><a href="#h3-0-66" id="h3-0-66" class="i">+		XChangeGC(dpy, b-&gt;gc, GCForeground | GCBackground, &amp;gcv);
+</a><a href="#h3-0-67" id="h3-0-67" class="i">+		XmbDrawImageString(dpy, b-&gt;drawable, b-&gt;font-&gt;set, b-&gt;gc,
+</a><a href="#h3-0-68" id="h3-0-68" class="i">+				x, y, buf, len);
+</a><a href="#h3-0-69" id="h3-0-69" class="i">+	}
+</a><a href="#h3-0-70" id="h3-0-70" class="i">+	else {
+</a><a href="#h3-0-71" id="h3-0-71" class="i">+		gcv.font = b-&gt;font-&gt;xfont-&gt;fid;
+</a><a href="#h3-0-72" id="h3-0-72" class="i">+		XChangeGC(dpy, b-&gt;gc, GCForeground | GCBackground | GCFont, &amp;gcv);
+</a><a href="#h3-0-73" id="h3-0-73" class="i">+		XDrawImageString(dpy, b-&gt;drawable, b-&gt;gc, x, y, buf, len);
+</a><a href="#h3-0-74" id="h3-0-74" class="i">+	}
+</a><a href="#h3-0-75" id="h3-0-75" class="i">+}
+</a><a href="#h3-0-76" id="h3-0-76" class="i">+
+</a><a href="#h3-0-77" id="h3-0-77" class="i">+static unsigned long
+</a><a href="#h3-0-78" id="h3-0-78" class="i">+xloadcolor(Display *dpy, Colormap cmap, const char *colstr)
+</a><a href="#h3-0-79" id="h3-0-79" class="i">+{
+</a><a href="#h3-0-80" id="h3-0-80" class="i">+	XColor color;
+</a><a href="#h3-0-81" id="h3-0-81" class="i">+	XAllocNamedColor(dpy, cmap, colstr, &amp;color, &amp;color);
+</a><a href="#h3-0-82" id="h3-0-82" class="i">+	return color.pixel;
+</a><a href="#h3-0-83" id="h3-0-83" class="i">+}
+</a><a href="#h3-0-84" id="h3-0-84" class="i">+
+</a><a href="#h3-0-85" id="h3-0-85" class="i">+void
+</a><a href="#h3-0-86" id="h3-0-86" class="i">+loadcolor(Display *dpy, int screen, Color *c,
+</a><a href="#h3-0-87" id="h3-0-87" class="i">+		const char *bg, const char *fg, const char *border)
+</a><a href="#h3-0-88" id="h3-0-88" class="i">+{
+</a><a href="#h3-0-89" id="h3-0-89" class="i">+	Colormap cmap = DefaultColormap(dpy, screen);
+</a><a href="#h3-0-90" id="h3-0-90" class="i">+	c-&gt;bg = xloadcolor(dpy, cmap, bg);
+</a><a href="#h3-0-91" id="h3-0-91" class="i">+	c-&gt;fg = xloadcolor(dpy, cmap, fg);
+</a><a href="#h3-0-92" id="h3-0-92" class="i">+	c-&gt;border = xloadcolor(dpy, cmap, border);
+</a><a href="#h3-0-93" id="h3-0-93" class="i">+}
+</a><a href="#h3-0-94" id="h3-0-94" class="i">+
+</a><a href="#h3-0-95" id="h3-0-95" class="i">+unsigned int
+</a><a href="#h3-0-96" id="h3-0-96" class="i">+textwidth_l(Fnt *font, char *text, unsigned int len)
+</a><a href="#h3-0-97" id="h3-0-97" class="i">+{
+</a><a href="#h3-0-98" id="h3-0-98" class="i">+	if(font-&gt;set) {
+</a><a href="#h3-0-99" id="h3-0-99" class="i">+		XRectangle r;
+</a><a href="#h3-0-100" id="h3-0-100" class="i">+		XmbTextExtents(font-&gt;set, text, len, 0, &amp;r);
+</a><a href="#h3-0-101" id="h3-0-101" class="i">+		return r.width;
+</a><a href="#h3-0-102" id="h3-0-102" class="i">+	}
+</a><a href="#h3-0-103" id="h3-0-103" class="i">+	return XTextWidth(font-&gt;xfont, text, len);
+</a><a href="#h3-0-104" id="h3-0-104" class="i">+}
+</a><a href="#h3-0-105" id="h3-0-105" class="i">+
+</a><a href="#h3-0-106" id="h3-0-106" class="i">+unsigned int
+</a><a href="#h3-0-107" id="h3-0-107" class="i">+textwidth(Fnt *font, char *text)
+</a><a href="#h3-0-108" id="h3-0-108" class="i">+{
+</a><a href="#h3-0-109" id="h3-0-109" class="i">+	return textwidth_l(font, text, strlen(text));
+</a><a href="#h3-0-110" id="h3-0-110" class="i">+}
+</a><a href="#h3-0-111" id="h3-0-111" class="i">+
+</a><a href="#h3-0-112" id="h3-0-112" class="i">+void
+</a><a href="#h3-0-113" id="h3-0-113" class="i">+loadfont(Display *dpy, Fnt *font, const char *fontstr)
+</a><a href="#h3-0-114" id="h3-0-114" class="i">+{
+</a><a href="#h3-0-115" id="h3-0-115" class="i">+	char **missing, *def;
+</a><a href="#h3-0-116" id="h3-0-116" class="i">+	int n;
+</a><a href="#h3-0-117" id="h3-0-117" class="i">+
+</a><a href="#h3-0-118" id="h3-0-118" class="i">+	missing = 0;
+</a><a href="#h3-0-119" id="h3-0-119" class="i">+	def = &quot;?&quot;;
+</a><a href="#h3-0-120" id="h3-0-120" class="i">+	setlocale(LC_ALL, &quot;&quot;);
+</a><a href="#h3-0-121" id="h3-0-121" class="i">+	if(font-&gt;set)
+</a><a href="#h3-0-122" id="h3-0-122" class="i">+		XFreeFontSet(dpy, font-&gt;set);
+</a><a href="#h3-0-123" id="h3-0-123" class="i">+	font-&gt;set = XCreateFontSet(dpy, fontstr, &amp;missing, &amp;n, &amp;def);
+</a><a href="#h3-0-124" id="h3-0-124" class="i">+	if(missing) {
+</a><a href="#h3-0-125" id="h3-0-125" class="i">+		while(n--)
+</a><a href="#h3-0-126" id="h3-0-126" class="i">+			fprintf(stderr, &quot;missing fontset: %s\n&quot;, missing[n]);
+</a><a href="#h3-0-127" id="h3-0-127" class="i">+		XFreeStringList(missing);
+</a><a href="#h3-0-128" id="h3-0-128" class="i">+		if(font-&gt;set) {
+</a><a href="#h3-0-129" id="h3-0-129" class="i">+			XFreeFontSet(dpy, font-&gt;set);
+</a><a href="#h3-0-130" id="h3-0-130" class="i">+			font-&gt;set = 0;
+</a><a href="#h3-0-131" id="h3-0-131" class="i">+		}
+</a><a href="#h3-0-132" id="h3-0-132" class="i">+	}
+</a><a href="#h3-0-133" id="h3-0-133" class="i">+	if(font-&gt;set) {
+</a><a href="#h3-0-134" id="h3-0-134" class="i">+		XFontSetExtents *font_extents;
+</a><a href="#h3-0-135" id="h3-0-135" class="i">+		XFontStruct **xfonts;
+</a><a href="#h3-0-136" id="h3-0-136" class="i">+		char **font_names;
+</a><a href="#h3-0-137" id="h3-0-137" class="i">+		unsigned int i;
+</a><a href="#h3-0-138" id="h3-0-138" class="i">+
+</a><a href="#h3-0-139" id="h3-0-139" class="i">+		font-&gt;ascent = font-&gt;descent = 0;
+</a><a href="#h3-0-140" id="h3-0-140" class="i">+		font_extents = XExtentsOfFontSet(font-&gt;set);
+</a><a href="#h3-0-141" id="h3-0-141" class="i">+		n = XFontsOfFontSet(font-&gt;set, &amp;xfonts, &amp;font_names);
+</a><a href="#h3-0-142" id="h3-0-142" class="i">+		for(i = 0, font-&gt;ascent = 0, font-&gt;descent = 0; i &lt; n; i++) {
+</a><a href="#h3-0-143" id="h3-0-143" class="i">+			if(font-&gt;ascent &lt; (*xfonts)-&gt;ascent)
+</a><a href="#h3-0-144" id="h3-0-144" class="i">+				font-&gt;ascent = (*xfonts)-&gt;ascent;
+</a><a href="#h3-0-145" id="h3-0-145" class="i">+			if(font-&gt;descent &lt; (*xfonts)-&gt;descent)
+</a><a href="#h3-0-146" id="h3-0-146" class="i">+				font-&gt;descent = (*xfonts)-&gt;descent;
+</a><a href="#h3-0-147" id="h3-0-147" class="i">+			xfonts++;
+</a><a href="#h3-0-148" id="h3-0-148" class="i">+		}
+</a><a href="#h3-0-149" id="h3-0-149" class="i">+	}
+</a><a href="#h3-0-150" id="h3-0-150" class="i">+	else {
+</a><a href="#h3-0-151" id="h3-0-151" class="i">+		if(font-&gt;xfont)
+</a><a href="#h3-0-152" id="h3-0-152" class="i">+			XFreeFont(dpy, font-&gt;xfont);
+</a><a href="#h3-0-153" id="h3-0-153" class="i">+		font-&gt;xfont = 0;
+</a><a href="#h3-0-154" id="h3-0-154" class="i">+		font-&gt;xfont = XLoadQueryFont(dpy, fontstr);
+</a><a href="#h3-0-155" id="h3-0-155" class="i">+		if (!font-&gt;xfont)
+</a><a href="#h3-0-156" id="h3-0-156" class="i">+			font-&gt;xfont = XLoadQueryFont(dpy, &quot;fixed&quot;);
+</a><a href="#h3-0-157" id="h3-0-157" class="i">+		if (!font-&gt;xfont)
+</a><a href="#h3-0-158" id="h3-0-158" class="i">+			error(&quot;error, cannot load &#39;fixed&#39; font\n&quot;);
+</a><a href="#h3-0-159" id="h3-0-159" class="i">+		font-&gt;ascent = font-&gt;xfont-&gt;ascent;
+</a><a href="#h3-0-160" id="h3-0-160" class="i">+		font-&gt;descent = font-&gt;xfont-&gt;descent;
+</a><a href="#h3-0-161" id="h3-0-161" class="i">+	}
+</a><a href="#h3-0-162" id="h3-0-162" class="i">+}
+</a><b>diff --git a/<a id="h4" href="../file/draw.h.html">draw.h</a> b/<a href="../file/draw.h.html">draw.h</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,6 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+/*
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+ * (C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+ * See LICENSE file for license details.
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+ */
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+extern void error(char *errstr, ...);
+</a><b>diff --git a/<a id="h5" href="../file/font.c.html">font.c</a> b/<a href="../file/font.c.html">font.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,81 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+/*
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+ * (C)opyright MMIV-MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+ * See LICENSE file for license details.
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+ */
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+#include &lt;string.h&gt;
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+#include &lt;locale.h&gt;
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+unsigned int
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+textwidth_l(BlitzFont *font, char *text, unsigned int len)
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+{
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+	if(font-&gt;set) {
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+		XRectangle r;
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+		XmbTextExtents(font-&gt;set, text, len, nil, &amp;r);
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+		return r.width;
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+	}
+</a><a href="#h5-0-18" id="h5-0-18" class="i">+	return XTextWidth(font-&gt;xfont, text, len);
+</a><a href="#h5-0-19" id="h5-0-19" class="i">+}
+</a><a href="#h5-0-20" id="h5-0-20" class="i">+
+</a><a href="#h5-0-21" id="h5-0-21" class="i">+unsigned int
+</a><a href="#h5-0-22" id="h5-0-22" class="i">+textwidth(BlitzFont *font, char *text)
+</a><a href="#h5-0-23" id="h5-0-23" class="i">+{
+</a><a href="#h5-0-24" id="h5-0-24" class="i">+	return blitz_textwidth_l(font, text, strlen(text));
+</a><a href="#h5-0-25" id="h5-0-25" class="i">+}
+</a><a href="#h5-0-26" id="h5-0-26" class="i">+
+</a><a href="#h5-0-27" id="h5-0-27" class="i">+void
+</a><a href="#h5-0-28" id="h5-0-28" class="i">+loadfont(Blitz *blitz, BlitzFont *font)
+</a><a href="#h5-0-29" id="h5-0-29" class="i">+{
+</a><a href="#h5-0-30" id="h5-0-30" class="i">+	char *fontname = font-&gt;fontstr;
+</a><a href="#h5-0-31" id="h5-0-31" class="i">+	char **missing = nil, *def = &quot;?&quot;;
+</a><a href="#h5-0-32" id="h5-0-32" class="i">+	int n;
+</a><a href="#h5-0-33" id="h5-0-33" class="i">+
+</a><a href="#h5-0-34" id="h5-0-34" class="i">+	setlocale(LC_ALL, &quot;&quot;);
+</a><a href="#h5-0-35" id="h5-0-35" class="i">+	if(font-&gt;set)
+</a><a href="#h5-0-36" id="h5-0-36" class="i">+		XFreeFontSet(blitz-&gt;dpy, font-&gt;set);
+</a><a href="#h5-0-37" id="h5-0-37" class="i">+	font-&gt;set = XCreateFontSet(blitz-&gt;dpy, fontname, &amp;missing, &amp;n, &amp;def);
+</a><a href="#h5-0-38" id="h5-0-38" class="i">+	if(missing) {
+</a><a href="#h5-0-39" id="h5-0-39" class="i">+		while(n--)
+</a><a href="#h5-0-40" id="h5-0-40" class="i">+			fprintf(stderr, &quot;liblitz: missing fontset: %s\n&quot;, missing[n]);
+</a><a href="#h5-0-41" id="h5-0-41" class="i">+		XFreeStringList(missing);
+</a><a href="#h5-0-42" id="h5-0-42" class="i">+		if(font-&gt;set) {
+</a><a href="#h5-0-43" id="h5-0-43" class="i">+			XFreeFontSet(blitz-&gt;dpy, font-&gt;set);
+</a><a href="#h5-0-44" id="h5-0-44" class="i">+			font-&gt;set = nil;
+</a><a href="#h5-0-45" id="h5-0-45" class="i">+		}
+</a><a href="#h5-0-46" id="h5-0-46" class="i">+	}
+</a><a href="#h5-0-47" id="h5-0-47" class="i">+	if(font-&gt;set) {
+</a><a href="#h5-0-48" id="h5-0-48" class="i">+		XFontSetExtents *font_extents;
+</a><a href="#h5-0-49" id="h5-0-49" class="i">+		XFontStruct **xfonts;
+</a><a href="#h5-0-50" id="h5-0-50" class="i">+		char **font_names;
+</a><a href="#h5-0-51" id="h5-0-51" class="i">+		unsigned int i;
+</a><a href="#h5-0-52" id="h5-0-52" class="i">+
+</a><a href="#h5-0-53" id="h5-0-53" class="i">+		font-&gt;ascent = font-&gt;descent = 0;
+</a><a href="#h5-0-54" id="h5-0-54" class="i">+		font_extents = XExtentsOfFontSet(font-&gt;set);
+</a><a href="#h5-0-55" id="h5-0-55" class="i">+		n = XFontsOfFontSet(font-&gt;set, &amp;xfonts, &amp;font_names);
+</a><a href="#h5-0-56" id="h5-0-56" class="i">+		for(i = 0, font-&gt;ascent = 0, font-&gt;descent = 0; i &lt; n; i++) {
+</a><a href="#h5-0-57" id="h5-0-57" class="i">+			if(font-&gt;ascent &lt; (*xfonts)-&gt;ascent)
+</a><a href="#h5-0-58" id="h5-0-58" class="i">+				font-&gt;ascent = (*xfonts)-&gt;ascent;
+</a><a href="#h5-0-59" id="h5-0-59" class="i">+			if(font-&gt;descent &lt; (*xfonts)-&gt;descent)
+</a><a href="#h5-0-60" id="h5-0-60" class="i">+				font-&gt;descent = (*xfonts)-&gt;descent;
+</a><a href="#h5-0-61" id="h5-0-61" class="i">+			xfonts++;
+</a><a href="#h5-0-62" id="h5-0-62" class="i">+		}
+</a><a href="#h5-0-63" id="h5-0-63" class="i">+	}
+</a><a href="#h5-0-64" id="h5-0-64" class="i">+	else {
+</a><a href="#h5-0-65" id="h5-0-65" class="i">+		if(font-&gt;xfont)
+</a><a href="#h5-0-66" id="h5-0-66" class="i">+			XFreeFont(blitz-&gt;dpy, font-&gt;xfont);
+</a><a href="#h5-0-67" id="h5-0-67" class="i">+		font-&gt;xfont = nil;
+</a><a href="#h5-0-68" id="h5-0-68" class="i">+		font-&gt;xfont = XLoadQueryFont(blitz-&gt;dpy, fontname);
+</a><a href="#h5-0-69" id="h5-0-69" class="i">+		if (!font-&gt;xfont) {
+</a><a href="#h5-0-70" id="h5-0-70" class="i">+			fontname = &quot;fixed&quot;;
+</a><a href="#h5-0-71" id="h5-0-71" class="i">+			font-&gt;xfont = XLoadQueryFont(blitz-&gt;dpy, fontname);
+</a><a href="#h5-0-72" id="h5-0-72" class="i">+		}
+</a><a href="#h5-0-73" id="h5-0-73" class="i">+		if (!font-&gt;xfont) {
+</a><a href="#h5-0-74" id="h5-0-74" class="i">+			fprintf(stderr, &quot;%s&quot;, &quot;liblitz: error, cannot load &#39;fixed&#39; font\n&quot;);
+</a><a href="#h5-0-75" id="h5-0-75" class="i">+			exit(1);
+</a><a href="#h5-0-76" id="h5-0-76" class="i">+		}
+</a><a href="#h5-0-77" id="h5-0-77" class="i">+		font-&gt;ascent = font-&gt;xfont-&gt;ascent;
+</a><a href="#h5-0-78" id="h5-0-78" class="i">+		font-&gt;descent = font-&gt;xfont-&gt;descent;
+</a><a href="#h5-0-79" id="h5-0-79" class="i">+	}
+</a><a href="#h5-0-80" id="h5-0-80" class="i">+}
+</a><b>diff --git a/<a id="h6" href="../file/gridmenu.1.html">gridmenu.1</a> b/<a href="../file/gridmenu.1.html">gridmenu.1</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -64,21 +64,5 @@ returns
+</a> if Enter is pressed on termination,
+ .B 1
+ if Escape is pressed.
+<a href="#h6-0-3" id="h6-0-3" class="d">-.SH ENVIRONMENT
+</a><a href="#h6-0-4" id="h6-0-4" class="d">-.TP
+</a><a href="#h6-0-5" id="h6-0-5" class="d">-GRID_FONT
+</a><a href="#h6-0-6" id="h6-0-6" class="d">-The X11 font used to display each item in the menu.
+</a><a href="#h6-0-7" id="h6-0-7" class="d">-.br
+</a><a href="#h6-0-8" id="h6-0-8" class="d">-Default: fixed
+</a><a href="#h6-0-9" id="h6-0-9" class="d">-.TP
+</a><a href="#h6-0-10" id="h6-0-10" class="d">-GRID_NORMCOLORS
+</a><a href="#h6-0-11" id="h6-0-11" class="d">-The foreground, background, and border colors of a label. Syntactically, three blank-separated color values of the form #RRGGBB are expected.
+</a><a href="#h6-0-12" id="h6-0-12" class="d">-.br
+</a><a href="#h6-0-13" id="h6-0-13" class="d">-Default: #222222 #eeeeee #666666
+</a><a href="#h6-0-14" id="h6-0-14" class="d">-.TP
+</a><a href="#h6-0-15" id="h6-0-15" class="d">-GRID_SELCOLORS
+</a><a href="#h6-0-16" id="h6-0-16" class="d">-Like GRID_NORMCOLORS, but for the selected label.
+</a><a href="#h6-0-17" id="h6-0-17" class="d">-.br
+</a><a href="#h6-0-18" id="h6-0-18" class="d">-Default: #ffffff #335577 #447799
+</a> .SH SEE ALSO
+ .BR gridwm (1)
+<b>diff --git a/<a id="h7" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -0,0 +1,18 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="i">+/*
+</a><a href="#h7-0-1" id="h7-0-1" class="i">+ * (C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h7-0-2" id="h7-0-2" class="i">+ * See LICENSE file for license details.
+</a><a href="#h7-0-3" id="h7-0-3" class="i">+ */
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+#include &lt;stdarg.h&gt;
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h7-0-7" id="h7-0-7" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h7-0-8" id="h7-0-8" class="i">+
+</a><a href="#h7-0-9" id="h7-0-9" class="i">+void
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+error(char *errstr, ...) {
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+	va_list ap;
+</a><a href="#h7-0-12" id="h7-0-12" class="i">+	va_start(ap, errstr);
+</a><a href="#h7-0-13" id="h7-0-13" class="i">+	vfprintf(stderr, errstr, ap);
+</a><a href="#h7-0-14" id="h7-0-14" class="i">+	va_end(ap);
+</a><a href="#h7-0-15" id="h7-0-15" class="i">+	exit(1);
+</a><a href="#h7-0-16" id="h7-0-16" class="i">+}
+</a><a href="#h7-0-17" id="h7-0-17" class="i">+
+</a><b>diff --git a/<a id="h8" href="../file/util.h.html">util.h</a> b/<a href="../file/util.h.html">util.h</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -0,0 +1,41 @@
+</a><a href="#h8-0-0" id="h8-0-0" class="i">+/*
+</a><a href="#h8-0-1" id="h8-0-1" class="i">+ * (C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h8-0-2" id="h8-0-2" class="i">+ * See LICENSE file for license details.
+</a><a href="#h8-0-3" id="h8-0-3" class="i">+ */
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+
+</a><a href="#h8-0-5" id="h8-0-5" class="i">+#include &lt;X11/Xlib.h&gt;
+</a><a href="#h8-0-6" id="h8-0-6" class="i">+#include &lt;X11/Xlocale.h&gt;
+</a><a href="#h8-0-7" id="h8-0-7" class="i">+
+</a><a href="#h8-0-8" id="h8-0-8" class="i">+typedef struct Brush Brush;
+</a><a href="#h8-0-9" id="h8-0-9" class="i">+typedef struct Color Color;
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+typedef struct Fnt Fnt;
+</a><a href="#h8-0-11" id="h8-0-11" class="i">+
+</a><a href="#h8-0-12" id="h8-0-12" class="i">+struct Color {
+</a><a href="#h8-0-13" id="h8-0-13" class="i">+	unsigned long bg;
+</a><a href="#h8-0-14" id="h8-0-14" class="i">+	unsigned long fg;
+</a><a href="#h8-0-15" id="h8-0-15" class="i">+	unsigned long border;
+</a><a href="#h8-0-16" id="h8-0-16" class="i">+};
+</a><a href="#h8-0-17" id="h8-0-17" class="i">+
+</a><a href="#h8-0-18" id="h8-0-18" class="i">+struct Fnt {
+</a><a href="#h8-0-19" id="h8-0-19" class="i">+	XFontStruct *xfont;
+</a><a href="#h8-0-20" id="h8-0-20" class="i">+	XFontSet set;
+</a><a href="#h8-0-21" id="h8-0-21" class="i">+	int ascent;
+</a><a href="#h8-0-22" id="h8-0-22" class="i">+	int descent;
+</a><a href="#h8-0-23" id="h8-0-23" class="i">+};
+</a><a href="#h8-0-24" id="h8-0-24" class="i">+
+</a><a href="#h8-0-25" id="h8-0-25" class="i">+struct Brush {
+</a><a href="#h8-0-26" id="h8-0-26" class="i">+	GC gc;
+</a><a href="#h8-0-27" id="h8-0-27" class="i">+	Drawable drawable;
+</a><a href="#h8-0-28" id="h8-0-28" class="i">+	XRectangle rect;
+</a><a href="#h8-0-29" id="h8-0-29" class="i">+	Bool border;
+</a><a href="#h8-0-30" id="h8-0-30" class="i">+	Fnt *font;
+</a><a href="#h8-0-31" id="h8-0-31" class="i">+	Color color;
+</a><a href="#h8-0-32" id="h8-0-32" class="i">+	const char *text;
+</a><a href="#h8-0-33" id="h8-0-33" class="i">+};
+</a><a href="#h8-0-34" id="h8-0-34" class="i">+
+</a><a href="#h8-0-35" id="h8-0-35" class="i">+extern void draw(Display *dpy, Brush *b);
+</a><a href="#h8-0-36" id="h8-0-36" class="i">+extern void loadcolor(Display *dpy, int screen, Color *c,
+</a><a href="#h8-0-37" id="h8-0-37" class="i">+		const char *bg, const char *fg, const char *bo);
+</a><a href="#h8-0-38" id="h8-0-38" class="i">+extern unsigned int textwidth_l(Fnt *font, char *text, unsigned int len);
+</a><a href="#h8-0-39" id="h8-0-39" class="i">+extern unsigned int textwidth(Fnt *font, char *text);
+</a><a href="#h8-0-40" id="h8-0-40" class="i">+extern void loadfont(Display *dpy, Fnt *font, const char *fontstr);
+</a><b>diff --git a/<a id="h9" href="../file/wm.c.html">wm.c</a> b/<a href="../file/wm.c.html">wm.c</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -36,15 +36,6 @@ usage()
+</a> 	exit(1);
+ }
+ 
+<a href="#h9-0-3" id="h9-0-3" class="d">-void
+</a><a href="#h9-0-4" id="h9-0-4" class="d">-error(char *errstr, ...) {
+</a><a href="#h9-0-5" id="h9-0-5" class="d">-	va_list ap;
+</a><a href="#h9-0-6" id="h9-0-6" class="d">-	va_start(ap, errstr);
+</a><a href="#h9-0-7" id="h9-0-7" class="d">-	vfprintf(stderr, errstr, ap);
+</a><a href="#h9-0-8" id="h9-0-8" class="d">-	va_end(ap);
+</a><a href="#h9-0-9" id="h9-0-9" class="d">-	exit(1);
+</a><a href="#h9-0-10" id="h9-0-10" class="d">-}
+</a><a href="#h9-0-11" id="h9-0-11" class="d">-
+</a> static void
+ scan_wins()
+ {
+<b>diff --git a/<a id="h10" href="../file/wm.h.html">wm.h</a> b/<a href="../file/wm.h.html">wm.h</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -3,7 +3,9 @@
+</a>  * See LICENSE file for license details.
+  */
+ 
+<a href="#h10-0-3" id="h10-0-3" class="d">-#include &lt;X11/Xlib.h&gt;
+</a><a href="#h10-0-4" id="h10-0-4" class="i">+#include &quot;draw.h&quot;
+</a><a href="#h10-0-5" id="h10-0-5" class="i">+#include &quot;util.h&quot;
+</a><a href="#h10-0-6" id="h10-0-6" class="i">+
+</a> #include &lt;X11/Xutil.h&gt;
+ 
+ /* WM atoms */
+<a href="#h10-1" id="h10-1" class="h">@@ -54,4 +56,3 @@ extern Cursor cursor[CurLast];
+</a> extern Pixmap pmap;
+ 
+ /* wm.c */
+<a href="#h10-1-3" id="h10-1-3" class="d">-extern void error(char *errstr, ...);
+</a></pre>
+</div>
+</body>
+</html>

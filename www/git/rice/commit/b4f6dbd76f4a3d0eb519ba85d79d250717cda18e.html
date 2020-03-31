@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cleanup to use with osx - rice - config file
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="rice Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>rice</h1><span class="desc">config file
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b4f6dbd76f4a3d0eb519ba85d79d250717cda18e.html">b4f6dbd76f4a3d0eb519ba85d79d250717cda18e</a>
+<b>parent</b> <a href="../commit/7deb8b163f06dcc2c27da3d71fbd4dad7c536e07.html">7deb8b163f06dcc2c27da3d71fbd4dad7c536e07</a>
+<b>Author:</b> Mark Feller &lt;<a href="mailto:mark.feller@member.fsf.org">mark.feller@member.fsf.org</a>&gt;
+<b>Date:</b>   Sat, 16 Mar 2019 16:51:54 -0600
+
+cleanup to use with osx
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bootstrap.sh</a></td><td> | </td><td class="num">21</td><td><span class="i">++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h1">dots/.bashrc</a></td><td> | </td><td class="num">146</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dots/.config/alacritty/alacritty.yml</a></td><td> | </td><td class="num">43</td><td><span class="i">++++++++++++++</span><span class="d">-----------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dots/.vimrc</a></td><td> | </td><td class="num">38</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">dots/.zshenv</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">dots/.zshrc</a></td><td> | </td><td class="num">47</td><td><span class="i">+++++++++++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">packages</a></td><td> | </td><td class="num">28</td><td><span class="i">++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h7">packages_linux</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>8 files changed, 138 insertions(+), 195 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bootstrap.sh.html">bootstrap.sh</a> b/<a href="../file/bootstrap.sh.html">bootstrap.sh</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,3 +1,22 @@
+</a> #!/bin/sh
+ 
+<a href="#h0-0-2" id="h0-0-2" class="d">-sudo dnf install i3wm i3lock mpd ncmpcpp ripgrep
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+PKGS=`grep -v ^\# packages | grep . | awk &#39;{print $1}&#39; | paste -sd &#39; &#39; -`
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+bootstrap_linux() {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+    echo &quot;Installing Packages&quot;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+    sudo dnf install $PKGS
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+bootstrap_osx() {
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+    echo &quot;Installing Packages&quot;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+    brew install $PKGS
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+if [[ &quot;$OSTYPE&quot; == &quot;linux-gnu&quot; ]]; then
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+    bootstrap_linux
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+elif [[ &quot;$OSTYPE&quot; == &quot;darwin&quot;* ]]; then
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+    bootstrap_osx
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+    IGNORE=&quot;--ignore bin|conkyrc|tmux.conf|dunst|rofi|i3|i3status&quot;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+fi
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+stow $IGNORE dots
+</a><b>diff --git a/<a id="h1" href="../file/dots/.bashrc.html">dots/.bashrc</a> b/<a href="../file/dots/.bashrc.html">dots/.bashrc</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,146 +0,0 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="d">-# .bashrc
+</a><a href="#h1-0-1" id="h1-0-1" class="d">-
+</a><a href="#h1-0-2" id="h1-0-2" class="d">-# Source global definitions
+</a><a href="#h1-0-3" id="h1-0-3" class="d">-if [ -f /etc/bashrc ]; then
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-        . /etc/bashrc
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-fi
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-# User specific environment
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-PATH=&quot;$HOME/.local/bin:$HOME/.bin:$PATH&quot;
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-export PATH
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-# Uncomment the following line if you don&#39;t like systemctl&#39;s auto-paging feature:
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-# export SYSTEMD_PAGER=
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-# User specific aliases and functions
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-## Prompt
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-export PS1=&quot;\e[37mλ \W »\e[0m &quot;
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-## Alias
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-alias ls=&quot;ls -F&quot;
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-alias ll=&quot;ls -lh&quot;
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-alias l=&quot;ls -la&quot;
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-alias emacs=&quot;TERM=xterm-256color emacs&quot;
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-alias q=&quot;exit&quot;
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-alias :q=&quot;exit&quot;
+</a><a href="#h1-0-26" id="h1-0-26" class="d">-alias neo=&quot;clear &amp;&amp; neofetch&quot;
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-alias notify=&#39;terminal-notifier -title &quot;Terminal&quot; -message &quot;Done with taks&quot;&#39;
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-alias weather=&quot;curl wttr.in/\~Boulder+Colorado&quot;
+</a><a href="#h1-0-29" id="h1-0-29" class="d">-alias f=&quot;fzf --preview=\&quot;head -$LINES {}\&quot;&quot;
+</a><a href="#h1-0-30" id="h1-0-30" class="d">-alias fz=&quot;vim \$(f)&quot;
+</a><a href="#h1-0-31" id="h1-0-31" class="d">-alias vi=vim
+</a><a href="#h1-0-32" id="h1-0-32" class="d">-alias yt=&quot;youtube-dl&quot;
+</a><a href="#h1-0-33" id="h1-0-33" class="d">-
+</a><a href="#h1-0-34" id="h1-0-34" class="d">-# Kubernetes
+</a><a href="#h1-0-35" id="h1-0-35" class="d">-alias kc=&quot;kubectl --kubeconfig=$HOME/cluster.config&quot;
+</a><a href="#h1-0-36" id="h1-0-36" class="d">-alias helm=&quot;helm --kubeconfig=$HOME/cluster.config&quot;
+</a><a href="#h1-0-37" id="h1-0-37" class="d">-export CORE=$GOPATH/src/gitlab.com/redeam/core
+</a><a href="#h1-0-38" id="h1-0-38" class="d">-alias c=&quot;cd $CORE&quot;
+</a><a href="#h1-0-39" id="h1-0-39" class="d">-
+</a><a href="#h1-0-40" id="h1-0-40" class="d">-## Kubernetes
+</a><a href="#h1-0-41" id="h1-0-41" class="d">-function gdep {
+</a><a href="#h1-0-42" id="h1-0-42" class="d">-    godepgraph -o gitlab.com/redeam -s gitlab.com/redeam/core/$1 | dot -Tpng -o /tmp/dep.png
+</a><a href="#h1-0-43" id="h1-0-43" class="d">-    open /tmp/dep.png
+</a><a href="#h1-0-44" id="h1-0-44" class="d">-}
+</a><a href="#h1-0-45" id="h1-0-45" class="d">-
+</a><a href="#h1-0-46" id="h1-0-46" class="d">-function gp {
+</a><a href="#h1-0-47" id="h1-0-47" class="d">-  kubectl --kubeconfig=$HOME/cluster.config get pods | egrep -o  &quot;$1.*Running&quot; | egrep -o &quot;$1[^ ]*&quot; | head -1
+</a><a href="#h1-0-48" id="h1-0-48" class="d">-}
+</a><a href="#h1-0-49" id="h1-0-49" class="d">-
+</a><a href="#h1-0-50" id="h1-0-50" class="d">-function kcforward {
+</a><a href="#h1-0-51" id="h1-0-51" class="d">-  POD=`gp $1`
+</a><a href="#h1-0-52" id="h1-0-52" class="d">-  kubectl --kubeconfig=$HOME/cluster.config port-forward $POD $2:8001
+</a><a href="#h1-0-53" id="h1-0-53" class="d">-}
+</a><a href="#h1-0-54" id="h1-0-54" class="d">-
+</a><a href="#h1-0-55" id="h1-0-55" class="d">-alias kt=&quot;ktail --kubeconfig=$HOME/cluster.config -t &#39;
+</a><a href="#h1-0-56" id="h1-0-56" class="d">-$BOLD$LIGHT_CYAN{{ .Container.Name }}$NONE $DIM{{ .Pod.Name }}$NONE $YELLOW{{ if .Timestamp }}{{ .Timestamp.Format \&quot;2006-01-02T15:04:05.999999999Z07:00\&quot; }}{{ end }}$NONE
+</a><a href="#h1-0-57" id="h1-0-57" class="d">-{{ .Message }} &#39;&quot;
+</a><a href="#h1-0-58" id="h1-0-58" class="d">-
+</a><a href="#h1-0-59" id="h1-0-59" class="d">-# coloured manuals
+</a><a href="#h1-0-60" id="h1-0-60" class="d">-man() {
+</a><a href="#h1-0-61" id="h1-0-61" class="d">-  env \
+</a><a href="#h1-0-62" id="h1-0-62" class="d">-    LESS_TERMCAP_mb=$(printf &quot;\e[1;31m&quot;) \
+</a><a href="#h1-0-63" id="h1-0-63" class="d">-    LESS_TERMCAP_md=$(printf &quot;\e[1;31m&quot;) \
+</a><a href="#h1-0-64" id="h1-0-64" class="d">-    LESS_TERMCAP_me=$(printf &quot;\e[0m&quot;) \
+</a><a href="#h1-0-65" id="h1-0-65" class="d">-    LESS_TERMCAP_se=$(printf &quot;\e[0m&quot;) \
+</a><a href="#h1-0-66" id="h1-0-66" class="d">-    LESS_TERMCAP_so=$(printf &quot;\e[1;44;33m&quot;) \
+</a><a href="#h1-0-67" id="h1-0-67" class="d">-    LESS_TERMCAP_ue=$(printf &quot;\e[0m&quot;) \
+</a><a href="#h1-0-68" id="h1-0-68" class="d">-    LESS_TERMCAP_us=$(printf &quot;\e[1;32m&quot;) \
+</a><a href="#h1-0-69" id="h1-0-69" class="d">-    man &quot;$@&quot;
+</a><a href="#h1-0-70" id="h1-0-70" class="d">-}
+</a><a href="#h1-0-71" id="h1-0-71" class="d">-
+</a><a href="#h1-0-72" id="h1-0-72" class="d">-setxkbmap -layout us -option ctrl:nocaps
+</a><a href="#h1-0-73" id="h1-0-73" class="d">-
+</a><a href="#h1-0-74" id="h1-0-74" class="d">-# fkill - kill process
+</a><a href="#h1-0-75" id="h1-0-75" class="d">-fkill() {
+</a><a href="#h1-0-76" id="h1-0-76" class="d">-  local pid
+</a><a href="#h1-0-77" id="h1-0-77" class="d">-  pid=$(ps -ef | sed 1d | fzf -m | awk &#39;{print $2}&#39;)
+</a><a href="#h1-0-78" id="h1-0-78" class="d">-
+</a><a href="#h1-0-79" id="h1-0-79" class="d">-  if [ &quot;x$pid&quot; != &quot;x&quot; ]
+</a><a href="#h1-0-80" id="h1-0-80" class="d">-  then
+</a><a href="#h1-0-81" id="h1-0-81" class="d">-    echo $pid | xargs kill -${1:-9}
+</a><a href="#h1-0-82" id="h1-0-82" class="d">-  fi
+</a><a href="#h1-0-83" id="h1-0-83" class="d">-}
+</a><a href="#h1-0-84" id="h1-0-84" class="d">-
+</a><a href="#h1-0-85" id="h1-0-85" class="d">-# ----------------------------------------------------------------------
+</a><a href="#h1-0-86" id="h1-0-86" class="d">-# Env
+</a><a href="#h1-0-87" id="h1-0-87" class="d">-export TERMINAL=$HOME/.bin/alacritty
+</a><a href="#h1-0-88" id="h1-0-88" class="d">-export PATH=$PATH:/usr/local/bin
+</a><a href="#h1-0-89" id="h1-0-89" class="d">-export PATH=$PATH:$HOME/.bin
+</a><a href="#h1-0-90" id="h1-0-90" class="d">-
+</a><a href="#h1-0-91" id="h1-0-91" class="d">-export HISTSIZE=1000
+</a><a href="#h1-0-92" id="h1-0-92" class="d">-export SAVEHIST=1000
+</a><a href="#h1-0-93" id="h1-0-93" class="d">-export HISTFILE=~/.history
+</a><a href="#h1-0-94" id="h1-0-94" class="d">-
+</a><a href="#h1-0-95" id="h1-0-95" class="d">-## User configuration
+</a><a href="#h1-0-96" id="h1-0-96" class="d">-export MANPATH=/usr/local/share/man:$MANPATH
+</a><a href="#h1-0-97" id="h1-0-97" class="d">-
+</a><a href="#h1-0-98" id="h1-0-98" class="d">-## Haskel
+</a><a href="#h1-0-99" id="h1-0-99" class="d">-export PATH=$PATH:$HOME/Library/Haskell/bin
+</a><a href="#h1-0-100" id="h1-0-100" class="d">-
+</a><a href="#h1-0-101" id="h1-0-101" class="d">-## Go
+</a><a href="#h1-0-102" id="h1-0-102" class="d">-export GOPATH=$HOME/prog/go
+</a><a href="#h1-0-103" id="h1-0-103" class="d">-export PATH=$PATH:$GOPATH/bin
+</a><a href="#h1-0-104" id="h1-0-104" class="d">-
+</a><a href="#h1-0-105" id="h1-0-105" class="d">-## Rust
+</a><a href="#h1-0-106" id="h1-0-106" class="d">-export PATH=$PATH:$HOME/.cargo/bin
+</a><a href="#h1-0-107" id="h1-0-107" class="d">-
+</a><a href="#h1-0-108" id="h1-0-108" class="d">-## fzf
+</a><a href="#h1-0-109" id="h1-0-109" class="d">-export FZF_DEFAULT_OPTS=&#39;--height 40% --exact&#39;
+</a><a href="#h1-0-110" id="h1-0-110" class="d">-export FZF_CTRL_T_OPTS=&quot;--preview &#39;(highlight -O ansi -l {} 2&gt; /dev/null || cat {} || tree -C {}) 2&gt; /dev/null | head -200&#39;&quot;
+</a><a href="#h1-0-111" id="h1-0-111" class="d">-export FZF_CTRL_R_OPTS=&#39;--sort --exact&#39;
+</a><a href="#h1-0-112" id="h1-0-112" class="d">-
+</a><a href="#h1-0-113" id="h1-0-113" class="d">-## Google Cloud SDK
+</a><a href="#h1-0-114" id="h1-0-114" class="d">-export PATH=&quot;/usr/local/opt/texinfo/bin:$PATH&quot;
+</a><a href="#h1-0-115" id="h1-0-115" class="d">-export PATH=&quot;/usr/local/opt/gpg-agent/bin:$PATH&quot;
+</a><a href="#h1-0-116" id="h1-0-116" class="d">-
+</a><a href="#h1-0-117" id="h1-0-117" class="d">-
+</a><a href="#h1-0-118" id="h1-0-118" class="d">-
+</a><a href="#h1-0-119" id="h1-0-119" class="d">-
+</a><a href="#h1-0-120" id="h1-0-120" class="d">-# re-wrote the script above
+</a><a href="#h1-0-121" id="h1-0-121" class="d">-bind &#39;&quot;\C-r&quot;: &quot;\C-x1\e^\er&quot;&#39;
+</a><a href="#h1-0-122" id="h1-0-122" class="d">-bind -x &#39;&quot;\C-x1&quot;: __fzf_history&#39;;
+</a><a href="#h1-0-123" id="h1-0-123" class="d">-
+</a><a href="#h1-0-124" id="h1-0-124" class="d">-__fzf_history ()
+</a><a href="#h1-0-125" id="h1-0-125" class="d">-{
+</a><a href="#h1-0-126" id="h1-0-126" class="d">-__ehc $(history | fzf --tac --tiebreak=index | perl -ne &#39;m/^\s*([0-9]+)/ and print &quot;!$1&quot;&#39;)
+</a><a href="#h1-0-127" id="h1-0-127" class="d">-}
+</a><a href="#h1-0-128" id="h1-0-128" class="d">-
+</a><a href="#h1-0-129" id="h1-0-129" class="d">-__ehc()
+</a><a href="#h1-0-130" id="h1-0-130" class="d">-{
+</a><a href="#h1-0-131" id="h1-0-131" class="d">-if
+</a><a href="#h1-0-132" id="h1-0-132" class="d">-        [[ -n $1 ]]
+</a><a href="#h1-0-133" id="h1-0-133" class="d">-then
+</a><a href="#h1-0-134" id="h1-0-134" class="d">-        bind &#39;&quot;\er&quot;: redraw-current-line&#39;
+</a><a href="#h1-0-135" id="h1-0-135" class="d">-        bind &#39;&quot;\e^&quot;: magic-space&#39;
+</a><a href="#h1-0-136" id="h1-0-136" class="d">-        READLINE_LINE=${READLINE_LINE:+${READLINE_LINE:0:READLINE_POINT}}${1}${READLINE_LINE:+${READLINE_LINE:READLINE_POINT}}
+</a><a href="#h1-0-137" id="h1-0-137" class="d">-        READLINE_POINT=$(( READLINE_POINT + ${#1} ))
+</a><a href="#h1-0-138" id="h1-0-138" class="d">-else
+</a><a href="#h1-0-139" id="h1-0-139" class="d">-        bind &#39;&quot;\er&quot;:&#39;
+</a><a href="#h1-0-140" id="h1-0-140" class="d">-        bind &#39;&quot;\e^&quot;:&#39;
+</a><a href="#h1-0-141" id="h1-0-141" class="d">-fi
+</a><a href="#h1-0-142" id="h1-0-142" class="d">-}
+</a><a href="#h1-0-143" id="h1-0-143" class="d">-
+</a><a href="#h1-0-144" id="h1-0-144" class="d">-# auto command to cd without cd
+</a><a href="#h1-0-145" id="h1-0-145" class="d">-shopt -s autocd
+</a><b>diff --git a/<a id="h2" href="../file/dots/.config/alacritty/alacritty.yml.html">dots/.config/alacritty/alacritty.yml</a> b/<a href="../file/dots/.config/alacritty/alacritty.yml.html">dots/.config/alacritty/alacritty.yml</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -24,12 +24,12 @@ window:
+</a>   # Units are physical pixels; this is not DPI aware.
+   # (change requires restart)
+   padding:
+<a href="#h2-0-3" id="h2-0-3" class="d">-    x: 10
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-    y: 10
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+    x: 45
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+    y: 45
+</a> 
+   # Window decorations
+   # Setting this to false will result in window without borders and title bar.
+<a href="#h2-0-10" id="h2-0-10" class="d">-  # decorations: transparent
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+  decorations: transparent
+</a> 
+ # Display tabs using this many cells (changes require restart)
+ tabspaces: 8
+<a href="#h2-1" id="h2-1" class="h">@@ -58,7 +58,7 @@ font:
+</a>     # style: Italic
+ 
+   # Point size of the font
+<a href="#h2-1-3" id="h2-1-3" class="d">-  size: 7
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+  size: 12.0
+</a> 
+   # Offset is the extra space around each character. offset.y can be thought of
+   # as modifying the linespacing, and offset.x as modifying the letter spacing.
+<a href="#h2-2" id="h2-2" class="h">@@ -83,13 +83,13 @@ render_timer: false
+</a> 
+ # Use custom cursor colors. If true, display the cursor in the cursor.foreground
+ # and cursor.background colors, otherwise invert the colors of the cursor.
+<a href="#h2-2-3" id="h2-2-3" class="d">-#custom_cursor_colors: false
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+custom_cursor_colors: false
+</a> 
+ # Colors (Tomorrow Night Bright)
+ colors:
+   # Default colors
+   primary:
+<a href="#h2-2-10" id="h2-2-10" class="d">-    background: &#39;#1d2021&#39;
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+    background: &#39;#161819&#39;
+</a>     foreground: &#39;#ebdbb2&#39;
+ 
+   # Colors the cursor will use if `custom_cursor_colors` is true
+<a href="#h2-3" id="h2-3" class="h">@@ -186,8 +186,6 @@ mouse:
+</a>   # or triple click.
+   double_click: { threshold: 300 }
+   triple_click: { threshold: 300 }
+<a href="#h2-3-3" id="h2-3-3" class="d">-
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-  # If this is `true`, the cursor is temporarily hidden when typing.
+</a>   hide_when_typing: true
+ 
+   # Faux Scrollback
+<a href="#h2-4" id="h2-4" class="h">@@ -198,14 +196,14 @@ mouse:
+</a>   # scrolling for applications like `man`.
+   #
+   # To disable this completely, set `faux_scrollback_lines` to 0.
+<a href="#h2-4-3" id="h2-4-3" class="d">-  # faux_scrollback_lines: 1
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+  faux_scrollback_lines: 1
+</a> 
+ selection:
+   semantic_escape_chars: &quot;,│`|:\&quot;&#39; ()[]{}&lt;&gt;&quot;
+ 
+ dynamic_title: true
+ 
+<a href="#h2-4-11" id="h2-4-11" class="d">-#hide_cursor_when_typing: true
+</a><a href="#h2-4-12" id="h2-4-12" class="i">+hide_cursor_when_typing: true
+</a> 
+ # Style of the cursor
+ #
+<a href="#h2-5" id="h2-5" class="h">@@ -213,7 +211,7 @@ dynamic_title: true
+</a> # - Block
+ # - Underline
+ # - Beam
+<a href="#h2-5-3" id="h2-5-3" class="d">-#cursor_style: Block
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+cursor_style: Block
+</a> 
+ # Live config reload (changes require restart)
+ live_config_reload: true
+<a href="#h2-6" id="h2-6" class="h">@@ -224,7 +222,7 @@ live_config_reload: true
+</a> # Entries in shell.args are passed unmodified as arguments to the shell.
+ #
+ shell:
+<a href="#h2-6-3" id="h2-6-3" class="d">-  program: /bin/bash
+</a><a href="#h2-6-4" id="h2-6-4" class="i">+  program: /bin/zsh
+</a> #   args:
+ #     - --login
+ 
+<a href="#h2-7" id="h2-7" class="h">@@ -263,9 +261,11 @@ shell:
+</a> #   `command` must be a map containing a `program` string, and `args` array of
+ #     strings. For example:
+ #     - { ... , command: { program: &quot;alacritty&quot;, args: [&quot;-e&quot;, &quot;vttest&quot;] } }
+<a href="#h2-7-3" id="h2-7-3" class="i">+#
+</a><a href="#h2-7-4" id="h2-7-4" class="i">+#     USE: xxd -psd
+</a> key_bindings:
+<a href="#h2-7-6" id="h2-7-6" class="d">-  - { key: V,        mods: Control|Shift, action: Paste                        }
+</a><a href="#h2-7-7" id="h2-7-7" class="d">-  - { key: C,        mods: Control|Shift, action: Copy                         }
+</a><a href="#h2-7-8" id="h2-7-8" class="i">+  - { key: V,        mods: Command, action: Paste                        }
+</a><a href="#h2-7-9" id="h2-7-9" class="i">+  - { key: C,        mods: Command, action: Copy                         }
+</a>   - { key: Q,        mods: Command, action: Quit                         }
+   - { key: W,        mods: Command, action: Quit                         }
+   - { key: Home,                    chars: &quot;\x1bOH&quot;,   mode: AppCursor   }
+<a href="#h2-8" id="h2-8" class="h">@@ -443,18 +443,3 @@ key_bindings:
+</a>   - { key: Key6,      mods: Alt|Shift, chars: &quot;\x1b^&quot;                       } # Alt + ^
+   - { key: Backslash, mods: Alt,       chars: &quot;\x1b\\&quot;                      } # Alt + \
+   - { key: Backslash, mods: Alt|Shift, chars: &quot;\x1b|&quot;                       } # Alt + |
+<a href="#h2-8-3" id="h2-8-3" class="d">-
+</a><a href="#h2-8-4" id="h2-8-4" class="d">-  - { key: Period,   mods: Alt,       chars: &quot;\x1b.&quot;                       }
+</a><a href="#h2-8-5" id="h2-8-5" class="d">-  - { key: Key8,     mods: Alt|Shift, chars: &quot;\x1b*&quot;                       }
+</a><a href="#h2-8-6" id="h2-8-6" class="d">-  - { key: Key3,     mods: Alt|Shift, chars: &quot;\x1b#&quot;                       }
+</a><a href="#h2-8-7" id="h2-8-7" class="d">-
+</a><a href="#h2-8-8" id="h2-8-8" class="d">-  - { key: Key1,     mods: Alt,     chars: &quot;\x1b1&quot;                       }
+</a><a href="#h2-8-9" id="h2-8-9" class="d">-  - { key: Key2,     mods: Alt,     chars: &quot;\x1b2&quot;                       }
+</a><a href="#h2-8-10" id="h2-8-10" class="d">-  - { key: Key3,     mods: Alt,     chars: &quot;\x1b3&quot;                       }
+</a><a href="#h2-8-11" id="h2-8-11" class="d">-  - { key: Key4,     mods: Alt,     chars: &quot;\x1b4&quot;                       }
+</a><a href="#h2-8-12" id="h2-8-12" class="d">-  - { key: Key5,     mods: Alt,     chars: &quot;\x1b5&quot;                       }
+</a><a href="#h2-8-13" id="h2-8-13" class="d">-  - { key: Key6,     mods: Alt,     chars: &quot;\x1b6&quot;                       }
+</a><a href="#h2-8-14" id="h2-8-14" class="d">-  - { key: Key7,     mods: Alt,     chars: &quot;\x1b7&quot;                       }
+</a><a href="#h2-8-15" id="h2-8-15" class="d">-  - { key: Key8,     mods: Alt,     chars: &quot;\x1b8&quot;                       }
+</a><a href="#h2-8-16" id="h2-8-16" class="d">-  - { key: Key9,     mods: Alt,     chars: &quot;\x1b9&quot;                       }
+</a><a href="#h2-8-17" id="h2-8-17" class="d">-  - { key: Key0,     mods: Alt,     chars: &quot;\x1b0&quot;                       }
+</a><b>diff --git a/<a id="h3" href="../file/dots/.vimrc.html">dots/.vimrc</a> b/<a href="../file/dots/.vimrc.html">dots/.vimrc</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -7,10 +7,15 @@
+</a> let mapleader =&quot; &quot;
+ 
+ call plug#begin(&#39;~/.vim/plugged&#39;)
+<a href="#h3-0-3" id="h3-0-3" class="i">+Plug &#39;Valloric/YouCompleteMe&#39;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+Plug &#39;/usr/local/opt/fzf&#39;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+Plug &#39;rust-lang/rust.vim&#39;
+</a> Plug &#39;junegunn/goyo.vim&#39;
+ Plug &#39;fatih/vim-go&#39;
+ call plug#end()
+ 
+<a href="#h3-0-10" id="h3-0-10" class="i">+map &lt;leader&gt;g :Goyo&lt;CR&gt;
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+
+</a> &quot; Some basics:
+ 	set nocompatible
+ 	set encoding=utf-8
+<a href="#h3-1" id="h3-1" class="h">@@ -24,3 +29,35 @@ call plug#end()
+</a> 
+ &quot; Open corresponding .pdf
+ 	map &lt;leader&gt;p :!open &lt;c-r&gt;%&lt;CR&gt;&lt;CR&gt;
+<a href="#h3-1-3" id="h3-1-3" class="i">+
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+&quot; enable man pages in vim
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	runtime ftplugin/man.vim
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+&quot; Window Navigation
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+	nnoremap &lt;C-h&gt; &lt;C-w&gt;h
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+	nnoremap &lt;C-j&gt; &lt;C-w&gt;j
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+	nnoremap &lt;C-k&gt; &lt;C-w&gt;k
+</a><a href="#h3-1-11" id="h3-1-11" class="i">+	nnoremap &lt;C-l&gt; &lt;C-w&gt;l
+</a><a href="#h3-1-12" id="h3-1-12" class="i">+
+</a><a href="#h3-1-13" id="h3-1-13" class="i">+&quot; fzf
+</a><a href="#h3-1-14" id="h3-1-14" class="i">+	noremap &lt;C-x&gt;&lt;C-f&gt; :FZF&lt;CR&gt;
+</a><a href="#h3-1-15" id="h3-1-15" class="i">+	noremap &lt;C-x&gt;b :Buffers&lt;CR&gt;
+</a><a href="#h3-1-16" id="h3-1-16" class="i">+	noremap &lt;C-x&gt;&lt;C-s&gt; :w&lt;CR&gt;
+</a><a href="#h3-1-17" id="h3-1-17" class="i">+	nmap &lt;C-x&gt;&lt;C-s&gt; :w&lt;CR&gt;
+</a><a href="#h3-1-18" id="h3-1-18" class="i">+	noremap &lt;C-c&gt;psr :Rg&lt;CR&gt;
+</a><a href="#h3-1-19" id="h3-1-19" class="i">+	noremap &lt;C-c&gt;pf :GFiles&lt;CR&gt;
+</a><a href="#h3-1-20" id="h3-1-20" class="i">+	nmap &lt;C-s&gt; :BLines&lt;CR&gt;
+</a><a href="#h3-1-21" id="h3-1-21" class="i">+	autocmd! FileType fzf
+</a><a href="#h3-1-22" id="h3-1-22" class="i">+	autocmd  FileType fzf set laststatus=0 noshowmode noruler
+</a><a href="#h3-1-23" id="h3-1-23" class="i">+	  \| autocmd BufLeave &lt;buffer&gt; set laststatus=2 showmode ruler
+</a><a href="#h3-1-24" id="h3-1-24" class="i">+
+</a><a href="#h3-1-25" id="h3-1-25" class="i">+	noremap &lt;C-x&gt;` :cn&lt;CR&gt;
+</a><a href="#h3-1-26" id="h3-1-26" class="i">+	noremap &lt;C-x&gt;&lt;C-c&gt; :qa&lt;CR&gt;
+</a><a href="#h3-1-27" id="h3-1-27" class="i">+	noremap &lt;C-c&gt;&lt;C-c&gt; :GoBuild
+</a><a href="#h3-1-28" id="h3-1-28" class="i">+
+</a><a href="#h3-1-29" id="h3-1-29" class="i">+	command! Core execute &quot;:cd $CORE&quot;
+</a><a href="#h3-1-30" id="h3-1-30" class="i">+
+</a><a href="#h3-1-31" id="h3-1-31" class="i">+
+</a><a href="#h3-1-32" id="h3-1-32" class="i">+	nnoremap gi :GoImports&lt;CR&gt;
+</a><a href="#h3-1-33" id="h3-1-33" class="i">+
+</a><a href="#h3-1-34" id="h3-1-34" class="i">+	noremap &lt;leader&gt;t :vertical terminal&lt;CR&gt;</a><a href="#h3-1-35" id="h3-1-35" class="i">+
+\ No newline at end of file
+</a><b>diff --git a/<a id="h4" href="../file/dots/.zshenv.html">dots/.zshenv</a> b/<a href="../file/dots/.zshenv.html">dots/.zshenv</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -1,6 +1,5 @@
+</a> export TERMINAL=$HOME/bin/alacritty
+ export PATH=$PATH:/usr/local/bin
+<a href="#h4-0-2" id="h4-0-2" class="d">-export PATH=$PATH:$HOME/.bin
+</a> 
+ ## ZSH Config
+ export ZDOTDIR=$HOME
+<a href="#h4-1" id="h4-1" class="h">@@ -28,9 +27,11 @@ export PATH=&quot;/usr/local/sbin:$PATH&quot;
+</a> export PATH=$PATH:$HOME/Library/Haskell/bin
+ 
+ ## Go
+<a href="#h4-1-3" id="h4-1-3" class="i">+export GOROOT=/usr/local/go
+</a> export GOPATH=$HOME/prog/go
+ export PATH=$PATH:$GOPATH/bin
+ export CORE=$GOPATH/src/gitlab.com/redeam/core
+<a href="#h4-1-7" id="h4-1-7" class="i">+export OPS=$GOPATH/src/gitlab.com/redeam/corestar
+</a> 
+ ## Docker
+ export DOCKER_HIDE_LEGACY_COMMANDS=1
+<b>diff --git a/<a id="h5" href="../file/dots/.zshrc.html">dots/.zshrc</a> b/<a href="../file/dots/.zshrc.html">dots/.zshrc</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -14,11 +14,13 @@ alias f=&quot;fzf --preview=\&quot;head -$LINES {}\&quot;&quot;
+</a> alias fz=&quot;vim \$(f)&quot;
+ alias vi=vim
+ alias yt=&quot;youtube-dl&quot;
+<a href="#h5-0-3" id="h5-0-3" class="i">+alias r=&quot;ranger&quot;
+</a> 
+ # Kubernetes
+ alias kc=&quot;kubectl --kubeconfig=$HOME/cluster.config&quot;
+ alias helm=&quot;helm --kubeconfig=$HOME/cluster.config&quot;
+ alias c=&quot;cd $CORE&quot;
+<a href="#h5-0-9" id="h5-0-9" class="i">+alias o=&quot;cd $OPS&quot;
+</a> 
+ ## Kubernetes
+ function gdep {
+<a href="#h5-1" id="h5-1" class="h">@@ -26,15 +28,6 @@ function gdep {
+</a>     open /tmp/dep.png
+ }
+ 
+<a href="#h5-1-3" id="h5-1-3" class="d">-function gp {
+</a><a href="#h5-1-4" id="h5-1-4" class="d">-  kubectl --kubeconfig=$HOME/cluster.config get pods | egrep -o  &quot;$1.*Running&quot; | egrep -o &quot;$1[^ ]*&quot; | head -1
+</a><a href="#h5-1-5" id="h5-1-5" class="d">-}
+</a><a href="#h5-1-6" id="h5-1-6" class="d">-
+</a><a href="#h5-1-7" id="h5-1-7" class="d">-function kcforward {
+</a><a href="#h5-1-8" id="h5-1-8" class="d">-  POD=`gp $1`
+</a><a href="#h5-1-9" id="h5-1-9" class="d">-  kubectl --kubeconfig=$HOME/cluster.config port-forward $POD $2:8001
+</a><a href="#h5-1-10" id="h5-1-10" class="d">-}
+</a><a href="#h5-1-11" id="h5-1-11" class="d">-
+</a> alias kt=&quot;ktail --kubeconfig=$HOME/cluster.config -t &#39;
+ $BOLD$LIGHT_CYAN{{ .Container.Name }}$NONE $DIM{{ .Pod.Name }}$NONE $YELLOW{{ if .Timestamp }}{{ .Timestamp.Format \&quot;2006-01-02T15:04:05.999999999Z07:00\&quot; }}{{ end }}$NONE
+ {{ .Message }} &#39;&quot;
+<a href="#h5-2" id="h5-2" class="h">@@ -48,6 +41,17 @@ function fhc {
+</a>   echo -n $( ([ -n &quot;$ZSH_NAME&quot; ] &amp;&amp; fc -l 1 || history) | fzf +s --tac | sed &#39;s/ *[0-9]* *//&#39;) | pbcopy
+ }
+ 
+<a href="#h5-2-3" id="h5-2-3" class="i">+# fkill - kill process
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+fkill() {
+</a><a href="#h5-2-5" id="h5-2-5" class="i">+  local pid
+</a><a href="#h5-2-6" id="h5-2-6" class="i">+  pid=$(ps -ef | sed 1d | fzf -m | awk &#39;{print $2}&#39;)
+</a><a href="#h5-2-7" id="h5-2-7" class="i">+
+</a><a href="#h5-2-8" id="h5-2-8" class="i">+  if [ &quot;x$pid&quot; != &quot;x&quot; ]
+</a><a href="#h5-2-9" id="h5-2-9" class="i">+  then
+</a><a href="#h5-2-10" id="h5-2-10" class="i">+    echo $pid | xargs kill -${1:-9}
+</a><a href="#h5-2-11" id="h5-2-11" class="i">+  fi
+</a><a href="#h5-2-12" id="h5-2-12" class="i">+}
+</a><a href="#h5-2-13" id="h5-2-13" class="i">+
+</a> # coloured manuals
+ man() {
+   env \
+<a href="#h5-3" id="h5-3" class="h">@@ -63,15 +67,22 @@ man() {
+</a> 
+ autoload -U +X bashcompinit &amp;&amp; bashcompinit
+ 
+<a href="#h5-3-3" id="h5-3-3" class="d">-# if [ -z $TMUX ]
+</a><a href="#h5-3-4" id="h5-3-4" class="d">-# then
+</a><a href="#h5-3-5" id="h5-3-5" class="d">-#         tmux ls &amp;&amp; read tmux_session &amp;&amp; tmux attach -t ${tmux_session:-default} || tmux new -s ${tmux_session:-default}
+</a><a href="#h5-3-6" id="h5-3-6" class="d">-# fi
+</a><a href="#h5-3-7" id="h5-3-7" class="i">+if [[ &quot;$OSTYPE&quot; == &quot;linux-gnu&quot; ]]; then
+</a><a href="#h5-3-8" id="h5-3-8" class="i">+    setxkbmap -layout us -option ctrl:nocaps
+</a><a href="#h5-3-9" id="h5-3-9" class="i">+
+</a><a href="#h5-3-10" id="h5-3-10" class="i">+    # The next line updates PATH for the Google Cloud SDK.
+</a><a href="#h5-3-11" id="h5-3-11" class="i">+    if [ -f &#39;/home/mjf/prog/google-cloud-sdk/path.zsh.inc&#39; ]; then
+</a><a href="#h5-3-12" id="h5-3-12" class="i">+        . &#39;/home/mjf/prog/google-cloud-sdk/path.zsh.inc&#39;;
+</a><a href="#h5-3-13" id="h5-3-13" class="i">+    fi
+</a> 
+<a href="#h5-3-15" id="h5-3-15" class="d">-setxkbmap -layout us -option ctrl:nocaps
+</a><a href="#h5-3-16" id="h5-3-16" class="i">+    # The next line enables shell command completion for gcloud.
+</a><a href="#h5-3-17" id="h5-3-17" class="i">+    if [ -f &#39;/home/mjf/prog/google-cloud-sdk/completion.zsh.inc&#39; ]; then
+</a><a href="#h5-3-18" id="h5-3-18" class="i">+        . &#39;/home/mjf/prog/google-cloud-sdk/completion.zsh.inc&#39;;
+</a><a href="#h5-3-19" id="h5-3-19" class="i">+    fi
+</a> 
+<a href="#h5-3-21" id="h5-3-21" class="d">-# The next line updates PATH for the Google Cloud SDK.
+</a><a href="#h5-3-22" id="h5-3-22" class="d">-if [ -f &#39;/home/mjf/prog/google-cloud-sdk/path.zsh.inc&#39; ]; then . &#39;/home/mjf/prog/google-cloud-sdk/path.zsh.inc&#39;; fi
+</a><a href="#h5-3-23" id="h5-3-23" class="i">+elif [[ &quot;$OSTYPE&quot; == &quot;darwin&quot;* ]]; then
+</a><a href="#h5-3-24" id="h5-3-24" class="i">+    if [ -f &#39;/Users/markfeller/Downloads/google-cloud-sdk/completion.zsh.inc&#39; ]; then
+</a><a href="#h5-3-25" id="h5-3-25" class="i">+        source &#39;/Users/markfeller/Downloads/google-cloud-sdk/completion.zsh.inc&#39;;
+</a><a href="#h5-3-26" id="h5-3-26" class="i">+    fi
+</a><a href="#h5-3-27" id="h5-3-27" class="i">+fi
+</a> 
+<a href="#h5-3-29" id="h5-3-29" class="d">-# The next line enables shell command completion for gcloud.
+</a><a href="#h5-3-30" id="h5-3-30" class="d">-if [ -f &#39;/home/mjf/prog/google-cloud-sdk/completion.zsh.inc&#39; ]; then . &#39;/home/mjf/prog/google-cloud-sdk/completion.zsh.inc&#39;; fi
+</a><b>diff --git a/<a id="h6" href="../file/packages.html">packages</a> b/<a href="../file/packages.html">packages</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,27 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+# Shell
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+zsh
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+# Music
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+mpd
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+mpc
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+ncmpcpp
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+# Utilities
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+fzf
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+ripgrep
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+emacs
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+vim
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+ranger	# file browser
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+wget
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+youtube-dl
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+htop
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+jq
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+neofetch
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+stow	# manage dotfiles
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+# build systems
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+cmake
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+gcc
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+go
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+pyenv
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+ipython</a><a href="#h6-0-27" id="h6-0-27" class="i">+
+\ No newline at end of file
+</a><b>diff --git a/<a id="h7" href="../file/packages_linux.html">packages_linux</a> b/<a href="../file/packages_linux.html">packages_linux</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -0,0 +1,6 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="i">+i3wm
+</a><a href="#h7-0-1" id="h7-0-1" class="i">+i3status
+</a><a href="#h7-0-2" id="h7-0-2" class="i">+i3lock
+</a><a href="#h7-0-3" id="h7-0-3" class="i">+rofi
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+dunst
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+libnotify</a><a href="#h7-0-6" id="h7-0-6" class="i">+
+\ No newline at end of file
+</a></pre>
+</div>
+</body>
+</html>

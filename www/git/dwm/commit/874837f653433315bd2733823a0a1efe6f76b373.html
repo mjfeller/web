@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Ph&#39;s MIN/MAX patch, nice work! - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/874837f653433315bd2733823a0a1efe6f76b373.html">874837f653433315bd2733823a0a1efe6f76b373</a>
+<b>parent</b> <a href="../commit/5fa559dbfc6238a911c210ae4124586c6886df23.html">5fa559dbfc6238a911c210ae4124586c6886df23</a>
+<b>Author:</b> anselm@anselm1 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Sun, 20 Apr 2008 18:28:21 +0100
+
+applied Ph&#39;s MIN/MAX patch, nice work!
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">53</td><td><span class="i">++++++++++++++++++++++</span><span class="d">-------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 22 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -41,6 +41,8 @@
+</a> #include &lt;X11/Xutil.h&gt;
+ 
+ /* macros */
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define MAX(a, b) ((a)&gt;(b)?(a):(b))
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define MIN(a, b) ((a)&lt;(b)?(a):(b))
+</a> #define BUTTONMASK		(ButtonPressMask|ButtonReleaseMask)
+ #define CLEANMASK(mask)		(mask &amp; ~(numlockmask|LockMask))
+ #define LENGTH(x)		(sizeof x / sizeof x[0])
+<a href="#h0-1" id="h0-1" class="h">@@ -601,9 +603,8 @@ drawtext(const char *text, unsigned long col[ColLast], Bool invert) {
+</a> 	if(!text)
+ 		return;
+ 	w = 0;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	olen = len = strlen(text);
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	if(len &gt;= sizeof buf)
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		len = sizeof buf - 1;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	olen = strlen(text);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	len = MIN(olen, sizeof buf - 1);
+</a> 	memcpy(buf, text, len);
+ 	buf[len] = 0;
+ 	h = dc.font.ascent + dc.font.descent;
+<a href="#h0-2" id="h0-2" class="h">@@ -880,10 +881,8 @@ initfont(const char *fontstr) {
+</a> 		font_extents = XExtentsOfFontSet(dc.font.set);
+ 		n = XFontsOfFontSet(dc.font.set, &amp;xfonts, &amp;font_names);
+ 		for(i = 0, dc.font.ascent = 0, dc.font.descent = 0; i &lt; n; i++) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-			if(dc.font.ascent &lt; (*xfonts)-&gt;ascent)
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-				dc.font.ascent = (*xfonts)-&gt;ascent;
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-			if(dc.font.descent &lt; (*xfonts)-&gt;descent)
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-				dc.font.descent = (*xfonts)-&gt;descent;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+			dc.font.ascent = MAX(dc.font.ascent, (*xfonts)-&gt;ascent);
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+			dc.font.descent = MAX(dc.font.descent,(*xfonts)-&gt;descent);
+</a> 			xfonts++;
+ 		}
+ 	}
+<a href="#h0-3" id="h0-3" class="h">@@ -1008,10 +1007,8 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 			c-&gt;x = wx + ww - c-&gt;w - 2 * c-&gt;bw;
+ 		if(c-&gt;y + c-&gt;h + 2 * c-&gt;bw &gt; wy + wh)
+ 			c-&gt;y = wy + wh - c-&gt;h - 2 * c-&gt;bw;
+<a href="#h0-3-3" id="h0-3-3" class="d">-		if(c-&gt;x &lt; wx)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-			c-&gt;x = wx;
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-		if(c-&gt;y &lt; wy)
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-			c-&gt;y = wy;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+		c-&gt;x = MAX(c-&gt;x, wx);
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+		c-&gt;y = MAX(c-&gt;y, wy);
+</a> 		c-&gt;bw = BORDERPX;
+ 	}
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -1177,10 +1174,8 @@ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> 
+ 	if(sizehints) {
+ 		/* set minimum possible */
+<a href="#h0-4-3" id="h0-4-3" class="d">-		if(w &lt; 1)
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-			w = 1;
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-		if(h &lt; 1)
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-			h = 1;
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+		w = MAX(1, w);
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+		h = MAX(1, h);
+</a> 
+ 		/* temporarily remove base dimensions */
+ 		w -= c-&gt;basew;
+<a href="#h0-5" id="h0-5" class="h">@@ -1206,14 +1201,14 @@ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> 		w += c-&gt;basew;
+ 		h += c-&gt;baseh;
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-		if(c-&gt;minw &gt; 0 &amp;&amp; w &lt; c-&gt;minw)
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-			w = c-&gt;minw;
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-		if(c-&gt;minh &gt; 0 &amp;&amp; h &lt; c-&gt;minh)
+</a><a href="#h0-5-6" id="h0-5-6" class="d">-			h = c-&gt;minh;
+</a><a href="#h0-5-7" id="h0-5-7" class="d">-		if(c-&gt;maxw &gt; 0 &amp;&amp; w &gt; c-&gt;maxw)
+</a><a href="#h0-5-8" id="h0-5-8" class="d">-			w = c-&gt;maxw;
+</a><a href="#h0-5-9" id="h0-5-9" class="d">-		if(c-&gt;maxh &gt; 0 &amp;&amp; h &gt; c-&gt;maxh)
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-			h = c-&gt;maxh;
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+		w = MAX(w, c-&gt;minw);
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+		h = MAX(h, c-&gt;minh);
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+		
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+		if (c-&gt;maxw)
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+			w = MIN(w, c-&gt;maxw);
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+		if (c-&gt;maxh)
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+			h = MIN(h, c-&gt;maxh);
+</a> 	}
+ 	if(w &lt;= 0 || h &lt;= 0)
+ 		return;
+<a href="#h0-6" id="h0-6" class="h">@@ -1266,10 +1261,8 @@ resizemouse(Client *c) {
+</a> 			break;
+ 		case MotionNotify:
+ 			XSync(dpy, False);
+<a href="#h0-6-3" id="h0-6-3" class="d">-			if((nw = ev.xmotion.x - ocx - 2 * c-&gt;bw + 1) &lt;= 0)
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-				nw = 1;
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-			if((nh = ev.xmotion.y - ocy - 2 * c-&gt;bw + 1) &lt;= 0)
+</a><a href="#h0-6-6" id="h0-6-6" class="d">-				nh = 1;
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+			nw = MAX(ev.xmotion.x - ocx - 2 * c-&gt;bw + 1, 1);
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+			nh = MAX(ev.xmotion.y - ocy - 2 * c-&gt;bw + 1, 1);
+</a> 			if(!c-&gt;isfloating &amp;&amp; !lt-&gt;isfloating &amp;&amp; (abs(nw - c-&gt;w) &gt; SNAP || abs(nh - c-&gt;h) &gt; SNAP))
+ 				togglefloating(NULL);
+ 			if((lt-&gt;isfloating) || c-&gt;isfloating)
+<a href="#h0-7" id="h0-7" class="h">@@ -1520,13 +1513,11 @@ setup(void) {
+</a> 	/* init bar */
+ 	for(blw = i = 0; LENGTH(layouts) &gt; 1 &amp;&amp; i &lt; LENGTH(layouts); i++) {
+ 		w = textw(layouts[i].symbol);
+<a href="#h0-7-3" id="h0-7-3" class="d">-		if(w &gt; blw)
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-			blw = w;
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+		blw = MAX(blw, w);
+</a> 	}
+ 	for(bgw = i = 0; LENGTH(geoms) &gt; 1 &amp;&amp; i &lt; LENGTH(geoms); i++) {
+ 		w = textw(geoms[i].symbol);
+<a href="#h0-7-9" id="h0-7-9" class="d">-		if(w &gt; bgw)
+</a><a href="#h0-7-10" id="h0-7-10" class="d">-			bgw = w;
+</a><a href="#h0-7-11" id="h0-7-11" class="i">+		bgw = MAX(bgw, w);
+</a> 	}
+ 
+ 	wa.override_redirect = 1;
+</pre>
+</div>
+</body>
+</html>

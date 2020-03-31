@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Force redisplay of all lines in DECSCNM - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/930b2c4a7f222e15e6493d5bbb8fd90e681d2626.html">930b2c4a7f222e15e6493d5bbb8fd90e681d2626</a>
+<b>parent</b> <a href="../commit/a984ffc4cb755c6dcdbc153b2591dca0ae6a8ead.html">a984ffc4cb755c6dcdbc153b2591dca0ae6a8ead</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Mon,  3 Sep 2012 21:52:34 +0200
+
+Force redisplay of all lines in DECSCNM
+
+When it is called DECSCNM all lines become dirty, because it is necessary
+redraw all lines for getting the new colors. It is easy see the problem
+running &#39;echo ^[[?5h&#39;.
+
+In order to get a correct flash when running tput flash is necessary wait
+after DECSCNM, until the changes are displayed, because in other case the
+switch between reverse on/reverse off will be too much fast and nothing will
+happen.
+---
+ st.c |   12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -54,6 +54,7 @@
+</a> 
+ #define SELECT_TIMEOUT (20*1000) /* 20 ms */
+ #define DRAW_TIMEOUT  (20*1000) /* 20 ms */
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define REDRAW_TIMEOUT (80*1000) /* 80 ms */
+</a> 
+ #define SERRNO strerror(errno)
+ #define MIN(a, b)  ((a) &lt; (b) ? (a) : (b))
+<a href="#h0-1" id="h0-1" class="h">@@ -238,6 +239,7 @@ typedef struct {
+</a> 
+ static void die(const char*, ...);
+ static void draw(void);
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void redraw(void);
+</a> static void drawregion(int, int, int, int);
+ static void execsh(void);
+ static void sigchld(int);
+<a href="#h0-2" id="h0-2" class="h">@@ -1206,7 +1208,7 @@ tsetmode(bool priv, bool set, int *args, int narg) {
+</a> 				mode = term.mode;
+ 				MODBIT(term.mode,set, MODE_REVERSE);
+ 				if (mode != term.mode)
+<a href="#h0-2-3" id="h0-2-3" class="d">-					draw();
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+					redraw();
+</a> 				break;
+ 			case 7:
+ 				MODBIT(term.mode, set, MODE_WRAP);
+<a href="#h0-3" id="h0-3" class="h">@@ -2030,6 +2032,14 @@ xdrawcursor(void) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="i">+redraw(void) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	struct timespec tv = {0, REDRAW_TIMEOUT * 1000};
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	tfulldirt();
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	draw();
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	nanosleep(&amp;tv, NULL);
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+}
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+void
+</a> draw() {
+ 	drawregion(0, 0, term.col, term.row);
+ 	xcopy();
+</pre>
+</div>
+</body>
+</html>

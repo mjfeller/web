@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added basic mouse support (actually we don&#39;t need more) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/48b6e9a3968e54a87f022c8e68b5bec5423cb75f.html">48b6e9a3968e54a87f022c8e68b5bec5423cb75f</a>
+<b>parent</b> <a href="../commit/b9da4b082eb658b4142b61c149212f414f7653b6.html">b9da4b082eb658b4142b61c149212f414f7653b6</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Tue, 11 Jul 2006 21:41:49 +0200
+
+added basic mouse support (actually we don&#39;t need more)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">2</td><td><span class="i"></span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">mouse.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">wm.h</a></td><td> | </td><td class="num">14</td><td><span class="i"></span><span class="d">--------------</span></td></tr>
+</table></pre><pre>4 files changed, 15 insertions(+), 24 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -70,8 +70,7 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	c-&gt;r[RFloat].y = wa-&gt;y;
+ 	c-&gt;r[RFloat].width = wa-&gt;width;
+ 	c-&gt;r[RFloat].height = wa-&gt;height;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	c-&gt;border = wa-&gt;border_width;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	XSetWindowBorderWidth(dpy, c-&gt;win, 0);
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	XSetWindowBorderWidth(dpy, c-&gt;win, 1);
+</a> 	XSelectInput(dpy, c-&gt;win, CLIENT_MASK);
+ 	XGetTransientForHint(dpy, c-&gt;win, &amp;c-&gt;trans);
+ 	if(!XGetWMNormalHints(dpy, c-&gt;win, &amp;c-&gt;size, &amp;msize) || !c-&gt;size.flags)
+<a href="#h0-1" id="h0-1" class="h">@@ -97,7 +96,11 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	c-&gt;snext = stack;
+ 	stack = c;
+ 	XMapWindow(dpy, c-&gt;win);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	XGrabButton(dpy, AnyButton, Mod1Mask, c-&gt;win, False, ButtonPressMask,
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	XGrabButton(dpy, Button1, Mod1Mask, c-&gt;win, False, ButtonPressMask,
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	XGrabButton(dpy, Button2, Mod1Mask, c-&gt;win, False, ButtonPressMask,
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+			GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	XGrabButton(dpy, Button3, Mod1Mask, c-&gt;win, False, ButtonPressMask,
+</a> 			GrabModeAsync, GrabModeSync, None, None);
+ 	focus(c);
+ }
+<a href="#h0-2" id="h0-2" class="h">@@ -116,7 +119,7 @@ resize(Client *c)
+</a> 	e.y = c-&gt;r[RFloat].y;
+ 	e.width = c-&gt;r[RFloat].width;
+ 	e.height = c-&gt;r[RFloat].height;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	e.border_width = c-&gt;border;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	e.border_width = 0;
+</a> 	e.above = None;
+ 	e.override_redirect = False;
+ 	XSelectInput(dpy, c-&gt;win, CLIENT_MASK &amp; ~StructureNotifyMask);
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -86,8 +86,6 @@ configurerequest(XEvent *e)
+</a> 			c-&gt;r[RFloat].width = ev-&gt;width;
+ 		if(ev-&gt;value_mask &amp; CWHeight)
+ 			c-&gt;r[RFloat].height = ev-&gt;height;
+<a href="#h1-0-3" id="h1-0-3" class="d">-		if(ev-&gt;value_mask &amp; CWBorderWidth)
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-			c-&gt;border = ev-&gt;border_width;
+</a> 	}
+ 
+ 	wc.x = ev-&gt;x;
+<b>diff --git a/<a id="h2" href="../file/mouse.c.html">mouse.c</a> b/<a href="../file/mouse.c.html">mouse.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -42,7 +42,7 @@ mresize(Client *c)
+</a> 
+ 	old_cx = c-&gt;r[RFloat].x;
+ 	old_cy = c-&gt;r[RFloat].y;
+<a href="#h2-0-3" id="h2-0-3" class="d">-	if(XGrabPointer(dpy, c-&gt;win, False, MouseMask, GrabModeAsync, GrabModeAsync,
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+</a> 				None, cursor[CurResize], CurrentTime) != GrabSuccess)
+ 		return;
+ 	XGrabServer(dpy);
+<a href="#h2-1" id="h2-1" class="h">@@ -55,10 +55,12 @@ mresize(Client *c)
+</a> 		case MotionNotify:
+ 			XUngrabServer(dpy);
+ 			mmatch(c, old_cx, old_cy, ev.xmotion.x, ev.xmotion.y);
+<a href="#h2-1-3" id="h2-1-3" class="d">-			resize(c);
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+			XResizeWindow(dpy, c-&gt;win, c-&gt;r[RFloat].width, c-&gt;r[RFloat].height);
+</a> 			XGrabServer(dpy);
+ 			break;
+ 		case ButtonRelease:
+<a href="#h2-1-8" id="h2-1-8" class="i">+			resize(c);
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+			XUngrabServer(dpy);
+</a> 			XUngrabPointer(dpy, CurrentTime);
+ 			return;
+ 		}
+<a href="#h2-2" id="h2-2" class="h">@@ -75,7 +77,7 @@ mmove(Client *c)
+</a> 
+ 	old_cx = c-&gt;r[RFloat].x;
+ 	old_cy = c-&gt;r[RFloat].y;
+<a href="#h2-2-3" id="h2-2-3" class="d">-	if(XGrabPointer(dpy, c-&gt;win, False, MouseMask, GrabModeAsync, GrabModeAsync,
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+</a> 				None, cursor[CurMove], CurrentTime) != GrabSuccess)
+ 		return;
+ 	XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x1, &amp;y1, &amp;di, &amp;di, &amp;dui);
+<a href="#h2-3" id="h2-3" class="h">@@ -88,10 +90,12 @@ mmove(Client *c)
+</a> 			XUngrabServer(dpy);
+ 			c-&gt;r[RFloat].x = old_cx + (ev.xmotion.x - x1);
+ 			c-&gt;r[RFloat].y = old_cy + (ev.xmotion.y - y1);
+<a href="#h2-3-3" id="h2-3-3" class="d">-			resize(c);
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+			XMoveResizeWindow(dpy, c-&gt;win, c-&gt;r[RFloat].x, c-&gt;r[RFloat].y,
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+					c-&gt;r[RFloat].width, c-&gt;r[RFloat].height);
+</a> 			XGrabServer(dpy);
+ 			break;
+ 		case ButtonRelease:
+<a href="#h2-3-9" id="h2-3-9" class="i">+			resize(c);
+</a> 			XUngrabServer(dpy);
+ 			XUngrabPointer(dpy, CurrentTime);
+ 			return;
+<b>diff --git a/<a id="h3" href="../file/wm.h.html">wm.h</a> b/<a href="../file/wm.h.html">wm.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -13,19 +13,6 @@
+</a> 
+ typedef struct Client Client;
+ typedef struct Key Key;
+<a href="#h3-0-3" id="h3-0-3" class="d">-typedef enum Align Align;
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-enum Align {
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-	NORTH = 0x01,
+</a><a href="#h3-0-7" id="h3-0-7" class="d">-	EAST  = 0x02,
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-	SOUTH = 0x04,
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-	WEST  = 0x08,
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-	NEAST = NORTH | EAST,
+</a><a href="#h3-0-11" id="h3-0-11" class="d">-	NWEST = NORTH | WEST,
+</a><a href="#h3-0-12" id="h3-0-12" class="d">-	SEAST = SOUTH | EAST,
+</a><a href="#h3-0-13" id="h3-0-13" class="d">-	SWEST = SOUTH | WEST,
+</a><a href="#h3-0-14" id="h3-0-14" class="d">-	CENTER = NEAST | SWEST
+</a><a href="#h3-0-15" id="h3-0-15" class="d">-};
+</a> 
+ /* atoms */
+ enum { WMProtocols, WMDelete, WMLast };
+<a href="#h3-1" id="h3-1" class="h">@@ -40,7 +27,6 @@ enum { RFloat, RGrid, RLast };
+</a> struct Client {
+ 	char name[256];
+ 	char tag[256];
+<a href="#h3-1-3" id="h3-1-3" class="d">-	unsigned int border;
+</a> 	int proto;
+ 	Bool fixedsize;
+ 	Window win;
+</pre>
+</div>
+</body>
+</html>

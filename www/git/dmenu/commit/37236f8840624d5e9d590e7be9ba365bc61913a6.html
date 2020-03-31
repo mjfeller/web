@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Connor&#39;s patch, thanks! - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/37236f8840624d5e9d590e7be9ba365bc61913a6.html">37236f8840624d5e9d590e7be9ba365bc61913a6</a>
+<b>parent</b> <a href="../commit/7082ba1e1050664309de707bbc5b7194a53ed5ac.html">7082ba1e1050664309de707bbc5b7194a53ed5ac</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Sun,  7 Mar 2010 08:32:16 +0000
+
+applied Connor&#39;s patch, thanks!
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">77</td><td><span class="i">+++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 33 insertions(+), 44 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -52,6 +52,7 @@ static void calcoffsetsh(void);
+</a> static void calcoffsetsv(void);
+ static char *cistrstr(const char *s, const char *sub);
+ static void cleanup(void);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void drawmenu(void);
+</a> static void drawmenuh(void);
+ static void drawmenuv(void);
+ static void drawtext(const char *text, unsigned long col[ColLast]);
+<a href="#h0-1" id="h0-1" class="h">@@ -95,7 +96,6 @@ static char *(*fstrstr)(const char *, const char *) = strstr;
+</a> static Bool vlist = False;
+ static unsigned int lines = 5;
+ static void (*calcoffsets)(void) = calcoffsetsh;
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void (*drawmenu)(void) = drawmenuh;
+</a> 
+ void
+ appenditem(Item *i, Item **list, Item **last) {
+<a href="#h0-2" id="h0-2" class="h">@@ -200,7 +200,7 @@ cleanup(void) {
+</a> 
+ void
+ drawcursor(void) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	XRectangle r = { dc.x, dc.y + 2, 1, dc.h - 4 };
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	XRectangle r = { dc.x, dc.y + 2, 1, dc.font.height - 2 };
+</a> 
+ 	r.x += textnw(text, cursor) + dc.font.height / 2;
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -209,9 +209,7 @@ drawcursor(void) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="d">-drawmenuh(void) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	Item *i;
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+drawmenu(void) {
+</a> 	dc.x = 0;
+ 	dc.y = 0;
+ 	dc.w = mw;
+<a href="#h0-4" id="h0-4" class="h">@@ -231,56 +229,48 @@ drawmenuh(void) {
+</a> 	drawcursor();
+ 	dc.x += cmdw;
+ 	if(curr) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-		dc.w = spaceitem;
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		drawtext((curr &amp;&amp; curr-&gt;left) ? &quot;&lt;&quot; : NULL, dc.norm);
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-		dc.x += dc.w;
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-		/* determine maximum items */
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-		for(i = curr; i != next; i=i-&gt;right) {
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-			dc.w = textw(i-&gt;text);
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-			if(dc.w &gt; mw / 3)
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-				dc.w = mw / 3;
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-			drawtext(i-&gt;text, (sel == i) ? dc.sel : dc.norm);
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-			dc.x += dc.w;
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-		}
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-		dc.x = mw - spaceitem;
+</a><a href="#h0-4-15" id="h0-4-15" class="d">-		dc.w = spaceitem;
+</a><a href="#h0-4-16" id="h0-4-16" class="d">-		drawtext(next ? &quot;&gt;&quot; : NULL, dc.norm);
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+		if(vlist)
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+			drawmenuv();
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+		else
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+			drawmenuh();
+</a> 	}
+ 	XCopyArea(dpy, dc.drawable, win, dc.gc, 0, 0, mw, mh, 0, 0);
+ 	XFlush(dpy);
+ }
+ 
+ void
+<a href="#h0-4-27" id="h0-4-27" class="i">+drawmenuh(void) {
+</a><a href="#h0-4-28" id="h0-4-28" class="i">+	Item *i;
+</a><a href="#h0-4-29" id="h0-4-29" class="i">+
+</a><a href="#h0-4-30" id="h0-4-30" class="i">+	dc.w = spaceitem;
+</a><a href="#h0-4-31" id="h0-4-31" class="i">+	drawtext((curr &amp;&amp; curr-&gt;left) ? &quot;&lt;&quot; : NULL, dc.norm);
+</a><a href="#h0-4-32" id="h0-4-32" class="i">+	dc.x += dc.w;
+</a><a href="#h0-4-33" id="h0-4-33" class="i">+	/* determine maximum items */
+</a><a href="#h0-4-34" id="h0-4-34" class="i">+	for(i = curr; i != next; i=i-&gt;right) {
+</a><a href="#h0-4-35" id="h0-4-35" class="i">+		dc.w = textw(i-&gt;text);
+</a><a href="#h0-4-36" id="h0-4-36" class="i">+		if(dc.w &gt; mw / 3)
+</a><a href="#h0-4-37" id="h0-4-37" class="i">+			dc.w = mw / 3;
+</a><a href="#h0-4-38" id="h0-4-38" class="i">+		drawtext(i-&gt;text, (sel == i) ? dc.sel : dc.norm);
+</a><a href="#h0-4-39" id="h0-4-39" class="i">+		dc.x += dc.w;
+</a><a href="#h0-4-40" id="h0-4-40" class="i">+	}
+</a><a href="#h0-4-41" id="h0-4-41" class="i">+	dc.x = mw - spaceitem;
+</a><a href="#h0-4-42" id="h0-4-42" class="i">+	dc.w = spaceitem;
+</a><a href="#h0-4-43" id="h0-4-43" class="i">+	drawtext(next ? &quot;&gt;&quot; : NULL, dc.norm);
+</a><a href="#h0-4-44" id="h0-4-44" class="i">+}
+</a><a href="#h0-4-45" id="h0-4-45" class="i">+
+</a><a href="#h0-4-46" id="h0-4-46" class="i">+void
+</a> drawmenuv(void) {
+ 	Item *i;
+ 
+ 	dc.x = 0;
+<a href="#h0-4-51" id="h0-4-51" class="d">-	dc.y = 0;
+</a> 	dc.w = mw;
+<a href="#h0-4-53" id="h0-4-53" class="d">-	dc.h = mh;
+</a><a href="#h0-4-54" id="h0-4-54" class="d">-	drawtext(NULL, dc.norm);
+</a><a href="#h0-4-55" id="h0-4-55" class="d">-	/* print prompt? */
+</a><a href="#h0-4-56" id="h0-4-56" class="d">-	if(promptw) {
+</a><a href="#h0-4-57" id="h0-4-57" class="d">-		dc.w = promptw;
+</a><a href="#h0-4-58" id="h0-4-58" class="d">-		drawtext(prompt, dc.sel);
+</a><a href="#h0-4-59" id="h0-4-59" class="d">-	}
+</a><a href="#h0-4-60" id="h0-4-60" class="d">-	dc.x += promptw;
+</a><a href="#h0-4-61" id="h0-4-61" class="d">-	dc.w = mw - promptw;
+</a><a href="#h0-4-62" id="h0-4-62" class="d">-	/* print command */
+</a><a href="#h0-4-63" id="h0-4-63" class="d">-	drawtext(text[0] ? text : NULL, dc.norm);
+</a><a href="#h0-4-64" id="h0-4-64" class="d">-	if(curr) {
+</a><a href="#h0-4-65" id="h0-4-65" class="d">-		dc.x = 0;
+</a><a href="#h0-4-66" id="h0-4-66" class="d">-		dc.w = mw;
+</a><a href="#h0-4-67" id="h0-4-67" class="i">+	dc.y += dc.font.height + 2;
+</a><a href="#h0-4-68" id="h0-4-68" class="i">+	/* determine maximum items */
+</a><a href="#h0-4-69" id="h0-4-69" class="i">+	for(i = curr; i != next; i=i-&gt;right) {
+</a><a href="#h0-4-70" id="h0-4-70" class="i">+		drawtext(i-&gt;text, (sel == i) ? dc.sel : dc.norm);
+</a> 		dc.y += dc.font.height + 2;
+<a href="#h0-4-72" id="h0-4-72" class="d">-		/* determine maximum items */
+</a><a href="#h0-4-73" id="h0-4-73" class="d">-		for(i = curr; i != next; i=i-&gt;right) {
+</a><a href="#h0-4-74" id="h0-4-74" class="d">-			drawtext(i-&gt;text, (sel == i) ? dc.sel : dc.norm);
+</a><a href="#h0-4-75" id="h0-4-75" class="d">-			dc.y += dc.font.height + 2;
+</a><a href="#h0-4-76" id="h0-4-76" class="d">-		}
+</a><a href="#h0-4-77" id="h0-4-77" class="d">-		drawtext(NULL, dc.norm);
+</a> 	}
+<a href="#h0-4-79" id="h0-4-79" class="d">-	XCopyArea(dpy, dc.drawable, win, dc.gc, 0, 0, mw, mh, 0, 0);
+</a><a href="#h0-4-80" id="h0-4-80" class="d">-	XFlush(dpy);
+</a><a href="#h0-4-81" id="h0-4-81" class="i">+	drawtext(NULL, dc.norm);
+</a> }
+ 
+ void
+<a href="#h0-5" id="h0-5" class="h">@@ -786,8 +776,7 @@ main(int argc, char *argv[]) {
+</a> 		else if(!strcmp(argv[i], &quot;-l&quot;)) {
+ 			vlist = True;
+ 			calcoffsets = calcoffsetsv;
+<a href="#h0-5-3" id="h0-5-3" class="d">-			drawmenu = drawmenuv;
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-			if(++i &lt; argc) lines += atoi(argv[i]);
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+			if(++i &lt; argc) lines = atoi(argv[i]);
+</a> 		}
+ 		else if(!strcmp(argv[i], &quot;-fn&quot;)) {
+ 			if(++i &lt; argc) font = argv[i];
+</pre>
+</div>
+</body>
+</html>

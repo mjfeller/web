@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed shiftview(), if you scroll the views in the tag area, you can also use Button1 instead removed focusclient([-]1) bound to scroll wheel - if you slightly move the mouse you will focus the first client anways which is in the way - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4b9337a01e7f12058ce54ed65d69e64748397498.html">4b9337a01e7f12058ce54ed65d69e64748397498</a>
+<b>parent</b> <a href="../commit/154497541d1378d3aded02df06029de94d8af586.html">154497541d1378d3aded02df06029de94d8af586</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 28 Jul 2007 12:58:56 +0200
+
+removed shiftview(), if you scroll the views in the tag area, you can also use Button1 instead
+removed focusclient([-]1) bound to scroll wheel - if you slightly move the mouse you will focus the first client anways which is in the way
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">tag.c</a></td><td> | </td><td class="num">18</td><td><span class="i"></span><span class="d">------------------</span></td></tr>
+</table></pre><pre>3 files changed, 2 insertions(+), 29 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -144,7 +144,6 @@ void tag(const char *arg);		/* tags sel with arg&#39;s index */
+</a> void toggletag(const char *arg);	/* toggles sel tags with arg&#39;s index */
+ void toggleview(const char *arg);	/* toggles the tag with arg&#39;s index (in)visible */
+ void view(const char *arg);		/* views the tag with arg&#39;s index */
+<a href="#h0-0-3" id="h0-0-3" class="d">-void shiftview(const char *arg);        /* views next(1)/previous(-1) tag */
+</a> 
+ /* util.c */
+ void *emallocz(unsigned int size);	/* allocates zero-initialized memory, exits on error */
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -16,7 +16,7 @@ typedef struct {
+</a> 
+ KEYS
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define CLEANMASK(mask) (mask &amp; ~(numlockmask | LockMask))
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#define CLEANMASK(mask)		(mask &amp; ~(numlockmask | LockMask))
+</a> #define MOUSEMASK		(BUTTONMASK | PointerMotionMask)
+ 
+ static Client *
+<a href="#h1-1" id="h1-1" class="h">@@ -135,19 +135,11 @@ buttonpress(XEvent *e) {
+</a> 					else
+ 						toggleview(buf);
+ 				}
+<a href="#h1-1-3" id="h1-1-3" class="d">-				else if(ev-&gt;button == Button4)
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-					shiftview(&quot;-1&quot;);
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-				else if(ev-&gt;button == Button5)
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-					shiftview(&quot;1&quot;);
+</a> 				return;
+ 			}
+ 		}
+<a href="#h1-1-10" id="h1-1-10" class="d">-		if(ev-&gt;x &lt; x + blw &amp;&amp; ev-&gt;button == Button1)
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+		if((ev-&gt;x &lt; x + blw) &amp;&amp; ev-&gt;button == Button1)
+</a> 			setlayout(NULL);
+<a href="#h1-1-13" id="h1-1-13" class="d">-		else if(ev-&gt;button == Button4)
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-			focusclient(&quot;-1&quot;);
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-		else if(ev-&gt;button == Button5)
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-			focusclient(&quot;1&quot;);
+</a> 	}
+ 	else if((c = getclient(ev-&gt;window))) {
+ 		focus(c);
+<b>diff --git a/<a id="h2" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -99,24 +99,6 @@ settags(Client *c, Client *trans) {
+</a> 			c-&gt;tags[i] = seltag[i];
+ }
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-void 
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-shiftview(const char *arg) {
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-	int i, j;
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-	for(i = 0; !seltag[i]; i++);
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-	for(j = i + 1; j &lt; ntags &amp;&amp; !seltag[j]; j++);
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-	if(j &lt; ntags)
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-		return; /* more than one tag selected */
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-	seltag[i] = False;
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-	i += arg ? atoi(arg) : 0;
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-	if(i &lt; 0)
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-		i = ntags - 1;
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-	else if(i &gt;= ntags)
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-		i = 0;
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-	seltag[i] = True;
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-	lt-&gt;arrange();
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-}
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-
+</a> void
+ tag(const char *arg) {
+ 	int i;
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added dmenu.h, common.c - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/855a56631916bdff1438e11c232b88450f973648.html">855a56631916bdff1438e11c232b88450f973648</a>
+<b>parent</b> <a href="../commit/29e8faed6cf4b296382439651cf04596d276f080.html">29e8faed6cf4b296382439651cf04596d276f080</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Fri,  2 Jul 2010 06:49:05 +0100
+
+added dmenu.h, common.c
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++++</span><span class="d">---</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">common.c</a></td><td> | </td><td class="num">129</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">config.def.h</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dinput.c</a></td><td> | </td><td class="num">150</td><td><span class="i">+++++</span><span class="d">--------------------------------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">dmenu.c</a></td><td> | </td><td class="num">188</td><td><span class="i">+++++++++++</span><span class="d">--------------------------------------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">dmenu.h</a></td><td> | </td><td class="num">30</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>6 files changed, 204 insertions(+), 314 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = dinput.c dmenu.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+SRC = dinput.c dmenu.c common.c
+</a> OBJ = ${SRC:.c=.o}
+ 
+ all: options dinput dmenu
+<a href="#h0-1" id="h0-1" class="h">@@ -24,9 +24,13 @@ config.h:
+</a> 	@echo creating $@ from config.def.h
+ 	@cp config.def.h $@
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-.o:
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+dinput: dinput.o common.o
+</a> 	@echo CC -o $@
+<a href="#h0-1-6" id="h0-1-6" class="d">-	@${CC} -o $@ $&lt; ${LDFLAGS}
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	@${CC} -o $@ $+ ${LDFLAGS}
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+dmenu: dmenu.o common.o
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	@echo CC -o $@
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	@${CC} -o $@ $+ ${LDFLAGS}
+</a> 
+ clean:
+ 	@echo cleaning
+<b>diff --git a/<a id="h1" href="../file/common.c.html">common.c</a> b/<a href="../file/common.c.html">common.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,129 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+#include &lt;string.h&gt;
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+#include &lt;unistd.h&gt;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#include &lt;X11/keysym.h&gt;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+#ifdef XINERAMA
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+#include &lt;X11/extensions/Xinerama.h&gt;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+#endif
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#include &quot;dmenu.h&quot;
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+/* variables */
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+char *prompt = NULL;
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+char text[4096] = &quot;&quot;;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+int promptw = 0;
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+int screen;
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+unsigned int numlockmask = 0;
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+unsigned int mw, mh;
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+unsigned long normcol[ColLast];
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+unsigned long selcol[ColLast];
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+Bool topbar = True;
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+DC dc;
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+Display *dpy;
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+Window win, root;
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+void
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+grabkeyboard(void) {
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+	unsigned int len;
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	for(len = 1000; len; len--) {
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+		if(XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+		== GrabSuccess)
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+			return;
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+		usleep(1000);
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	}
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+	exit(EXIT_FAILURE);
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+}
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+void
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+run(void) {
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+	XEvent ev;
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+	/* main event loop */
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+	XSync(dpy, False);
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+	while(!XNextEvent(dpy, &amp;ev))
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+		switch(ev.type) {
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+		case KeyPress:
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+			kpress(&amp;ev.xkey);
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+			break;
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+		case Expose:
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+			if(ev.xexpose.count == 0)
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+				drawbar();
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+			break;
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+		case VisibilityNotify:
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+			if(ev.xvisibility.state != VisibilityUnobscured)
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+				XRaiseWindow(dpy, win);
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+			break;
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+		}
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+	exit(EXIT_FAILURE);
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+}
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+void
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+setup(unsigned int lines) {
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+	int i, j, x, y;
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+#if XINERAMA
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+	int n;
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+	XineramaScreenInfo *info = NULL;
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+#endif
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+	XModifierKeymap *modmap;
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+	XSetWindowAttributes wa;
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+	/* init modifier map */
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+	modmap = XGetModifierMapping(dpy);
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+	for(i = 0; i &lt; 8; i++)
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+		for(j = 0; j &lt; modmap-&gt;max_keypermod; j++) {
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j]
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+			== XKeysymToKeycode(dpy, XK_Num_Lock))
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+				numlockmask = (1 &lt;&lt; i);
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+		}
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+	XFreeModifiermap(modmap);
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+	dc.dpy = dpy;
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+	normcol[ColBG] = getcolor(&amp;dc, normbgcolor);
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+	normcol[ColFG] = getcolor(&amp;dc, normfgcolor);
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+	selcol[ColBG] = getcolor(&amp;dc, selbgcolor);
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+	selcol[ColFG] = getcolor(&amp;dc, selfgcolor);
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+	initfont(&amp;dc, font);
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+	/* input window */
+</a><a href="#h1-0-88" id="h1-0-88" class="i">+	wa.override_redirect = True;
+</a><a href="#h1-0-89" id="h1-0-89" class="i">+	wa.background_pixmap = ParentRelative;
+</a><a href="#h1-0-90" id="h1-0-90" class="i">+	wa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
+</a><a href="#h1-0-91" id="h1-0-91" class="i">+
+</a><a href="#h1-0-92" id="h1-0-92" class="i">+	/* input window geometry */
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+	mh = (dc.font.height + 2) * (lines + 1);
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+#if XINERAMA
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+	if(XineramaIsActive(dpy) &amp;&amp; (info = XineramaQueryScreens(dpy, &amp;n))) {
+</a><a href="#h1-0-96" id="h1-0-96" class="i">+		i = 0;
+</a><a href="#h1-0-97" id="h1-0-97" class="i">+		if(n &gt; 1) {
+</a><a href="#h1-0-98" id="h1-0-98" class="i">+			int di;
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+			unsigned int dui;
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+			Window dummy;
+</a><a href="#h1-0-101" id="h1-0-101" class="i">+			if(XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x, &amp;y, &amp;di, &amp;di, &amp;dui))
+</a><a href="#h1-0-102" id="h1-0-102" class="i">+				for(i = 0; i &lt; n; i++)
+</a><a href="#h1-0-103" id="h1-0-103" class="i">+					if(INRECT(x, y, info[i].x_org, info[i].y_org, info[i].width, info[i].height))
+</a><a href="#h1-0-104" id="h1-0-104" class="i">+						break;
+</a><a href="#h1-0-105" id="h1-0-105" class="i">+		}
+</a><a href="#h1-0-106" id="h1-0-106" class="i">+		x = info[i].x_org;
+</a><a href="#h1-0-107" id="h1-0-107" class="i">+		y = topbar ? info[i].y_org : info[i].y_org + info[i].height - mh;
+</a><a href="#h1-0-108" id="h1-0-108" class="i">+		mw = info[i].width;
+</a><a href="#h1-0-109" id="h1-0-109" class="i">+		XFree(info);
+</a><a href="#h1-0-110" id="h1-0-110" class="i">+	}
+</a><a href="#h1-0-111" id="h1-0-111" class="i">+	else
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+#endif
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+	{
+</a><a href="#h1-0-114" id="h1-0-114" class="i">+		x = 0;
+</a><a href="#h1-0-115" id="h1-0-115" class="i">+		y = topbar ? 0 : DisplayHeight(dpy, screen) - mh;
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+		mw = DisplayWidth(dpy, screen);
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+	}
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+	win = XCreateWindow(dpy, root, x, y, mw, mh, 0,
+</a><a href="#h1-0-120" id="h1-0-120" class="i">+			DefaultDepth(dpy, screen), CopyFromParent,
+</a><a href="#h1-0-121" id="h1-0-121" class="i">+			DefaultVisual(dpy, screen),
+</a><a href="#h1-0-122" id="h1-0-122" class="i">+			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+</a><a href="#h1-0-123" id="h1-0-123" class="i">+
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+	setupdraw(&amp;dc, win);
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+	if(prompt)
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+		promptw = MIN(textw(&amp;dc, prompt), mw / 5);
+</a><a href="#h1-0-127" id="h1-0-127" class="i">+	XMapRaised(dpy, win);
+</a><a href="#h1-0-128" id="h1-0-128" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,9 +1,8 @@
+</a> /* See LICENSE file for copyright and license details. */
+ 
+ /* appearance */
+<a href="#h2-0-3" id="h2-0-3" class="d">-const char *font        = &quot;-*-terminus-medium-r-normal-*-14-*-*-*-*-*-*-*&quot;;
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-const char *normbgcolor = &quot;#cccccc&quot;;
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-const char *normfgcolor = &quot;#000000&quot;;
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-const char *selbgcolor  = &quot;#0066ff&quot;;
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-const char *selfgcolor  = &quot;#ffffff&quot;;
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-unsigned int spaceitem  = 30; /* px between menu items */
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+static const char *font        = &quot;-*-terminus-medium-r-normal-*-14-*-*-*-*-*-*-*&quot;;
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+static const char *normbgcolor = &quot;#cccccc&quot;;
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+static const char *normfgcolor = &quot;#000000&quot;;
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+static const char *selbgcolor  = &quot;#0066ff&quot;;
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+static const char *selfgcolor  = &quot;#ffffff&quot;;
+</a><b>diff --git a/<a id="h3" href="../file/dinput.c.html">dinput.c</a> b/<a href="../file/dinput.c.html">dinput.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -4,45 +4,16 @@
+</a> #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+<a href="#h3-0-3" id="h3-0-3" class="d">-#include &lt;unistd.h&gt;
+</a> #include &lt;X11/keysym.h&gt;
+ #include &lt;X11/Xlib.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+<a href="#h3-0-7" id="h3-0-7" class="d">-#ifdef XINERAMA
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-#include &lt;X11/extensions/Xinerama.h&gt;
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-#endif
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-#include &lt;draw.h&gt;
+</a><a href="#h3-0-11" id="h3-0-11" class="d">-
+</a><a href="#h3-0-12" id="h3-0-12" class="d">-/* macros */
+</a><a href="#h3-0-13" id="h3-0-13" class="d">-#define INRECT(X,Y,RX,RY,RW,RH) ((X) &gt;= (RX) &amp;&amp; (X) &lt; (RX) + (RW) &amp;&amp; (Y) &gt;= (RY) &amp;&amp; (Y) &lt; (RY) + (RH))
+</a><a href="#h3-0-14" id="h3-0-14" class="d">-#define MIN(a, b)               ((a) &lt; (b) ? (a) : (b))
+</a><a href="#h3-0-15" id="h3-0-15" class="d">-#define MAX(a, b)               ((a) &gt; (b) ? (a) : (b))
+</a><a href="#h3-0-16" id="h3-0-16" class="d">-#define IS_UTF8_1ST_CHAR(c)     ((((c) &amp; 0xc0) == 0xc0) || !((c) &amp; 0x80))
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+#include &quot;dmenu.h&quot;
+</a> 
+ /* forward declarations */
+ static void cleanup(void);
+<a href="#h3-0-21" id="h3-0-21" class="d">-static void drawinput(void);
+</a><a href="#h3-0-22" id="h3-0-22" class="d">-static void grabkeyboard(void);
+</a><a href="#h3-0-23" id="h3-0-23" class="d">-static void kpress(XKeyEvent *e);
+</a><a href="#h3-0-24" id="h3-0-24" class="d">-static void run(void);
+</a><a href="#h3-0-25" id="h3-0-25" class="d">-static void setup(void);
+</a><a href="#h3-0-26" id="h3-0-26" class="d">-
+</a><a href="#h3-0-27" id="h3-0-27" class="d">-#include &quot;config.h&quot;
+</a> 
+ /* variables */
+<a href="#h3-0-30" id="h3-0-30" class="d">-static char *prompt = NULL;
+</a><a href="#h3-0-31" id="h3-0-31" class="d">-static char text[4096];
+</a><a href="#h3-0-32" id="h3-0-32" class="d">-static int promptw = 0;
+</a><a href="#h3-0-33" id="h3-0-33" class="d">-static int screen;
+</a> static size_t cursor = 0;
+<a href="#h3-0-35" id="h3-0-35" class="d">-static unsigned int numlockmask = 0;
+</a><a href="#h3-0-36" id="h3-0-36" class="d">-static unsigned int mw, mh;
+</a><a href="#h3-0-37" id="h3-0-37" class="d">-static unsigned long normcol[ColLast];
+</a><a href="#h3-0-38" id="h3-0-38" class="d">-static unsigned long selcol[ColLast];
+</a><a href="#h3-0-39" id="h3-0-39" class="d">-static Bool topbar = True;
+</a><a href="#h3-0-40" id="h3-0-40" class="d">-static DC dc;
+</a><a href="#h3-0-41" id="h3-0-41" class="d">-static Display *dpy;
+</a><a href="#h3-0-42" id="h3-0-42" class="d">-static Window win, root;
+</a> 
+ void
+ cleanup(void) {
+<a href="#h3-1" id="h3-1" class="h">@@ -53,7 +24,7 @@ cleanup(void) {
+</a> }
+ 
+ void
+<a href="#h3-1-3" id="h3-1-3" class="d">-drawinput(void)
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+drawbar(void)
+</a> {
+ 	dc.x = 0;
+ 	dc.y = 0;
+<a href="#h3-2" id="h3-2" class="h">@@ -73,19 +44,6 @@ drawinput(void)
+</a> }
+ 
+ void
+<a href="#h3-2-3" id="h3-2-3" class="d">-grabkeyboard(void) {
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-	unsigned int len;
+</a><a href="#h3-2-5" id="h3-2-5" class="d">-
+</a><a href="#h3-2-6" id="h3-2-6" class="d">-	for(len = 1000; len; len--) {
+</a><a href="#h3-2-7" id="h3-2-7" class="d">-		if(XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+</a><a href="#h3-2-8" id="h3-2-8" class="d">-		== GrabSuccess)
+</a><a href="#h3-2-9" id="h3-2-9" class="d">-			return;
+</a><a href="#h3-2-10" id="h3-2-10" class="d">-		usleep(1000);
+</a><a href="#h3-2-11" id="h3-2-11" class="d">-	}
+</a><a href="#h3-2-12" id="h3-2-12" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h3-2-13" id="h3-2-13" class="d">-}
+</a><a href="#h3-2-14" id="h3-2-14" class="d">-
+</a><a href="#h3-2-15" id="h3-2-15" class="d">-void
+</a> kpress(XKeyEvent *e) {
+ 	char buf[sizeof text];
+ 	int num;
+<a href="#h3-3" id="h3-3" class="h">@@ -207,101 +165,7 @@ kpress(XKeyEvent *e) {
+</a> 		while(cursor++ &lt; len &amp;&amp; !IS_UTF8_1ST_CHAR(text[cursor]));
+ 		break;
+ 	}
+<a href="#h3-3-3" id="h3-3-3" class="d">-	drawinput();
+</a><a href="#h3-3-4" id="h3-3-4" class="d">-}
+</a><a href="#h3-3-5" id="h3-3-5" class="d">-
+</a><a href="#h3-3-6" id="h3-3-6" class="d">-void
+</a><a href="#h3-3-7" id="h3-3-7" class="d">-run(void) {
+</a><a href="#h3-3-8" id="h3-3-8" class="d">-	XEvent ev;
+</a><a href="#h3-3-9" id="h3-3-9" class="d">-
+</a><a href="#h3-3-10" id="h3-3-10" class="d">-	/* main event loop */
+</a><a href="#h3-3-11" id="h3-3-11" class="d">-	XSync(dpy, False);
+</a><a href="#h3-3-12" id="h3-3-12" class="d">-	while(!XNextEvent(dpy, &amp;ev))
+</a><a href="#h3-3-13" id="h3-3-13" class="d">-		switch(ev.type) {
+</a><a href="#h3-3-14" id="h3-3-14" class="d">-		case KeyPress:
+</a><a href="#h3-3-15" id="h3-3-15" class="d">-			kpress(&amp;ev.xkey);
+</a><a href="#h3-3-16" id="h3-3-16" class="d">-			break;
+</a><a href="#h3-3-17" id="h3-3-17" class="d">-		case Expose:
+</a><a href="#h3-3-18" id="h3-3-18" class="d">-			if(ev.xexpose.count == 0)
+</a><a href="#h3-3-19" id="h3-3-19" class="d">-				drawinput();
+</a><a href="#h3-3-20" id="h3-3-20" class="d">-			break;
+</a><a href="#h3-3-21" id="h3-3-21" class="d">-		case VisibilityNotify:
+</a><a href="#h3-3-22" id="h3-3-22" class="d">-			if(ev.xvisibility.state != VisibilityUnobscured)
+</a><a href="#h3-3-23" id="h3-3-23" class="d">-				XRaiseWindow(dpy, win);
+</a><a href="#h3-3-24" id="h3-3-24" class="d">-			break;
+</a><a href="#h3-3-25" id="h3-3-25" class="d">-		}
+</a><a href="#h3-3-26" id="h3-3-26" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h3-3-27" id="h3-3-27" class="d">-}
+</a><a href="#h3-3-28" id="h3-3-28" class="d">-
+</a><a href="#h3-3-29" id="h3-3-29" class="d">-void
+</a><a href="#h3-3-30" id="h3-3-30" class="d">-setup(void) {
+</a><a href="#h3-3-31" id="h3-3-31" class="d">-	int i, j, x, y;
+</a><a href="#h3-3-32" id="h3-3-32" class="d">-#if XINERAMA
+</a><a href="#h3-3-33" id="h3-3-33" class="d">-	int n;
+</a><a href="#h3-3-34" id="h3-3-34" class="d">-	XineramaScreenInfo *info = NULL;
+</a><a href="#h3-3-35" id="h3-3-35" class="d">-#endif
+</a><a href="#h3-3-36" id="h3-3-36" class="d">-	XModifierKeymap *modmap;
+</a><a href="#h3-3-37" id="h3-3-37" class="d">-	XSetWindowAttributes wa;
+</a><a href="#h3-3-38" id="h3-3-38" class="d">-
+</a><a href="#h3-3-39" id="h3-3-39" class="d">-	/* init modifier map */
+</a><a href="#h3-3-40" id="h3-3-40" class="d">-	modmap = XGetModifierMapping(dpy);
+</a><a href="#h3-3-41" id="h3-3-41" class="d">-	for(i = 0; i &lt; 8; i++)
+</a><a href="#h3-3-42" id="h3-3-42" class="d">-		for(j = 0; j &lt; modmap-&gt;max_keypermod; j++) {
+</a><a href="#h3-3-43" id="h3-3-43" class="d">-			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j]
+</a><a href="#h3-3-44" id="h3-3-44" class="d">-			== XKeysymToKeycode(dpy, XK_Num_Lock))
+</a><a href="#h3-3-45" id="h3-3-45" class="d">-				numlockmask = (1 &lt;&lt; i);
+</a><a href="#h3-3-46" id="h3-3-46" class="d">-		}
+</a><a href="#h3-3-47" id="h3-3-47" class="d">-	XFreeModifiermap(modmap);
+</a><a href="#h3-3-48" id="h3-3-48" class="d">-
+</a><a href="#h3-3-49" id="h3-3-49" class="d">-	dc.dpy = dpy;
+</a><a href="#h3-3-50" id="h3-3-50" class="d">-	normcol[ColBG] = getcolor(&amp;dc, normbgcolor);
+</a><a href="#h3-3-51" id="h3-3-51" class="d">-	normcol[ColFG] = getcolor(&amp;dc, normfgcolor);
+</a><a href="#h3-3-52" id="h3-3-52" class="d">-	selcol[ColBG] = getcolor(&amp;dc, selbgcolor);
+</a><a href="#h3-3-53" id="h3-3-53" class="d">-	selcol[ColFG] = getcolor(&amp;dc, selfgcolor);
+</a><a href="#h3-3-54" id="h3-3-54" class="d">-	initfont(&amp;dc, font);
+</a><a href="#h3-3-55" id="h3-3-55" class="d">-
+</a><a href="#h3-3-56" id="h3-3-56" class="d">-	/* input window */
+</a><a href="#h3-3-57" id="h3-3-57" class="d">-	wa.override_redirect = True;
+</a><a href="#h3-3-58" id="h3-3-58" class="d">-	wa.background_pixmap = ParentRelative;
+</a><a href="#h3-3-59" id="h3-3-59" class="d">-	wa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
+</a><a href="#h3-3-60" id="h3-3-60" class="d">-
+</a><a href="#h3-3-61" id="h3-3-61" class="d">-	/* input window geometry */
+</a><a href="#h3-3-62" id="h3-3-62" class="d">-	mh = dc.font.height + 2;
+</a><a href="#h3-3-63" id="h3-3-63" class="d">-#if XINERAMA
+</a><a href="#h3-3-64" id="h3-3-64" class="d">-	if(XineramaIsActive(dpy) &amp;&amp; (info = XineramaQueryScreens(dpy, &amp;n))) {
+</a><a href="#h3-3-65" id="h3-3-65" class="d">-		i = 0;
+</a><a href="#h3-3-66" id="h3-3-66" class="d">-		if(n &gt; 1) {
+</a><a href="#h3-3-67" id="h3-3-67" class="d">-			int di;
+</a><a href="#h3-3-68" id="h3-3-68" class="d">-			unsigned int dui;
+</a><a href="#h3-3-69" id="h3-3-69" class="d">-			Window dummy;
+</a><a href="#h3-3-70" id="h3-3-70" class="d">-			if(XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x, &amp;y, &amp;di, &amp;di, &amp;dui))
+</a><a href="#h3-3-71" id="h3-3-71" class="d">-				for(i = 0; i &lt; n; i++)
+</a><a href="#h3-3-72" id="h3-3-72" class="d">-					if(INRECT(x, y, info[i].x_org, info[i].y_org, info[i].width, info[i].height))
+</a><a href="#h3-3-73" id="h3-3-73" class="d">-						break;
+</a><a href="#h3-3-74" id="h3-3-74" class="d">-		}
+</a><a href="#h3-3-75" id="h3-3-75" class="d">-		x = info[i].x_org;
+</a><a href="#h3-3-76" id="h3-3-76" class="d">-		y = topbar ? info[i].y_org : info[i].y_org + info[i].height - mh;
+</a><a href="#h3-3-77" id="h3-3-77" class="d">-		mw = info[i].width;
+</a><a href="#h3-3-78" id="h3-3-78" class="d">-		XFree(info);
+</a><a href="#h3-3-79" id="h3-3-79" class="d">-	}
+</a><a href="#h3-3-80" id="h3-3-80" class="d">-	else
+</a><a href="#h3-3-81" id="h3-3-81" class="d">-#endif
+</a><a href="#h3-3-82" id="h3-3-82" class="d">-	{
+</a><a href="#h3-3-83" id="h3-3-83" class="d">-		x = 0;
+</a><a href="#h3-3-84" id="h3-3-84" class="d">-		y = topbar ? 0 : DisplayHeight(dpy, screen) - mh;
+</a><a href="#h3-3-85" id="h3-3-85" class="d">-		mw = DisplayWidth(dpy, screen);
+</a><a href="#h3-3-86" id="h3-3-86" class="d">-	}
+</a><a href="#h3-3-87" id="h3-3-87" class="d">-
+</a><a href="#h3-3-88" id="h3-3-88" class="d">-	win = XCreateWindow(dpy, root, x, y, mw, mh, 0,
+</a><a href="#h3-3-89" id="h3-3-89" class="d">-			DefaultDepth(dpy, screen), CopyFromParent,
+</a><a href="#h3-3-90" id="h3-3-90" class="d">-			DefaultVisual(dpy, screen),
+</a><a href="#h3-3-91" id="h3-3-91" class="d">-			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+</a><a href="#h3-3-92" id="h3-3-92" class="d">-
+</a><a href="#h3-3-93" id="h3-3-93" class="d">-	setupdraw(&amp;dc, win);
+</a><a href="#h3-3-94" id="h3-3-94" class="d">-	if(prompt)
+</a><a href="#h3-3-95" id="h3-3-95" class="d">-		promptw = MIN(textw(&amp;dc, prompt), mw / 5);
+</a><a href="#h3-3-96" id="h3-3-96" class="d">-	cursor = strlen(text);
+</a><a href="#h3-3-97" id="h3-3-97" class="d">-	XMapRaised(dpy, win);
+</a><a href="#h3-3-98" id="h3-3-98" class="i">+	drawbar();
+</a> }
+ 
+ int
+<a href="#h3-4" id="h3-4" class="h">@@ -336,11 +200,13 @@ main(int argc, char *argv[]) {
+</a> 			if(++i &lt; argc) selfgcolor = argv[i];
+ 		}
+ 		else if(!strcmp(argv[i], &quot;-v&quot;)) {
+<a href="#h3-4-3" id="h3-4-3" class="d">-			printf(&quot;dinput-&quot;VERSION&quot;, © 2006-2010 dinput engineers, see LICENSE for details\n&quot;);
+</a><a href="#h3-4-4" id="h3-4-4" class="i">+			printf(&quot;dinput-&quot;VERSION&quot;, © 2006-2010 dmenu engineers, see LICENSE for details\n&quot;);
+</a> 			exit(EXIT_SUCCESS);
+ 		}
+<a href="#h3-4-7" id="h3-4-7" class="d">-		else if(!*text)
+</a><a href="#h3-4-8" id="h3-4-8" class="i">+		else if(!*text) {
+</a> 			strncpy(text, argv[i], sizeof text);
+<a href="#h3-4-10" id="h3-4-10" class="i">+			cursor = strlen(text);
+</a><a href="#h3-4-11" id="h3-4-11" class="i">+		}
+</a> 		else {
+ 			fputs(&quot;usage: dinput [-b] [-fn &lt;font&gt;] [-nb &lt;color&gt;] [-nf &lt;color&gt;]\n&quot;
+ 			      &quot;              [-p &lt;prompt&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-v] [&lt;text&gt;]\n&quot;, stderr);
+<a href="#h3-5" id="h3-5" class="h">@@ -356,7 +222,7 @@ main(int argc, char *argv[]) {
+</a> 	root = RootWindow(dpy, screen);
+ 
+ 	grabkeyboard();
+<a href="#h3-5-3" id="h3-5-3" class="d">-	setup();
+</a><a href="#h3-5-4" id="h3-5-4" class="i">+	setup(0);
+</a> 	run();
+ 	return 0;
+ }
+<b>diff --git a/<a id="h4" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -8,16 +8,7 @@
+</a> #include &lt;X11/keysym.h&gt;
+ #include &lt;X11/Xlib.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+<a href="#h4-0-3" id="h4-0-3" class="d">-#ifdef XINERAMA
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-#include &lt;X11/extensions/Xinerama.h&gt;
+</a><a href="#h4-0-5" id="h4-0-5" class="d">-#endif
+</a><a href="#h4-0-6" id="h4-0-6" class="d">-#include &lt;draw.h&gt;
+</a><a href="#h4-0-7" id="h4-0-7" class="d">-
+</a><a href="#h4-0-8" id="h4-0-8" class="d">-/* macros */
+</a><a href="#h4-0-9" id="h4-0-9" class="d">-#define INRECT(X,Y,RX,RY,RW,RH) ((X) &gt;= (RX) &amp;&amp; (X) &lt; (RX) + (RW) &amp;&amp; (Y) &gt;= (RY) &amp;&amp; (Y) &lt; (RY) + (RH))
+</a><a href="#h4-0-10" id="h4-0-10" class="d">-#define MIN(a, b)               ((a) &lt; (b) ? (a) : (b))
+</a><a href="#h4-0-11" id="h4-0-11" class="d">-#define MAX(a, b)               ((a) &gt; (b) ? (a) : (b))
+</a><a href="#h4-0-12" id="h4-0-12" class="d">-#define IS_UTF8_1ST_CHAR(c)     ((((c) &amp; 0xc0) == 0xc0) || !((c) &amp; 0x80))
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+#include &quot;dmenu.h&quot;
+</a> 
+ typedef struct Item Item;
+ struct Item {
+<a href="#h4-1" id="h4-1" class="h">@@ -33,41 +24,22 @@ static void calcoffsetsv(void);
+</a> static char *cistrstr(const char *s, const char *sub);
+ static void cleanup(void);
+ static void dinput(void);
+<a href="#h4-1-3" id="h4-1-3" class="d">-static void drawmenu(void);
+</a> static void drawmenuh(void);
+ static void drawmenuv(void);
+<a href="#h4-1-6" id="h4-1-6" class="d">-static void grabkeyboard(void);
+</a><a href="#h4-1-7" id="h4-1-7" class="d">-static void kpress(XKeyEvent *e);
+</a><a href="#h4-1-8" id="h4-1-8" class="d">-static void match(char *pattern);
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+static void match(void);
+</a> static void readstdin(void);
+<a href="#h4-1-11" id="h4-1-11" class="d">-static void run(void);
+</a><a href="#h4-1-12" id="h4-1-12" class="d">-static void setup(void);
+</a><a href="#h4-1-13" id="h4-1-13" class="d">-
+</a><a href="#h4-1-14" id="h4-1-14" class="d">-#include &quot;config.h&quot;
+</a> 
+ /* variables */
+ static char **argp = NULL;
+ static char *maxname = NULL;
+<a href="#h4-1-19" id="h4-1-19" class="d">-static char *prompt = NULL;
+</a><a href="#h4-1-20" id="h4-1-20" class="d">-static char text[4096];
+</a><a href="#h4-1-21" id="h4-1-21" class="d">-static int cmdw = 0;
+</a><a href="#h4-1-22" id="h4-1-22" class="d">-static int promptw = 0;
+</a><a href="#h4-1-23" id="h4-1-23" class="d">-static int screen;
+</a><a href="#h4-1-24" id="h4-1-24" class="i">+static unsigned int cmdw = 0;
+</a> static unsigned int lines = 0;
+<a href="#h4-1-26" id="h4-1-26" class="d">-static unsigned int numlockmask = 0;
+</a><a href="#h4-1-27" id="h4-1-27" class="d">-static unsigned int mw, mh;
+</a><a href="#h4-1-28" id="h4-1-28" class="d">-static unsigned long normcol[ColLast];
+</a><a href="#h4-1-29" id="h4-1-29" class="d">-static unsigned long selcol[ColLast];
+</a><a href="#h4-1-30" id="h4-1-30" class="d">-static Bool topbar = True;
+</a><a href="#h4-1-31" id="h4-1-31" class="d">-static DC dc;
+</a><a href="#h4-1-32" id="h4-1-32" class="d">-static Display *dpy;
+</a> static Item *allitems = NULL;  /* first of all items */
+ static Item *item = NULL;      /* first of pattern matching items */
+ static Item *sel = NULL;
+ static Item *next = NULL;
+ static Item *prev = NULL;
+ static Item *curr = NULL;
+<a href="#h4-1-39" id="h4-1-39" class="d">-static Window win, root;
+</a> static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
+ static char *(*fstrstr)(const char *, const char *) = strstr;
+ static void (*calcoffsets)(void) = calcoffsetsh;
+<a href="#h4-2" id="h4-2" class="h">@@ -85,14 +57,13 @@ appenditem(Item *i, Item **list, Item **last) {
+</a> 
+ void
+ calcoffsetsh(void) {
+<a href="#h4-2-3" id="h4-2-3" class="d">-	unsigned int x;
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+	unsigned int w, x;
+</a> 
+<a href="#h4-2-6" id="h4-2-6" class="d">-	x = promptw + cmdw + (2 * spaceitem);
+</a><a href="#h4-2-7" id="h4-2-7" class="d">-	for(next = curr; next; next = next-&gt;right)
+</a><a href="#h4-2-8" id="h4-2-8" class="i">+	w = promptw + cmdw + textw(&amp;dc, &quot;&lt;&quot;) + textw(&amp;dc, &quot;&gt;&quot;);
+</a><a href="#h4-2-9" id="h4-2-9" class="i">+	for(x = w, next = curr; next; next = next-&gt;right)
+</a> 		if((x += MIN(textw(&amp;dc, next-&gt;text), mw / 3)) &gt; mw)
+ 			break;
+<a href="#h4-2-12" id="h4-2-12" class="d">-	x = promptw + cmdw + (2 * spaceitem);
+</a><a href="#h4-2-13" id="h4-2-13" class="d">-	for(prev = curr; prev &amp;&amp; prev-&gt;left; prev = prev-&gt;left)
+</a><a href="#h4-2-14" id="h4-2-14" class="i">+	for(x = w, prev = curr; prev &amp;&amp; prev-&gt;left; prev = prev-&gt;left)
+</a> 		if((x += MIN(textw(&amp;dc, prev-&gt;left-&gt;text), mw / 3)) &gt; mw)
+ 			break;
+ }
+<a href="#h4-3" id="h4-3" class="h">@@ -157,7 +128,7 @@ dinput(void) {
+</a> }
+ 
+ void
+<a href="#h4-3-3" id="h4-3-3" class="d">-drawmenu(void) {
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+drawbar(void) {
+</a> 	dc.x = 0;
+ 	dc.y = 0;
+ 	dc.w = mw;
+<a href="#h4-4" id="h4-4" class="h">@@ -188,7 +159,7 @@ drawmenuh(void) {
+</a> 	Item *i;
+ 
+ 	dc.x += cmdw;
+<a href="#h4-4-3" id="h4-4-3" class="d">-	dc.w = spaceitem;
+</a><a href="#h4-4-4" id="h4-4-4" class="i">+	dc.w = textw(&amp;dc, &quot;&lt;&quot;);
+</a> 	drawtext(&amp;dc, curr-&gt;left ? &quot;&lt;&quot; : NULL, normcol);
+ 	dc.x += dc.w;
+ 	for(i = curr; i != next; i = i-&gt;right) {
+<a href="#h4-5" id="h4-5" class="h">@@ -196,7 +167,7 @@ drawmenuh(void) {
+</a> 		drawtext(&amp;dc, i-&gt;text, (sel == i) ? selcol : normcol);
+ 		dc.x += dc.w;
+ 	}
+<a href="#h4-5-3" id="h4-5-3" class="d">-	dc.w = spaceitem;
+</a><a href="#h4-5-4" id="h4-5-4" class="i">+	dc.w = textw(&amp;dc, &quot;&gt;&quot;);
+</a> 	dc.x = mw - dc.w;
+ 	drawtext(&amp;dc, next ? &quot;&gt;&quot; : NULL, normcol);
+ }
+<a href="#h4-6" id="h4-6" class="h">@@ -218,19 +189,6 @@ drawmenuv(void) {
+</a> }
+ 
+ void
+<a href="#h4-6-3" id="h4-6-3" class="d">-grabkeyboard(void) {
+</a><a href="#h4-6-4" id="h4-6-4" class="d">-	unsigned int len;
+</a><a href="#h4-6-5" id="h4-6-5" class="d">-
+</a><a href="#h4-6-6" id="h4-6-6" class="d">-	for(len = 1000; len; len--) {
+</a><a href="#h4-6-7" id="h4-6-7" class="d">-		if(XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+</a><a href="#h4-6-8" id="h4-6-8" class="d">-		== GrabSuccess)
+</a><a href="#h4-6-9" id="h4-6-9" class="d">-			return;
+</a><a href="#h4-6-10" id="h4-6-10" class="d">-		usleep(1000);
+</a><a href="#h4-6-11" id="h4-6-11" class="d">-	}
+</a><a href="#h4-6-12" id="h4-6-12" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h4-6-13" id="h4-6-13" class="d">-}
+</a><a href="#h4-6-14" id="h4-6-14" class="d">-
+</a><a href="#h4-6-15" id="h4-6-15" class="d">-void
+</a> kpress(XKeyEvent *e) {
+ 	char buf[sizeof text];
+ 	int num;
+<a href="#h4-7" id="h4-7" class="h">@@ -285,7 +243,7 @@ kpress(XKeyEvent *e) {
+</a> 			break;
+ 		case XK_u:
+ 			text[0] = &#39;\0&#39;;
+<a href="#h4-7-3" id="h4-7-3" class="d">-			match(text);
+</a><a href="#h4-7-4" id="h4-7-4" class="i">+			match();
+</a> 			break;
+ 		case XK_w:
+ 			if(len == 0)
+<a href="#h4-8" id="h4-8" class="h">@@ -294,7 +252,7 @@ kpress(XKeyEvent *e) {
+</a> 			while(i-- &gt; 0 &amp;&amp; text[i] == &#39; &#39;);
+ 			while(i-- &gt; 0 &amp;&amp; text[i] != &#39; &#39;);
+ 			text[++i] = &#39;\0&#39;;
+<a href="#h4-8-3" id="h4-8-3" class="d">-			match(text);
+</a><a href="#h4-8-4" id="h4-8-4" class="i">+			match();
+</a> 			break;
+ 		}
+ 	}
+<a href="#h4-9" id="h4-9" class="h">@@ -304,7 +262,7 @@ kpress(XKeyEvent *e) {
+</a> 		if(num &amp;&amp; !iscntrl((int) buf[0])) {
+ 			memcpy(text + len, buf, num + 1);
+ 			len += num;
+<a href="#h4-9-3" id="h4-9-3" class="d">-			match(text);
+</a><a href="#h4-9-4" id="h4-9-4" class="i">+			match();
+</a> 		}
+ 		break;
+ 	case XK_BackSpace:
+<a href="#h4-10" id="h4-10" class="h">@@ -313,7 +271,7 @@ kpress(XKeyEvent *e) {
+</a> 		for(i = 1; len - i &gt; 0 &amp;&amp; !IS_UTF8_1ST_CHAR(text[len - i]); i++);
+ 		len -= i;
+ 		text[len] = &#39;\0&#39;;
+<a href="#h4-10-3" id="h4-10-3" class="d">-		match(text);
+</a><a href="#h4-10-4" id="h4-10-4" class="i">+		match();
+</a> 		break;
+ 	case XK_End:
+ 		while(next) {
+<a href="#h4-11" id="h4-11" class="h">@@ -373,24 +331,22 @@ kpress(XKeyEvent *e) {
+</a> 		dinput();
+ 		break;
+ 	}
+<a href="#h4-11-3" id="h4-11-3" class="d">-	drawmenu();
+</a><a href="#h4-11-4" id="h4-11-4" class="i">+	drawbar();
+</a> }
+ 
+ void
+<a href="#h4-11-8" id="h4-11-8" class="d">-match(char *pattern) {
+</a><a href="#h4-11-9" id="h4-11-9" class="d">-	unsigned int plen;
+</a><a href="#h4-11-10" id="h4-11-10" class="i">+match(void) {
+</a><a href="#h4-11-11" id="h4-11-11" class="i">+	unsigned int len;
+</a> 	Item *i, *itemend, *lexact, *lprefix, *lsubstr, *exactend, *prefixend, *substrend;
+ 
+<a href="#h4-11-14" id="h4-11-14" class="d">-	if(!pattern)
+</a><a href="#h4-11-15" id="h4-11-15" class="d">-		return;
+</a><a href="#h4-11-16" id="h4-11-16" class="d">-	plen = strlen(pattern);
+</a><a href="#h4-11-17" id="h4-11-17" class="i">+	len = strlen(text);
+</a> 	item = lexact = lprefix = lsubstr = itemend = exactend = prefixend = substrend = NULL;
+ 	for(i = allitems; i; i = i-&gt;next)
+<a href="#h4-11-20" id="h4-11-20" class="d">-		if(!fstrncmp(pattern, i-&gt;text, plen + 1))
+</a><a href="#h4-11-21" id="h4-11-21" class="i">+		if(!fstrncmp(text, i-&gt;text, len + 1))
+</a> 			appenditem(i, &amp;lexact, &amp;exactend);
+<a href="#h4-11-23" id="h4-11-23" class="d">-		else if(!fstrncmp(pattern, i-&gt;text, plen))
+</a><a href="#h4-11-24" id="h4-11-24" class="i">+		else if(!fstrncmp(text, i-&gt;text, len))
+</a> 			appenditem(i, &amp;lprefix, &amp;prefixend);
+<a href="#h4-11-26" id="h4-11-26" class="d">-		else if(fstrstr(i-&gt;text, pattern))
+</a><a href="#h4-11-27" id="h4-11-27" class="i">+		else if(fstrstr(i-&gt;text, text))
+</a> 			appenditem(i, &amp;lsubstr, &amp;substrend);
+ 	if(lexact) {
+ 		item = lexact;
+<a href="#h4-12" id="h4-12" class="h">@@ -444,103 +400,6 @@ readstdin(void) {
+</a> 	}
+ }
+ 
+<a href="#h4-12-3" id="h4-12-3" class="d">-void
+</a><a href="#h4-12-4" id="h4-12-4" class="d">-run(void) {
+</a><a href="#h4-12-5" id="h4-12-5" class="d">-	XEvent ev;
+</a><a href="#h4-12-6" id="h4-12-6" class="d">-
+</a><a href="#h4-12-7" id="h4-12-7" class="d">-	/* main event loop */
+</a><a href="#h4-12-8" id="h4-12-8" class="d">-	XSync(dpy, False);
+</a><a href="#h4-12-9" id="h4-12-9" class="d">-	while(!XNextEvent(dpy, &amp;ev))
+</a><a href="#h4-12-10" id="h4-12-10" class="d">-		switch(ev.type) {
+</a><a href="#h4-12-11" id="h4-12-11" class="d">-		case KeyPress:
+</a><a href="#h4-12-12" id="h4-12-12" class="d">-			kpress(&amp;ev.xkey);
+</a><a href="#h4-12-13" id="h4-12-13" class="d">-			break;
+</a><a href="#h4-12-14" id="h4-12-14" class="d">-		case Expose:
+</a><a href="#h4-12-15" id="h4-12-15" class="d">-			if(ev.xexpose.count == 0)
+</a><a href="#h4-12-16" id="h4-12-16" class="d">-				drawmenu();
+</a><a href="#h4-12-17" id="h4-12-17" class="d">-			break;
+</a><a href="#h4-12-18" id="h4-12-18" class="d">-		case VisibilityNotify:
+</a><a href="#h4-12-19" id="h4-12-19" class="d">-			if(ev.xvisibility.state != VisibilityUnobscured)
+</a><a href="#h4-12-20" id="h4-12-20" class="d">-				XRaiseWindow(dpy, win);
+</a><a href="#h4-12-21" id="h4-12-21" class="d">-			break;
+</a><a href="#h4-12-22" id="h4-12-22" class="d">-		}
+</a><a href="#h4-12-23" id="h4-12-23" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h4-12-24" id="h4-12-24" class="d">-}
+</a><a href="#h4-12-25" id="h4-12-25" class="d">-
+</a><a href="#h4-12-26" id="h4-12-26" class="d">-void
+</a><a href="#h4-12-27" id="h4-12-27" class="d">-setup(void) {
+</a><a href="#h4-12-28" id="h4-12-28" class="d">-	int i, j, x, y;
+</a><a href="#h4-12-29" id="h4-12-29" class="d">-#if XINERAMA
+</a><a href="#h4-12-30" id="h4-12-30" class="d">-	int n;
+</a><a href="#h4-12-31" id="h4-12-31" class="d">-	XineramaScreenInfo *info = NULL;
+</a><a href="#h4-12-32" id="h4-12-32" class="d">-#endif
+</a><a href="#h4-12-33" id="h4-12-33" class="d">-	XModifierKeymap *modmap;
+</a><a href="#h4-12-34" id="h4-12-34" class="d">-	XSetWindowAttributes wa;
+</a><a href="#h4-12-35" id="h4-12-35" class="d">-
+</a><a href="#h4-12-36" id="h4-12-36" class="d">-	/* init modifier map */
+</a><a href="#h4-12-37" id="h4-12-37" class="d">-	modmap = XGetModifierMapping(dpy);
+</a><a href="#h4-12-38" id="h4-12-38" class="d">-	for(i = 0; i &lt; 8; i++)
+</a><a href="#h4-12-39" id="h4-12-39" class="d">-		for(j = 0; j &lt; modmap-&gt;max_keypermod; j++) {
+</a><a href="#h4-12-40" id="h4-12-40" class="d">-			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j]
+</a><a href="#h4-12-41" id="h4-12-41" class="d">-			== XKeysymToKeycode(dpy, XK_Num_Lock))
+</a><a href="#h4-12-42" id="h4-12-42" class="d">-				numlockmask = (1 &lt;&lt; i);
+</a><a href="#h4-12-43" id="h4-12-43" class="d">-		}
+</a><a href="#h4-12-44" id="h4-12-44" class="d">-	XFreeModifiermap(modmap);
+</a><a href="#h4-12-45" id="h4-12-45" class="d">-
+</a><a href="#h4-12-46" id="h4-12-46" class="d">-	dc.dpy = dpy;
+</a><a href="#h4-12-47" id="h4-12-47" class="d">-	normcol[ColBG] = getcolor(&amp;dc, normbgcolor);
+</a><a href="#h4-12-48" id="h4-12-48" class="d">-	normcol[ColFG] = getcolor(&amp;dc, normfgcolor);
+</a><a href="#h4-12-49" id="h4-12-49" class="d">-	selcol[ColBG] = getcolor(&amp;dc, selbgcolor);
+</a><a href="#h4-12-50" id="h4-12-50" class="d">-	selcol[ColFG] = getcolor(&amp;dc, selfgcolor);
+</a><a href="#h4-12-51" id="h4-12-51" class="d">-	initfont(&amp;dc, font);
+</a><a href="#h4-12-52" id="h4-12-52" class="d">-
+</a><a href="#h4-12-53" id="h4-12-53" class="d">-	/* menu window */
+</a><a href="#h4-12-54" id="h4-12-54" class="d">-	wa.override_redirect = True;
+</a><a href="#h4-12-55" id="h4-12-55" class="d">-	wa.background_pixmap = ParentRelative;
+</a><a href="#h4-12-56" id="h4-12-56" class="d">-	wa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
+</a><a href="#h4-12-57" id="h4-12-57" class="d">-
+</a><a href="#h4-12-58" id="h4-12-58" class="d">-	/* menu window geometry */
+</a><a href="#h4-12-59" id="h4-12-59" class="d">-	mh = (dc.font.height + 2) * (lines + 1);
+</a><a href="#h4-12-60" id="h4-12-60" class="d">-#if XINERAMA
+</a><a href="#h4-12-61" id="h4-12-61" class="d">-	if(XineramaIsActive(dpy) &amp;&amp; (info = XineramaQueryScreens(dpy, &amp;n))) {
+</a><a href="#h4-12-62" id="h4-12-62" class="d">-		i = 0;
+</a><a href="#h4-12-63" id="h4-12-63" class="d">-		if(n &gt; 1) {
+</a><a href="#h4-12-64" id="h4-12-64" class="d">-			int di;
+</a><a href="#h4-12-65" id="h4-12-65" class="d">-			unsigned int dui;
+</a><a href="#h4-12-66" id="h4-12-66" class="d">-			Window dummy;
+</a><a href="#h4-12-67" id="h4-12-67" class="d">-			if(XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x, &amp;y, &amp;di, &amp;di, &amp;dui))
+</a><a href="#h4-12-68" id="h4-12-68" class="d">-				for(i = 0; i &lt; n; i++)
+</a><a href="#h4-12-69" id="h4-12-69" class="d">-					if(INRECT(x, y, info[i].x_org, info[i].y_org, info[i].width, info[i].height))
+</a><a href="#h4-12-70" id="h4-12-70" class="d">-						break;
+</a><a href="#h4-12-71" id="h4-12-71" class="d">-		}
+</a><a href="#h4-12-72" id="h4-12-72" class="d">-		x = info[i].x_org;
+</a><a href="#h4-12-73" id="h4-12-73" class="d">-		y = topbar ? info[i].y_org : info[i].y_org + info[i].height - mh;
+</a><a href="#h4-12-74" id="h4-12-74" class="d">-		mw = info[i].width;
+</a><a href="#h4-12-75" id="h4-12-75" class="d">-		XFree(info);
+</a><a href="#h4-12-76" id="h4-12-76" class="d">-	}
+</a><a href="#h4-12-77" id="h4-12-77" class="d">-	else
+</a><a href="#h4-12-78" id="h4-12-78" class="d">-#endif
+</a><a href="#h4-12-79" id="h4-12-79" class="d">-	{
+</a><a href="#h4-12-80" id="h4-12-80" class="d">-		x = 0;
+</a><a href="#h4-12-81" id="h4-12-81" class="d">-		y = topbar ? 0 : mh - DisplayHeight(dpy, screen);
+</a><a href="#h4-12-82" id="h4-12-82" class="d">-		mw = DisplayWidth(dpy, screen);
+</a><a href="#h4-12-83" id="h4-12-83" class="d">-	}
+</a><a href="#h4-12-84" id="h4-12-84" class="d">-
+</a><a href="#h4-12-85" id="h4-12-85" class="d">-	win = XCreateWindow(dpy, root, x, y, mw, mh, 0,
+</a><a href="#h4-12-86" id="h4-12-86" class="d">-			DefaultDepth(dpy, screen), CopyFromParent,
+</a><a href="#h4-12-87" id="h4-12-87" class="d">-			DefaultVisual(dpy, screen),
+</a><a href="#h4-12-88" id="h4-12-88" class="d">-			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+</a><a href="#h4-12-89" id="h4-12-89" class="d">-
+</a><a href="#h4-12-90" id="h4-12-90" class="d">-	setupdraw(&amp;dc, win);
+</a><a href="#h4-12-91" id="h4-12-91" class="d">-	if(maxname)
+</a><a href="#h4-12-92" id="h4-12-92" class="d">-		cmdw = MIN(textw(&amp;dc, maxname), mw / 3);
+</a><a href="#h4-12-93" id="h4-12-93" class="d">-	if(prompt)
+</a><a href="#h4-12-94" id="h4-12-94" class="d">-		promptw = MIN(textw(&amp;dc, prompt), mw / 5);
+</a><a href="#h4-12-95" id="h4-12-95" class="d">-	text[0] = &#39;\0&#39;;
+</a><a href="#h4-12-96" id="h4-12-96" class="d">-	match(text);
+</a><a href="#h4-12-97" id="h4-12-97" class="d">-	XMapRaised(dpy, win);
+</a><a href="#h4-12-98" id="h4-12-98" class="d">-}
+</a><a href="#h4-12-99" id="h4-12-99" class="d">-
+</a> int
+ main(int argc, char *argv[]) {
+ 	unsigned int i;
+<a href="#h4-13" id="h4-13" class="h">@@ -600,7 +459,10 @@ main(int argc, char *argv[]) {
+</a> 
+ 	readstdin();
+ 	grabkeyboard();
+<a href="#h4-13-3" id="h4-13-3" class="d">-	setup();
+</a><a href="#h4-13-4" id="h4-13-4" class="i">+	setup(lines);
+</a><a href="#h4-13-5" id="h4-13-5" class="i">+	if(maxname)
+</a><a href="#h4-13-6" id="h4-13-6" class="i">+		cmdw = MIN(textw(&amp;dc, maxname), mw / 3);
+</a><a href="#h4-13-7" id="h4-13-7" class="i">+	match();
+</a> 	run();
+ 	return 0;
+ }
+<b>diff --git a/<a id="h5" href="../file/dmenu.h.html">dmenu.h</a> b/<a href="../file/dmenu.h.html">dmenu.h</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,30 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+#include &lt;X11/Xlib.h&gt;
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+#include &lt;draw.h&gt;
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+#include &quot;config.h&quot;
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+/* macros */
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+#define INRECT(X,Y,RX,RY,RW,RH) ((X) &gt;= (RX) &amp;&amp; (X) &lt; (RX) + (RW) &amp;&amp; (Y) &gt;= (RY) &amp;&amp; (Y) &lt; (RY) + (RH))
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+#define MIN(a, b)               ((a) &lt; (b) ? (a) : (b))
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+#define MAX(a, b)               ((a) &gt; (b) ? (a) : (b))
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+#define IS_UTF8_1ST_CHAR(c)     ((((c) &amp; 0xc0) == 0xc0) || !((c) &amp; 0x80))
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+/* forward declarations */
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+void drawbar(void);
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+void grabkeyboard(void);
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+void kpress(XKeyEvent *e);
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+void run(void);
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+void setup(unsigned int lines);
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+/* variables */
+</a><a href="#h5-0-18" id="h5-0-18" class="i">+extern char *prompt;
+</a><a href="#h5-0-19" id="h5-0-19" class="i">+extern char text[4096];
+</a><a href="#h5-0-20" id="h5-0-20" class="i">+extern int promptw;
+</a><a href="#h5-0-21" id="h5-0-21" class="i">+extern int screen;
+</a><a href="#h5-0-22" id="h5-0-22" class="i">+extern unsigned int numlockmask;
+</a><a href="#h5-0-23" id="h5-0-23" class="i">+extern unsigned int mw, mh;
+</a><a href="#h5-0-24" id="h5-0-24" class="i">+extern unsigned long normcol[ColLast];
+</a><a href="#h5-0-25" id="h5-0-25" class="i">+extern unsigned long selcol[ColLast];
+</a><a href="#h5-0-26" id="h5-0-26" class="i">+extern Bool topbar;
+</a><a href="#h5-0-27" id="h5-0-27" class="i">+extern DC dc;
+</a><a href="#h5-0-28" id="h5-0-28" class="i">+extern Display *dpy;
+</a><a href="#h5-0-29" id="h5-0-29" class="i">+extern Window win, root;
+</a></pre>
+</div>
+</body>
+</html>

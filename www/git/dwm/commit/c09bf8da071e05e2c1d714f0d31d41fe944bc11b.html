@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sanitized other stuff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c09bf8da071e05e2c1d714f0d31d41fe944bc11b.html">c09bf8da071e05e2c1d714f0d31d41fe944bc11b</a>
+<b>parent</b> <a href="../commit/adaa28a6e600f636f5e86244ccef69e98419ba1a.html">adaa28a6e600f636f5e86244ccef69e98419ba1a</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Sat, 15 Jul 2006 17:19:19 +0200
+
+sanitized other stuff
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">draw.c</a></td><td> | </td><td class="num">104</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">4</td><td><span class="i">+</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">event.c</a></td><td> | </td><td class="num">141</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">main.c</a></td><td> | </td><td class="num">25</td><td><span class="i">++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>5 files changed, 136 insertions(+), 142 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -178,7 +178,7 @@ killclient(Arg *arg)
+</a> 	if(!sel)
+ 		return;
+ 	if(sel-&gt;proto &amp; WM_PROTOCOL_DELWIN)
+<a href="#h0-0-3" id="h0-0-3" class="d">-		sendevent(sel-&gt;win, wm_atom[WMProtocols], wm_atom[WMDelete]);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		sendevent(sel-&gt;win, wmatom[WMProtocols], wmatom[WMDelete]);
+</a> 	else
+ 		XKillClient(dpy, sel-&gt;win);
+ }
+<a href="#h0-1" id="h0-1" class="h">@@ -353,7 +353,7 @@ settitle(Client *c)
+</a> 
+ 	name.nitems = 0;
+ 	c-&gt;name[0] = 0;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	XGetTextProperty(dpy, c-&gt;win, &amp;name, net_atom[NetWMName]);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	XGetTextProperty(dpy, c-&gt;win, &amp;name, netatom[NetWMName]);
+</a> 	if(!name.nitems)
+ 		XGetWMName(dpy, c-&gt;win, &amp;name);
+ 	if(!name.nitems)
+<b>diff --git a/<a id="h1" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -29,51 +29,18 @@ drawborder(void)
+</a> 	XDrawLines(dpy, dc.drawable, dc.gc, points, 5, CoordModePrevious);
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-/* extern functions */
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-void
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-drawall()
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-{
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	Client *c;
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-	for(c = clients; c; c = getnext(c-&gt;next))
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-		drawtitle(c);
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	drawstatus();
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-}
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-void
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-drawstatus()
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+static unsigned int
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+textnw(char *text, unsigned int len)
+</a> {
+<a href="#h1-0-20" id="h1-0-20" class="d">-	int i;
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-	Bool istile = arrange == dotile;
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-	dc.x = dc.y = 0;
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-	dc.w = bw;
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-	drawtext(NULL, !istile, False);
+</a><a href="#h1-0-26" id="h1-0-26" class="d">-
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-	dc.w = 0;
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-	for(i = 0; i &lt; TLast; i++) {
+</a><a href="#h1-0-29" id="h1-0-29" class="d">-		dc.x += dc.w;
+</a><a href="#h1-0-30" id="h1-0-30" class="d">-		dc.w = textw(tags[i]);
+</a><a href="#h1-0-31" id="h1-0-31" class="d">-		if(istile)
+</a><a href="#h1-0-32" id="h1-0-32" class="d">-			drawtext(tags[i], (i == tsel), True);
+</a><a href="#h1-0-33" id="h1-0-33" class="d">-		else
+</a><a href="#h1-0-34" id="h1-0-34" class="d">-			drawtext(tags[i], (i != tsel), True);
+</a><a href="#h1-0-35" id="h1-0-35" class="d">-	}
+</a><a href="#h1-0-36" id="h1-0-36" class="d">-	if(sel) {
+</a><a href="#h1-0-37" id="h1-0-37" class="d">-		dc.x += dc.w;
+</a><a href="#h1-0-38" id="h1-0-38" class="d">-		dc.w = textw(sel-&gt;name);
+</a><a href="#h1-0-39" id="h1-0-39" class="d">-		drawtext(sel-&gt;name, istile, True);
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+	XRectangle r;
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+	if(dc.font.set) {
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+		XmbTextExtents(dc.font.set, text, len, NULL, &amp;r);
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+		return r.width;
+</a> 	}
+<a href="#h1-0-45" id="h1-0-45" class="d">-	dc.w = textw(stext);
+</a><a href="#h1-0-46" id="h1-0-46" class="d">-	dc.x = bx + bw - dc.w;
+</a><a href="#h1-0-47" id="h1-0-47" class="d">-	drawtext(stext, !istile, False);
+</a><a href="#h1-0-48" id="h1-0-48" class="d">-
+</a><a href="#h1-0-49" id="h1-0-49" class="d">-	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, bw, bh, 0, 0);
+</a><a href="#h1-0-50" id="h1-0-50" class="d">-	XFlush(dpy);
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+	return XTextWidth(dc.font.xfont, text, len);
+</a> }
+ 
+<a href="#h1-0-54" id="h1-0-54" class="d">-void
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+static void
+</a> drawtext(const char *text, Bool invert, Bool border)
+ {
+ 	int x, y, w, h;
+<a href="#h1-1" id="h1-1" class="h">@@ -123,6 +90,50 @@ drawtext(const char *text, Bool invert, Bool border)
+</a> 	}
+ }
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+/* extern functions */
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+void
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+drawall()
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+{
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	Client *c;
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+	for(c = clients; c; c = getnext(c-&gt;next))
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+		drawtitle(c);
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+	drawstatus();
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+}
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+void
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+drawstatus()
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+{
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+	int i;
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+	Bool istile = arrange == dotile;
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+	dc.x = dc.y = 0;
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+	dc.w = bw;
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+	drawtext(NULL, !istile, False);
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+	dc.w = 0;
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+	for(i = 0; i &lt; TLast; i++) {
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+		dc.x += dc.w;
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+		dc.w = textw(tags[i]);
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+		if(istile)
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+			drawtext(tags[i], (i == tsel), True);
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+		else
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+			drawtext(tags[i], (i != tsel), True);
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+	}
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+	if(sel) {
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+		dc.x += dc.w;
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+		dc.w = textw(sel-&gt;name);
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+		drawtext(sel-&gt;name, istile, True);
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+	}
+</a><a href="#h1-1-39" id="h1-1-39" class="i">+	dc.w = textw(stext);
+</a><a href="#h1-1-40" id="h1-1-40" class="i">+	dc.x = bx + bw - dc.w;
+</a><a href="#h1-1-41" id="h1-1-41" class="i">+	drawtext(stext, !istile, False);
+</a><a href="#h1-1-42" id="h1-1-42" class="i">+
+</a><a href="#h1-1-43" id="h1-1-43" class="i">+	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, bw, bh, 0, 0);
+</a><a href="#h1-1-44" id="h1-1-44" class="i">+	XFlush(dpy);
+</a><a href="#h1-1-45" id="h1-1-45" class="i">+}
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+
+</a> void
+ drawtitle(Client *c)
+ {
+<a href="#h1-2" id="h1-2" class="h">@@ -219,17 +230,6 @@ setfont(const char *fontstr)
+</a> }
+ 
+ unsigned int
+<a href="#h1-2-3" id="h1-2-3" class="d">-textnw(char *text, unsigned int len)
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-{
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-	XRectangle r;
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-	if(dc.font.set) {
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-		XmbTextExtents(dc.font.set, text, len, NULL, &amp;r);
+</a><a href="#h1-2-8" id="h1-2-8" class="d">-		return r.width;
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-	}
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-	return XTextWidth(dc.font.xfont, text, len);
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-}
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-
+</a><a href="#h1-2-13" id="h1-2-13" class="d">-unsigned int
+</a> textw(char *text)
+ {
+ 	return textnw(text, strlen(text)) + dc.font.height;
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -89,7 +89,7 @@ struct Key {
+</a> 
+ extern Display *dpy;
+ extern Window root, barwin;
+<a href="#h2-0-3" id="h2-0-3" class="d">-extern Atom wm_atom[WMLast], net_atom[NetLast];
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+extern Atom wmatom[WMLast], netatom[NetLast];
+</a> extern Cursor cursor[CurLast];
+ extern Bool running, issel;
+ extern void (*handler[LASTEvent])(XEvent *);
+<a href="#h2-1" id="h2-1" class="h">@@ -124,11 +124,9 @@ extern void zoom(Arg *arg);
+</a> /* draw.c */
+ extern void drawall();
+ extern void drawstatus();
+<a href="#h2-1-3" id="h2-1-3" class="d">-extern void drawtext(const char *text, Bool invert, Bool border);
+</a> extern void drawtitle(Client *c);
+ extern unsigned long getcolor(const char *colstr);
+ extern void setfont(const char *fontstr);
+<a href="#h2-1-7" id="h2-1-7" class="d">-extern unsigned int textnw(char *text, unsigned int len);
+</a> extern unsigned int textw(char *text);
+ 
+ /* event.c */
+<b>diff --git a/<a id="h3" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -51,8 +51,73 @@ Key key[] = {
+</a> 
+ /* static functions */
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-static void movemouse(Client *c);
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-static void resizemouse(Client *c);
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+static void
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+movemouse(Client *c)
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+{
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	XEvent ev;
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+	int x1, y1, ocx, ocy, di;
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+	unsigned int dui;
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+	Window dummy;
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+	ocx = c-&gt;x;
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	ocy = c-&gt;y;
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+				None, cursor[CurMove], CurrentTime) != GrabSuccess)
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+		return;
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+	XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x1, &amp;y1, &amp;di, &amp;di, &amp;dui);
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+	for(;;) {
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+		XMaskEvent(dpy, MouseMask | ExposureMask, &amp;ev);
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+		switch (ev.type) {
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+		default: break;
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+		case Expose:
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+			handler[Expose](&amp;ev);
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+			break;
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+		case MotionNotify:
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+			XFlush(dpy);
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+			c-&gt;x = ocx + (ev.xmotion.x - x1);
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+			c-&gt;y = ocy + (ev.xmotion.y - y1);
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+			resize(c, False);
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+			break;
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+		case ButtonRelease:
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+			XUngrabPointer(dpy, CurrentTime);
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+			return;
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+		}
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	}
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+}
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+static void
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+resizemouse(Client *c)
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+{
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+	XEvent ev;
+</a><a href="#h3-0-43" id="h3-0-43" class="i">+	int ocx, ocy;
+</a><a href="#h3-0-44" id="h3-0-44" class="i">+
+</a><a href="#h3-0-45" id="h3-0-45" class="i">+	ocx = c-&gt;x;
+</a><a href="#h3-0-46" id="h3-0-46" class="i">+	ocy = c-&gt;y;
+</a><a href="#h3-0-47" id="h3-0-47" class="i">+	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+</a><a href="#h3-0-48" id="h3-0-48" class="i">+				None, cursor[CurResize], CurrentTime) != GrabSuccess)
+</a><a href="#h3-0-49" id="h3-0-49" class="i">+		return;
+</a><a href="#h3-0-50" id="h3-0-50" class="i">+	XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w, c-&gt;h);
+</a><a href="#h3-0-51" id="h3-0-51" class="i">+	for(;;) {
+</a><a href="#h3-0-52" id="h3-0-52" class="i">+		XMaskEvent(dpy, MouseMask | ExposureMask, &amp;ev);
+</a><a href="#h3-0-53" id="h3-0-53" class="i">+		switch(ev.type) {
+</a><a href="#h3-0-54" id="h3-0-54" class="i">+		default: break;
+</a><a href="#h3-0-55" id="h3-0-55" class="i">+		case Expose:
+</a><a href="#h3-0-56" id="h3-0-56" class="i">+			handler[Expose](&amp;ev);
+</a><a href="#h3-0-57" id="h3-0-57" class="i">+			break;
+</a><a href="#h3-0-58" id="h3-0-58" class="i">+		case MotionNotify:
+</a><a href="#h3-0-59" id="h3-0-59" class="i">+			XFlush(dpy);
+</a><a href="#h3-0-60" id="h3-0-60" class="i">+			c-&gt;w = abs(ocx - ev.xmotion.x);
+</a><a href="#h3-0-61" id="h3-0-61" class="i">+			c-&gt;h = abs(ocy - ev.xmotion.y);
+</a><a href="#h3-0-62" id="h3-0-62" class="i">+			c-&gt;x = (ocx &lt;= ev.xmotion.x) ? ocx : ocx - c-&gt;w;
+</a><a href="#h3-0-63" id="h3-0-63" class="i">+			c-&gt;y = (ocy &lt;= ev.xmotion.y) ? ocy : ocy - c-&gt;h;
+</a><a href="#h3-0-64" id="h3-0-64" class="i">+			resize(c, True);
+</a><a href="#h3-0-65" id="h3-0-65" class="i">+			break;
+</a><a href="#h3-0-66" id="h3-0-66" class="i">+		case ButtonRelease:
+</a><a href="#h3-0-67" id="h3-0-67" class="i">+			XUngrabPointer(dpy, CurrentTime);
+</a><a href="#h3-0-68" id="h3-0-68" class="i">+			return;
+</a><a href="#h3-0-69" id="h3-0-69" class="i">+		}
+</a><a href="#h3-0-70" id="h3-0-70" class="i">+	}
+</a><a href="#h3-0-71" id="h3-0-71" class="i">+}
+</a> 
+ static void
+ buttonpress(XEvent *e)
+<a href="#h3-1" id="h3-1" class="h">@@ -214,40 +279,6 @@ maprequest(XEvent *e)
+</a> }
+ 
+ static void
+<a href="#h3-1-3" id="h3-1-3" class="d">-movemouse(Client *c)
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-{
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-	XEvent ev;
+</a><a href="#h3-1-6" id="h3-1-6" class="d">-	int x1, y1, ocx, ocy, di;
+</a><a href="#h3-1-7" id="h3-1-7" class="d">-	unsigned int dui;
+</a><a href="#h3-1-8" id="h3-1-8" class="d">-	Window dummy;
+</a><a href="#h3-1-9" id="h3-1-9" class="d">-
+</a><a href="#h3-1-10" id="h3-1-10" class="d">-	ocx = c-&gt;x;
+</a><a href="#h3-1-11" id="h3-1-11" class="d">-	ocy = c-&gt;y;
+</a><a href="#h3-1-12" id="h3-1-12" class="d">-	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+</a><a href="#h3-1-13" id="h3-1-13" class="d">-				None, cursor[CurMove], CurrentTime) != GrabSuccess)
+</a><a href="#h3-1-14" id="h3-1-14" class="d">-		return;
+</a><a href="#h3-1-15" id="h3-1-15" class="d">-	XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x1, &amp;y1, &amp;di, &amp;di, &amp;dui);
+</a><a href="#h3-1-16" id="h3-1-16" class="d">-	for(;;) {
+</a><a href="#h3-1-17" id="h3-1-17" class="d">-		XMaskEvent(dpy, MouseMask | ExposureMask, &amp;ev);
+</a><a href="#h3-1-18" id="h3-1-18" class="d">-		switch (ev.type) {
+</a><a href="#h3-1-19" id="h3-1-19" class="d">-		default: break;
+</a><a href="#h3-1-20" id="h3-1-20" class="d">-		case Expose:
+</a><a href="#h3-1-21" id="h3-1-21" class="d">-			handler[Expose](&amp;ev);
+</a><a href="#h3-1-22" id="h3-1-22" class="d">-			break;
+</a><a href="#h3-1-23" id="h3-1-23" class="d">-		case MotionNotify:
+</a><a href="#h3-1-24" id="h3-1-24" class="d">-			XFlush(dpy);
+</a><a href="#h3-1-25" id="h3-1-25" class="d">-			c-&gt;x = ocx + (ev.xmotion.x - x1);
+</a><a href="#h3-1-26" id="h3-1-26" class="d">-			c-&gt;y = ocy + (ev.xmotion.y - y1);
+</a><a href="#h3-1-27" id="h3-1-27" class="d">-			resize(c, False);
+</a><a href="#h3-1-28" id="h3-1-28" class="d">-			break;
+</a><a href="#h3-1-29" id="h3-1-29" class="d">-		case ButtonRelease:
+</a><a href="#h3-1-30" id="h3-1-30" class="d">-			XUngrabPointer(dpy, CurrentTime);
+</a><a href="#h3-1-31" id="h3-1-31" class="d">-			return;
+</a><a href="#h3-1-32" id="h3-1-32" class="d">-		}
+</a><a href="#h3-1-33" id="h3-1-33" class="d">-	}
+</a><a href="#h3-1-34" id="h3-1-34" class="d">-}
+</a><a href="#h3-1-35" id="h3-1-35" class="d">-
+</a><a href="#h3-1-36" id="h3-1-36" class="d">-static void
+</a> propertynotify(XEvent *e)
+ {
+ 	XPropertyEvent *ev = &amp;e-&gt;xproperty;
+<a href="#h3-2" id="h3-2" class="h">@@ -258,7 +289,7 @@ propertynotify(XEvent *e)
+</a> 		return; /* ignore */
+ 
+ 	if((c = getclient(ev-&gt;window))) {
+<a href="#h3-2-3" id="h3-2-3" class="d">-		if(ev-&gt;atom == wm_atom[WMProtocols]) {
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+		if(ev-&gt;atom == wmatom[WMProtocols]) {
+</a> 			c-&gt;proto = getproto(c-&gt;win);
+ 			return;
+ 		}
+<a href="#h3-3" id="h3-3" class="h">@@ -273,7 +304,7 @@ propertynotify(XEvent *e)
+</a> 				setsize(c);
+ 				break;
+ 		}
+<a href="#h3-3-3" id="h3-3-3" class="d">-		if(ev-&gt;atom == XA_WM_NAME || ev-&gt;atom == net_atom[NetWMName]) {
+</a><a href="#h3-3-4" id="h3-3-4" class="i">+		if(ev-&gt;atom == XA_WM_NAME || ev-&gt;atom == netatom[NetWMName]) {
+</a> 			settitle(c);
+ 			drawtitle(c);
+ 		}
+<a href="#h3-4" id="h3-4" class="h">@@ -281,40 +312,6 @@ propertynotify(XEvent *e)
+</a> }
+ 
+ static void
+<a href="#h3-4-3" id="h3-4-3" class="d">-resizemouse(Client *c)
+</a><a href="#h3-4-4" id="h3-4-4" class="d">-{
+</a><a href="#h3-4-5" id="h3-4-5" class="d">-	XEvent ev;
+</a><a href="#h3-4-6" id="h3-4-6" class="d">-	int ocx, ocy;
+</a><a href="#h3-4-7" id="h3-4-7" class="d">-
+</a><a href="#h3-4-8" id="h3-4-8" class="d">-	ocx = c-&gt;x;
+</a><a href="#h3-4-9" id="h3-4-9" class="d">-	ocy = c-&gt;y;
+</a><a href="#h3-4-10" id="h3-4-10" class="d">-	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+</a><a href="#h3-4-11" id="h3-4-11" class="d">-				None, cursor[CurResize], CurrentTime) != GrabSuccess)
+</a><a href="#h3-4-12" id="h3-4-12" class="d">-		return;
+</a><a href="#h3-4-13" id="h3-4-13" class="d">-	XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w, c-&gt;h);
+</a><a href="#h3-4-14" id="h3-4-14" class="d">-	for(;;) {
+</a><a href="#h3-4-15" id="h3-4-15" class="d">-		XMaskEvent(dpy, MouseMask | ExposureMask, &amp;ev);
+</a><a href="#h3-4-16" id="h3-4-16" class="d">-		switch(ev.type) {
+</a><a href="#h3-4-17" id="h3-4-17" class="d">-		default: break;
+</a><a href="#h3-4-18" id="h3-4-18" class="d">-		case Expose:
+</a><a href="#h3-4-19" id="h3-4-19" class="d">-			handler[Expose](&amp;ev);
+</a><a href="#h3-4-20" id="h3-4-20" class="d">-			break;
+</a><a href="#h3-4-21" id="h3-4-21" class="d">-		case MotionNotify:
+</a><a href="#h3-4-22" id="h3-4-22" class="d">-			XFlush(dpy);
+</a><a href="#h3-4-23" id="h3-4-23" class="d">-			c-&gt;w = abs(ocx - ev.xmotion.x);
+</a><a href="#h3-4-24" id="h3-4-24" class="d">-			c-&gt;h = abs(ocy - ev.xmotion.y);
+</a><a href="#h3-4-25" id="h3-4-25" class="d">-			c-&gt;x = (ocx &lt;= ev.xmotion.x) ? ocx : ocx - c-&gt;w;
+</a><a href="#h3-4-26" id="h3-4-26" class="d">-			c-&gt;y = (ocy &lt;= ev.xmotion.y) ? ocy : ocy - c-&gt;h;
+</a><a href="#h3-4-27" id="h3-4-27" class="d">-			resize(c, True);
+</a><a href="#h3-4-28" id="h3-4-28" class="d">-			break;
+</a><a href="#h3-4-29" id="h3-4-29" class="d">-		case ButtonRelease:
+</a><a href="#h3-4-30" id="h3-4-30" class="d">-			XUngrabPointer(dpy, CurrentTime);
+</a><a href="#h3-4-31" id="h3-4-31" class="d">-			return;
+</a><a href="#h3-4-32" id="h3-4-32" class="d">-		}
+</a><a href="#h3-4-33" id="h3-4-33" class="d">-	}
+</a><a href="#h3-4-34" id="h3-4-34" class="d">-}
+</a><a href="#h3-4-35" id="h3-4-35" class="d">-
+</a><a href="#h3-4-36" id="h3-4-36" class="d">-static void
+</a> unmapnotify(XEvent *e)
+ {
+ 	Client *c;
+<b>diff --git a/<a id="h4" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -16,10 +16,10 @@
+</a> 
+ Display *dpy;
+ Window root, barwin;
+<a href="#h4-0-3" id="h4-0-3" class="d">-Atom wm_atom[WMLast], net_atom[NetLast];
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+Atom wmatom[WMLast], netatom[NetLast];
+</a> Cursor cursor[CurLast];
+ Bool running = True;
+<a href="#h4-0-7" id="h4-0-7" class="d">-Bool issel;
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+Bool issel = True;
+</a> 
+ int tsel = Tdev; /* default tag */
+ int screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+<a href="#h4-1" id="h4-1" class="h">@@ -30,8 +30,6 @@ Client *clients = NULL;
+</a> Client *sel = NULL;
+ 
+ static Bool otherwm;
+<a href="#h4-1-3" id="h4-1-3" class="d">-static const char version[] =
+</a><a href="#h4-1-4" id="h4-1-4" class="d">-	&quot;dwm-&quot; VERSION &quot;, (C)opyright MMVI Anselm R. Garbe\n&quot;;
+</a> static int (*xerrorxlib)(Display *, XErrorEvent *);
+ 
+ /* static functions */
+<a href="#h4-2" id="h4-2" class="h">@@ -109,12 +107,12 @@ getproto(Window w)
+</a> 	int protos = 0;
+ 	int i;
+ 
+<a href="#h4-2-3" id="h4-2-3" class="d">-	res = win_property(w, wm_atom[WMProtocols], XA_ATOM, 20L, &amp;protocols);
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+	res = win_property(w, wmatom[WMProtocols], XA_ATOM, 20L, &amp;protocols);
+</a> 	if(res &lt;= 0) {
+ 		return protos;
+ 	}
+ 	for(i = 0; i &lt; res; i++) {
+<a href="#h4-2-9" id="h4-2-9" class="d">-		if(protocols[i] == wm_atom[WMDelete])
+</a><a href="#h4-2-10" id="h4-2-10" class="i">+		if(protocols[i] == wmatom[WMDelete])
+</a> 			protos |= WM_PROTOCOL_DELWIN;
+ 	}
+ 	free((char *) protocols);
+<a href="#h4-3" id="h4-3" class="h">@@ -184,7 +182,8 @@ main(int argc, char *argv[])
+</a> 	for(i = 1; (i &lt; argc) &amp;&amp; (argv[i][0] == &#39;-&#39;); i++) {
+ 		switch (argv[i][1]) {
+ 		case &#39;v&#39;:
+<a href="#h4-3-3" id="h4-3-3" class="d">-			fprintf(stdout, &quot;%s&quot;, version);
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+			fprintf(stdout, &quot;%s&quot;,
+</a><a href="#h4-3-5" id="h4-3-5" class="i">+					&quot;dwm-&quot;VERSION&quot;, (C)opyright MMVI Anselm R. Garbe\n&quot;);
+</a> 			exit(0);
+ 			break;
+ 		default:
+<a href="#h4-4" id="h4-4" class="h">@@ -214,12 +213,12 @@ main(int argc, char *argv[])
+</a> 	xerrorxlib = XSetErrorHandler(xerror);
+ 
+ 	/* init atoms */
+<a href="#h4-4-3" id="h4-4-3" class="d">-	wm_atom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+</a><a href="#h4-4-4" id="h4-4-4" class="d">-	wm_atom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+</a><a href="#h4-4-5" id="h4-4-5" class="d">-	net_atom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+</a><a href="#h4-4-6" id="h4-4-6" class="d">-	net_atom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+</a><a href="#h4-4-7" id="h4-4-7" class="d">-	XChangeProperty(dpy, root, net_atom[NetSupported], XA_ATOM, 32,
+</a><a href="#h4-4-8" id="h4-4-8" class="d">-			PropModeReplace, (unsigned char *) net_atom, NetLast);
+</a><a href="#h4-4-9" id="h4-4-9" class="i">+	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+</a><a href="#h4-4-10" id="h4-4-10" class="i">+	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+</a><a href="#h4-4-11" id="h4-4-11" class="i">+	netatom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+</a><a href="#h4-4-12" id="h4-4-12" class="i">+	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+</a><a href="#h4-4-13" id="h4-4-13" class="i">+	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
+</a><a href="#h4-4-14" id="h4-4-14" class="i">+			PropModeReplace, (unsigned char *) netatom, NetLast);
+</a> 
+ 	/* init cursors */
+ 	cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
+</pre>
+</div>
+</body>
+</html>

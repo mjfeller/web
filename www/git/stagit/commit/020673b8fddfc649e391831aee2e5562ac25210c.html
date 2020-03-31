@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>post-receive: fix warning in script for example when pushing deleted tags - stagit - static site generate for git repositories
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="stagit Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>stagit</h1><span class="desc">static site generate for git repositories
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/020673b8fddfc649e391831aee2e5562ac25210c.html">020673b8fddfc649e391831aee2e5562ac25210c</a>
+<b>parent</b> <a href="../commit/1add4bf3ae0105ce19d9189a499bf450e32ec171.html">1add4bf3ae0105ce19d9189a499bf450e32ec171</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Sat, 25 Nov 2017 16:02:24 +0100
+
+post-receive: fix warning in script for example when pushing deleted tags
+
+the &quot;new&quot; variable would be zero:
+	remote: fatal: bad object 0000000000000000000000000000000000000000
+
+NOTE: when pushing new tags the &quot;old&quot; variable would be zero, this was
+      already fixed.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">example_post-receive.sh</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 1 insertion(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/example_post-receive.sh.html">example_post-receive.sh</a> b/<a href="../file/example_post-receive.sh.html">example_post-receive.sh</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -37,6 +37,7 @@ cd &quot;${dir}&quot; || exit 1
+</a> force=0
+ while read -r old new ref; do
+ 	test &quot;${old}&quot; = &quot;0000000000000000000000000000000000000000&quot; &amp;&amp; continue
+<a href="#h0-0-3" id="h0-0-3" class="i">+	test &quot;${new}&quot; = &quot;0000000000000000000000000000000000000000&quot; &amp;&amp; continue
+</a> 
+ 	hasrevs=$(git rev-list &quot;${old}&quot; &quot;^${new}&quot; | sed 1q)
+ 	if test -n &quot;${hasrevs}&quot;; then
+</pre>
+</div>
+</body>
+</html>

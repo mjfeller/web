@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Close when the embedding window is destroyed - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/153aaf88bf9bf5c6c4b118bd871f8cf1eafdcab5.html">153aaf88bf9bf5c6c4b118bd871f8cf1eafdcab5</a>
+<b>parent</b> <a href="../commit/65be875f5adf31e9c4762ac8a8d74b1dfdd78584.html">65be875f5adf31e9c4762ac8a8d74b1dfdd78584</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Mon,  4 Feb 2019 00:29:26 +0100
+
+Close when the embedding window is destroyed
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">LICENSE</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">7</td><td><span class="i">++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 7 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/LICENSE.html">LICENSE</a> b/<a href="../file/LICENSE.html">LICENSE</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -9,7 +9,7 @@ MIT/X Consortium License
+</a> © 2009 Evan Gates &lt;evan.gates@gmail.com&gt;
+ © 2010-2012 Connor Lane Smith &lt;cls@lubutu.com&gt;
+ © 2014-2019 Hiltjo Posthuma &lt;hiltjo@codemadness.org&gt;
+<a href="#h0-0-3" id="h0-0-3" class="d">-© 2015-2018 Quentin Rameau &lt;quinq@fifth.space&gt;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+© 2015-2019 Quentin Rameau &lt;quinq@fifth.space&gt;
+</a> 
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files (the &quot;Software&quot;),
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -556,6 +556,11 @@ run(void)
+</a> 		if (XFilterEvent(&amp;ev, None))
+ 			continue;
+ 		switch(ev.type) {
+<a href="#h1-0-3" id="h1-0-3" class="i">+		case DestroyNotify:
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+			if (ev.xdestroywindow.window != win)
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+				break;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+			cleanup();
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+			exit(1);
+</a> 		case Expose:
+ 			if (ev.xexpose.count == 0)
+ 				drw_map(drw, win, 0, 0, mw, mh);
+<a href="#h1-1" id="h1-1" class="h">@@ -667,7 +672,7 @@ setup(void)
+</a> 	XMapRaised(dpy, win);
+ 	XSetInputFocus(dpy, win, RevertToParent, CurrentTime);
+ 	if (embed) {
+<a href="#h1-1-3" id="h1-1-3" class="d">-		XSelectInput(dpy, parentwin, FocusChangeMask);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		XSelectInput(dpy, parentwin, FocusChangeMask | SubstructureNotifyMask);
+</a> 		if (XQueryTree(dpy, parentwin, &amp;dw, &amp;w, &amp;dws, &amp;du) &amp;&amp; dws) {
+ 			for (i = 0; i &lt; du &amp;&amp; dws[i] != win; ++i)
+ 				XSelectInput(dpy, dws[i], FocusChangeMask);
+</pre>
+</div>
+</body>
+</html>

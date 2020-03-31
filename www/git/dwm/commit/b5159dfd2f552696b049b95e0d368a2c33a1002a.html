@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>separated setup stuff into main.c:setup() - this makes main() more readable - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b5159dfd2f552696b049b95e0d368a2c33a1002a.html">b5159dfd2f552696b049b95e0d368a2c33a1002a</a>
+<b>parent</b> <a href="../commit/07c2659806e95499b4a258ff1961e61c541f50b3.html">07c2659806e95499b4a258ff1961e61c541f50b3</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Wed, 23 Aug 2006 10:21:57 +0200
+
+separated setup stuff into main.c:setup() - this makes main() more readable
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.h</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++++</span><span class="d">------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">main.c</a></td><td> | </td><td class="num">181</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">view.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>3 files changed, 104 insertions(+), 99 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -11,15 +11,10 @@
+</a> #define MOUSEMASK		(BUTTONMASK | PointerMotionMask)
+ #define PROTODELWIN		1
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-typedef union Arg Arg;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-typedef struct Client Client;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-typedef struct DC DC;
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-typedef struct Fnt Fnt;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-union Arg {
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+typedef union {
+</a> 	const char *cmd;
+ 	int i;
+<a href="#h0-0-12" id="h0-0-12" class="d">-};
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+} Arg;
+</a> 
+ /* atoms */
+ enum { NetSupported, NetWMName, NetLast };
+<a href="#h0-1" id="h0-1" class="h">@@ -28,18 +23,18 @@ enum { WMProtocols, WMDelete, WMLast };
+</a> /* cursor */
+ enum { CurNormal, CurResize, CurMove, CurLast };
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-/* windowcorners */
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+/* window corners */
+</a> typedef enum { TopLeft, TopRight, BotLeft, BotRight } Corner;
+ 
+<a href="#h0-1-7" id="h0-1-7" class="d">-struct Fnt {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+typedef struct {
+</a> 	int ascent;
+ 	int descent;
+ 	int height;
+ 	XFontSet set;
+ 	XFontStruct *xfont;
+<a href="#h0-1-14" id="h0-1-14" class="d">-};
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+} Fnt;
+</a> 
+<a href="#h0-1-17" id="h0-1-17" class="d">-struct DC { /* draw context */
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+typedef struct { /* draw context */
+</a> 	int x, y, w, h;
+ 	unsigned long bg;
+ 	unsigned long fg;
+<a href="#h0-2" id="h0-2" class="h">@@ -47,8 +42,9 @@ struct DC { /* draw context */
+</a> 	Drawable drawable;
+ 	Fnt font;
+ 	GC gc;
+<a href="#h0-2-3" id="h0-2-3" class="d">-};
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+} DC;
+</a> 
+<a href="#h0-2-6" id="h0-2-6" class="i">+typedef struct Client Client;
+</a> struct Client {
+ 	char name[256];
+ 	int proto;
+<b>diff --git a/<a id="h1" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -15,6 +15,22 @@
+</a> #include &lt;X11/Xatom.h&gt;
+ #include &lt;X11/Xproto.h&gt;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+/* extern */
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+char stext[1024];
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+Bool *seltag;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+int screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+unsigned int ntags, numlockmask;
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+Atom wmatom[WMLast], netatom[NetLast];
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+Bool running = True;
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+Bool issel = True;
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+Client *clients = NULL;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+Client *sel = NULL;
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+Cursor cursor[CurLast];
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+Display *dpy;
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+DC dc = {0};
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+Window root, barwin;
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+
+</a> /* static */
+ 
+ static int (*xerrorxlib)(Display *, XErrorEvent *);
+<a href="#h1-1" id="h1-1" class="h">@@ -62,6 +78,79 @@ scan()
+</a> 		XFree(wins);
+ }
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+static void
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+setup()
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+{
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	int i, j;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	unsigned int mask;
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	Window w;
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+	XModifierKeymap *modmap;
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+	XSetWindowAttributes wa;
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+	/* init atoms */
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+	netatom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+			PropModeReplace, (unsigned char *) netatom, NetLast);
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	/* init cursors */
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+	cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+	cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+	modmap = XGetModifierMapping(dpy);
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+	for (i = 0; i &lt; 8; i++) {
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+		for (j = 0; j &lt; modmap-&gt;max_keypermod; j++) {
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j] == XKeysymToKeycode(dpy, XK_Num_Lock))
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+				numlockmask = (1 &lt;&lt; i);
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+		}
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+	}
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+	XFree(modmap);
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+	wa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask | EnterWindowMask | LeaveWindowMask;
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+	wa.cursor = cursor[CurNormal];
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &amp;wa);
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+	grabkeys();
+</a><a href="#h1-1-39" id="h1-1-39" class="i">+	initrregs();
+</a><a href="#h1-1-40" id="h1-1-40" class="i">+
+</a><a href="#h1-1-41" id="h1-1-41" class="i">+	for(ntags = 0; tags[ntags]; ntags++);
+</a><a href="#h1-1-42" id="h1-1-42" class="i">+	seltag = emallocz(sizeof(Bool) * ntags);
+</a><a href="#h1-1-43" id="h1-1-43" class="i">+	seltag[0] = True;
+</a><a href="#h1-1-44" id="h1-1-44" class="i">+
+</a><a href="#h1-1-45" id="h1-1-45" class="i">+	/* style */
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+	dc.bg = getcolor(BGCOLOR);
+</a><a href="#h1-1-47" id="h1-1-47" class="i">+	dc.fg = getcolor(FGCOLOR);
+</a><a href="#h1-1-48" id="h1-1-48" class="i">+	dc.border = getcolor(BORDERCOLOR);
+</a><a href="#h1-1-49" id="h1-1-49" class="i">+	setfont(FONT);
+</a><a href="#h1-1-50" id="h1-1-50" class="i">+
+</a><a href="#h1-1-51" id="h1-1-51" class="i">+	sx = sy = 0;
+</a><a href="#h1-1-52" id="h1-1-52" class="i">+	sw = DisplayWidth(dpy, screen);
+</a><a href="#h1-1-53" id="h1-1-53" class="i">+	sh = DisplayHeight(dpy, screen);
+</a><a href="#h1-1-54" id="h1-1-54" class="i">+	mw = (sw * MASTERW) / 100;
+</a><a href="#h1-1-55" id="h1-1-55" class="i">+
+</a><a href="#h1-1-56" id="h1-1-56" class="i">+	bx = by = 0;
+</a><a href="#h1-1-57" id="h1-1-57" class="i">+	bw = sw;
+</a><a href="#h1-1-58" id="h1-1-58" class="i">+	dc.h = bh = dc.font.height + 4;
+</a><a href="#h1-1-59" id="h1-1-59" class="i">+	wa.override_redirect = 1;
+</a><a href="#h1-1-60" id="h1-1-60" class="i">+	wa.background_pixmap = ParentRelative;
+</a><a href="#h1-1-61" id="h1-1-61" class="i">+	wa.event_mask = ButtonPressMask | ExposureMask;
+</a><a href="#h1-1-62" id="h1-1-62" class="i">+	barwin = XCreateWindow(dpy, root, bx, by, bw, bh, 0, DefaultDepth(dpy, screen),
+</a><a href="#h1-1-63" id="h1-1-63" class="i">+			CopyFromParent, DefaultVisual(dpy, screen),
+</a><a href="#h1-1-64" id="h1-1-64" class="i">+			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+</a><a href="#h1-1-65" id="h1-1-65" class="i">+	XDefineCursor(dpy, barwin, cursor[CurNormal]);
+</a><a href="#h1-1-66" id="h1-1-66" class="i">+	XMapRaised(dpy, barwin);
+</a><a href="#h1-1-67" id="h1-1-67" class="i">+
+</a><a href="#h1-1-68" id="h1-1-68" class="i">+	dc.drawable = XCreatePixmap(dpy, root, sw, bh, DefaultDepth(dpy, screen));
+</a><a href="#h1-1-69" id="h1-1-69" class="i">+	dc.gc = XCreateGC(dpy, root, 0, 0);
+</a><a href="#h1-1-70" id="h1-1-70" class="i">+
+</a><a href="#h1-1-71" id="h1-1-71" class="i">+	issel = XQueryPointer(dpy, root, &amp;w, &amp;w, &amp;i, &amp;i, &amp;i, &amp;i, &amp;mask);
+</a><a href="#h1-1-72" id="h1-1-72" class="i">+
+</a><a href="#h1-1-73" id="h1-1-73" class="i">+	strcpy(stext, &quot;dwm-&quot;VERSION);
+</a><a href="#h1-1-74" id="h1-1-74" class="i">+}
+</a><a href="#h1-1-75" id="h1-1-75" class="i">+
+</a> /*
+  * Startup Error handler to check if another window manager
+  * is already running.
+<a href="#h1-2" id="h1-2" class="h">@@ -75,20 +164,6 @@ xerrorstart(Display *dsply, XErrorEvent *ee)
+</a> 
+ /* extern */
+ 
+<a href="#h1-2-3" id="h1-2-3" class="d">-char stext[1024];
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-Bool *seltag;
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-int screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-unsigned int ntags, numlockmask;
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-Atom wmatom[WMLast], netatom[NetLast];
+</a><a href="#h1-2-8" id="h1-2-8" class="d">-Bool running = True;
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-Bool issel = True;
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-Client *clients = NULL;
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-Client *sel = NULL;
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-Cursor cursor[CurLast];
+</a><a href="#h1-2-13" id="h1-2-13" class="d">-Display *dpy;
+</a><a href="#h1-2-14" id="h1-2-14" class="d">-DC dc = {0};
+</a><a href="#h1-2-15" id="h1-2-15" class="d">-Window root, barwin;
+</a><a href="#h1-2-16" id="h1-2-16" class="d">-
+</a> int
+ getproto(Window w)
+ {
+<a href="#h1-3" id="h1-3" class="h">@@ -153,12 +228,8 @@ xerror(Display *dpy, XErrorEvent *ee)
+</a> int
+ main(int argc, char *argv[])
+ {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	int i, j, xfd;
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-	unsigned int mask;
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+	int r, xfd;
+</a> 	fd_set rd;
+<a href="#h1-3-7" id="h1-3-7" class="d">-	Window w;
+</a><a href="#h1-3-8" id="h1-3-8" class="d">-	XModifierKeymap *modmap;
+</a><a href="#h1-3-9" id="h1-3-9" class="d">-	XSetWindowAttributes wa;
+</a> 
+ 	if(argc == 2 &amp;&amp; !strncmp(&quot;-v&quot;, argv[1], 3)) {
+ 		fputs(&quot;dwm-&quot;VERSION&quot;, (C)opyright MMVI Anselm R. Garbe\n&quot;, stdout);
+<a href="#h1-4" id="h1-4" class="h">@@ -189,70 +260,8 @@ main(int argc, char *argv[])
+</a> 	xerrorxlib = XSetErrorHandler(xerror);
+ 	XSync(dpy, False);
+ 
+<a href="#h1-4-3" id="h1-4-3" class="d">-	/* init atoms */
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+</a><a href="#h1-4-5" id="h1-4-5" class="d">-	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+</a><a href="#h1-4-6" id="h1-4-6" class="d">-	netatom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+</a><a href="#h1-4-7" id="h1-4-7" class="d">-	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+</a><a href="#h1-4-8" id="h1-4-8" class="d">-	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
+</a><a href="#h1-4-9" id="h1-4-9" class="d">-			PropModeReplace, (unsigned char *) netatom, NetLast);
+</a><a href="#h1-4-10" id="h1-4-10" class="d">-
+</a><a href="#h1-4-11" id="h1-4-11" class="d">-	/* init cursors */
+</a><a href="#h1-4-12" id="h1-4-12" class="d">-	cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
+</a><a href="#h1-4-13" id="h1-4-13" class="d">-	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
+</a><a href="#h1-4-14" id="h1-4-14" class="d">-	cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
+</a><a href="#h1-4-15" id="h1-4-15" class="d">-
+</a><a href="#h1-4-16" id="h1-4-16" class="d">-	modmap = XGetModifierMapping(dpy);
+</a><a href="#h1-4-17" id="h1-4-17" class="d">-	for (i = 0; i &lt; 8; i++) {
+</a><a href="#h1-4-18" id="h1-4-18" class="d">-		for (j = 0; j &lt; modmap-&gt;max_keypermod; j++) {
+</a><a href="#h1-4-19" id="h1-4-19" class="d">-			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j] == XKeysymToKeycode(dpy, XK_Num_Lock))
+</a><a href="#h1-4-20" id="h1-4-20" class="d">-				numlockmask = (1 &lt;&lt; i);
+</a><a href="#h1-4-21" id="h1-4-21" class="d">-		}
+</a><a href="#h1-4-22" id="h1-4-22" class="d">-	}
+</a><a href="#h1-4-23" id="h1-4-23" class="d">-	XFree(modmap);
+</a><a href="#h1-4-24" id="h1-4-24" class="d">-
+</a><a href="#h1-4-25" id="h1-4-25" class="d">-	wa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask | EnterWindowMask | LeaveWindowMask;
+</a><a href="#h1-4-26" id="h1-4-26" class="d">-	wa.cursor = cursor[CurNormal];
+</a><a href="#h1-4-27" id="h1-4-27" class="d">-	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &amp;wa);
+</a><a href="#h1-4-28" id="h1-4-28" class="d">-
+</a><a href="#h1-4-29" id="h1-4-29" class="d">-	grabkeys();
+</a><a href="#h1-4-30" id="h1-4-30" class="d">-	initrregs();
+</a><a href="#h1-4-31" id="h1-4-31" class="d">-
+</a><a href="#h1-4-32" id="h1-4-32" class="d">-	for(ntags = 0; tags[ntags]; ntags++);
+</a><a href="#h1-4-33" id="h1-4-33" class="d">-	seltag = emallocz(sizeof(Bool) * ntags);
+</a><a href="#h1-4-34" id="h1-4-34" class="d">-	seltag[0] = True;
+</a><a href="#h1-4-35" id="h1-4-35" class="d">-
+</a><a href="#h1-4-36" id="h1-4-36" class="d">-	/* style */
+</a><a href="#h1-4-37" id="h1-4-37" class="d">-	dc.bg = getcolor(BGCOLOR);
+</a><a href="#h1-4-38" id="h1-4-38" class="d">-	dc.fg = getcolor(FGCOLOR);
+</a><a href="#h1-4-39" id="h1-4-39" class="d">-	dc.border = getcolor(BORDERCOLOR);
+</a><a href="#h1-4-40" id="h1-4-40" class="d">-	setfont(FONT);
+</a><a href="#h1-4-41" id="h1-4-41" class="d">-
+</a><a href="#h1-4-42" id="h1-4-42" class="d">-	sx = sy = 0;
+</a><a href="#h1-4-43" id="h1-4-43" class="d">-	sw = DisplayWidth(dpy, screen);
+</a><a href="#h1-4-44" id="h1-4-44" class="d">-	sh = DisplayHeight(dpy, screen);
+</a><a href="#h1-4-45" id="h1-4-45" class="d">-	mw = (sw * MASTERW) / 100;
+</a><a href="#h1-4-46" id="h1-4-46" class="d">-
+</a><a href="#h1-4-47" id="h1-4-47" class="d">-	bx = by = 0;
+</a><a href="#h1-4-48" id="h1-4-48" class="d">-	bw = sw;
+</a><a href="#h1-4-49" id="h1-4-49" class="d">-	dc.h = bh = dc.font.height + 4;
+</a><a href="#h1-4-50" id="h1-4-50" class="d">-	wa.override_redirect = 1;
+</a><a href="#h1-4-51" id="h1-4-51" class="d">-	wa.background_pixmap = ParentRelative;
+</a><a href="#h1-4-52" id="h1-4-52" class="d">-	wa.event_mask = ButtonPressMask | ExposureMask;
+</a><a href="#h1-4-53" id="h1-4-53" class="d">-	barwin = XCreateWindow(dpy, root, bx, by, bw, bh, 0, DefaultDepth(dpy, screen),
+</a><a href="#h1-4-54" id="h1-4-54" class="d">-			CopyFromParent, DefaultVisual(dpy, screen),
+</a><a href="#h1-4-55" id="h1-4-55" class="d">-			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+</a><a href="#h1-4-56" id="h1-4-56" class="d">-	XDefineCursor(dpy, barwin, cursor[CurNormal]);
+</a><a href="#h1-4-57" id="h1-4-57" class="d">-	XMapRaised(dpy, barwin);
+</a><a href="#h1-4-58" id="h1-4-58" class="d">-
+</a><a href="#h1-4-59" id="h1-4-59" class="d">-	dc.drawable = XCreatePixmap(dpy, root, sw, bh, DefaultDepth(dpy, screen));
+</a><a href="#h1-4-60" id="h1-4-60" class="d">-	dc.gc = XCreateGC(dpy, root, 0, 0);
+</a><a href="#h1-4-61" id="h1-4-61" class="d">-
+</a><a href="#h1-4-62" id="h1-4-62" class="d">-	strcpy(stext, &quot;dwm-&quot;VERSION);
+</a><a href="#h1-4-63" id="h1-4-63" class="i">+	setup();
+</a> 	drawstatus();
+<a href="#h1-4-65" id="h1-4-65" class="d">-
+</a><a href="#h1-4-66" id="h1-4-66" class="d">-	issel = XQueryPointer(dpy, root, &amp;w, &amp;w, &amp;i, &amp;i, &amp;i, &amp;i, &amp;mask);
+</a><a href="#h1-4-67" id="h1-4-67" class="d">-
+</a> 	scan();
+ 
+ 	/* main event loop, also reads status text from stdin */
+<a href="#h1-5" id="h1-5" class="h">@@ -264,10 +273,10 @@ main(int argc, char *argv[])
+</a> 		if(readin)
+ 			FD_SET(STDIN_FILENO, &amp;rd);
+ 		FD_SET(xfd, &amp;rd);
+<a href="#h1-5-3" id="h1-5-3" class="d">-		i = select(xfd + 1, &amp;rd, NULL, NULL, NULL);
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-		if((i == -1) &amp;&amp; (errno == EINTR))
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+		r = select(xfd + 1, &amp;rd, NULL, NULL, NULL);
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+		if((r == -1) &amp;&amp; (errno == EINTR))
+</a> 			continue;
+<a href="#h1-5-8" id="h1-5-8" class="d">-		if(i &gt; 0) {
+</a><a href="#h1-5-9" id="h1-5-9" class="i">+		if(r &gt; 0) {
+</a> 			if(readin &amp;&amp; FD_ISSET(STDIN_FILENO, &amp;rd)) {
+ 				readin = NULL != fgets(stext, sizeof(stext), stdin);
+ 				if(readin)
+<a href="#h1-6" id="h1-6" class="h">@@ -277,7 +286,7 @@ main(int argc, char *argv[])
+</a> 				drawstatus();
+ 			}
+ 		}
+<a href="#h1-6-3" id="h1-6-3" class="d">-		else if(i &lt; 0)
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+		else if(r &lt; 0)
+</a> 			eprint(&quot;select failed\n&quot;);
+ 		procevent();
+ 	}
+<b>diff --git a/<a id="h2" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -195,7 +195,7 @@ restack()
+</a> void
+ togglemode(Arg *arg)
+ {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	arrange = arrange == dofloat ? dotile : dofloat;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	arrange = (arrange == dofloat) ? dotile : dofloat;
+</a> 	if(sel)
+ 		arrange(NULL);
+ 	else
+</pre>
+</div>
+</body>
+</html>

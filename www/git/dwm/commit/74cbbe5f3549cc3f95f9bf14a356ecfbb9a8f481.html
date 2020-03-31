@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>reverted accidental removal of sx, sy - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/74cbbe5f3549cc3f95f9bf14a356ecfbb9a8f481.html">74cbbe5f3549cc3f95f9bf14a356ecfbb9a8f481</a>
+<b>parent</b> <a href="../commit/52f0b9e2e3e7eba1e7d2b940863d9a72fa8112d6.html">52f0b9e2e3e7eba1e7d2b940863d9a72fa8112d6</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Wed, 21 Feb 2007 11:49:06 +0100
+
+reverted accidental removal of sx, sy
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">main.c</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 6 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -87,7 +87,7 @@ typedef struct {
+</a> 
+ extern const char *tags[];			/* all tags */
+ extern char stext[256];				/* status text */
+<a href="#h0-0-3" id="h0-0-3" class="d">-extern int screen, sw, sh;			/* screen geometry */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+extern int screen, sx, sy, sw, sh;		/* screen geometry */
+</a> extern int wax, way, wah, waw;			/* windowarea geometry */
+ extern unsigned int bh, blw;			/* bar height, bar layout label width */
+ extern unsigned int master, nmaster;		/* master percent, number of master clients */
+<b>diff --git a/<a id="h1" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -18,7 +18,7 @@
+</a> /* extern */
+ 
+ char stext[256];
+<a href="#h1-0-3" id="h1-0-3" class="d">-int screen, sw, sh, wax, way, waw, wah;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+int screen, sx, sy, sw, sh, wax, way, waw, wah;
+</a> unsigned int bh, ntags, numlockmask;
+ Atom wmatom[WMLast], netatom[NetLast];
+ Bool *seltag;
+<a href="#h1-1" id="h1-1" class="h">@@ -181,6 +181,7 @@ setup(void) {
+</a> 	dc.sel[ColFG] = initcolor(SELFGCOLOR);
+ 	initfont(FONT);
+ 	/* geometry */
+<a href="#h1-1-3" id="h1-1-3" class="i">+	sx = sy = 0;
+</a> 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+ 	initlayouts();
+<a href="#h1-2" id="h1-2" class="h">@@ -189,15 +190,15 @@ setup(void) {
+</a> 	wa.override_redirect = 1;
+ 	wa.background_pixmap = ParentRelative;
+ 	wa.event_mask = ButtonPressMask | ExposureMask;
+<a href="#h1-2-3" id="h1-2-3" class="d">-	barwin = XCreateWindow(dpy, root, 0, (TOPBAR ? 0 : sh - bh), sw, bh, 0,
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	barwin = XCreateWindow(dpy, root, sx, sy + (TOPBAR ? 0 : sh - bh), sw, bh, 0,
+</a> 			DefaultDepth(dpy, screen), CopyFromParent, DefaultVisual(dpy, screen),
+ 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+ 	XDefineCursor(dpy, barwin, cursor[CurNormal]);
+ 	XMapRaised(dpy, barwin);
+ 	strcpy(stext, &quot;dwm-&quot;VERSION);
+ 	/* windowarea */
+<a href="#h1-2-11" id="h1-2-11" class="d">-	wax = 0;
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-	way = (TOPBAR ? bh : 0);
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+	wax = sx;
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+	way = sy + (TOPBAR ? bh : 0);
+</a> 	wah = sh - bh;
+ 	waw = sw;
+ 	/* pixmap for everything */
+</pre>
+</div>
+</body>
+</html>

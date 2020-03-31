@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>and the winner is - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c73d5cb7b67d60abc92ff83aff57fc610dcd08e1.html">c73d5cb7b67d60abc92ff83aff57fc610dcd08e1</a>
+<b>parent</b> <a href="../commit/6458803d213aa0d083f4c350e5fc813a9a095045.html">6458803d213aa0d083f4c350e5fc813a9a095045</a>
+<b>Author:</b> arg@mig29 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Fri,  1 Dec 2006 17:45:27 +0100
+
+and the winner is
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">draw.c</a></td><td> | </td><td class="num">29</td><td><span class="i">+++++++++++++++++</span><span class="d">------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 20 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -30,13 +30,13 @@ textnw(const char *text, unsigned int len) {
+</a> }
+ 
+ static void
+<a href="#h0-0-3" id="h0-0-3" class="d">-drawtext(const char *text, unsigned long col[ColLast], Bool dot, Bool corner) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+drawtext(const char *text, unsigned long col[ColLast], Bool filleddot, Bool emptydot) {
+</a> 	int x, y, w, h;
+ 	static char buf[256];
+ 	unsigned int len, olen;
+ 	XGCValues gcv;
+ 	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+<a href="#h0-0-10" id="h0-0-10" class="d">-	XPoint pt[3];
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	XPoint pt[5];
+</a> 
+ 	XSetForeground(dpy, dc.gc, col[ColBG]);
+ 	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+<a href="#h0-1" id="h0-1" class="h">@@ -74,20 +74,25 @@ drawtext(const char *text, unsigned long col[ColLast], Bool dot, Bool corner) {
+</a> 		XChangeGC(dpy, dc.gc, GCForeground | GCFont, &amp;gcv);
+ 		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+ 	}
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(dot) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	x = (h + 2) / 4;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	if(filleddot) {
+</a> 		r.x = dc.x + 2;
+ 		r.y = dc.y + 2;
+<a href="#h0-1-8" id="h0-1-8" class="d">-		r.width = r.height = (h + 2) / 4;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		r.width = r.height = x;
+</a> 		XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+ 	}
+<a href="#h0-1-12" id="h0-1-12" class="d">-	if(corner) {
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-		pt[0].x = dc.x + 1;
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-		pt[0].y = dc.y + dc.h / 2 + 1;
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-		pt[1].x = 0;
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-		pt[1].y = - dc.h / 2;
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-		pt[2].x = dc.h / 2;
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-		pt[2].y = 0;
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-		XDrawLines(dpy, dc.drawable, dc.gc, pt, 3, CoordModePrevious);
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	if(emptydot) {
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+		pt[0].x = dc.x + 2;
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+		pt[0].y = dc.y + 2;
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+		pt[1].x = x;
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+		pt[1].y = 0;
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+		pt[2].x = 0;
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+		pt[2].y = x;
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+		pt[3].x = -x;
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+		pt[3].y = 0;
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+		pt[4].x = 0;
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+		pt[4].y = -x;
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+		XDrawLines(dpy, dc.drawable, dc.gc, pt, 5, CoordModePrevious);
+</a> 	}
+ }
+ 
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -21,8 +21,9 @@ tags. Selecting certain tags displays all windows with these tags.
+</a> dwm contains a small status bar which displays all available tags, the mode,
+ the title of the focused window, and the text read from standard input. The
+ selected tags are indicated with a different color. The tags of the focused
+<a href="#h1-0-3" id="h1-0-3" class="d">-window are indicated with a small point in the top left corner.  The tags which
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-are applied to one or more clients are indicated with a top line.
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+window are indicated with a filled square in the top left corner.  The tags
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+which are applied to one or more clients are indicated with an empty square in
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+the top left corner.
+</a> .P
+ dwm draws a 1-pixel border around windows to indicate the focus state.
+ Unfocused windows contain a small bar in front of them displaying their title.
+</pre>
+</div>
+</body>
+</html>

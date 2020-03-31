@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>add prototype for command parsing - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d61a2a8fce2638594644feb664ce04398825b0f3.html">d61a2a8fce2638594644feb664ce04398825b0f3</a>
+<b>parent</b> <a href="../commit/240411e7d08006f181afbf70930f748d7585ce85.html">240411e7d08006f181afbf70930f748d7585ce85</a>
+<b>Author:</b> Matthias-Christian Ott &lt;<a href="mailto:ott@enolink.de">ott@enolink.de</a>&gt;
+<b>Date:</b>   Thu,  7 Aug 2008 10:38:54 +0200
+
+add prototype for command parsing
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">std.c</a></td><td> | </td><td class="num">81</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 50 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/std.c.html">std.c</a> b/<a href="../file/std.c.html">std.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -18,19 +18,6 @@
+</a> #define MAX(a,b)	(((a) &gt; (b)) ? (a) : (b))
+ #define MIN(a,b)	(((a) &lt; (b)) ? (a) : (b))
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void buffer(char c);
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-static void cmd(const char *cmdstr, ...);
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-static int getch();
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-static void getpty(void);
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-static void movea(int x, int y);
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-static void mover(int x, int y);
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-static void parseesc(void);
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-static void scroll(int l);
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-static void shell(void);
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-static void sigchld(int n);
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-static char unbuffer(void);
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-static void ungetch(int c);
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-
+</a> typedef struct {
+ 	unsigned char data[BUFSIZ];
+ 	int s, e;
+<a href="#h0-1" id="h0-1" class="h">@@ -40,8 +27,23 @@ typedef struct {
+</a> typedef struct {
+ 	unsigned char data[BUFSIZ];
+ 	int i, n;
+<a href="#h0-1-3" id="h0-1-3" class="i">+	int fd;
+</a> } ReadBuffer;
+ 
+<a href="#h0-1-6" id="h0-1-6" class="i">+static void buffer(char c);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+static void cmd(const char *cmdstr, ...);
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+static int getch(ReadBuffer *buf);
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+static void getpty(void);
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+static void movea(int x, int y);
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+static void mover(int x, int y);
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+static void parsecmd(void);
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+static void parseesc(void);
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+static void scroll(int l);
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+static void shell(void);
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+static void sigchld(int n);
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+static char unbuffer(void);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+static void ungetch(ReadBuffer *buf, int c);
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+
+</a> static int cols = 80, lines = 25;
+ static int cx = 0, cy = 0;
+ static int c;
+<a href="#h0-2" id="h0-2" class="h">@@ -49,7 +51,7 @@ static int ptm, pts;
+</a> static _Bool bold, digit, qmark;
+ static pid_t pid;
+ static RingBuffer buf;
+<a href="#h0-2-3" id="h0-2-3" class="d">-static ReadBuffer rbuf;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+static ReadBuffer cmdbuf, ptmbuf;
+</a> 
+ void
+ buffer(char c) {
+<a href="#h0-3" id="h0-3" class="h">@@ -73,14 +75,14 @@ cmd(const char *cmdstr, ...) {
+</a> }
+ 
+ int
+<a href="#h0-3-3" id="h0-3-3" class="d">-getch() {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	if(rbuf.i++ &gt;= rbuf.n) {
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-		rbuf.n = read(ptm, rbuf.data, LENGTH(rbuf.data));
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-		if(rbuf.n == -1)
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-			err(EXIT_FAILURE, &quot;cannot read from slave pty&quot;);
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-		rbuf.i = 0;
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+getch(ReadBuffer *buf) {
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+	if(buf-&gt;i++ &gt;= buf-&gt;n) {
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+		buf-&gt;n = read(buf-&gt;fd, buf-&gt;data, BUFSIZ);
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+		if(buf-&gt;n == -1)
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+			err(EXIT_FAILURE, &quot;cannot read&quot;);
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+		buf-&gt;i = 0;
+</a> 	}
+<a href="#h0-3-16" id="h0-3-16" class="d">-	return rbuf.data[rbuf.i];
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+	return buf-&gt;data[buf-&gt;i];
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -98,15 +100,19 @@ mover(int x, int y) {
+</a> }
+ 
+ void
+<a href="#h0-4-3" id="h0-4-3" class="i">+parsecmd(void) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+}
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+void
+</a> parseesc(void) {
+ 	int i, j;
+ 	int arg[16];
+ 
+ 	memset(arg, 0, LENGTH(arg));
+<a href="#h0-4-12" id="h0-4-12" class="d">-	c = getch();
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+	c = getch(&amp;ptmbuf);
+</a> 	switch(c) {
+ 	case &#39;[&#39;:
+<a href="#h0-4-16" id="h0-4-16" class="d">-		c = getch();
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+		c = getch(&amp;ptmbuf);
+</a> 		for(j = 0; j &lt; LENGTH(arg);) {
+ 			if(isdigit(c)) {
+ 				digit = 1;
+<a href="#h0-5" id="h0-5" class="h">@@ -128,7 +134,7 @@ parseesc(void) {
+</a> 				}
+ 				break;
+ 			}
+<a href="#h0-5-3" id="h0-5-3" class="d">-			c = getch();
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+			c = getch(&amp;ptmbuf);
+</a> 		}
+ 		switch(c) {
+ 		case &#39;@&#39;:
+<a href="#h0-6" id="h0-6" class="h">@@ -202,7 +208,7 @@ parseesc(void) {
+</a> 		break;
+ 	default:
+ 		putchar(&#39;\033&#39;);
+<a href="#h0-6-3" id="h0-6-3" class="d">-		ungetch(c);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+		ungetch(&amp;ptmbuf, c);
+</a> 	}
+ }
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -291,10 +297,10 @@ unbuffer(void) {
+</a> }
+ 
+ void
+<a href="#h0-7-3" id="h0-7-3" class="d">-ungetch(int c) {
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-	if(rbuf.i + 1 &gt;= rbuf.n)
+</a><a href="#h0-7-5" id="h0-7-5" class="d">-		errx(EXIT_FAILURE, &quot;read buffer full&quot;);
+</a><a href="#h0-7-6" id="h0-7-6" class="d">-	rbuf.data[rbuf.i++] = c;
+</a><a href="#h0-7-7" id="h0-7-7" class="i">+ungetch(ReadBuffer *buf, int c) {
+</a><a href="#h0-7-8" id="h0-7-8" class="i">+	if(buf-&gt;i + 1 &gt;= buf-&gt;n)
+</a><a href="#h0-7-9" id="h0-7-9" class="i">+		errx(EXIT_FAILURE, &quot;buffer full&quot;);
+</a><a href="#h0-7-10" id="h0-7-10" class="i">+	buf-&gt;data[buf-&gt;i++] = c;
+</a> }
+ 
+ int
+<a href="#h0-8" id="h0-8" class="h">@@ -307,15 +313,28 @@ main(int argc, char *argv[]) {
+</a> 		errx(EXIT_FAILURE, &quot;usage: std [-v]&quot;);
+ 	getpty();
+ 	shell();
+<a href="#h0-8-3" id="h0-8-3" class="i">+	cmdbuf.fd = STDIN_FILENO;
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+	ptmbuf.fd = ptm;
+</a> 	FD_ZERO(&amp;rfds);
+ 	FD_SET(STDIN_FILENO, &amp;rfds);
+ 	FD_SET(ptm, &amp;rfds);
+ 	for(;;) {
+ 		if(select(ptm + 1, &amp;rfds, NULL, NULL, NULL) == -1)
+ 			err(EXIT_FAILURE, &quot;cannot select&quot;);
+<a href="#h0-8-11" id="h0-8-11" class="i">+		if(FD_ISSET(STDIN_FILENO, &amp;rfds))
+</a><a href="#h0-8-12" id="h0-8-12" class="i">+			do {
+</a><a href="#h0-8-13" id="h0-8-13" class="i">+				c = getch(&amp;cmdbuf);
+</a><a href="#h0-8-14" id="h0-8-14" class="i">+				switch(c) {
+</a><a href="#h0-8-15" id="h0-8-15" class="i">+				case &#39;:&#39;:
+</a><a href="#h0-8-16" id="h0-8-16" class="i">+					parsecmd();
+</a><a href="#h0-8-17" id="h0-8-17" class="i">+					break;
+</a><a href="#h0-8-18" id="h0-8-18" class="i">+				default:
+</a><a href="#h0-8-19" id="h0-8-19" class="i">+					break;
+</a><a href="#h0-8-20" id="h0-8-20" class="i">+				}
+</a><a href="#h0-8-21" id="h0-8-21" class="i">+			} while(cmdbuf.i &lt; cmdbuf.n);
+</a> 		if(FD_ISSET(ptm, &amp;rfds)) {
+ 			do {
+<a href="#h0-8-24" id="h0-8-24" class="d">-				c = getch();
+</a><a href="#h0-8-25" id="h0-8-25" class="i">+				c = getch(&amp;ptmbuf);
+</a> 				switch(c) {
+ 				case &#39;\033&#39;:
+ 					parseesc();
+<a href="#h0-9" id="h0-9" class="h">@@ -323,7 +342,7 @@ main(int argc, char *argv[]) {
+</a> 				default:
+ 					putchar(c);
+ 				}
+<a href="#h0-9-3" id="h0-9-3" class="d">-			} while(rbuf.i &lt; rbuf.n);
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+			} while(ptmbuf.i &lt; ptmbuf.n);
+</a> 			fflush(stdout);
+ 		}
+ 	}
+</pre>
+</div>
+</body>
+</html>

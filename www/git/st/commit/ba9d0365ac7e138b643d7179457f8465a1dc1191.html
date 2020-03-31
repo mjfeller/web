@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Clarify some or exclusive expressions - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ba9d0365ac7e138b643d7179457f8465a1dc1191.html">ba9d0365ac7e138b643d7179457f8465a1dc1191</a>
+<b>parent</b> <a href="../commit/950ff21e17af487b205ea0b666be015790114fa7.html">950ff21e17af487b205ea0b666be015790114fa7</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Thu,  8 Nov 2012 17:17:26 +0100
+
+Clarify some or exclusive expressions
+
+Since relational expresions are always evaluated to 0 or 1, we can use
+bitwise xor operator instead of using more complex boolean expressions.
+---
+ st.c |   14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 7 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1475,15 +1475,15 @@ tsetmode(bool priv, bool set, int *args, int narg) {
+</a> 				break;
+ 			case 1049: /* = 1047 and 1048 */
+ 			case 47:
+<a href="#h0-0-3" id="h0-0-3" class="d">-			case 1047:
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-				if(IS_SET(MODE_ALTSCREEN))
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+			case 1047: {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+				bool alt = IS_SET(MODE_ALTSCREEN) != 0;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+				if(alt)
+</a> 					tclearregion(0, 0, term.col-1, term.row-1);
+<a href="#h0-0-9" id="h0-0-9" class="d">-				if((set &amp;&amp; !IS_SET(MODE_ALTSCREEN)) ||
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-						(!set &amp;&amp; IS_SET(MODE_ALTSCREEN))) {
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+				if(set ^ alt)		/* set is always 1 or 0 */
+</a> 					tswapscreen();
+<a href="#h0-0-13" id="h0-0-13" class="d">-				}
+</a> 				if(*args != 1049)
+ 					break;
+<a href="#h0-0-16" id="h0-0-16" class="i">+			}
+</a> 				/* pass through */
+ 			case 1048:
+ 				tcursor((set) ? CURSOR_SAVE : CURSOR_LOAD);
+<a href="#h0-1" id="h0-1" class="h">@@ -2546,9 +2546,9 @@ drawregion(int x1, int y1, int x2, int y2) {
+</a> 	int ic, ib, x, y, ox, sl;
+ 	Glyph base, new;
+ 	char buf[DRAW_BUF_SIZ];
+<a href="#h0-1-3" id="h0-1-3" class="d">-	bool ena_sel = sel.bx != -1, alt = IS_SET(MODE_ALTSCREEN);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	bool ena_sel = sel.bx != -1, alt = IS_SET(MODE_ALTSCREEN) != 0;
+</a> 
+<a href="#h0-1-6" id="h0-1-6" class="d">-	if((sel.alt &amp;&amp; !alt) || (!sel.alt &amp;&amp; alt))
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	if((sel.alt != 0) ^ alt)
+</a> 		ena_sel = 0;
+ 	if(!(xw.state &amp; WIN_VISIBLE))
+ 		return;
+</pre>
+</div>
+</body>
+</html>

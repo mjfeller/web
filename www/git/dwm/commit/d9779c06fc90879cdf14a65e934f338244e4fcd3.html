@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>some stylistic changes - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d9779c06fc90879cdf14a65e934f338244e4fcd3.html">d9779c06fc90879cdf14a65e934f338244e4fcd3</a>
+<b>parent</b> <a href="../commit/20996c6c5a0edbc9ebcb82e22520d04b789a9f0a.html">20996c6c5a0edbc9ebcb82e22520d04b789a9f0a</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 14 Jul 2009 16:01:14 +0100
+
+some stylistic changes
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">17</td><td><span class="i">++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -51,7 +51,7 @@
+</a> #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
+ #define WIDTH(X)                ((X)-&gt;w + 2 * (X)-&gt;bw)
+ #define HEIGHT(X)               ((X)-&gt;h + 2 * (X)-&gt;bw)
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define TAGMASK                 ((int)((1LL &lt;&lt; LENGTH(tags)) - 1))
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define TAGMASK                 ((int)((1 &lt;&lt; LENGTH(tags)) - 1))
+</a> #define TEXTW(X)                (textnw(X, strlen(X)) + dc.font.height)
+ 
+ /* enums */
+<a href="#h0-1" id="h0-1" class="h">@@ -271,7 +271,7 @@ static Window root;
+</a> #include &quot;config.h&quot;
+ 
+ /* compile-time check if all tags fit into an unsigned int bit array. */
+<a href="#h0-1-3" id="h0-1-3" class="d">-struct NumTags { char limitexceeded[sizeof(unsigned int) * 8 &lt; LENGTH(tags) ? -1 : 1]; };
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+struct NumTags { char limitexceeded[LENGTH(tags) &gt; 31 ? -1 : 1]; };
+</a> 
+ /* function implementations */
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -420,9 +420,9 @@ buttonpress(XEvent *e) {
+</a> 	}
+ 	if(ev-&gt;window == selmon-&gt;barwin) {
+ 		i = x = 0;
+<a href="#h0-2-3" id="h0-2-3" class="d">-		do
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		do {
+</a> 			x += TEXTW(tags[i]);
+<a href="#h0-2-6" id="h0-2-6" class="d">-		while(ev-&gt;x &gt;= x &amp;&amp; ++i &lt; LENGTH(tags));
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		} while(ev-&gt;x &gt;= x &amp;&amp; ++i &lt; LENGTH(tags));
+</a> 		if(i &lt; LENGTH(tags)) {
+ 			click = ClkTagBar;
+ 			arg.ui = 1 &lt;&lt; i;
+<a href="#h0-3" id="h0-3" class="h">@@ -977,6 +977,7 @@ initfont(const char *fontstr) {
+</a> 		XFontSetExtents *font_extents;
+ 		XFontStruct **xfonts;
+ 		char **font_names;
+<a href="#h0-3-3" id="h0-3-3" class="i">+
+</a> 		dc.font.ascent = dc.font.descent = 0;
+ 		font_extents = XExtentsOfFontSet(dc.font.set);
+ 		n = XFontsOfFontSet(dc.font.set, &amp;xfonts, &amp;font_names);
+<a href="#h0-4" id="h0-4" class="h">@@ -1184,8 +1185,7 @@ movemouse(const Arg *arg) {
+</a> 				resize(c, nx, ny, c-&gt;w, c-&gt;h, True);
+ 			break;
+ 		}
+<a href="#h0-4-3" id="h0-4-3" class="d">-	}
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	while(ev.type != ButtonRelease);
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	} while(ev.type != ButtonRelease);
+</a> 	XUngrabPointer(dpy, CurrentTime);
+ 	if((m = ptrtomon(c-&gt;x + c-&gt;w / 2, c-&gt;y + c-&gt;h / 2)) != selmon) {
+ 		sendmon(c, m);
+<a href="#h0-5" id="h0-5" class="h">@@ -1303,8 +1303,7 @@ resizemouse(const Arg *arg) {
+</a> 				resize(c, c-&gt;x, c-&gt;y, nw, nh, True);
+ 			break;
+ 		}
+<a href="#h0-5-3" id="h0-5-3" class="d">-	}
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	while(ev.type != ButtonRelease);
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+	} while(ev.type != ButtonRelease);
+</a> 	XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w + c-&gt;bw - 1, c-&gt;h + c-&gt;bw - 1);
+ 	XUngrabPointer(dpy, CurrentTime);
+ 	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+<a href="#h0-6" id="h0-6" class="h">@@ -1347,7 +1346,7 @@ run(void) {
+</a> 	XSync(dpy, False);
+ 	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev))
+ 		if(handler[ev.type])
+<a href="#h0-6-3" id="h0-6-3" class="d">-			(handler[ev.type])(&amp;ev); /* call handler */
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+			handler[ev.type](&amp;ev); /* call handler */
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

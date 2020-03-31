@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Sander&#39;s drop_bh patch - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/042297b27b64aa1ff3a7da12f5b07268ba2f11eb.html">042297b27b64aa1ff3a7da12f5b07268ba2f11eb</a>
+<b>parent</b> <a href="../commit/a5cb80b86cdedb8cd1f3a02de47f204bd174f649.html">a5cb80b86cdedb8cd1f3a02de47f204bd174f649</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Wed, 31 Jan 2007 20:08:55 +0100
+
+applied Sander&#39;s drop_bh patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">view.c</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -98,11 +98,11 @@ dotile(void) {
+</a> 			else {  /* tile window */
+ 				c-&gt;x += mw;
+ 				c-&gt;w = tw - 2 * BORDERPX;
+<a href="#h0-0-3" id="h0-0-3" class="d">-				if(th - 2 * BORDERPX &gt; bh) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+				if(th &gt; 2 * BORDERPX) {
+</a> 					c-&gt;y += (i - nmaster) * th;
+ 					c-&gt;h = th - 2 * BORDERPX;
+ 				}
+<a href="#h0-0-8" id="h0-0-8" class="d">-				else /* fallback if th - 2 * BORDERPX &lt; bh */
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+				else /* fallback if th &lt;= 2 * BORDERPX */
+</a> 					c-&gt;h = wah - 2 * BORDERPX;
+ 			}
+ 			resize(c, False);
+<a href="#h0-1" id="h0-1" class="h">@@ -150,7 +150,7 @@ focusprev(Arg *arg) {
+</a> void
+ incnmaster(Arg *arg) {
+ 	if((arrange == dofloat) || (nmaster + arg-&gt;i &lt; 1)
+<a href="#h0-1-3" id="h0-1-3" class="d">-		|| (wah / (nmaster + arg-&gt;i) - 2 * BORDERPX &lt; bh))
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		|| (wah / (nmaster + arg-&gt;i) &lt;= 2 * BORDERPX))
+</a> 		return;
+ 	nmaster += arg-&gt;i;
+ 	if(sel)
+<a href="#h0-2" id="h0-2" class="h">@@ -174,8 +174,8 @@ resizemaster(Arg *arg) {
+</a> 	if(arg-&gt;i == 0)
+ 		master = MASTER;
+ 	else {
+<a href="#h0-2-3" id="h0-2-3" class="d">-		if(waw * (master + arg-&gt;i) / 1000 &gt; waw - bh - 2 * BORDERPX
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-			|| waw * (master + arg-&gt;i) / 1000 &lt; bh + 2 * BORDERPX)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		if(waw * (master + arg-&gt;i) / 1000 &gt;= waw - 2 * BORDERPX
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			|| waw * (master + arg-&gt;i) / 1000 &lt;= 2 * BORDERPX)
+</a> 			return;
+ 		master += arg-&gt;i;
+ 	}
+</pre>
+</div>
+</body>
+</html>

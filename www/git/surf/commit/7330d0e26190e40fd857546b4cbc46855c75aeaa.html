@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Applying Nibbles download patch. Thanks! - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7330d0e26190e40fd857546b4cbc46855c75aeaa.html">7330d0e26190e40fd857546b4cbc46855c75aeaa</a>
+<b>parent</b> <a href="../commit/7d3d996a3dd355a6382c9976f9734e593daad26c.html">7d3d996a3dd355a6382c9976f9734e593daad26c</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Wed, 26 May 2010 15:33:01 +0200
+
+Applying Nibbles download patch. Thanks!
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 20 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -12,9 +12,15 @@ static time_t sessiontime   = 0;
+</a> 	&quot;prop=\&quot;`xprop -id $2 $0 | cut -d &#39;\&quot;&#39; -f 2 | dmenu`\&quot; &amp;&amp;&quot; \
+ 	&quot;xprop -id $2 -f $1 8s -set $1 \&quot;$prop\&quot;&quot;, \
+ 	p, q, winid, NULL } }
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define DOWNLOAD(p)       { \
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	.v = (char *[]){ &quot;/bin/sh&quot;, &quot;-c&quot;, \
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	&quot;prop=\&quot;`xprop -id $1 $0 | cut -d &#39;\&quot;&#39; -f 2`\&quot;;&quot; \
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	&quot;xterm -e \&quot;wget --load-cookies ~/.surf/cookies.txt $prop;\&quot;&quot;, \
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	p, winid, NULL } }
+</a> #define MODKEY GDK_CONTROL_MASK
+ static Key keys[] = {
+     /* modifier	            keyval      function    arg             Focus */
+<a href="#h0-0-11" id="h0-0-11" class="i">+    { MODKEY,               GDK_s,      spawn,      DOWNLOAD(&quot;_SURF_HILIGHT&quot;) },
+</a>     { MODKEY|GDK_SHIFT_MASK,GDK_r,      reload,     { .b = TRUE } },
+     { MODKEY,               GDK_r,      reload,     { .b = FALSE } },
+     { MODKEY|GDK_SHIFT_MASK,GDK_p,      print,      { 0 } },
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -81,6 +81,7 @@ static const char *getatom(Client *c, int a);
+</a> static const char *getcookies(SoupURI *uri);
+ static char *geturi(Client *c);
+ void gotheaders(SoupMessage *msg, gpointer user_data);
+<a href="#h1-0-3" id="h1-0-3" class="i">+static gboolean initdownload(WebKitWebView *v, WebKitDownload *o, Client *c);
+</a> static gboolean keypress(GtkWidget *w, GdkEventKey *ev, Client *c);
+ static void linkhover(WebKitWebView *v, const char* t, const char* l, Client *c);
+ static void loadstatuschange(WebKitWebView *view, GParamSpec *pspec, Client *c);
+<a href="#h1-1" id="h1-1" class="h">@@ -329,6 +330,16 @@ gotheaders(SoupMessage *msg, gpointer v) {
+</a> }
+ 
+ gboolean
+<a href="#h1-1-3" id="h1-1-3" class="i">+initdownload(WebKitWebView *view, WebKitDownload *o, Client *c) {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	Arg arg;
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	updatewinid(c);
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	cmd = (Arg)DOWNLOAD(&quot;_SURF_HILIGHT&quot;);
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	spawn(c, &amp;cmg);
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+	return FALSE;
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+}
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+gboolean
+</a> keypress(GtkWidget* w, GdkEventKey *ev, Client *c) {
+ 	guint i;
+ 	gboolean processed = FALSE;
+<a href="#h1-2" id="h1-2" class="h">@@ -454,6 +465,7 @@ newclient(void) {
+</a> 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;window-object-cleared&quot;, G_CALLBACK(windowobjectcleared), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;notify::load-status&quot;, G_CALLBACK(loadstatuschange), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;notify::progress&quot;, G_CALLBACK(progresschange), c);
+<a href="#h1-2-3" id="h1-2-3" class="i">+	g_signal_connect(G_OBJECT(c-&gt;view), &quot;download-requested&quot;, G_CALLBACK(initdownload), c);
+</a> 
+ 	/* Indicator */
+ 	c-&gt;indicator = gtk_drawing_area_new();
+<a href="#h1-3" id="h1-3" class="h">@@ -495,6 +507,7 @@ newclient(void) {
+</a> 
+ 	setatom(c, AtomFind, &quot;&quot;);
+ 	setatom(c, AtomUri, &quot;about:blank&quot;);
+<a href="#h1-3-3" id="h1-3-3" class="i">+	setatom(c, AtomHiLight, &quot;about:blank&quot;);
+</a> 	if(NOBACKGROUND)
+ 		webkit_web_view_set_transparent(c-&gt;view, TRUE);
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -750,6 +763,7 @@ update(Client *c) {
+</a> 		t = g_strdup(c-&gt;linkhover);
+ 	else
+ 		t = g_strdup(c-&gt;title);
+<a href="#h1-4-3" id="h1-4-3" class="i">+	setatom(c, AtomHiLight, c-&gt;linkhover ? c-&gt;linkhover : geturi(c));
+</a> 	drawindicator(c);
+ 	gtk_window_set_title(GTK_WINDOW(c-&gt;win), t);
+ 	g_free(t);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Simplify handling of c-&gt;title - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d4ac9fb6f4b719607fa7ff13a44a78d057d27be5.html">d4ac9fb6f4b719607fa7ff13a44a78d057d27be5</a>
+<b>parent</b> <a href="../commit/10105c8b87a1e3e4c5b98100a6947f1c350561da.html">10105c8b87a1e3e4c5b98100a6947f1c350561da</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sun, 22 Nov 2015 13:24:24 +0100
+
+Simplify handling of c-&gt;title
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++++</span><span class="d">-----------------</span></td></tr>
+</table></pre><pre>1 file changed, 13 insertions(+), 17 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -333,14 +333,12 @@ newclient(Client *rc)
+</a> 	if (!(c = calloc(1, sizeof(Client))))
+ 		die(&quot;Cannot malloc!\n&quot;);
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	c-&gt;title = NULL;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	c-&gt;progress = 100;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-
+</a> 	c-&gt;next = clients;
+ 	clients = c;
+ 
+<a href="#h0-0-9" id="h0-0-9" class="d">-	c-&gt;view = newview(c, rc ? rc-&gt;view : NULL);
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	c-&gt;progress = 100;
+</a> 	c-&gt;tlsflags = G_TLS_CERTIFICATE_VALIDATE_ALL + 1;
+<a href="#h0-0-12" id="h0-0-12" class="i">+	c-&gt;view = newview(c, rc ? rc-&gt;view : NULL);
+</a> 
+ 	return c;
+ }
+<a href="#h0-1" id="h0-1" class="h">@@ -435,26 +433,24 @@ void
+</a> updatetitle(Client *c)
+ {
+ 	char *title;
+<a href="#h0-1-3" id="h0-1-3" class="i">+	const char *name = c-&gt;targeturi ? c-&gt;targeturi :
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	                   c-&gt;title ? c-&gt;title : &quot;&quot;;
+</a> 
+ 	if (showindicators) {
+ 		gettogglestats(c);
+ 		getpagestats(c);
+ 
+<a href="#h0-1-10" id="h0-1-10" class="d">-		if (c-&gt;progress != 100) {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		if (c-&gt;progress != 100)
+</a> 			title = g_strdup_printf(&quot;[%i%%] %s:%s | %s&quot;,
+<a href="#h0-1-13" id="h0-1-13" class="d">-			        c-&gt;progress, togglestats, pagestats,
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-			        c-&gt;targeturi ? c-&gt;targeturi : c-&gt;title);
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-		} else {
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+			        c-&gt;progress, togglestats, pagestats, name);
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		else
+</a> 			title = g_strdup_printf(&quot;%s:%s | %s&quot;,
+<a href="#h0-1-19" id="h0-1-19" class="d">-			        togglestats, pagestats,
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-			        c-&gt;targeturi ? c-&gt;targeturi : c-&gt;title);
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-		}
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+			        togglestats, pagestats, name);
+</a> 
+ 		gtk_window_set_title(GTK_WINDOW(c-&gt;win), title);
+ 		g_free(title);
+ 	} else {
+<a href="#h0-1-27" id="h0-1-27" class="d">-		gtk_window_set_title(GTK_WINDOW(c-&gt;win), c-&gt;title ?
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-		                     c-&gt;title : &quot;&quot;);
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+		gtk_window_set_title(GTK_WINDOW(c-&gt;win), name);
+</a> 	}
+ }
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -1543,15 +1539,15 @@ main(int argc, char *argv[])
+</a> 	} ARGEND;
+ 	if (argc &gt; 0)
+ 		arg.v = argv[0];
+<a href="#h0-2-3" id="h0-2-3" class="i">+	else
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		arg.v = &quot;about:blank&quot;;
+</a> 
+ 	setup();
+ 	c = newclient(NULL);
+ 	showview(NULL, c);
+ 
+<a href="#h0-2-10" id="h0-2-10" class="d">-	if (arg.v)
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-		loaduri(clients, &amp;arg);
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-	else
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-		updatetitle(c);
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+	loaduri(c, &amp;arg);
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	updatetitle(c);
+</a> 
+ 	gtk_main();
+ 	cleanup();
+</pre>
+</div>
+</body>
+</html>

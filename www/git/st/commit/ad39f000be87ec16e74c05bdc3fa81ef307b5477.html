@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added sigchld handler, cleaned error checking. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ad39f000be87ec16e74c05bdc3fa81ef307b5477.html">ad39f000be87ec16e74c05bdc3fa81ef307b5477</a>
+<b>parent</b> <a href="../commit/2f35cef54b5a32b5498aded0a25f78d0d973a152.html">2f35cef54b5a32b5498aded0a25f78d0d973a152</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 11 Jun 2009 16:41:14 +0200
+
+added sigchld handler, cleaned error checking.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">60</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 41 insertions(+), 26 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,4 +1,4 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="d">-/* See LICENSE for licence details.	 */
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+/* See LICENSE for licence details. */
+</a> #include &quot;st.h&quot;
+ 
+ /* Globals */
+<a href="#h0-1" id="h0-1" class="h">@@ -7,6 +7,7 @@ XWindow xw;
+</a> Term term;
+ Escseq escseq;
+ int cmdfd;
+<a href="#h0-1-3" id="h0-1-3" class="i">+pid_t pid;
+</a> int running;
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -27,34 +28,45 @@ execsh(void) {
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="d">-xbell(void) {	/* visual bell */
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+xbell(void) { /* visual bell */
+</a> 	XRectangle r = { 0, 0, xw.w, xw.h };
+ 	XSetForeground(xw.dis, dc.gc, dc.col[BellCol]);
+ 	XFillRectangles(xw.dis, xw.win, dc.gc, &amp;r, 1);
+<a href="#h0-2-8" id="h0-2-8" class="d">-	usleep(30000);
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	/* usleep(30000); */
+</a> 	draw(SCredraw);
+ }
+ 
+<a href="#h0-2-13" id="h0-2-13" class="i">+void 
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+sigchld(int a) {
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	int stat = 0;
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+	if(waitpid(pid, &amp;stat, 0) &lt; 0)
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+		die(&quot;Waiting for pid %hd failed: %s\n&quot;,	pid, SERRNO);
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+	if(WIFEXITED(stat))
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+		exit(WEXITSTATUS(stat));
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+	else
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+		exit(EXIT_FAILURE);
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+}
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+
+</a> void
+ ttynew(void) {
+ 	int m, s;
+<a href="#h0-2-28" id="h0-2-28" class="d">-	pid_t pid;
+</a> 	char *pts;
+ 
+ 	if((m = posix_openpt(O_RDWR | O_NOCTTY)) &lt; 0)
+<a href="#h0-2-32" id="h0-2-32" class="d">-		die(&quot;openpt&quot;);
+</a><a href="#h0-2-33" id="h0-2-33" class="d">-	if(grantpt(m) == -1)
+</a><a href="#h0-2-34" id="h0-2-34" class="d">-		die(&quot;grandpt&quot;);
+</a><a href="#h0-2-35" id="h0-2-35" class="d">-	if(unlockpt(m) == -1)
+</a><a href="#h0-2-36" id="h0-2-36" class="d">-		die(&quot;unlockpt&quot;);
+</a><a href="#h0-2-37" id="h0-2-37" class="d">-	if((pts = ptsname(m)) == NULL)
+</a><a href="#h0-2-38" id="h0-2-38" class="d">-		die(&quot;ptsname&quot;);
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+		die(&quot;openpt failed: %s\n&quot;, SERRNO);
+</a><a href="#h0-2-40" id="h0-2-40" class="i">+	if(grantpt(m) &lt; 0)
+</a><a href="#h0-2-41" id="h0-2-41" class="i">+		die(&quot;grandpt failed: %s\n&quot;, SERRNO);
+</a><a href="#h0-2-42" id="h0-2-42" class="i">+	if(unlockpt(m) &lt; 0)
+</a><a href="#h0-2-43" id="h0-2-43" class="i">+		die(&quot;unlockpt failed: %s\n&quot;, SERRNO);
+</a><a href="#h0-2-44" id="h0-2-44" class="i">+	if(!(pts = ptsname(m)))
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+		die(&quot;ptsname failed: %s\n&quot;, SERRNO);
+</a> 	if((s = open(pts, O_RDWR | O_NOCTTY)) &lt; 0)
+<a href="#h0-2-47" id="h0-2-47" class="d">-		die(&quot;slave open&quot;);
+</a><a href="#h0-2-48" id="h0-2-48" class="i">+		die(&quot;Couldn&#39;t open slave: %s\n&quot;, SERRNO);
+</a> 	fcntl(s, F_SETFL, O_NDELAY);
+ 	switch(pid = fork()) {
+ 	case -1:
+<a href="#h0-2-52" id="h0-2-52" class="d">-		die(&quot;fork&quot;);
+</a><a href="#h0-2-53" id="h0-2-53" class="i">+		die(&quot;fork failed\n&quot;);
+</a> 		break;
+ 	case 0:
+ 		setsid(); /* create a new process group */
+<a href="#h0-3" id="h0-3" class="h">@@ -62,12 +74,13 @@ ttynew(void) {
+</a> 		dup2(s, STDOUT_FILENO);
+ 		dup2(s, STDERR_FILENO);
+ 		if(ioctl(s, TIOCSCTTY, NULL) &lt; 0)
+<a href="#h0-3-3" id="h0-3-3" class="d">-			die(&quot;slave TTIOCSTTY&quot;);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			die(&quot;ioctl TTIOCSTTY failed: %s\n&quot;, SERRNO);
+</a> 		execsh();
+ 		break;
+ 	default:
+ 		close(s);
+ 		cmdfd = m;
+<a href="#h0-3-10" id="h0-3-10" class="i">+		signal(SIGCHLD, sigchld);
+</a> 	}
+ }
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -85,9 +98,8 @@ ttyread(void) {
+</a> 	int ret;
+ 
+ 	switch(ret = read(cmdfd, buf, BUFSIZ)) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-	case -1: /* error or exit */
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		/* XXX: be more precise */
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-		running = 0;
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+	case -1: 
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+		die(&quot;Couldn&#39;t read from shell: %s\n&quot;, SERRNO);
+</a> 		break;
+ 	default:
+ 		tputs(buf, ret);
+<a href="#h0-5" id="h0-5" class="h">@@ -97,7 +109,7 @@ ttyread(void) {
+</a> void
+ ttywrite(char *s, size_t n) {
+ 	if(write(cmdfd, s, n) == -1)
+<a href="#h0-5-3" id="h0-5-3" class="d">-		die(&quot;write error on tty.&quot;);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		die(&quot;write error on tty: %s\n&quot;, SERRNO);
+</a> }
+ 
+ void
+<a href="#h0-6" id="h0-6" class="h">@@ -108,7 +120,7 @@ ttyresize(int x, int y) {
+</a> 	w.ws_col = term.col;
+ 	w.ws_xpixel = w.ws_ypixel = 0;
+ 	if(ioctl(cmdfd, TIOCSWINSZ, &amp;w) &lt; 0)
+<a href="#h0-6-3" id="h0-6-3" class="d">-		fprintf(stderr, &quot;Couldn&#39;t set window size: %m\n&quot;);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+		fprintf(stderr, &quot;Couldn&#39;t set window size: %s\n&quot;, SERRNO);
+</a> }
+ 
+ int
+<a href="#h0-7" id="h0-7" class="h">@@ -889,7 +901,7 @@ run(void) {
+</a> 
+ 	running = 1;
+ 	XSelectInput(xw.dis, xw.win, ExposureMask | KeyPressMask | StructureNotifyMask);
+<a href="#h0-7-3" id="h0-7-3" class="d">-	XResizeWindow(xw.dis, xw.win, xw.w , xw.h); /* seems to fix the resize bug in wmii */
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	XResizeWindow(xw.dis, xw.win, xw.w , xw.h); /* fix resize bug in wmii (?) */
+</a> 	
+ 	while(running) {
+ 		FD_ZERO(&amp;rfd);
+<a href="#h0-8" id="h0-8" class="h">@@ -898,11 +910,9 @@ run(void) {
+</a> 		XFlush(xw.dis);
+ 		ret = select(MAX(xfd, cmdfd)+1, &amp;rfd, NULL, NULL, NULL);
+ 
+<a href="#h0-8-3" id="h0-8-3" class="d">-		if(ret &lt; 0) {
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-			fprintf(stderr, &quot;select: %m\n&quot;);
+</a><a href="#h0-8-5" id="h0-8-5" class="d">-			running = 0;
+</a><a href="#h0-8-6" id="h0-8-6" class="d">-		}
+</a><a href="#h0-8-7" id="h0-8-7" class="d">-		
+</a><a href="#h0-8-8" id="h0-8-8" class="i">+		if(ret &lt; 0)
+</a><a href="#h0-8-9" id="h0-8-9" class="i">+			die(&quot;select failed: %s\n&quot;, SERRNO);
+</a><a href="#h0-8-10" id="h0-8-10" class="i">+				
+</a> 		if(FD_ISSET(xfd, &amp;rfd)) {
+ 			while(XPending(xw.dis)) {
+ 				XNextEvent(xw.dis, &amp;ev);
+<b>diff --git a/<a id="h1" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,16 +1,19 @@
+</a> /* See LICENSE for licence details. */
+ #define _XOPEN_SOURCE
+ #include &lt;ctype.h&gt;
+<a href="#h1-0-3" id="h1-0-3" class="i">+#include &lt;errno.h&gt;
+</a> #include &lt;fcntl.h&gt;
+ #include &lt;locale.h&gt;
+ #include &lt;stdarg.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+<a href="#h1-0-10" id="h1-0-10" class="i">+#include &lt;signal.h&gt;
+</a> #include &lt;sys/ioctl.h&gt;
+ #include &lt;sys/select.h&gt;
+ #include &lt;sys/stat.h&gt;
+ #include &lt;sys/types.h&gt;
+<a href="#h1-0-15" id="h1-0-15" class="i">+#include &lt;sys/wait.h&gt;
+</a> #include &lt;unistd.h&gt;
+ #include &lt;X11/Xlib.h&gt;
+ #include &lt;X11/keysym.h&gt;
+<a href="#h1-1" id="h1-1" class="h">@@ -52,6 +55,7 @@ static char* colorname[] = {
+</a> #define ESCSIZ 256
+ #define ESCARG 16
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+#define SERRNO strerror(errno)
+</a> #define MIN(a, b)  ((a) &lt; (b) ? (a) : (b))
+ #define MAX(a, b)  ((a) &lt; (b) ? (b) : (a))
+ #define LEN(a)     (sizeof(a) / sizeof(a[0]))
+<a href="#h1-2" id="h1-2" class="h">@@ -63,7 +67,7 @@ static char* colorname[] = {
+</a> enum { ATnone=0 , ATreverse=1 , ATunderline=2, ATbold=4 }; /* Attribute */
+ enum { CSup, CSdown, CSright, CSleft, CShide, CSdraw, CSwrap, CSsave, CSload }; /* Cursor */
+ enum { CRset=1 , CRupdate=2 }; /* Character state */
+<a href="#h1-2-3" id="h1-2-3" class="d">-enum { TMwrap=1 , TMinsert=2 }; /* Terminal mode */
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+enum { TMwrap=1 , TMinsert=2, TMaltcharset }; /* Terminal mode */
+</a> enum { SCupdate, SCredraw }; /* screen draw mode */
+ 
+ typedef int Color;
+<a href="#h1-3" id="h1-3" class="h">@@ -130,6 +134,7 @@ typedef struct {
+</a> void die(const char *errstr, ...);
+ void draw(int);
+ void execsh(void);
+<a href="#h1-3-3" id="h1-3-3" class="i">+void sigchld(int);
+</a> void kpress(XKeyEvent *);
+ void resize(XEvent *);
+ void run(void);
+</pre>
+</div>
+</body>
+</html>

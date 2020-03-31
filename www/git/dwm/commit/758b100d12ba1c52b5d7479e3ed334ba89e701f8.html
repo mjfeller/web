@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>extended rule to apply monitors if set up accordingly - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/758b100d12ba1c52b5d7479e3ed334ba89e701f8.html">758b100d12ba1c52b5d7479e3ed334ba89e701f8</a>
+<b>parent</b> <a href="../commit/8420fb1cedf067ce230d5d69e5d4edb3031745e7.html">8420fb1cedf067ce230d5d69e5d4edb3031745e7</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Thu,  9 Jul 2009 21:52:17 +0100
+
+extended rule to apply monitors if set up accordingly
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 12 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -17,9 +17,9 @@ static const Bool topbar            = True;     /* False means bottom bar */
+</a> static const char *tags[] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot; };
+ 
+ static const Rule rules[] = {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	/* class      instance    title       tags mask     isfloating */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ &quot;Gimp&quot;,     NULL,       NULL,       0,            True },
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	{ &quot;Firefox&quot;,  NULL,       NULL,       1 &lt;&lt; 8,       False },
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	/* class      instance    title       tags mask     isfloating   monitor */
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	{ &quot;Gimp&quot;,     NULL,       NULL,       0,            True,        -1 },
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	{ &quot;Firefox&quot;,  NULL,       NULL,       1 &lt;&lt; 8,       False,       -1 },
+</a> };
+ 
+ /* layout(s) */
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -121,8 +121,8 @@ typedef struct {
+</a> } Layout;
+ 
+ struct Monitor {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	int screen_number;
+</a> 	float mfact;
+<a href="#h1-0-5" id="h1-0-5" class="i">+	int num;
+</a> 	int by;               /* bar geometry */
+ 	int mx, my, mw, mh;   /* screen size */
+ 	int wx, wy, ww, wh;   /* window area  */
+<a href="#h1-1" id="h1-1" class="h">@@ -145,6 +145,7 @@ typedef struct {
+</a> 	const char *title;
+ 	unsigned int tags;
+ 	Bool isfloating;
+<a href="#h1-1-3" id="h1-1-3" class="i">+	int monitor;
+</a> } Rule;
+ 
+ /* function declarations */
+<a href="#h1-2" id="h1-2" class="h">@@ -238,7 +239,7 @@ static void zoom(const Arg *arg);
+</a> /* variables */
+ static char stext[256], ntext[8];
+ static int screen;
+<a href="#h1-2-3" id="h1-2-3" class="d">-static int sw, sh;           /* X display screen geometry x, y, width, height */
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+static int sw, sh;           /* X display screen geometry width, height */
+</a> static int bh, blw = 0;      /* bar geometry */
+ static int (*xerrorxlib)(Display *, XErrorEvent *);
+ static unsigned int numlockmask = 0;
+<a href="#h1-3" id="h1-3" class="h">@@ -276,6 +277,7 @@ void
+</a> applyrules(Client *c) {
+ 	unsigned int i;
+ 	const Rule *r;
+<a href="#h1-3-3" id="h1-3-3" class="i">+	Monitor *m;
+</a> 	XClassHint ch = { 0 };
+ 
+ 	/* rule matching */
+<a href="#h1-4" id="h1-4" class="h">@@ -289,6 +291,9 @@ applyrules(Client *c) {
+</a> 			{
+ 				c-&gt;isfloating = r-&gt;isfloating;
+ 				c-&gt;tags |= r-&gt;tags;
+<a href="#h1-4-3" id="h1-4-3" class="i">+				for(m = mons; m &amp;&amp; m-&gt;num != r-&gt;monitor; m = m-&gt;next);
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+				if(m)
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+					c-&gt;mon = m;
+</a> 			}
+ 		}
+ 		if(ch.res_class)
+<a href="#h1-5" id="h1-5" class="h">@@ -1698,7 +1703,7 @@ updategeom(void) {
+</a> #ifdef XINERAMA
+ 	if(XineramaIsActive(dpy)) {
+ 		for(i = 0, m = newmons; m; m = m-&gt;next, i++) {
+<a href="#h1-5-3" id="h1-5-3" class="d">-			m-&gt;screen_number = info[i].screen_number;
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+			m-&gt;num = info[i].screen_number;
+</a> 			m-&gt;mx = m-&gt;wx = info[i].x_org;
+ 			m-&gt;my = m-&gt;wy = info[i].y_org;
+ 			m-&gt;mw = m-&gt;ww = info[i].width;
+<a href="#h1-6" id="h1-6" class="h">@@ -1710,7 +1715,7 @@ updategeom(void) {
+</a> #endif /* XINERAMA */
+ 	/* default monitor setup */
+ 	{
+<a href="#h1-6-3" id="h1-6-3" class="d">-		m-&gt;screen_number = 0;
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+		m-&gt;num = 0;
+</a> 		m-&gt;mx = m-&gt;wx = 0;
+ 		m-&gt;my = m-&gt;wy = 0;
+ 		m-&gt;mw = m-&gt;ww = sw;
+</pre>
+</div>
+</body>
+</html>

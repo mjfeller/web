@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>merge - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2d9716907da6c5ae1c494958b25b2b7969adf28a.html">2d9716907da6c5ae1c494958b25b2b7969adf28a</a>
+<b>parent</b> <a href="../commit/fb64ed7af166f6d712dcba58ee59d58145752e90.html">fb64ed7af166f6d712dcba58ee59d58145752e90</a>
+<b>Author:</b> Enno Boland (Gottox) &lt;<a href="mailto:gottox@s01.de">gottox@s01.de</a>&gt;
+<b>Date:</b>   Mon,  8 Jun 2009 09:27:40 +0200
+
+merge
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">27</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 24 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -28,6 +28,7 @@ typedef struct Client {
+</a> 	gint progress;
+ 	struct Client *next;
+ } Client;
+<a href="#h0-0-3" id="h0-0-3" class="i">+SoupCookieJar *cookiejar;
+</a> Client *clients = NULL;
+ gboolean embed = FALSE;
+ gboolean showxid = FALSE;
+<a href="#h0-1" id="h0-1" class="h">@@ -185,7 +186,7 @@ keypress(GtkWidget* w, GdkEventKey *ev, gpointer d) {
+</a> 			return FALSE;
+ 		}
+ 	}
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(ev-&gt;state == GDK_CONTROL_MASK || ev-&gt;state == (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+        else if(ev-&gt;state == GDK_CONTROL_MASK || ev-&gt;state == (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) {
+</a> 		switch(ev-&gt;keyval) {
+ 		case GDK_r:
+ 		case GDK_R:
+<a href="#h0-2" id="h0-2" class="h">@@ -210,6 +211,16 @@ keypress(GtkWidget* w, GdkEventKey *ev, gpointer d) {
+</a> 			return TRUE;
+ 		}
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="i">+        else {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+                switch(ev-&gt;keyval) {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+                case GDK_k:
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+                        webkit_web_view_move_cursor(c-&gt;view, GTK_MOVEMENT_DISPLAY_LINES, -1);
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+                        return TRUE;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+                case GDK_j:
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+                        webkit_web_view_move_cursor(c-&gt;view, GTK_MOVEMENT_DISPLAY_LINES, 1);
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+                        return TRUE;
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+                }
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+        }
+</a> 	return FALSE;
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -260,7 +271,7 @@ loadfile(const Client *c, const gchar *f) {
+</a> 		g_string_prepend(uri, &quot;file://&quot;);
+ 		loaduri(c, uri-&gt;str);
+ 	}
+<a href="#h0-3-3" id="h0-3-3" class="d">-	
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -367,7 +378,7 @@ processx(GdkXEvent *e, GdkEvent *event, gpointer d) {
+</a> 	if(((XEvent *)e)-&gt;type == PropertyNotify) {
+ 		ev = &amp;((XEvent *)e)-&gt;xproperty;
+ 		if(ignore_once == FALSE &amp;&amp; ev-&gt;atom == urlprop &amp;&amp; ev-&gt;state == PropertyNewValue) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-			XGetWindowProperty(dpy, ev-&gt;window, urlprop, 0L, BUFSIZ, False, XA_STRING, 
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+			XGetWindowProperty(dpy, ev-&gt;window, urlprop, 0L, BUFSIZ, False, XA_STRING,
+</a> 				&amp;adummy, &amp;idummy, &amp;ldummy, &amp;ldummy, &amp;buf);
+ 			loaduri(c, (gchar *)buf);
+ 			XFree(buf);
+<a href="#h0-5" id="h0-5" class="h">@@ -422,8 +433,10 @@ updatetitle(Client *c) {
+</a> 
+ int main(int argc, char *argv[]) {
+ 	gchar *uri = NULL, *file = NULL;
+<a href="#h0-5-3" id="h0-5-3" class="i">+        SoupSession *s;
+</a> 	Client *c;
+ 	int o;
+<a href="#h0-5-6" id="h0-5-6" class="i">+        const gchar *home, *filename;
+</a> 
+ 	gtk_init(NULL, NULL);
+ 	if (!g_thread_supported())
+<a href="#h0-6" id="h0-6" class="h">@@ -465,6 +478,14 @@ int main(int argc, char *argv[]) {
+</a> 		goto argerr;
+ 	if(!clients)
+ 		newclient();
+<a href="#h0-6-3" id="h0-6-3" class="i">+
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+        /* cookie persistance */
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+        s = webkit_get_default_session();
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+        home = g_get_home_dir();
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+        filename = g_build_filename(home, &quot;.surf-cookies&quot;, NULL);
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+        cookiejar = soup_cookie_jar_text_new(filename, FALSE);
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+        soup_session_add_feature(s, SOUP_SESSION_FEATURE(cookiejar));
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+
+</a> 	gtk_main();
+ 	cleanup();
+ 	return EXIT_SUCCESS;
+</pre>
+</div>
+</body>
+</html>

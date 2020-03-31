@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>initial implementation of selection and clipboard - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0ba53e48c76a2a2668dfa270cfd0227461c3a91b.html">0ba53e48c76a2a2668dfa270cfd0227461c3a91b</a>
+<b>parent</b> <a href="../commit/e1ce89f2678628b1c0e904800822a553de2817de.html">e1ce89f2678628b1c0e904800822a553de2817de</a>
+<b>Author:</b> pancake &lt;<a href="mailto:pancake@nopcode.org">pancake@nopcode.org</a>&gt;
+<b>Date:</b>   Mon, 30 Aug 2010 23:41:37 +0200
+
+initial implementation of selection and clipboard
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">111</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 108 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -177,6 +177,9 @@ static char* kmap(KeySym);
+</a> static void kpress(XEvent *);
+ static void resize(XEvent *);
+ static void focus(XEvent *);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void brelease(XEvent *e);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void bpress(XEvent *e);
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static void bmotion(XEvent *e);
+</a> 
+ 
+ static void (*handler[LASTEvent])(XEvent *) = {
+<a href="#h0-1" id="h0-1" class="h">@@ -185,6 +188,9 @@ static void (*handler[LASTEvent])(XEvent *) = {
+</a> 	[ConfigureNotify] = resize,
+ 	[FocusIn] = focus,
+ 	[FocusOut] = focus,
+<a href="#h0-1-3" id="h0-1-3" class="i">+	[MotionNotify] = bmotion,
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	[ButtonPress] = bpress,
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	[ButtonRelease] = brelease,
+</a> };
+ 
+ /* Globals */
+<a href="#h0-2" id="h0-2" class="h">@@ -195,6 +201,103 @@ static CSIEscape escseq;
+</a> static int cmdfd;
+ static pid_t pid;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+/* selection */
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+// TODO: use X11 clipboard
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+static int selmode = 0;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+static int selbx = -1, selby;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+static int selex, seley;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+int sb[2], se[2];
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+static const char *clipboard = NULL;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+static inline int selected(int x, int y) {
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	if ((seley==y &amp;&amp; selby==y)) {
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		int bx = MIN(selbx, selex);
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+		int ex = MAX(selbx, selex);
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+		return if(x&gt;=bx &amp;&amp; x&lt;=ex)
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+	}
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+	return (((y&gt;sb[1] &amp;&amp; y&lt;se[1]) || (y==se[1] &amp;&amp; x&lt;=se[0])) || \
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+		(y==sb[1] &amp;&amp; x&gt;=sb[0] &amp;&amp; (x&lt;=se[0] || sb[1]!=se[1])))
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+}
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+static void getbuttoninfo(XEvent *e, int *b, int *x, int *y) {
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+	if(b) *b = e-&gt;xbutton.state,
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+		*b=*b==4096?5:*b==2048?4:*b==1024?3:*b==512?2:*b==256?1:-1;
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+	*x = e-&gt;xbutton.x/xw.cw;
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+	*y = e-&gt;xbutton.y/xw.ch;
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+	sb[0] = selby&lt;seley?selbx:selex;
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+	sb[1] = MIN(selby, seley);
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+	se[0] = selby&lt;seley?selex:selbx;
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+	se[1] = MAX(selby, seley);
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+}
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+static void bpress(XEvent *e) {
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+	selmode = 1;
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+	selex = selbx = e-&gt;xbutton.x/xw.cw;
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+	seley = selby = e-&gt;xbutton.y/xw.ch;
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+}
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+static char *getseltext() {
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+	char *str, *ptr;
+</a><a href="#h0-2-40" id="h0-2-40" class="i">+	int ls, x, y, sz;
+</a><a href="#h0-2-41" id="h0-2-41" class="i">+	if(selbx==-1)
+</a><a href="#h0-2-42" id="h0-2-42" class="i">+		return NULL;
+</a><a href="#h0-2-43" id="h0-2-43" class="i">+	sz = ((xw.w/xw.ch) * (se[1]-sb[1]+2));
+</a><a href="#h0-2-44" id="h0-2-44" class="i">+	ptr = str = malloc (sz);
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+	for(y = 0; y &lt; term.row; y++) {
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+		for(x = 0; x &lt; term.col; x++) {
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+			if(term.line[y][x].c &amp;&amp; (ls=selected(x, y))) {
+</a><a href="#h0-2-48" id="h0-2-48" class="i">+				*ptr = term.line[y][x].c;
+</a><a href="#h0-2-49" id="h0-2-49" class="i">+				ptr++;
+</a><a href="#h0-2-50" id="h0-2-50" class="i">+			}
+</a><a href="#h0-2-51" id="h0-2-51" class="i">+		}
+</a><a href="#h0-2-52" id="h0-2-52" class="i">+		if (ls) {
+</a><a href="#h0-2-53" id="h0-2-53" class="i">+			*ptr = &#39;\n&#39;;
+</a><a href="#h0-2-54" id="h0-2-54" class="i">+			ptr++;
+</a><a href="#h0-2-55" id="h0-2-55" class="i">+		}
+</a><a href="#h0-2-56" id="h0-2-56" class="i">+	}
+</a><a href="#h0-2-57" id="h0-2-57" class="i">+	*ptr = 0;
+</a><a href="#h0-2-58" id="h0-2-58" class="i">+	return str;
+</a><a href="#h0-2-59" id="h0-2-59" class="i">+}
+</a><a href="#h0-2-60" id="h0-2-60" class="i">+
+</a><a href="#h0-2-61" id="h0-2-61" class="i">+static void clipboard_copy(const char *str) {
+</a><a href="#h0-2-62" id="h0-2-62" class="i">+	free((void *)clipboard);
+</a><a href="#h0-2-63" id="h0-2-63" class="i">+	clipboard = str;
+</a><a href="#h0-2-64" id="h0-2-64" class="i">+}
+</a><a href="#h0-2-65" id="h0-2-65" class="i">+
+</a><a href="#h0-2-66" id="h0-2-66" class="i">+static void clipboard_paste() {
+</a><a href="#h0-2-67" id="h0-2-67" class="i">+	if(clipboard)
+</a><a href="#h0-2-68" id="h0-2-68" class="i">+		ttywrite(clipboard, strlen(clipboard));
+</a><a href="#h0-2-69" id="h0-2-69" class="i">+}
+</a><a href="#h0-2-70" id="h0-2-70" class="i">+
+</a><a href="#h0-2-71" id="h0-2-71" class="i">+// TODO: doubleclick to select word
+</a><a href="#h0-2-72" id="h0-2-72" class="i">+static void brelease(XEvent *e) {
+</a><a href="#h0-2-73" id="h0-2-73" class="i">+	int b;
+</a><a href="#h0-2-74" id="h0-2-74" class="i">+	selmode = 0;
+</a><a href="#h0-2-75" id="h0-2-75" class="i">+	getbuttoninfo(e, &amp;b, &amp;selex, &amp;seley);
+</a><a href="#h0-2-76" id="h0-2-76" class="i">+	if(b==4)
+</a><a href="#h0-2-77" id="h0-2-77" class="i">+		tscrollup(1);
+</a><a href="#h0-2-78" id="h0-2-78" class="i">+	else
+</a><a href="#h0-2-79" id="h0-2-79" class="i">+	if(b==5)
+</a><a href="#h0-2-80" id="h0-2-80" class="i">+		tscrolldown(1);
+</a><a href="#h0-2-81" id="h0-2-81" class="i">+	else
+</a><a href="#h0-2-82" id="h0-2-82" class="i">+	if(selbx==selex &amp;&amp; selby==seley) {
+</a><a href="#h0-2-83" id="h0-2-83" class="i">+		selbx = -1;
+</a><a href="#h0-2-84" id="h0-2-84" class="i">+		if(b==2)
+</a><a href="#h0-2-85" id="h0-2-85" class="i">+			clipboard_paste();
+</a><a href="#h0-2-86" id="h0-2-86" class="i">+	} else {
+</a><a href="#h0-2-87" id="h0-2-87" class="i">+		if(b==1)
+</a><a href="#h0-2-88" id="h0-2-88" class="i">+			clipboard_copy(getseltext());
+</a><a href="#h0-2-89" id="h0-2-89" class="i">+	}
+</a><a href="#h0-2-90" id="h0-2-90" class="i">+	draw(1);
+</a><a href="#h0-2-91" id="h0-2-91" class="i">+}
+</a><a href="#h0-2-92" id="h0-2-92" class="i">+
+</a><a href="#h0-2-93" id="h0-2-93" class="i">+static void bmotion(XEvent *e) {
+</a><a href="#h0-2-94" id="h0-2-94" class="i">+	if (selmode) {
+</a><a href="#h0-2-95" id="h0-2-95" class="i">+		getbuttoninfo(e, NULL, &amp;selex, &amp;seley);
+</a><a href="#h0-2-96" id="h0-2-96" class="i">+		draw(1);
+</a><a href="#h0-2-97" id="h0-2-97" class="i">+	}
+</a><a href="#h0-2-98" id="h0-2-98" class="i">+}
+</a><a href="#h0-2-99" id="h0-2-99" class="i">+
+</a> #ifdef DEBUG
+ void
+ tdump(void) {
+<a href="#h0-3" id="h0-3" class="h">@@ -1210,7 +1313,7 @@ draw(int redraw_all) {
+</a> 	int i, x, y, ox;
+ 	Glyph base, new;
+ 	char buf[DRAW_BUF_SIZ];
+<a href="#h0-3-3" id="h0-3-3" class="d">-	
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+
+</a> 	XSetForeground(xw.dis, dc.gc, dc.col[DefaultBG]);
+ 	XFillRectangle(xw.dis, xw.buf, dc.gc, 0, 0, xw.bufw, xw.bufh);
+ 	for(y = 0; y &lt; term.row; y++) {
+<a href="#h0-4" id="h0-4" class="h">@@ -1218,8 +1321,10 @@ draw(int redraw_all) {
+</a> 		i = ox = 0;
+ 		for(x = 0; x &lt; term.col; x++) {
+ 			new = term.line[y][x];
+<a href="#h0-4-3" id="h0-4-3" class="i">+			if(selbx!=-1 &amp;&amp; new.c &amp;&amp; selected(x, y))
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+				new.mode = ATTR_REVERSE;
+</a> 			if(i &gt; 0 &amp;&amp; (!(new.state &amp; GLYPH_SET) || ATTRCMP(base, new) ||
+<a href="#h0-4-6" id="h0-4-6" class="d">-						i &gt;= DRAW_BUF_SIZ)) {
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+					i &gt;= DRAW_BUF_SIZ)) {
+</a> 				xdraws(buf, base, ox, y, i);
+ 				i = 0;
+ 			}
+<a href="#h0-5" id="h0-5" class="h">@@ -1335,7 +1440,7 @@ run(void) {
+</a> 	XEvent ev;
+ 	fd_set rfd;
+ 	int xfd = XConnectionNumber(xw.dis);
+<a href="#h0-5-3" id="h0-5-3" class="d">-	long mask = ExposureMask | KeyPressMask | StructureNotifyMask | FocusChangeMask;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	long mask = ExposureMask | KeyPressMask | StructureNotifyMask | FocusChangeMask | PointerMotionMask | ButtonPressMask | ButtonReleaseMask;
+</a> 
+ 	XSelectInput(xw.dis, xw.win, mask);
+ 	XResizeWindow(xw.dis, xw.win, xw.w, xw.h); /* XXX: fix resize bug in wmii (?) */
+</pre>
+</div>
+</body>
+</html>

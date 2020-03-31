@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implement multi-tag selection through button3 click on the specific tag - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d7413ffd2d9a84fc3140b28b26f8cb6bb80164e4.html">d7413ffd2d9a84fc3140b28b26f8cb6bb80164e4</a>
+<b>parent</b> <a href="../commit/50729a2e73bc142ba79aa335012d401fca2391d3.html">50729a2e73bc142ba79aa335012d401fca2391d3</a>
+<b>Author:</b> Anselm R.Garbe &lt;<a href="mailto:arg@10ksloc.org">arg@10ksloc.org</a>&gt;
+<b>Date:</b>   Fri, 11 Aug 2006 18:37:41 +0200
+
+implement multi-tag selection through button3 click on the specific tag
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">draw.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">event.c</a></td><td> | </td><td class="num">8</td><td><span class="i">+++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">main.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">tag.c</a></td><td> | </td><td class="num">40</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>6 files changed, 48 insertions(+), 17 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -24,7 +24,7 @@ resizetitle(Client *c)
+</a> 		c-&gt;tw = c-&gt;w + 2;
+ 	c-&gt;tx = c-&gt;x + c-&gt;w - c-&gt;tw + 2;
+ 	c-&gt;ty = c-&gt;y;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if(c-&gt;tags[tsel])
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if(isvisible(c))
+</a> 		XMoveResizeWindow(dpy, c-&gt;title, c-&gt;tx, c-&gt;ty, c-&gt;tw, c-&gt;th);
+ 	else
+ 		XMoveResizeWindow(dpy, c-&gt;title, c-&gt;tx + 2 * sw, c-&gt;ty, c-&gt;tw, c-&gt;th);
+<a href="#h0-1" id="h0-1" class="h">@@ -276,7 +276,7 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	/* mapping the window now prevents flicker */
+ 	XMapRaised(dpy, c-&gt;win);
+ 	XMapRaised(dpy, c-&gt;title);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(c-&gt;tags[tsel])
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if(isvisible(c))
+</a> 		focus(c);
+ }
+ 
+<b>diff --git a/<a id="h1" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -109,9 +109,9 @@ drawstatus()
+</a> 		dc.x += dc.w;
+ 		dc.w = textw(tags[i]);
+ 		if(istile)
+<a href="#h1-0-3" id="h1-0-3" class="d">-			drawtext(tags[i], (i == tsel));
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+			drawtext(tags[i], tsel[i]);
+</a> 		else
+<a href="#h1-0-6" id="h1-0-6" class="d">-			drawtext(tags[i], (i != tsel));
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+			drawtext(tags[i], !tsel[i]);
+</a> 	}
+ 	x = dc.x + dc.w;
+ 	dc.w = textw(stext);
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -69,12 +69,12 @@ struct Client {
+</a> 
+ extern const char *tags[];
+ extern char stext[1024];
+<a href="#h2-0-3" id="h2-0-3" class="d">-extern int tsel, screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+extern int screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+</a> extern unsigned int ntags;
+ extern void (*handler[LASTEvent])(XEvent *);
+ extern void (*arrange)(Arg *);
+ extern Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h2-0-9" id="h2-0-9" class="d">-extern Bool running, issel;
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+extern Bool running, issel, *tsel;
+</a> extern Client *clients, *sel;
+ extern Cursor cursor[CurLast];
+ extern DC dc;
+<a href="#h2-1" id="h2-1" class="h">@@ -121,6 +121,7 @@ extern void appendtag(Arg *arg);
+</a> extern void dofloat(Arg *arg);
+ extern void dotile(Arg *arg);
+ extern void initrregs();
+<a href="#h2-1-3" id="h2-1-3" class="i">+extern Bool isvisible(Client *c);
+</a> extern Client *getnext(Client *c);
+ extern Client *getprev(Client *c);
+ extern void replacetag(Arg *arg);
+<b>diff --git a/<a id="h3" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -108,7 +108,13 @@ buttonpress(XEvent *e)
+</a> 			for(a.i = 0; a.i &lt; ntags; a.i++) {
+ 				x += textw(tags[a.i]);
+ 				if(ev-&gt;x &lt; x) {
+<a href="#h3-0-3" id="h3-0-3" class="d">-					view(&amp;a);
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+					if(ev-&gt;button == Button3) {
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+						tsel[a.i] = True;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+						arrange(NULL);
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+						drawall();
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+					}
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+					else
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+						view(&amp;a);
+</a> 					return;
+ 				}
+ 			}
+<b>diff --git a/<a id="h4" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -83,7 +83,7 @@ xerrorstart(Display *dsply, XErrorEvent *ee)
+</a> /* extern */
+ 
+ char stext[1024];
+<a href="#h4-0-3" id="h4-0-3" class="d">-int tsel = DEFTAG;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+Bool *tsel;
+</a> int screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+ unsigned int ntags;
+ Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h4-1" id="h4-1" class="h">@@ -213,6 +213,8 @@ main(int argc, char *argv[])
+</a> 	initrregs();
+ 
+ 	for(ntags = 0; tags[ntags]; ntags++);
+<a href="#h4-1-3" id="h4-1-3" class="i">+	tsel = emallocz(sizeof(Bool) * ntags);
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+	tsel[DEFTAG] = True;
+</a> 
+ 	/* style */
+ 	dc.bg = getcolor(BGCOLOR);
+<b>diff --git a/<a id="h5" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -51,7 +51,7 @@ dofloat(Arg *arg)
+</a> 
+ 	for(c = clients; c; c = c-&gt;next) {
+ 		c-&gt;ismax = False;
+<a href="#h5-0-3" id="h5-0-3" class="d">-		if(c-&gt;tags[tsel]) {
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+		if(isvisible(c)) {
+</a> 			resize(c, True, TopLeft);
+ 		}
+ 		else
+<a href="#h5-1" id="h5-1" class="h">@@ -74,7 +74,7 @@ dotile(Arg *arg)
+</a> 
+ 	w = sw - mw;
+ 	for(n = 0, c = clients; c; c = c-&gt;next)
+<a href="#h5-1-3" id="h5-1-3" class="d">-		if(c-&gt;tags[tsel] &amp;&amp; !c-&gt;isfloat)
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+		if(isvisible(c) &amp;&amp; !c-&gt;isfloat)
+</a> 			n++;
+ 
+ 	if(n &gt; 1)
+<a href="#h5-2" id="h5-2" class="h">@@ -84,7 +84,7 @@ dotile(Arg *arg)
+</a> 
+ 	for(i = 0, c = clients; c; c = c-&gt;next) {
+ 		c-&gt;ismax = False;
+<a href="#h5-2-3" id="h5-2-3" class="d">-		if(c-&gt;tags[tsel]) {
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+		if(isvisible(c)) {
+</a> 			if(c-&gt;isfloat) {
+ 				higher(c);
+ 				resize(c, True, TopLeft);
+<a href="#h5-3" id="h5-3" class="h">@@ -135,14 +135,14 @@ dotile(Arg *arg)
+</a> Client *
+ getnext(Client *c)
+ {
+<a href="#h5-3-3" id="h5-3-3" class="d">-	for(; c &amp;&amp; !c-&gt;tags[tsel]; c = c-&gt;next);
+</a><a href="#h5-3-4" id="h5-3-4" class="i">+	for(; c &amp;&amp; !isvisible(c); c = c-&gt;next);
+</a> 	return c;
+ }
+ 
+ Client *
+ getprev(Client *c)
+ {
+<a href="#h5-3-11" id="h5-3-11" class="d">-	for(; c &amp;&amp; !c-&gt;tags[tsel]; c = c-&gt;prev);
+</a><a href="#h5-3-12" id="h5-3-12" class="i">+	for(; c &amp;&amp; !isvisible(c); c = c-&gt;prev);
+</a> 	return c;
+ }
+ 
+<a href="#h5-4" id="h5-4" class="h">@@ -175,6 +175,17 @@ initrregs()
+</a> 	}
+ }
+ 
+<a href="#h5-4-3" id="h5-4-3" class="i">+Bool
+</a><a href="#h5-4-4" id="h5-4-4" class="i">+isvisible(Client *c)
+</a><a href="#h5-4-5" id="h5-4-5" class="i">+{
+</a><a href="#h5-4-6" id="h5-4-6" class="i">+	unsigned int i;
+</a><a href="#h5-4-7" id="h5-4-7" class="i">+
+</a><a href="#h5-4-8" id="h5-4-8" class="i">+	for(i = 0; i &lt; ntags; i++)
+</a><a href="#h5-4-9" id="h5-4-9" class="i">+		if(c-&gt;tags[i] &amp;&amp; tsel[i])
+</a><a href="#h5-4-10" id="h5-4-10" class="i">+			return True;
+</a><a href="#h5-4-11" id="h5-4-11" class="i">+	return False;
+</a><a href="#h5-4-12" id="h5-4-12" class="i">+}
+</a><a href="#h5-4-13" id="h5-4-13" class="i">+
+</a> void
+ replacetag(Arg *arg)
+ {
+<a href="#h5-5" id="h5-5" class="h">@@ -217,7 +228,8 @@ settags(Client *c)
+</a> 			XFree(ch.res_name);
+ 	}
+ 	if(!matched)
+<a href="#h5-5-3" id="h5-5-3" class="d">-		c-&gt;tags[tsel] = True;
+</a><a href="#h5-5-4" id="h5-5-4" class="i">+		for(i = 0; i &lt; ntags; i++)
+</a><a href="#h5-5-5" id="h5-5-5" class="i">+			c-&gt;tags[i] = tsel[i];
+</a> }
+ 
+ void
+<a href="#h5-6" id="h5-6" class="h">@@ -230,7 +242,11 @@ togglemode(Arg *arg)
+</a> void
+ view(Arg *arg)
+ {
+<a href="#h5-6-3" id="h5-6-3" class="d">-	tsel = arg-&gt;i;
+</a><a href="#h5-6-4" id="h5-6-4" class="i">+	unsigned int i;
+</a><a href="#h5-6-5" id="h5-6-5" class="i">+
+</a><a href="#h5-6-6" id="h5-6-6" class="i">+	for(i = 0; i &lt; ntags; i++)
+</a><a href="#h5-6-7" id="h5-6-7" class="i">+		tsel[i] = False;
+</a><a href="#h5-6-8" id="h5-6-8" class="i">+	tsel[arg-&gt;i] = True;
+</a> 	arrange(NULL);
+ 	drawall();
+ }
+<a href="#h5-7" id="h5-7" class="h">@@ -238,13 +254,19 @@ view(Arg *arg)
+</a> void
+ viewnext(Arg *arg)
+ {
+<a href="#h5-7-3" id="h5-7-3" class="d">-	arg-&gt;i = (tsel &lt; ntags-1) ? tsel+1 : 0;
+</a><a href="#h5-7-4" id="h5-7-4" class="i">+	unsigned int i;
+</a><a href="#h5-7-5" id="h5-7-5" class="i">+
+</a><a href="#h5-7-6" id="h5-7-6" class="i">+	for(i = 0; !tsel[i]; i++);
+</a><a href="#h5-7-7" id="h5-7-7" class="i">+	arg-&gt;i = (i &lt; ntags-1) ? i+1 : 0;
+</a> 	view(arg);
+ }
+ 
+ void
+ viewprev(Arg *arg)
+ {
+<a href="#h5-7-14" id="h5-7-14" class="d">-	arg-&gt;i = (tsel &gt; 0) ? tsel-1 : ntags-1;
+</a><a href="#h5-7-15" id="h5-7-15" class="i">+	unsigned int i;
+</a><a href="#h5-7-16" id="h5-7-16" class="i">+
+</a><a href="#h5-7-17" id="h5-7-17" class="i">+	for(i = 0; !tsel[i]; i++);
+</a><a href="#h5-7-18" id="h5-7-18" class="i">+	arg-&gt;i = (i &gt; 0) ? i-1 : ntags-1;
+</a> 	view(arg);
+ }
+</pre>
+</div>
+</body>
+</html>

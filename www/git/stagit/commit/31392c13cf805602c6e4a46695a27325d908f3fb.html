@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>stagit: add -l option: limit the amount of commits for the log.html file - stagit - static site generate for git repositories
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="stagit Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>stagit</h1><span class="desc">static site generate for git repositories
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/31392c13cf805602c6e4a46695a27325d908f3fb.html">31392c13cf805602c6e4a46695a27325d908f3fb</a>
+<b>parent</b> <a href="../commit/2f2ecde5c38db848cf6286aca9fc0f73137244e6.html">2f2ecde5c38db848cf6286aca9fc0f73137244e6</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Sun, 21 Jan 2018 16:47:10 +0100
+
+stagit: add -l option: limit the amount of commits for the log.html file
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">stagit.1</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">stagit.c</a></td><td> | </td><td class="num">49</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>2 files changed, 50 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/stagit.1.html">stagit.1</a> b/<a href="../file/stagit.1.html">stagit.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,4 +1,4 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="d">-.Dd May 1, 2016
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+.Dd Januari 21, 2018
+</a> .Dt STAGIT 1
+ .Os
+ .Sh NAME
+<a href="#h0-1" id="h0-1" class="h">@@ -7,6 +7,7 @@
+</a> .Sh SYNOPSIS
+ .Nm
+ .Op Fl c Ar cachefile
+<a href="#h0-1-3" id="h0-1-3" class="i">+.Op Fl l Ar commits
+</a> .Ar repodir
+ .Sh DESCRIPTION
+ .Nm
+<a href="#h0-2" id="h0-2" class="h">@@ -25,8 +26,19 @@ will store the last commit id and the entries in the HTML table.
+</a> It is up to the user to make sure the state of the
+ .Ar cachefile
+ is in sync with the history of the repository.
+<a href="#h0-2-3" id="h0-2-3" class="i">+.It Fl l Ar commits
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+Write a maximum number of
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+.Ar commits
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+to the log.html file only.
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+However the commit files are written as usual.
+</a> .El
+ .Pp
+<a href="#h0-2-10" id="h0-2-10" class="i">+The options
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+.Fl c
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+and
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+.Fl l
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+cannot be used at the same time.
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+.Pp
+</a> The following files will be written:
+ .Bl -tag -width Ds
+ .It atom.xml
+<b>diff --git a/<a id="h1" href="../file/stagit.c.html">stagit.c</a> b/<a href="../file/stagit.c.html">stagit.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -57,6 +57,7 @@ static char *strippedname = &quot;&quot;;
+</a> static char description[255];
+ static char cloneurl[1024];
+ static int haslicense, hasreadme, hassubmodules;
+<a href="#h1-0-3" id="h1-0-3" class="i">+static long long nlogcommits = -1; /* &lt; 0 indicates not used */
+</a> 
+ /* cache */
+ static git_oid lastoid;
+<a href="#h1-1" id="h1-1" class="h">@@ -558,7 +559,7 @@ writelog(FILE *fp, const git_oid *oid)
+</a> 	struct commitinfo *ci;
+ 	git_revwalk *w = NULL;
+ 	git_oid id;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	char path[PATH_MAX];
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	char path[PATH_MAX], oidstr[GIT_OID_HEXSZ + 1];
+</a> 	FILE *fpfile;
+ 	int r;
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -572,24 +573,37 @@ writelog(FILE *fp, const git_oid *oid)
+</a> 
+ 		if (cachefile &amp;&amp; !memcmp(&amp;id, &amp;lastoid, sizeof(id)))
+ 			break;
+<a href="#h1-2-3" id="h1-2-3" class="i">+
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		git_oid_tostr(oidstr, sizeof(oidstr), &amp;id);
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		r = snprintf(path, sizeof(path), &quot;commit/%s.html&quot;, oidstr);
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+		if (r == -1 || (size_t)r &gt;= sizeof(path))
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+			errx(1, &quot;path truncated: &#39;commit/%s.html&#39;&quot;, oidstr);
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+		r = access(path, F_OK);
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+		/* optimization: if there are no log lines to write and
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+		   the commit file already exists: skip the diffstat */
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+		if (!nlogcommits &amp;&amp; !r)
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+			continue;
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+
+</a> 		if (!(ci = commitinfo_getbyoid(&amp;id)))
+ 			break;
+<a href="#h1-2-17" id="h1-2-17" class="d">-		/* lookup stats: only required here */
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+		/* diffstat: for stagit HTML required for the log.html line */
+</a> 		if (commitinfo_getstats(ci) == -1)
+ 			goto err;
+ 
+<a href="#h1-2-22" id="h1-2-22" class="d">-		writelogline(fp, ci);
+</a><a href="#h1-2-23" id="h1-2-23" class="i">+		if (nlogcommits &lt; 0) {
+</a><a href="#h1-2-24" id="h1-2-24" class="i">+			writelogline(fp, ci);
+</a><a href="#h1-2-25" id="h1-2-25" class="i">+		} else if (nlogcommits &gt; 0) {
+</a><a href="#h1-2-26" id="h1-2-26" class="i">+			writelogline(fp, ci);
+</a><a href="#h1-2-27" id="h1-2-27" class="i">+			nlogcommits--;
+</a><a href="#h1-2-28" id="h1-2-28" class="i">+		}
+</a><a href="#h1-2-29" id="h1-2-29" class="i">+
+</a> 		if (cachefile)
+ 			writelogline(wcachefp, ci);
+ 
+<a href="#h1-2-33" id="h1-2-33" class="d">-		relpath = &quot;../&quot;;
+</a><a href="#h1-2-34" id="h1-2-34" class="d">-
+</a><a href="#h1-2-35" id="h1-2-35" class="d">-		r = snprintf(path, sizeof(path), &quot;commit/%s.html&quot;, ci-&gt;oid);
+</a><a href="#h1-2-36" id="h1-2-36" class="d">-		if (r == -1 || (size_t)r &gt;= sizeof(path))
+</a><a href="#h1-2-37" id="h1-2-37" class="d">-			errx(1, &quot;path truncated: &#39;commit/%s.html&#39;&quot;, ci-&gt;oid);
+</a><a href="#h1-2-38" id="h1-2-38" class="d">-
+</a> 		/* check if file exists if so skip it */
+<a href="#h1-2-40" id="h1-2-40" class="d">-		if (access(path, F_OK)) {
+</a><a href="#h1-2-41" id="h1-2-41" class="i">+		if (r) {
+</a><a href="#h1-2-42" id="h1-2-42" class="i">+			relpath = &quot;../&quot;;
+</a> 			fpfile = efopen(path, &quot;w&quot;);
+ 			writeheader(fpfile, ci-&gt;summary);
+ 			fputs(&quot;&lt;pre&gt;&quot;, fpfile);
+<a href="#h1-3" id="h1-3" class="h">@@ -986,7 +1000,7 @@ err:
+</a> void
+ usage(char *argv0)
+ {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	fprintf(stderr, &quot;%s [-c cachefile] repodir\n&quot;, argv0);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	fprintf(stderr, &quot;%s [-c cachefile] [-l commits] repodir\n&quot;, argv0);
+</a> 	exit(1);
+ }
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -1012,9 +1026,20 @@ main(int argc, char *argv[])
+</a> 				usage(argv[0]);
+ 			repodir = argv[i];
+ 		} else if (argv[i][1] == &#39;c&#39;) {
+<a href="#h1-4-3" id="h1-4-3" class="d">-			if (i + 1 &gt;= argc)
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+			if (nlogcommits &gt; 0 || i + 1 &gt;= argc)
+</a> 				usage(argv[0]);
+ 			cachefile = argv[++i];
+<a href="#h1-4-7" id="h1-4-7" class="i">+		} else if (argv[i][1] == &#39;l&#39;) {
+</a><a href="#h1-4-8" id="h1-4-8" class="i">+			if (cachefile || i + 1 &gt;= argc)
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+				usage(argv[0]);
+</a><a href="#h1-4-10" id="h1-4-10" class="i">+			errno = 0;
+</a><a href="#h1-4-11" id="h1-4-11" class="i">+			nlogcommits = strtoll(argv[++i], &amp;p, 10);
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+			if (argv[i][0] == &#39;\0&#39; || *p != &#39;\0&#39; ||
+</a><a href="#h1-4-13" id="h1-4-13" class="i">+			    nlogcommits &lt;= 0)
+</a><a href="#h1-4-14" id="h1-4-14" class="i">+				usage(argv[0]);
+</a><a href="#h1-4-15" id="h1-4-15" class="i">+			if (errno == ERANGE &amp;&amp; (nlogcommits == LLONG_MAX ||
+</a><a href="#h1-4-16" id="h1-4-16" class="i">+			    nlogcommits == LLONG_MIN))
+</a><a href="#h1-4-17" id="h1-4-17" class="i">+				usage(argv[0]);
+</a> 		}
+ 	}
+ 	if (!cachefile &amp;&amp; pledge(&quot;stdio rpath wpath cpath&quot;, NULL) == -1)
+</pre>
+</div>
+</body>
+</html>

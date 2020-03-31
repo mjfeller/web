@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed a typo in config.mk, fixed cleanup code in dmenu (now frees all allocated stuff) - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bbb2cc2a729cac8d0b2f0233924ad0491f00c2d7.html">bbb2cc2a729cac8d0b2f0233924ad0491f00c2d7</a>
+<b>parent</b> <a href="../commit/02ddc93c9483214533824576cc219bd2f269ddc2.html">02ddc93c9483214533824576cc219bd2f269ddc2</a>
+<b>Author:</b> Anselm R.Garbe &lt;<a href="mailto:arg@10ksloc.org">arg@10ksloc.org</a>&gt;
+<b>Date:</b>   Wed, 16 Aug 2006 19:25:04 +0200
+
+fixed a typo in config.mk, fixed cleanup code in dmenu (now frees all allocated stuff)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">main.c</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 16 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -11,7 +11,7 @@ X11INC = /usr/X11R6/include
+</a> X11LIB = /usr/X11R6/lib
+ 
+ # includes and libs
+<a href="#h0-0-3" id="h0-0-3" class="d">-INCS = _I. -I/usr/include -I${X11INC}
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+INCS = -I. -I/usr/include -I${X11INC}
+</a> LIBS = -L/usr/lib -lc -L${X11LIB} -lX11
+ 
+ # flags
+<b>diff --git a/<a id="h1" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -29,7 +29,7 @@ static int mx, my, mw, mh;
+</a> static int ret = 0;
+ static int nitem = 0;
+ static unsigned int cmdw = 0;
+<a href="#h1-0-3" id="h1-0-3" class="d">-static Bool done = False;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+static Bool running = True;
+</a> static Item *allitems = NULL;	/* first of all items */
+ static Item *item = NULL;	/* first of pattern matching items */
+ static Item *sel = NULL;
+<a href="#h1-1" id="h1-1" class="h">@@ -219,11 +219,11 @@ kpress(XKeyEvent * e)
+</a> 		else if(text)
+ 			fprintf(stdout, &quot;%s&quot;, text);
+ 		fflush(stdout);
+<a href="#h1-1-3" id="h1-1-3" class="d">-		done = True;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		running = False;
+</a> 		break;
+ 	case XK_Escape:
+ 		ret = 1;
+<a href="#h1-1-8" id="h1-1-8" class="d">-		done = True;
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+		running = False;
+</a> 		break;
+ 	case XK_BackSpace:
+ 		if((i = len)) {
+<a href="#h1-2" id="h1-2" class="h">@@ -290,6 +290,7 @@ int
+</a> main(int argc, char *argv[])
+ {
+ 	char *maxname;
+<a href="#h1-2-3" id="h1-2-3" class="i">+	Item *i;
+</a> 	XEvent ev;
+ 	XSetWindowAttributes wa;
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -349,7 +350,7 @@ main(int argc, char *argv[])
+</a> 	XSync(dpy, False);
+ 
+ 	/* main event loop */
+<a href="#h1-3-3" id="h1-3-3" class="d">-	while(!done &amp;&amp; !XNextEvent(dpy, &amp;ev)) {
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev)) {
+</a> 		switch (ev.type) {
+ 		case KeyPress:
+ 			kpress(&amp;ev.xkey);
+<a href="#h1-4" id="h1-4" class="h">@@ -364,6 +365,16 @@ main(int argc, char *argv[])
+</a> 	}
+ 
+ 	XUngrabKeyboard(dpy, CurrentTime);
+<a href="#h1-4-3" id="h1-4-3" class="i">+	while(allitems) {
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		i = allitems-&gt;next;
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+		free(allitems-&gt;text);
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+		free(allitems);
+</a><a href="#h1-4-7" id="h1-4-7" class="i">+		allitems = i;
+</a><a href="#h1-4-8" id="h1-4-8" class="i">+	}
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+	if(dc.font.set)
+</a><a href="#h1-4-10" id="h1-4-10" class="i">+		XFreeFontSet(dpy, dc.font.set);
+</a><a href="#h1-4-11" id="h1-4-11" class="i">+	else
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+		XFreeFont(dpy, dc.font.xfont);
+</a> 	XFreePixmap(dpy, dc.drawable);
+ 	XFreeGC(dpy, dc.gc);
+ 	XDestroyWindow(dpy, win);
+</pre>
+</div>
+</body>
+</html>

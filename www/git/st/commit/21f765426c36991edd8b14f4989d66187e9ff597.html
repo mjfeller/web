@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Change internal character representation. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/21f765426c36991edd8b14f4989d66187e9ff597.html">21f765426c36991edd8b14f4989d66187e9ff597</a>
+<b>parent</b> <a href="../commit/753fe862b14c7dd4b0449ab2c3bf22ecbb10030e.html">753fe862b14c7dd4b0449ab2c3bf22ecbb10030e</a>
+<b>Author:</b> noname@inventati.org &lt;<a href="mailto:noname@inventati.org">noname@inventati.org</a>&gt;
+<b>Date:</b>   Tue, 21 Apr 2015 23:29:01 +0200
+
+Change internal character representation.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">73</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 35 insertions(+), 38 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -72,6 +72,7 @@ char *argv0;
+</a> #define ISCONTROLC0(c) (BETWEEN(c, 0, 0x1f) || (c) == &#39;\177&#39;)
+ #define ISCONTROLC1(c) (BETWEEN(c, 0x80, 0x9f))
+ #define ISCONTROL(c) (ISCONTROLC0(c) || ISCONTROLC1(c))
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define ISDELIM(u) (BETWEEN(u, 0, 127) &amp;&amp; strchr(worddelimiters, u) != NULL)
+</a> #define LIMIT(x, a, b)    (x) = (x) &lt; (a) ? (a) : (x) &gt; (b) ? (b) : (x)
+ #define ATTRCMP(a, b) ((a).mode != (b).mode || (a).fg != (b).fg || (a).bg != (b).bg)
+ #define IS_SET(flag) ((term.mode &amp; (flag)) != 0)
+<a href="#h0-1" id="h0-1" class="h">@@ -180,7 +181,7 @@ typedef XftDraw *Draw;
+</a> typedef XftColor Color;
+ 
+ typedef struct {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	char c[UTF_SIZ]; /* character code */
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	long u;           /* character code */
+</a> 	ushort mode;      /* attribute flags */
+ 	uint32_t fg;      /* foreground  */
+ 	uint32_t bg;      /* background  */
+<a href="#h0-2" id="h0-2" class="h">@@ -410,6 +411,7 @@ static void tstrsequence(uchar);
+</a> 
+ static inline ushort sixd_to_16bit(int);
+ static void xdraws(char *, Glyph, int, int, int, int);
+<a href="#h0-2-3" id="h0-2-3" class="i">+static void xdrawglyph(Glyph, int, int);
+</a> static void xhints(void);
+ static void xclear(int, int, int, int);
+ static void xdrawcursor(void);
+<a href="#h0-3" id="h0-3" class="h">@@ -461,7 +463,6 @@ static size_t utf8decode(char *, long *, size_t);
+</a> static long utf8decodebyte(char, size_t *);
+ static size_t utf8encode(long, char *);
+ static char utf8encodebyte(long, size_t);
+<a href="#h0-3-3" id="h0-3-3" class="d">-static size_t utf8len(char *);
+</a> static size_t utf8validate(long *, size_t);
+ 
+ static ssize_t xwrite(int, const char *, size_t);
+<a href="#h0-4" id="h0-4" class="h">@@ -630,11 +631,6 @@ utf8encodebyte(long u, size_t i) {
+</a> }
+ 
+ size_t
+<a href="#h0-4-3" id="h0-4-3" class="d">-utf8len(char *c) {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	return utf8decode(c, &amp;(long){0}, UTF_SIZ);
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-}
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-size_t
+</a> utf8validate(long *u, size_t i) {
+ 	if(!BETWEEN(*u, utfmin[i], utfmax[i]) || BETWEEN(*u, 0xD800, 0xDFFF))
+ 		*u = UTF_INVALID;
+<a href="#h0-5" id="h0-5" class="h">@@ -679,7 +675,7 @@ tlinelen(int y) {
+</a> 	if(term.line[y][i - 1].mode &amp; ATTR_WRAP)
+ 		return i;
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-	while(i &gt; 0 &amp;&amp; term.line[y][i - 1].c[0] == &#39; &#39;)
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	while(i &gt; 0 &amp;&amp; term.line[y][i - 1].u == &#39; &#39;)
+</a> 		--i;
+ 
+ 	return i;
+<a href="#h0-6" id="h0-6" class="h">@@ -736,7 +732,7 @@ selsnap(int mode, int *x, int *y, int direction) {
+</a> 		 * beginning of a line.
+ 		 */
+ 		prevgp = &amp;term.line[*y][*x];
+<a href="#h0-6-3" id="h0-6-3" class="d">-		prevdelim = strchr(worddelimiters, prevgp-&gt;c[0]) != NULL;
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+		prevdelim = ISDELIM(prevgp-&gt;u);
+</a> 		for(;;) {
+ 			newx = *x + direction;
+ 			newy = *y;
+<a href="#h0-7" id="h0-7" class="h">@@ -758,9 +754,9 @@ selsnap(int mode, int *x, int *y, int direction) {
+</a> 				break;
+ 
+ 			gp = &amp;term.line[newy][newx];
+<a href="#h0-7-3" id="h0-7-3" class="d">-			delim = strchr(worddelimiters, gp-&gt;c[0]) != NULL;
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+			delim = ISDELIM(gp-&gt;u);
+</a> 			if(!(gp-&gt;mode &amp; ATTR_WDUMMY) &amp;&amp; (delim != prevdelim
+<a href="#h0-7-6" id="h0-7-6" class="d">-					|| (delim &amp;&amp; gp-&gt;c[0] != prevgp-&gt;c[0])))
+</a><a href="#h0-7-7" id="h0-7-7" class="i">+					|| (delim &amp;&amp; gp-&gt;u != prevgp-&gt;u)))
+</a> 				break;
+ 
+ 			*x = newx;
+<a href="#h0-8" id="h0-8" class="h">@@ -936,7 +932,7 @@ bpress(XEvent *e) {
+</a> char *
+ getsel(void) {
+ 	char *str, *ptr;
+<a href="#h0-8-3" id="h0-8-3" class="d">-	int y, bufsize, size, lastx, linelen;
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+	int y, bufsize, lastx, linelen;
+</a> 	Glyph *gp, *last;
+ 
+ 	if(sel.ob.x == -1)
+<a href="#h0-9" id="h0-9" class="h">@@ -957,16 +953,14 @@ getsel(void) {
+</a> 			lastx = (sel.ne.y == y) ? sel.ne.x : term.col-1;
+ 		}
+ 		last = &amp;term.line[y][MIN(lastx, linelen-1)];
+<a href="#h0-9-3" id="h0-9-3" class="d">-		while(last &gt;= gp &amp;&amp; last-&gt;c[0] == &#39; &#39;)
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+		while(last &gt;= gp &amp;&amp; last-&gt;u == &#39; &#39;)
+</a> 			--last;
+ 
+ 		for( ; gp &lt;= last; ++gp) {
+ 			if(gp-&gt;mode &amp; ATTR_WDUMMY)
+ 				continue;
+ 
+<a href="#h0-9-11" id="h0-9-11" class="d">-			size = utf8len(gp-&gt;c);
+</a><a href="#h0-9-12" id="h0-9-12" class="d">-			memcpy(ptr, gp-&gt;c, size);
+</a><a href="#h0-9-13" id="h0-9-13" class="d">-			ptr += size;
+</a><a href="#h0-9-14" id="h0-9-14" class="i">+			ptr += utf8encode(gp-&gt;u, ptr);
+</a> 		}
+ 
+ 		/*
+<a href="#h0-10" id="h0-10" class="h">@@ -1643,17 +1637,17 @@ tsetchar(char *c, Glyph *attr, int x, int y) {
+</a> 
+ 	if(term.line[y][x].mode &amp; ATTR_WIDE) {
+ 		if(x+1 &lt; term.col) {
+<a href="#h0-10-3" id="h0-10-3" class="d">-			term.line[y][x+1].c[0] = &#39; &#39;;
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+			term.line[y][x+1].u = &#39; &#39;;
+</a> 			term.line[y][x+1].mode &amp;= ~ATTR_WDUMMY;
+ 		}
+ 	} else if(term.line[y][x].mode &amp; ATTR_WDUMMY) {
+<a href="#h0-10-8" id="h0-10-8" class="d">-		term.line[y][x-1].c[0] = &#39; &#39;;
+</a><a href="#h0-10-9" id="h0-10-9" class="i">+		term.line[y][x-1].u = &#39; &#39;;
+</a> 		term.line[y][x-1].mode &amp;= ~ATTR_WIDE;
+ 	}
+ 
+ 	term.dirty[y] = 1;
+ 	term.line[y][x] = *attr;
+<a href="#h0-10-15" id="h0-10-15" class="d">-	memcpy(term.line[y][x].c, c, UTF_SIZ);
+</a><a href="#h0-10-16" id="h0-10-16" class="i">+	utf8decode(c, &amp;term.line[y][x].u, UTF_SIZ);
+</a> }
+ 
+ void
+<a href="#h0-11" id="h0-11" class="h">@@ -1680,7 +1674,7 @@ tclearregion(int x1, int y1, int x2, int y2) {
+</a> 			gp-&gt;fg = term.c.attr.fg;
+ 			gp-&gt;bg = term.c.attr.bg;
+ 			gp-&gt;mode = 0;
+<a href="#h0-11-3" id="h0-11-3" class="d">-			memcpy(gp-&gt;c, &quot; &quot;, 2);
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+			gp-&gt;u = &#39; &#39;;
+</a> 		}
+ 	}
+ }
+<a href="#h0-12" id="h0-12" class="h">@@ -2400,13 +2394,14 @@ tdumpsel(void) {
+</a> 
+ void
+ tdumpline(int n) {
+<a href="#h0-12-3" id="h0-12-3" class="i">+	char buf[UTF_SIZ];
+</a> 	Glyph *bp, *end;
+ 
+ 	bp = &amp;term.line[n][0];
+ 	end = &amp;bp[MIN(tlinelen(n), term.col) - 1];
+<a href="#h0-12-8" id="h0-12-8" class="d">-	if(bp != end || bp-&gt;c[0] != &#39; &#39;) {
+</a><a href="#h0-12-9" id="h0-12-9" class="i">+	if(bp != end || bp-&gt;u != &#39; &#39;) {
+</a> 		for( ;bp &lt;= end; ++bp)
+<a href="#h0-12-11" id="h0-12-11" class="d">-			tprinter(bp-&gt;c, utf8len(bp-&gt;c));
+</a><a href="#h0-12-12" id="h0-12-12" class="i">+			tprinter(buf, utf8encode(bp-&gt;u, buf));
+</a> 	}
+ 	tprinter(&quot;\n&quot;, 1);
+ }
+<a href="#h0-13" id="h0-13" class="h">@@ -2789,7 +2784,7 @@ tputc(char *c, int len) {
+</a> 	if(width == 2) {
+ 		gp-&gt;mode |= ATTR_WIDE;
+ 		if(term.c.x+1 &lt; term.col) {
+<a href="#h0-13-3" id="h0-13-3" class="d">-			gp[1].c[0] = &#39;\0&#39;;
+</a><a href="#h0-13-4" id="h0-13-4" class="i">+			gp[1].u = &#39;\0&#39;;
+</a> 			gp[1].mode = ATTR_WDUMMY;
+ 		}
+ 	}
+<a href="#h0-14" id="h0-14" class="h">@@ -3553,10 +3548,19 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> }
+ 
+ void
+<a href="#h0-14-3" id="h0-14-3" class="i">+xdrawglyph(Glyph g, int x, int y) {
+</a><a href="#h0-14-4" id="h0-14-4" class="i">+	static char buf[UTF_SIZ];
+</a><a href="#h0-14-5" id="h0-14-5" class="i">+	size_t len = utf8encode(g.u, buf);
+</a><a href="#h0-14-6" id="h0-14-6" class="i">+	int width = g.mode &amp; ATTR_WIDE ? 2 : 1;
+</a><a href="#h0-14-7" id="h0-14-7" class="i">+
+</a><a href="#h0-14-8" id="h0-14-8" class="i">+	xdraws(buf, g, x, y, width, len);
+</a><a href="#h0-14-9" id="h0-14-9" class="i">+}
+</a><a href="#h0-14-10" id="h0-14-10" class="i">+
+</a><a href="#h0-14-11" id="h0-14-11" class="i">+void
+</a> xdrawcursor(void) {
+ 	static int oldx = 0, oldy = 0;
+<a href="#h0-14-14" id="h0-14-14" class="d">-	int sl, width, curx;
+</a><a href="#h0-14-15" id="h0-14-15" class="d">-	Glyph g = {{&#39; &#39;}, ATTR_NULL, defaultbg, defaultcs};
+</a><a href="#h0-14-16" id="h0-14-16" class="i">+	int curx;
+</a><a href="#h0-14-17" id="h0-14-17" class="i">+	Glyph g = {&#39; &#39;, ATTR_NULL, defaultbg, defaultcs};
+</a> 
+ 	LIMIT(oldx, 0, term.col-1);
+ 	LIMIT(oldy, 0, term.row-1);
+<a href="#h0-15" id="h0-15" class="h">@@ -3569,13 +3573,10 @@ xdrawcursor(void) {
+</a> 	if(term.line[term.c.y][curx].mode &amp; ATTR_WDUMMY)
+ 		curx--;
+ 
+<a href="#h0-15-3" id="h0-15-3" class="d">-	memcpy(g.c, term.line[term.c.y][term.c.x].c, UTF_SIZ);
+</a><a href="#h0-15-4" id="h0-15-4" class="i">+	g.u = term.line[term.c.y][term.c.x].u;
+</a> 
+ 	/* remove the old cursor */
+<a href="#h0-15-7" id="h0-15-7" class="d">-	sl = utf8len(term.line[oldy][oldx].c);
+</a><a href="#h0-15-8" id="h0-15-8" class="d">-	width = (term.line[oldy][oldx].mode &amp; ATTR_WIDE)? 2 : 1;
+</a><a href="#h0-15-9" id="h0-15-9" class="d">-	xdraws(term.line[oldy][oldx].c, term.line[oldy][oldx], oldx,
+</a><a href="#h0-15-10" id="h0-15-10" class="d">-			oldy, width, sl);
+</a><a href="#h0-15-11" id="h0-15-11" class="i">+	xdrawglyph(term.line[oldy][oldx], oldx, oldy);
+</a> 
+ 	if(IS_SET(MODE_HIDE))
+ 		return;
+<a href="#h0-16" id="h0-16" class="h">@@ -3592,10 +3593,8 @@ xdrawcursor(void) {
+</a> 						g.bg = defaultfg;
+ 					}
+ 
+<a href="#h0-16-3" id="h0-16-3" class="d">-				sl = utf8len(g.c);
+</a><a href="#h0-16-4" id="h0-16-4" class="d">-				width = (term.line[term.c.y][curx].mode &amp; ATTR_WIDE)\
+</a><a href="#h0-16-5" id="h0-16-5" class="d">-					? 2 : 1;
+</a><a href="#h0-16-6" id="h0-16-6" class="d">-				xdraws(g.c, g, term.c.x, term.c.y, width, sl);
+</a><a href="#h0-16-7" id="h0-16-7" class="i">+				g.mode |= term.line[term.c.y][curx].mode &amp; ATTR_WIDE;
+</a><a href="#h0-16-8" id="h0-16-8" class="i">+				xdrawglyph(g, term.c.x, term.c.y);
+</a> 				break;
+ 			case 3: /* Blinking Underline */
+ 			case 4: /* Steady Underline */
+<a href="#h0-17" id="h0-17" class="h">@@ -3668,7 +3667,7 @@ draw(void) {
+</a> 
+ void
+ drawregion(int x1, int y1, int x2, int y2) {
+<a href="#h0-17-3" id="h0-17-3" class="d">-	int ic, ib, x, y, ox, sl;
+</a><a href="#h0-17-4" id="h0-17-4" class="i">+	int ic, ib, x, y, ox;
+</a> 	Glyph base, new;
+ 	char buf[DRAW_BUF_SIZ];
+ 	bool ena_sel = sel.ob.x != -1 &amp;&amp; sel.alt == IS_SET(MODE_ALTSCREEN);
+<a href="#h0-18" id="h0-18" class="h">@@ -3700,9 +3699,7 @@ drawregion(int x1, int y1, int x2, int y2) {
+</a> 				base = new;
+ 			}
+ 
+<a href="#h0-18-3" id="h0-18-3" class="d">-			sl = utf8len(new.c);
+</a><a href="#h0-18-4" id="h0-18-4" class="d">-			memcpy(buf+ib, new.c, sl);
+</a><a href="#h0-18-5" id="h0-18-5" class="d">-			ib += sl;
+</a><a href="#h0-18-6" id="h0-18-6" class="i">+			ib += utf8encode(new.u, buf+ib);
+</a> 			ic += (new.mode &amp; ATTR_WIDE)? 2 : 1;
+ 		}
+ 		if(ib &gt; 0)
+</pre>
+</div>
+</body>
+</html>

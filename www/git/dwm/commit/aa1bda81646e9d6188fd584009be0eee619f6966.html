@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>configurenotify remembers max geom now, and restores this if necessary, however it accepts to touch the max size on configurerequest, this shouldn&#39;t break fillscreen apps (tested with mplayer) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/aa1bda81646e9d6188fd584009be0eee619f6966.html">aa1bda81646e9d6188fd584009be0eee619f6966</a>
+<b>parent</b> <a href="../commit/157ea539a2d1926ee3a9d2fe713eba0b9428f685.html">157ea539a2d1926ee3a9d2fe713eba0b9428f685</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Tue, 29 Aug 2006 17:31:55 +0200
+
+configurenotify remembers max geom now, and restores this if necessary, however it accepts to touch the max size on configurerequest, this shouldn&#39;t break fillscreen apps (tested with mplayer)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">event.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tag.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 14 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -150,6 +150,7 @@ buttonpress(XEvent *e)
+</a> static void
+ configurerequest(XEvent *e)
+ {
+<a href="#h0-0-3" id="h0-0-3" class="i">+	int ox, oy, ow, oh;
+</a> 	unsigned long newmask;
+ 	Client *c;
+ 	XConfigureRequestEvent *ev = &amp;e-&gt;xconfigurerequest;
+<a href="#h0-1" id="h0-1" class="h">@@ -157,6 +158,10 @@ configurerequest(XEvent *e)
+</a> 	XWindowChanges wc;
+ 
+ 	if((c = getclient(ev-&gt;window))) {
+<a href="#h0-1-3" id="h0-1-3" class="i">+		ox = c-&gt;x;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		oy = c-&gt;y;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		ow = c-&gt;w;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+		oh = c-&gt;h;
+</a> 		gravitate(c, True);
+ 		if(ev-&gt;value_mask &amp; CWX)
+ 			c-&gt;x = ev-&gt;x;
+<a href="#h0-2" id="h0-2" class="h">@@ -191,8 +196,13 @@ configurerequest(XEvent *e)
+</a> 			XSendEvent(dpy, c-&gt;win, True, NoEventMask, &amp;synev);
+ 		}
+ 		XSync(dpy, False);
+<a href="#h0-2-3" id="h0-2-3" class="d">-		if(c-&gt;isfloat)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		if(c-&gt;isfloat || c-&gt;ismax) {
+</a> 			resize(c, False, TopLeft);
+<a href="#h0-2-6" id="h0-2-6" class="i">+			c-&gt;x = ox;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+			c-&gt;y = oy;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+			c-&gt;w = ow;
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+			c-&gt;h = oh;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+		}
+</a> 		else
+ 			arrange(NULL);
+ 	}
+<b>diff --git a/<a id="h1" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -31,7 +31,7 @@ static RReg *rreg = NULL;
+</a> static unsigned int len = 0;
+ 
+ static void
+<a href="#h1-0-3" id="h1-0-3" class="d">-applytag()
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+commit()
+</a> {
+ 	/* asserts sel != NULL */
+ 	settitle(sel);
+<a href="#h1-1" id="h1-1" class="h">@@ -132,7 +132,7 @@ tag(Arg *arg)
+</a> 	for(i = 0; i &lt; ntags; i++)
+ 		sel-&gt;tags[i] = False;
+ 	sel-&gt;tags[arg-&gt;i] = True;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	applytag();
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	commit();
+</a> }
+ 
+ void
+<a href="#h1-2" id="h1-2" class="h">@@ -147,5 +147,5 @@ toggletag(Arg *arg)
+</a> 	for(i = 0; i &lt; ntags &amp;&amp; !sel-&gt;tags[i]; i++);
+ 	if(i == ntags)
+ 		sel-&gt;tags[arg-&gt;i] = True;
+<a href="#h1-2-3" id="h1-2-3" class="d">-	applytag();
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	commit();
+</a> }
+</pre>
+</div>
+</body>
+</html>

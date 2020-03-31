@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>code cleaning, windows are properly closed on exit; if last client quits, exit - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/89622e41b248eb18ee7b36aa3f95f9eb4b4ad4a0.html">89622e41b248eb18ee7b36aa3f95f9eb4b4ad4a0</a>
+<b>parent</b> <a href="../commit/9f9e39604dc3dbcc8b6b56b421a110548ec608fb.html">9f9e39604dc3dbcc8b6b56b421a110548ec608fb</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Mon, 26 Oct 2009 16:50:38 +0100
+
+code cleaning, windows are properly closed on exit; if last client quits, exit
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">4</td><td><span class="i">+</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.c</a></td><td> | </td><td class="num">57</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 31 insertions(+), 30 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -7,12 +7,10 @@ static const int tabwidth           = 200;
+</a> static const char before[]          = &quot;&lt;&quot;;
+ static const char after[]           = &quot;&gt;&quot;;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define EXEC &quot;surf&quot;, &quot;-e&quot;, winid
+</a> #define MODKEY ControlMask
+ static Key keys[] = { \
+ 	/* modifier                     key        function        argument */
+<a href="#h0-0-7" id="h0-0-7" class="d">-	{ MODKEY|ShiftMask,             XK_Return, spawn,          { .v = (char*[]){ EXEC, NULL} } },
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	{ MODKEY|ShiftMask,             XK_t,      spawn,          { .v = (char*[]){ EXEC, NULL} } },
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	{ MODKEY|ShiftMask,             XK_Return, spawn,          { .v = (char*[]){ &quot;surf&quot;, &quot;-e&quot;, winid, NULL} } },
+</a> 	{ MODKEY|ShiftMask,             XK_l,      rotate,         { .i = +1 } },
+ 	{ MODKEY|ShiftMask,             XK_h,      rotate,         { .i = -1 } },
+ 	{ MODKEY,                       XK_1,      move,           { .i = 1 } },
+<b>diff --git a/<a id="h1" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -47,11 +47,9 @@
+</a> #define LENGTH(x)                (sizeof x / sizeof x[0])
+ #define CLEANMASK(mask)          (mask &amp; ~(numlockmask|LockMask))
+ #define TEXTW(x)                 (textnw(x, strlen(x)) + dc.font.height)
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define XEMBED_EMBEDDED_NOTIFY   0
+</a> 
+ enum { ColFG, ColBG, ColLast };                         /* color */
+<a href="#h1-0-6" id="h1-0-6" class="d">-enum { NetSupported, NetWMName, NetLast };              /* EWMH atoms */
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-enum { WMProtocols, WMDelete, WMState, WMLast };        /* default atoms */
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+enum { WMProtocols, WMDelete, WMLast };                 /* default atoms */
+</a> 
+ typedef union {
+ 	int i;
+<a href="#h1-1" id="h1-1" class="h">@@ -147,10 +145,10 @@ static void (*handler[LASTEvent]) (const XEvent *) = {
+</a> };
+ static int bh, wx, wy, ww, wh;
+ static unsigned int numlockmask = 0;
+<a href="#h1-1-3" id="h1-1-3" class="d">-static Bool running = True, badwindow = False;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+static Bool running = True, hadclients = False;
+</a> static Display *dpy;
+ static DC dc;
+<a href="#h1-1-7" id="h1-1-7" class="d">-static Atom wmatom[WMLast], netatom[NetLast], xembedatom;
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+static Atom wmatom[WMLast], xembedatom;
+</a> static Window root, win;
+ static Client *clients = NULL, *sel = NULL;
+ static int (*xerrorxlib)(Display *, XErrorEvent *);
+<a href="#h1-2" id="h1-2" class="h">@@ -177,6 +175,15 @@ buttonpress(const XEvent *e) {
+</a> 
+ void
+ cleanup(void) {
+<a href="#h1-2-3" id="h1-2-3" class="i">+	Client *c, *n;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	for(c = clients; c; c = n) {
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+		killclient(NULL);
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+		focus(c);
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+		XReparentWindow(dpy, c-&gt;win, root, 0, 0);
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+		n = c-&gt;next;
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+		unmanage(c);
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+	}
+</a> 	if(dc.font.set)
+ 		XFreeFontSet(dpy, dc.font.set);
+ 	else
+<a href="#h1-3" id="h1-3" class="h">@@ -191,9 +198,9 @@ void
+</a> clientmessage(const XEvent *e) {
+ 	const XClientMessageEvent *ev = &amp;e-&gt;xclient;
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-	if(ev-&gt;message_type == xembedatom) {
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-		printf(&quot;%ld %ld %ld %ld %ld\n&quot;, ev-&gt;data.l[0], ev-&gt;data.l[1], ev-&gt;data.l[2], ev-&gt;data.l[3], ev-&gt;data.l[4]);
+</a><a href="#h1-3-5" id="h1-3-5" class="d">-	}
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+	if(ev-&gt;message_type == wmatom[WMProtocols]
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+			&amp;&amp; ev-&gt;data.l[0] == wmatom[WMDelete])
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+		running = False;
+</a> }
+ 
+ void
+<a href="#h1-4" id="h1-4" class="h">@@ -552,14 +559,11 @@ manage(Window w) {
+</a> 		Client *c;
+ 		XEvent e;
+ 
+<a href="#h1-4-3" id="h1-4-3" class="i">+		hadclients = True;
+</a> 		XWithdrawWindow(dpy, w, 0);
+ 		XReparentWindow(dpy, w, win, 0, bh);
+ 		XSelectInput(dpy, w, PropertyChangeMask|StructureNotifyMask|EnterWindowMask);
+ 		XSync(dpy, False);
+<a href="#h1-4-8" id="h1-4-8" class="d">-		if(badwindow) {
+</a><a href="#h1-4-9" id="h1-4-9" class="d">-			badwindow = False;
+</a><a href="#h1-4-10" id="h1-4-10" class="d">-			return;
+</a><a href="#h1-4-11" id="h1-4-11" class="d">-		}
+</a> 		for(i = 0; i &lt; LENGTH(keys); i++) {
+ 			if((code = XKeysymToKeycode(dpy, keys[i].keysym)))
+ 				for(j = 0; j &lt; LENGTH(modifiers); j++)
+<a href="#h1-5" id="h1-5" class="h">@@ -679,9 +683,6 @@ setup(void) {
+</a> 	/* init atoms */
+ 	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+ 	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+<a href="#h1-5-3" id="h1-5-3" class="d">-	wmatom[WMState] = XInternAtom(dpy, &quot;WM_STATE&quot;, False);
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-	netatom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+</a><a href="#h1-5-5" id="h1-5-5" class="d">-	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+</a> 	xembedatom = XInternAtom(dpy, &quot;_XEMBED&quot;, False);
+ 	/* init appearance */
+ 	wx = 0;
+<a href="#h1-6" id="h1-6" class="h">@@ -701,12 +702,13 @@ setup(void) {
+</a> 	XMapRaised(dpy, win);
+ 	XSelectInput(dpy, win, SubstructureNotifyMask|FocusChangeMask|
+ 			ButtonPressMask|ExposureMask|KeyPressMask|
+<a href="#h1-6-3" id="h1-6-3" class="d">-			StructureNotifyMask);
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+			StructureNotifyMask|SubstructureRedirectMask);
+</a> 	xerrorxlib = XSetErrorHandler(xerror);
+ 	XClassHint class_hint;
+ 	class_hint.res_name = &quot;tabbed&quot;;
+ 	class_hint.res_class = &quot;Tabbed&quot;;
+ 	XSetClassHint(dpy, win, &amp;class_hint);
+<a href="#h1-6-10" id="h1-6-10" class="i">+	XSetWMProtocols(dpy, win, &amp;wmatom[WMDelete], 1);
+</a> 	snprintf(winid, LENGTH(winid), &quot;%u&quot;, (int)win);
+ 	focus(clients);
+ }
+<a href="#h1-7" id="h1-7" class="h">@@ -749,14 +751,16 @@ unmanage(Client *c) {
+</a> 	if(!clients)
+ 		return;
+ 	else if(c == clients)
+<a href="#h1-7-3" id="h1-7-3" class="d">-		clients = c-&gt;next;
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+		pc = clients = c-&gt;next;
+</a> 	else {
+ 		for(pc = clients; pc &amp;&amp; pc-&gt;next &amp;&amp; pc-&gt;next != c; pc = pc-&gt;next);
+ 		pc-&gt;next = c-&gt;next;
+ 	}
+<a href="#h1-7-9" id="h1-7-9" class="i">+	focus(c-&gt;next ? c-&gt;next : pc);
+</a> 	free(c);
+<a href="#h1-7-11" id="h1-7-11" class="d">-	focus(clients);
+</a> 	XSync(dpy, False);
+<a href="#h1-7-13" id="h1-7-13" class="i">+	if(hadclients &amp;&amp; !clients)
+</a><a href="#h1-7-14" id="h1-7-14" class="i">+		running = False;
+</a> }
+ 
+ void
+<a href="#h1-8" id="h1-8" class="h">@@ -798,10 +802,6 @@ updatetitle(Client *c) {
+</a>  * default error handler, which may call exit.  */
+ int
+ xerror(Display *dpy, XErrorEvent *ee) {
+<a href="#h1-8-3" id="h1-8-3" class="d">-	if(ee-&gt;error_code == BadWindow) {
+</a><a href="#h1-8-4" id="h1-8-4" class="d">-		badwindow = True;
+</a><a href="#h1-8-5" id="h1-8-5" class="d">-		return 0;
+</a><a href="#h1-8-6" id="h1-8-6" class="d">-	}
+</a> 	fprintf(stderr, &quot;tabbed: fatal error: request code=%d, error code=%d\n&quot;,
+ 			ee-&gt;request_code, ee-&gt;error_code);
+ 	return xerrorxlib(dpy, ee); /* may call exit */
+<a href="#h1-9" id="h1-9" class="h">@@ -825,12 +825,15 @@ main(int argc, char *argv[]) {
+</a> 	setup();
+ 	printf(&quot;%i\n&quot;, (int)win);
+ 	fflush(NULL);
+<a href="#h1-9-3" id="h1-9-3" class="d">-	if(detach &amp;&amp; fork() != 0) {
+</a><a href="#h1-9-4" id="h1-9-4" class="d">-		if(dpy)
+</a><a href="#h1-9-5" id="h1-9-5" class="d">-			close(ConnectionNumber(dpy));
+</a><a href="#h1-9-6" id="h1-9-6" class="d">-		return EXIT_SUCCESS;
+</a><a href="#h1-9-7" id="h1-9-7" class="i">+	if(detach) {
+</a><a href="#h1-9-8" id="h1-9-8" class="i">+		if(fork() == 0)
+</a><a href="#h1-9-9" id="h1-9-9" class="i">+			fclose(stdout);
+</a><a href="#h1-9-10" id="h1-9-10" class="i">+		else {
+</a><a href="#h1-9-11" id="h1-9-11" class="i">+			if(dpy)
+</a><a href="#h1-9-12" id="h1-9-12" class="i">+				close(ConnectionNumber(dpy));
+</a><a href="#h1-9-13" id="h1-9-13" class="i">+			return EXIT_SUCCESS;
+</a><a href="#h1-9-14" id="h1-9-14" class="i">+		}
+</a> 	}
+<a href="#h1-9-16" id="h1-9-16" class="d">-	fclose(stdout);
+</a> 	run();
+ 	cleanup();
+ 	XCloseDisplay(dpy);
+</pre>
+</div>
+</body>
+</html>

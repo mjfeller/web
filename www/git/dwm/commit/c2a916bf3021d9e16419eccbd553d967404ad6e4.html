@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>made arrange again like it was once - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c2a916bf3021d9e16419eccbd553d967404ad6e4.html">c2a916bf3021d9e16419eccbd553d967404ad6e4</a>
+<b>parent</b> <a href="../commit/2bd46d1ce62e35d2785f43bb9f6f331d3309f66f.html">2bd46d1ce62e35d2785f43bb9f6f331d3309f66f</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 19 Jun 2008 14:58:19 +0100
+
+made arrange again like it was once
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>1 file changed, 15 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -53,6 +53,7 @@
+</a> #define MOUSEMASK       (BUTTONMASK|PointerMotionMask)
+ #define TAGMASK         ((int)((1LL &lt;&lt; LENGTH(tags)) - 1))
+ #define TEXTW(x)        (textnw(x, strlen(x)) + dc.font.height)
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define ISVISIBLE(x)    (x-&gt;tags &amp; tagset[seltags])
+</a> 
+ /* enums */
+ enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+<a href="#h0-1" id="h0-1" class="h">@@ -89,7 +90,7 @@ struct Client {
+</a> 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int bw, oldbw;
+ 	uint tags;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	Bool isbanned, isfixed, isfloating, isurgent;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	Bool isfixed, isfloating, isurgent;
+</a> 	Client *next;
+ 	Client *snext;
+ 	Window win;
+<a href="#h0-2" id="h0-2" class="h">@@ -273,14 +274,13 @@ arrange(void) {
+</a> 	Client *c;
+ 
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h0-2-3" id="h0-2-3" class="d">-		if(c-&gt;tags &amp; tagset[seltags]) { /* is visible */
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-			c-&gt;isbanned = False;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		if(ISVISIBLE(c)) {
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a> 			if(!lt[sellt]-&gt;arrange || c-&gt;isfloating)
+ 				resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+ 		}
+<a href="#h0-2-10" id="h0-2-10" class="d">-		else if(!c-&gt;isbanned) {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+		else {
+</a> 			XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+<a href="#h0-2-13" id="h0-2-13" class="d">-			c-&gt;isbanned = True;
+</a> 		}
+ 
+ 	focus(NULL);
+<a href="#h0-3" id="h0-3" class="h">@@ -428,7 +428,7 @@ configurerequest(XEvent *e) {
+</a> 				c-&gt;y = sy + (sh / 2 - c-&gt;h / 2); /* center in y direction */
+ 			if((ev-&gt;value_mask &amp; (CWX|CWY)) &amp;&amp; !(ev-&gt;value_mask &amp; (CWWidth|CWHeight)))
+ 				configure(c);
+<a href="#h0-3-3" id="h0-3-3" class="d">-			if(!c-&gt;isbanned)
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			if(ISVISIBLE(c))
+</a> 				XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+ 		}
+ 		else
+<a href="#h0-4" id="h0-4" class="h">@@ -605,8 +605,8 @@ expose(XEvent *e) {
+</a> 
+ void
+ focus(Client *c) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-	if(!c || c-&gt;isbanned)
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		for(c = stack; c &amp;&amp; c-&gt;isbanned; c = c-&gt;snext);
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	if(!c || !ISVISIBLE(c))
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		for(c = stack; c &amp;&amp; !ISVISIBLE(c); c = c-&gt;snext);
+</a> 	if(sel &amp;&amp; sel != c) {
+ 		grabbuttons(sel, False);
+ 		XSetWindowBorder(dpy, sel-&gt;win, dc.norm[ColBorder]);
+<a href="#h0-5" id="h0-5" class="h">@@ -639,17 +639,17 @@ focusstack(const Arg *arg) {
+</a> 	if(!sel)
+ 		return;
+ 	if (arg-&gt;i &gt; 0) {
+<a href="#h0-5-3" id="h0-5-3" class="d">-		for(c = sel-&gt;next; c &amp;&amp; c-&gt;isbanned; c = c-&gt;next);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		for(c = sel-&gt;next; c &amp;&amp; !ISVISIBLE(c); c = c-&gt;next);
+</a> 		if(!c)
+<a href="#h0-5-6" id="h0-5-6" class="d">-			for(c = clients; c &amp;&amp; c-&gt;isbanned; c = c-&gt;next);
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+			for(c = clients; c &amp;&amp; !ISVISIBLE(c); c = c-&gt;next);
+</a> 	}
+ 	else {
+ 		for(i = clients; i != sel; i = i-&gt;next)
+<a href="#h0-5-11" id="h0-5-11" class="d">-			if (!i-&gt;isbanned)
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+			if(ISVISIBLE(i))
+</a> 				c = i;
+ 		if(!c)
+ 			for(; i; i = i-&gt;next)
+<a href="#h0-5-16" id="h0-5-16" class="d">-				if (!i-&gt;isbanned)
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+				if(ISVISIBLE(i))
+</a> 					c = i;
+ 	}
+ 	if(c) {
+<a href="#h0-6" id="h0-6" class="h">@@ -1018,7 +1018,7 @@ movemouse(const Arg *arg) {
+</a> 
+ Client *
+ nexttiled(Client *c) {
+<a href="#h0-6-3" id="h0-6-3" class="d">-	for(; c &amp;&amp; (c-&gt;isfloating || c-&gt;isbanned); c = c-&gt;next);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	for(; c &amp;&amp; (c-&gt;isfloating || !ISVISIBLE(c)); c = c-&gt;next);
+</a> 	return c;
+ }
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -1113,7 +1113,7 @@ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> 		h = bh;
+ 	if(w &lt; bh)
+ 		w = bh;
+<a href="#h0-7-3" id="h0-7-3" class="d">-	if(!c-&gt;isbanned || c-&gt;x != x || c-&gt;y != y || c-&gt;w != w || c-&gt;h != h) {
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	if(c-&gt;x != x || c-&gt;y != y || c-&gt;w != w || c-&gt;h != h) {
+</a> 		c-&gt;x = wc.x = x;
+ 		c-&gt;y = wc.y = y;
+ 		c-&gt;w = wc.width = w;
+<a href="#h0-8" id="h0-8" class="h">@@ -1189,7 +1189,7 @@ restack(void) {
+</a> 		wc.stack_mode = Below;
+ 		wc.sibling = barwin;
+ 		for(c = stack; c; c = c-&gt;snext)
+<a href="#h0-8-3" id="h0-8-3" class="d">-			if(!c-&gt;isfloating &amp;&amp; !c-&gt;isbanned) {
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+			if(!c-&gt;isfloating &amp;&amp; ISVISIBLE(c)) {
+</a> 				XConfigureWindow(dpy, c-&gt;win, CWSibling|CWStackMode, &amp;wc);
+ 				wc.sibling = c-&gt;win;
+ 			}
+</pre>
+</div>
+</body>
+</html>

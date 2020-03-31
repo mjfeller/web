@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implemented regexp matching for rules - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bcaf6a7a0f492c3fafc4baabd2dc06f5191417ee.html">bcaf6a7a0f492c3fafc4baabd2dc06f5191417ee</a>
+<b>parent</b> <a href="../commit/f95eed34b46dfe73f1511703e0a9301c9d8d1952.html">f95eed34b46dfe73f1511703e0a9301c9d8d1952</a>
+<b>Author:</b> arg@10ksloc.org &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Wed, 19 Jul 2006 17:42:08 +0200
+
+implemented regexp matching for rules
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">17</td><td><span class="i"></span><span class="d">-----------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">event.c</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">tag.c</a></td><td> | </td><td class="num">40</td><td><span class="i">++++++++++++++++++++++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>4 files changed, 40 insertions(+), 32 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -247,8 +247,9 @@ manage(Window w, XWindowAttributes *wa)
+</a> 			GrabModeAsync, GrabModeSync, None, None);
+ 
+ 	if(!c-&gt;isfloat)
+<a href="#h0-0-3" id="h0-0-3" class="d">-		c-&gt;isfloat = trans
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-			|| ((c-&gt;maxw == c-&gt;minw) &amp;&amp; (c-&gt;maxh == c-&gt;minh));
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		c-&gt;isfloat = trans || (c-&gt;maxw &amp;&amp; c-&gt;minw &amp;&amp;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+				(c-&gt;maxw == c-&gt;minw) &amp;&amp; (c-&gt;maxh == c-&gt;minh));
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a> 
+ 	setgeom(c);
+ 	settitle(c);
+<b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -30,8 +30,6 @@ typedef struct Client Client;
+</a> typedef enum Corner Corner;
+ typedef struct DC DC;
+ typedef struct Fnt Fnt;
+<a href="#h1-0-3" id="h1-0-3" class="d">-typedef struct Key Key;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-typedef struct Rule Rule;
+</a> 
+ union Arg {
+ 	const char **argv;
+<a href="#h1-1" id="h1-1" class="h">@@ -84,20 +82,6 @@ struct Client {
+</a> 	Window title;
+ };
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-struct Rule {
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	const char *class;
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	const char *instance;
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	char *tags[TLast];
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-	Bool isfloat;
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-};
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-struct Key {
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-	unsigned long mod;
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-	KeySym keysym;
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-	void (*func)(Arg *arg);
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-	Arg arg;
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-};
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-
+</a> extern char *tags[TLast], stext[1024];
+ extern int tsel, screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+ extern void (*handler[LASTEvent])(XEvent *);
+<a href="#h1-2" id="h1-2" class="h">@@ -108,7 +92,6 @@ extern Client *clients, *sel;
+</a> extern Cursor cursor[CurLast];
+ extern DC dc;
+ extern Display *dpy;
+<a href="#h1-2-3" id="h1-2-3" class="d">-extern Key key[];
+</a> extern Window root, barwin;
+ 
+ /* client.c */
+<b>diff --git a/<a id="h2" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -12,6 +12,14 @@
+</a> #define MouseMask       (ButtonMask | PointerMotionMask)
+ 
+ /* CUSTOMIZE */
+<a href="#h2-0-3" id="h2-0-3" class="i">+
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+typedef struct {
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	unsigned long mod;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	KeySym keysym;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	void (*func)(Arg *arg);
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	Arg arg;
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+} Key;
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+
+</a> const char *browse[] = { &quot;firefox&quot;, NULL };
+ const char *gimp[] = { &quot;gimp&quot;, NULL };
+ const char *term[] = { 
+<a href="#h2-1" id="h2-1" class="h">@@ -20,7 +28,7 @@ const char *term[] = {
+</a> };
+ const char *xlock[] = { &quot;xlock&quot;, NULL };
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-Key key[] = {
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+static Key key[] = {
+</a> 	/* modifier				key			function	arguments */
+ 	{ ControlMask,			XK_0,		appendtag,	{ .i = Tscratch } }, 
+ 	{ ControlMask,			XK_1,		appendtag,	{ .i = Tdev } }, 
+<b>diff --git a/<a id="h3" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -4,15 +4,25 @@
+</a>  */
+ #include &quot;dwm.h&quot;
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+#include &lt;regex.h&gt;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+#include &lt;stdio.h&gt;
+</a> #include &lt;string.h&gt;
+<a href="#h3-0-6" id="h3-0-6" class="i">+#include &lt;sys/types.h&gt;
+</a> #include &lt;X11/Xutil.h&gt;
+ 
+ /* static */
+ 
+<a href="#h3-0-11" id="h3-0-11" class="i">+typedef struct {
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	const char *pattern;
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+	char *tags[TLast];
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	Bool isfloat;
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+} Rule;
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+
+</a> /* CUSTOMIZE */ 
+ static Rule rule[] = {
+<a href="#h3-0-19" id="h3-0-19" class="d">-	/* class			instance	tags						isfloat */
+</a><a href="#h3-0-20" id="h3-0-20" class="d">-	{ &quot;Firefox-bin&quot;,	&quot;firefox-bin&quot;,	{ [Twww] = &quot;www&quot; },			False },
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+	/* class			instance	tags		isfloat */
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+	{ &quot;Firefox.*&quot;,	{ [Twww] = &quot;www&quot; },			False },
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+	{ &quot;Gimp.*&quot;,		{ 0 },						True},
+</a> };
+ 
+ /* extern */
+<a href="#h3-1" id="h3-1" class="h">@@ -164,10 +174,13 @@ replacetag(Arg *arg)
+</a> void
+ settags(Client *c)
+ {
+<a href="#h3-1-3" id="h3-1-3" class="d">-	XClassHint ch;
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+	char classinst[256];
+</a> 	static unsigned int len = rule ? sizeof(rule) / sizeof(rule[0]) : 0;
+ 	unsigned int i, j;
+<a href="#h3-1-7" id="h3-1-7" class="i">+	regex_t regex;
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+	regmatch_t tmp;
+</a> 	Bool matched = False;
+<a href="#h3-1-10" id="h3-1-10" class="i">+	XClassHint ch;
+</a> 
+ 	if(!len) {
+ 		c-&gt;tags[tsel] = tags[tsel];
+<a href="#h3-2" id="h3-2" class="h">@@ -175,24 +188,27 @@ settags(Client *c)
+</a> 	}
+ 
+ 	if(XGetClassHint(dpy, c-&gt;win, &amp;ch)) {
+<a href="#h3-2-3" id="h3-2-3" class="d">-		if(ch.res_class &amp;&amp; ch.res_name) {
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-			for(i = 0; i &lt; len; i++)
+</a><a href="#h3-2-5" id="h3-2-5" class="d">-				if(!strncmp(rule[i].class, ch.res_class, sizeof(rule[i].class))
+</a><a href="#h3-2-6" id="h3-2-6" class="d">-					&amp;&amp; !strncmp(rule[i].instance, ch.res_name, sizeof(rule[i].instance)))
+</a><a href="#h3-2-7" id="h3-2-7" class="d">-				{
+</a><a href="#h3-2-8" id="h3-2-8" class="d">-					for(j = 0; j &lt; TLast; j++)
+</a><a href="#h3-2-9" id="h3-2-9" class="i">+		snprintf(classinst, sizeof(classinst), &quot;%s:%s&quot;,
+</a><a href="#h3-2-10" id="h3-2-10" class="i">+				ch.res_class ? ch.res_class : &quot;&quot;,
+</a><a href="#h3-2-11" id="h3-2-11" class="i">+				ch.res_name ? ch.res_name : &quot;&quot;);
+</a><a href="#h3-2-12" id="h3-2-12" class="i">+		for(i = 0; !matched &amp;&amp; i &lt; len; i++) {
+</a><a href="#h3-2-13" id="h3-2-13" class="i">+			if(!regcomp(&amp;regex, rule[i].pattern, 0)) {
+</a><a href="#h3-2-14" id="h3-2-14" class="i">+				if(!regexec(&amp;regex, classinst, 1, &amp;tmp, 0)) {
+</a><a href="#h3-2-15" id="h3-2-15" class="i">+					for(j = 0; j &lt; TLast; j++) {
+</a><a href="#h3-2-16" id="h3-2-16" class="i">+						if(rule[i].tags[j])
+</a><a href="#h3-2-17" id="h3-2-17" class="i">+							matched = True;
+</a> 						c-&gt;tags[j] = rule[i].tags[j];
+<a href="#h3-2-19" id="h3-2-19" class="i">+					}
+</a> 					c-&gt;isfloat = rule[i].isfloat;
+<a href="#h3-2-21" id="h3-2-21" class="d">-					matched = True;
+</a><a href="#h3-2-22" id="h3-2-22" class="d">-					break;
+</a> 				}
+<a href="#h3-2-24" id="h3-2-24" class="i">+				regfree(&amp;regex);
+</a><a href="#h3-2-25" id="h3-2-25" class="i">+			}
+</a> 		}
+ 		if(ch.res_class)
+ 			XFree(ch.res_class);
+ 		if(ch.res_name)
+ 			XFree(ch.res_name);
+ 	}
+<a href="#h3-2-32" id="h3-2-32" class="d">-
+</a> 	if(!matched)
+ 		c-&gt;tags[tsel] = tags[tsel];
+ }
+</pre>
+</div>
+</body>
+</html>

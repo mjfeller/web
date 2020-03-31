@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>backport of local changes - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d58dd3b8bc42ed31232e4145696d7dacb117a31c.html">d58dd3b8bc42ed31232e4145696d7dacb117a31c</a>
+<b>parent</b> <a href="../commit/802f1922f93aef1e4876719e107828a1fa15b1a6.html">802f1922f93aef1e4876719e107828a1fa15b1a6</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 10 May 2009 13:17:09 +0100
+
+backport of local changes
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">LICENSE</a></td><td> | </td><td class="num">43</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">Makefile</a></td><td> | </td><td class="num">69</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">README</a></td><td> | </td><td class="num">28</td><td><span class="i">++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">TODO</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">config.mk</a></td><td> | </td><td class="num">31</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">st.c</a></td><td> | </td><td class="num">926</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h6">st.h</a></td><td> | </td><td class="num">181</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h7">st.info</a></td><td> | </td><td class="num">54</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="D">D</td><td><a href="#h8">std.c</a></td><td> | </td><td class="num">363</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+</table></pre><pre>9 files changed, 1278 insertions(+), 426 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/LICENSE.html">LICENSE</a> b/<a href="../file/LICENSE.html">LICENSE</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,22 +1,25 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="d">-MIT/X Consortium License
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+Copyright (c) 2009, Aurélien APTEL &lt;aurelien dot aptel at gmail dot com&gt;
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+Copyright (c) 2009, Anselm R Garbe &lt;garbeam at gmail dot com&gt;
+</a> 
+<a href="#h0-0-4" id="h0-0-4" class="d">-© 2007-2008 Anselm R Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-© 2008 Matthias Christian Ott &lt;ott at enolink dot de&gt;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+Redistribution and use in source and binary forms, with or without
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+modification, are permitted provided that the following conditions are met:
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+    * Redistributions of source code must retain the above copyright
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+      notice, this list of conditions and the following disclaimer.
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+    * Redistributions in binary form must reproduce the above copyright
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+      notice, this list of conditions and the following disclaimer in the
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+      documentation and/or other materials provided with the distribution.
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+    * Neither the name of the copyright holder nor the names of its
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+      contributors may be used to endorse or promote products derived
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+      from this software without specific prior written permission.
+</a> 
+<a href="#h0-0-17" id="h0-0-17" class="d">-Permission is hereby granted, free of charge, to any person obtaining a
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-copy of this software and associated documentation files (the &quot;Software&quot;),
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-to deal in the Software without restriction, including without limitation
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-the rights to use, copy, modify, merge, publish, distribute, sublicense,
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-and/or sell copies of the Software, and to permit persons to whom the 
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-Software is furnished to do so, subject to the following conditions:
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-The above copyright notice and this permission notice shall be included in 
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-all copies or substantial portions of the Software. 
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL 
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-DEALINGS IN THE SOFTWARE.
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+&quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+</a><b>diff --git a/<a id="h1" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,45 +1,50 @@
+</a> # st - simple terminal
+ # See LICENSE file for copyright and license details.
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-VERSION = 0.0
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+include config.mk
+</a> 
+<a href="#h1-0-6" id="h1-0-6" class="d">-PREFIX = /usr/local
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-MANDIR = $(PREFIX)/share/man
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+SRC = st.c
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+OBJ = ${SRC:.c=.o}
+</a> 
+<a href="#h1-0-11" id="h1-0-11" class="d">-CFLAGS = -DVERSION=\&quot;0.0\&quot; -D_GNU_SOURCE
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+all: options st
+</a> 
+<a href="#h1-0-14" id="h1-0-14" class="d">-all: st std
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+options:
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	@echo st build options:
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	@echo &quot;CFLAGS   = ${CFLAGS}&quot;
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	@echo &quot;LDFLAGS  = ${LDFLAGS}&quot;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	@echo &quot;CC       = ${CC}&quot;
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+.c.o:
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+	@echo CC $&lt;
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+	@${CC} -c ${CFLAGS} $&lt;
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+${OBJ}: config.mk
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+st: ${OBJ}
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	@echo CC -o $@
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+	@${CC} -o $@ ${OBJ} ${LDFLAGS}
+</a> 
+ clean:
+<a href="#h1-0-32" id="h1-0-32" class="d">-	rm -f st std
+</a><a href="#h1-0-33" id="h1-0-33" class="d">-	rm -f st.o std.o
+</a><a href="#h1-0-34" id="h1-0-34" class="d">-	rm -f st-$(VERSION).tar.gz
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	@echo cleaning
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	@rm -f st ${OBJ} st-${VERSION}.tar.gz
+</a> 
+ dist: clean
+<a href="#h1-0-39" id="h1-0-39" class="d">-	mkdir st-$(VERSION)
+</a><a href="#h1-0-40" id="h1-0-40" class="d">-	cp -f LICENSE README st-$(VERSION)
+</a><a href="#h1-0-41" id="h1-0-41" class="d">-	cp -f Makefile config.mk st-$(VERSION)
+</a><a href="#h1-0-42" id="h1-0-42" class="d">-	cp -f st.1 std.1 st-$(VERSION)
+</a><a href="#h1-0-43" id="h1-0-43" class="d">-	cp -f st.c std.c st-$(VERSION)
+</a><a href="#h1-0-44" id="h1-0-44" class="d">-	tar -czf st-$(VERSION).tar st-$(VERSION)
+</a><a href="#h1-0-45" id="h1-0-45" class="d">-	rm -rf st-$(VERSION)
+</a><a href="#h1-0-46" id="h1-0-46" class="d">-
+</a><a href="#h1-0-47" id="h1-0-47" class="d">-install:
+</a><a href="#h1-0-48" id="h1-0-48" class="d">-	mkdir -p $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h1-0-49" id="h1-0-49" class="d">-	cp -f st $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h1-0-50" id="h1-0-50" class="d">-	cp -f std $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h1-0-51" id="h1-0-51" class="d">-	chmod 755 $(DESTDIR)$(PREFIX)/bin/st
+</a><a href="#h1-0-52" id="h1-0-52" class="d">-	chmod 755 $(DESTDIR)$(PREFIX)/bin/std
+</a><a href="#h1-0-53" id="h1-0-53" class="d">-	mkdir -p $(DESTDIR)$(MANDIR)/man1
+</a><a href="#h1-0-54" id="h1-0-54" class="d">-	sed &#39;s/VERSION/$(VERSION)/g&#39; &lt; st.1 &gt; $(DESTDIR)$(MANDIR)/man1/st.1
+</a><a href="#h1-0-55" id="h1-0-55" class="d">-	chmod 644 $(DESTDIR)$(MANDIR)/man1/st.1
+</a><a href="#h1-0-56" id="h1-0-56" class="d">-	sed &#39;s/VERSION/$(VERSION)/g&#39; &lt; std.1 &gt; $(DESTDIR)$(MANDIR)/man1/std.1
+</a><a href="#h1-0-57" id="h1-0-57" class="d">-	chmod 644 $(DESTDIR)$(MANDIR)/man1/std.1
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+	@echo creating dist tarball
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+	@mkdir -p st-${VERSION}
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+	@cp -R LICENSE Makefile README config.mk st.h ${SRC} st-${VERSION}
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+	@tar -cf st-${VERSION}.tar st-${VERSION}
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+	@gzip st-${VERSION}.tar
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+	@rm -rf st-${VERSION}
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+install: all
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+	@mkdir -p ${DESTDIR}${PREFIX}/bin
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+	@cp -f st ${DESTDIR}${PREFIX}/bin
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+	@chmod 755 ${DESTDIR}${PREFIX}/bin/st
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+	@tic st.info
+</a> 
+ uninstall:
+<a href="#h1-0-73" id="h1-0-73" class="d">-	rm -f $(DESTDIR)$(PREFIX)/bin/st
+</a><a href="#h1-0-74" id="h1-0-74" class="d">-	rm -f $(DESTDIR)$(PREFIX)/bin/std
+</a><a href="#h1-0-75" id="h1-0-75" class="d">-	rm -f $(DESTDIR)$(MANDIR)/man1/st.1
+</a><a href="#h1-0-76" id="h1-0-76" class="d">-	rm -f $(DESTDIR)$(MANDIR)/man1/std.1
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+	@rm -f ${DESTDIR}${PREFIX}/bin/st
+</a> 
+<a href="#h1-0-80" id="h1-0-80" class="d">-.PHONY: all clean dist install uninstall
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+.PHONY: all options clean dist install uninstall
+</a><b>diff --git a/<a id="h2" href="../file/README.html">README</a> b/<a href="../file/README.html">README</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,28 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+st - simple terminal
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+--------------------
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+st is a simple virtual terminal emulator for X which sucks less.
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+Requirements
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+------------
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+In order to build st you need the Xlib header files.
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+Installation
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+------------
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+Edit config.mk to match your local setup (st is installed into
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+the /usr/local namespace by default).
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+Afterwards enter the following command to build and install st (if
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+necessary as root):
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+    make clean install
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+Running st
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+----------
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+See the man page for details.
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+Credits
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+-------
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+Based on  Aurélien APTEL &lt;aurelien dot aptel at gmail dot com&gt; bt source code.
+</a><b>diff --git a/<a id="h3" href="../file/TODO.html">TODO</a> b/<a href="../file/TODO.html">TODO</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,9 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+  - write a clean terminfo entry
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+  - write global &quot;setup&quot; func
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+  - try to split more logic/gfx
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+  - optimize drawing
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+  - handle copy/paste
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+  - fix fork/child exit problem
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+  - fix resize (shrinking should move last line up)
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+  - handle utf8 
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+  - refactor/clean code
+</a><b>diff --git a/<a id="h4" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,31 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+# st version
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+VERSION = 0.0
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+# Customize below to fit your system
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+# paths
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+PREFIX = /usr/local
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+MANPREFIX = ${PREFIX}/share/man
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+X11INC = /usr/X11R6/include
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+X11LIB = /usr/X11R6/lib
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+# Xinerama, comment if you don&#39;t want it
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+#XINERAMALIBS = -L${X11LIB} -lXinerama
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+#XINERAMAFLAGS = -DXINERAMA
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+# includes and libs
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+INCS = -I. -I/usr/include -I${X11INC}
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 ${XINERAMALIBS}
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+# flags
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; ${XINERAMAFLAGS}
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+CFLAGS = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+LDFLAGS = -s ${LIBS}
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+# Solaris
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+#CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+#LDFLAGS = ${LIBS}
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+# compiler and linker
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+CC = cc
+</a><b>diff --git a/<a id="h5" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -1,17 +1,921 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="d">-/* See LICENSE file for copyright and license details. */
+</a><a href="#h5-0-1" id="h5-0-1" class="d">-#include &lt;stdio.h&gt;
+</a><a href="#h5-0-2" id="h5-0-2" class="d">-#include &lt;stdlib.h&gt;
+</a><a href="#h5-0-3" id="h5-0-3" class="d">-#include &lt;string.h&gt;
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+/* See LICENSE for licence details.  */
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+#include &quot;st.h&quot;
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+/* Globals */
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+DC dc;
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+XWindow xw;
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+Term term;
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+Escseq escseq;
+</a><a href="#h5-0-12" id="h5-0-12" class="i">+int cmdfd;
+</a><a href="#h5-0-13" id="h5-0-13" class="i">+int running;
+</a><a href="#h5-0-14" id="h5-0-14" class="i">+
+</a><a href="#h5-0-15" id="h5-0-15" class="i">+void
+</a><a href="#h5-0-16" id="h5-0-16" class="i">+die(const char *errstr, ...) {
+</a><a href="#h5-0-17" id="h5-0-17" class="i">+	va_list ap;
+</a><a href="#h5-0-18" id="h5-0-18" class="i">+
+</a><a href="#h5-0-19" id="h5-0-19" class="i">+	va_start(ap, errstr);
+</a><a href="#h5-0-20" id="h5-0-20" class="i">+	vfprintf(stderr, errstr, ap);
+</a><a href="#h5-0-21" id="h5-0-21" class="i">+	va_end(ap);
+</a><a href="#h5-0-22" id="h5-0-22" class="i">+	exit(EXIT_FAILURE);
+</a><a href="#h5-0-23" id="h5-0-23" class="i">+}
+</a><a href="#h5-0-24" id="h5-0-24" class="i">+
+</a><a href="#h5-0-25" id="h5-0-25" class="i">+void
+</a><a href="#h5-0-26" id="h5-0-26" class="i">+execsh(void) {
+</a><a href="#h5-0-27" id="h5-0-27" class="i">+	char *args[3] = {SHELL, &quot;-i&quot;, NULL};
+</a><a href="#h5-0-28" id="h5-0-28" class="i">+	putenv(&quot;TERM=&quot; TNAME);
+</a><a href="#h5-0-29" id="h5-0-29" class="i">+	execvp(SHELL, args);
+</a><a href="#h5-0-30" id="h5-0-30" class="i">+}
+</a><a href="#h5-0-31" id="h5-0-31" class="i">+
+</a><a href="#h5-0-32" id="h5-0-32" class="i">+void
+</a><a href="#h5-0-33" id="h5-0-33" class="i">+xbell(void) {   /* visual bell */
+</a><a href="#h5-0-34" id="h5-0-34" class="i">+	XRectangle r = { 0, 0, xw.w, xw.h };
+</a><a href="#h5-0-35" id="h5-0-35" class="i">+	XSetForeground(xw.dis, dc.gc, dc.col[BellCol]);
+</a><a href="#h5-0-36" id="h5-0-36" class="i">+	XFillRectangles(xw.dis, xw.win, dc.gc, &amp;r, 1);
+</a><a href="#h5-0-37" id="h5-0-37" class="i">+	XFlush(xw.dis);
+</a><a href="#h5-0-38" id="h5-0-38" class="i">+	usleep(30000);
+</a><a href="#h5-0-39" id="h5-0-39" class="i">+	draw(SCredraw);
+</a><a href="#h5-0-40" id="h5-0-40" class="i">+}
+</a><a href="#h5-0-41" id="h5-0-41" class="i">+
+</a><a href="#h5-0-42" id="h5-0-42" class="i">+void
+</a><a href="#h5-0-43" id="h5-0-43" class="i">+ttynew(void) {
+</a><a href="#h5-0-44" id="h5-0-44" class="i">+	int m, s;
+</a><a href="#h5-0-45" id="h5-0-45" class="i">+	pid_t pid;
+</a><a href="#h5-0-46" id="h5-0-46" class="i">+	char *pts;
+</a><a href="#h5-0-47" id="h5-0-47" class="i">+
+</a><a href="#h5-0-48" id="h5-0-48" class="i">+	if((m = posix_openpt(O_RDWR | O_NOCTTY)) &lt; 0)
+</a><a href="#h5-0-49" id="h5-0-49" class="i">+		die(&quot;openpt&quot;);
+</a><a href="#h5-0-50" id="h5-0-50" class="i">+	if(grantpt(m) == -1)
+</a><a href="#h5-0-51" id="h5-0-51" class="i">+		die(&quot;grandpt&quot;);
+</a><a href="#h5-0-52" id="h5-0-52" class="i">+	if(unlockpt(m) == -1)
+</a><a href="#h5-0-53" id="h5-0-53" class="i">+		die(&quot;unlockpt&quot;);
+</a><a href="#h5-0-54" id="h5-0-54" class="i">+	if((pts = ptsname(m)) == NULL)
+</a><a href="#h5-0-55" id="h5-0-55" class="i">+		die(&quot;ptsname&quot;);
+</a><a href="#h5-0-56" id="h5-0-56" class="i">+	if((s = open(pts, O_RDWR | O_NOCTTY)) &lt; 0)
+</a><a href="#h5-0-57" id="h5-0-57" class="i">+		die(&quot;slave open&quot;);
+</a><a href="#h5-0-58" id="h5-0-58" class="i">+	fcntl(s, F_SETFL, O_NDELAY);
+</a><a href="#h5-0-59" id="h5-0-59" class="i">+	switch(pid = fork()) {
+</a><a href="#h5-0-60" id="h5-0-60" class="i">+	case -1:
+</a><a href="#h5-0-61" id="h5-0-61" class="i">+		die(&quot;fork&quot;);
+</a><a href="#h5-0-62" id="h5-0-62" class="i">+		break;
+</a><a href="#h5-0-63" id="h5-0-63" class="i">+	case 0:
+</a><a href="#h5-0-64" id="h5-0-64" class="i">+		setsid(); /* create a new process group */
+</a><a href="#h5-0-65" id="h5-0-65" class="i">+		dup2(s, STDIN_FILENO);
+</a><a href="#h5-0-66" id="h5-0-66" class="i">+		dup2(s, STDOUT_FILENO);
+</a><a href="#h5-0-67" id="h5-0-67" class="i">+		dup2(s, STDERR_FILENO);
+</a><a href="#h5-0-68" id="h5-0-68" class="i">+		if(ioctl(s, TIOCSCTTY, NULL) &lt; 0)
+</a><a href="#h5-0-69" id="h5-0-69" class="i">+			die(&quot;slave TTIOCSTTY&quot;);
+</a><a href="#h5-0-70" id="h5-0-70" class="i">+		execsh();
+</a><a href="#h5-0-71" id="h5-0-71" class="i">+		break;
+</a><a href="#h5-0-72" id="h5-0-72" class="i">+	default:
+</a><a href="#h5-0-73" id="h5-0-73" class="i">+		close(s);
+</a><a href="#h5-0-74" id="h5-0-74" class="i">+		cmdfd = m;
+</a><a href="#h5-0-75" id="h5-0-75" class="i">+	}
+</a><a href="#h5-0-76" id="h5-0-76" class="i">+}
+</a><a href="#h5-0-77" id="h5-0-77" class="i">+
+</a><a href="#h5-0-78" id="h5-0-78" class="i">+void
+</a><a href="#h5-0-79" id="h5-0-79" class="i">+dump(char c) {
+</a><a href="#h5-0-80" id="h5-0-80" class="i">+	static int col;
+</a><a href="#h5-0-81" id="h5-0-81" class="i">+	fprintf(stderr, &quot; %02x %c &quot;, c, isprint(c)?c:&#39;.&#39;);
+</a><a href="#h5-0-82" id="h5-0-82" class="i">+	if(++col % 10 == 0)
+</a><a href="#h5-0-83" id="h5-0-83" class="i">+		fprintf(stderr, &quot;\n&quot;);
+</a><a href="#h5-0-84" id="h5-0-84" class="i">+}
+</a><a href="#h5-0-85" id="h5-0-85" class="i">+
+</a><a href="#h5-0-86" id="h5-0-86" class="i">+void
+</a><a href="#h5-0-87" id="h5-0-87" class="i">+ttyread(void) {
+</a><a href="#h5-0-88" id="h5-0-88" class="i">+	char buf[BUFSIZ] = {0};
+</a><a href="#h5-0-89" id="h5-0-89" class="i">+	int ret;
+</a><a href="#h5-0-90" id="h5-0-90" class="i">+
+</a><a href="#h5-0-91" id="h5-0-91" class="i">+	switch(ret = read(cmdfd, buf, BUFSIZ)) {
+</a><a href="#h5-0-92" id="h5-0-92" class="i">+	case -1: /* error or exit */
+</a><a href="#h5-0-93" id="h5-0-93" class="i">+		/* XXX: be more precise */
+</a><a href="#h5-0-94" id="h5-0-94" class="i">+		running = 0;
+</a><a href="#h5-0-95" id="h5-0-95" class="i">+		break;
+</a><a href="#h5-0-96" id="h5-0-96" class="i">+	default:
+</a><a href="#h5-0-97" id="h5-0-97" class="i">+		tputs(buf, ret);
+</a><a href="#h5-0-98" id="h5-0-98" class="i">+	}
+</a><a href="#h5-0-99" id="h5-0-99" class="i">+}
+</a><a href="#h5-0-100" id="h5-0-100" class="i">+
+</a><a href="#h5-0-101" id="h5-0-101" class="i">+void
+</a><a href="#h5-0-102" id="h5-0-102" class="i">+ttywrite(char *s, size_t n) {
+</a><a href="#h5-0-103" id="h5-0-103" class="i">+	if(write(cmdfd, s, n) == -1)
+</a><a href="#h5-0-104" id="h5-0-104" class="i">+		die(&quot;write error on tty.&quot;);
+</a><a href="#h5-0-105" id="h5-0-105" class="i">+}
+</a><a href="#h5-0-106" id="h5-0-106" class="i">+
+</a><a href="#h5-0-107" id="h5-0-107" class="i">+void
+</a><a href="#h5-0-108" id="h5-0-108" class="i">+ttyresize(int x, int y) {
+</a><a href="#h5-0-109" id="h5-0-109" class="i">+	struct winsize w;
+</a><a href="#h5-0-110" id="h5-0-110" class="i">+
+</a><a href="#h5-0-111" id="h5-0-111" class="i">+	w.ws_row = term.row;
+</a><a href="#h5-0-112" id="h5-0-112" class="i">+	w.ws_col = term.col;
+</a><a href="#h5-0-113" id="h5-0-113" class="i">+	w.ws_xpixel = w.ws_ypixel = 0;
+</a><a href="#h5-0-114" id="h5-0-114" class="i">+	if(ioctl(cmdfd, TIOCSWINSZ, &amp;w) &lt; 0)
+</a><a href="#h5-0-115" id="h5-0-115" class="i">+		fprintf(stderr, &quot;Couldn&#39;t set window size: %m\n&quot;);
+</a><a href="#h5-0-116" id="h5-0-116" class="i">+}
+</a> 
+ int
+<a href="#h5-0-119" id="h5-0-119" class="d">-main(int argc, char *argv[]) {
+</a><a href="#h5-0-120" id="h5-0-120" class="d">-	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1])) {
+</a><a href="#h5-0-121" id="h5-0-121" class="d">-		fprintf(stderr, &quot;st-&quot;VERSION&quot;, © 2007-2008 st engineers, see LICENSE for details\n&quot;);
+</a><a href="#h5-0-122" id="h5-0-122" class="d">-		exit(EXIT_SUCCESS);
+</a><a href="#h5-0-123" id="h5-0-123" class="i">+escfinal(char c) {
+</a><a href="#h5-0-124" id="h5-0-124" class="i">+	if(escseq.len == 1)
+</a><a href="#h5-0-125" id="h5-0-125" class="i">+		switch(c) {
+</a><a href="#h5-0-126" id="h5-0-126" class="i">+		case &#39;[&#39;:
+</a><a href="#h5-0-127" id="h5-0-127" class="i">+		case &#39;]&#39;:
+</a><a href="#h5-0-128" id="h5-0-128" class="i">+		case &#39;(&#39;:
+</a><a href="#h5-0-129" id="h5-0-129" class="i">+			return 0;
+</a><a href="#h5-0-130" id="h5-0-130" class="i">+		case &#39;=&#39;:
+</a><a href="#h5-0-131" id="h5-0-131" class="i">+		case &#39;&gt;&#39;:
+</a><a href="#h5-0-132" id="h5-0-132" class="i">+		default:
+</a><a href="#h5-0-133" id="h5-0-133" class="i">+			return 1;
+</a><a href="#h5-0-134" id="h5-0-134" class="i">+		}
+</a><a href="#h5-0-135" id="h5-0-135" class="i">+	else if(BETWEEN(c, 0x40, 0x7E))
+</a><a href="#h5-0-136" id="h5-0-136" class="i">+		return 1;
+</a><a href="#h5-0-137" id="h5-0-137" class="i">+	return 0;     
+</a><a href="#h5-0-138" id="h5-0-138" class="i">+}
+</a><a href="#h5-0-139" id="h5-0-139" class="i">+
+</a><a href="#h5-0-140" id="h5-0-140" class="i">+void
+</a><a href="#h5-0-141" id="h5-0-141" class="i">+tcpos(int mode) {
+</a><a href="#h5-0-142" id="h5-0-142" class="i">+	static int x = 0;
+</a><a href="#h5-0-143" id="h5-0-143" class="i">+	static int y = 0;
+</a><a href="#h5-0-144" id="h5-0-144" class="i">+
+</a><a href="#h5-0-145" id="h5-0-145" class="i">+	if(mode == CSsave)
+</a><a href="#h5-0-146" id="h5-0-146" class="i">+		x = term.c.x, y = term.c.y;
+</a><a href="#h5-0-147" id="h5-0-147" class="i">+	else if(mode == CSload)
+</a><a href="#h5-0-148" id="h5-0-148" class="i">+		tmoveto(x, y);
+</a><a href="#h5-0-149" id="h5-0-149" class="i">+}
+</a><a href="#h5-0-150" id="h5-0-150" class="i">+
+</a><a href="#h5-0-151" id="h5-0-151" class="i">+void
+</a><a href="#h5-0-152" id="h5-0-152" class="i">+tnew(int col, int row) {   /* screen size */
+</a><a href="#h5-0-153" id="h5-0-153" class="i">+	term.row = row, term.col = col;
+</a><a href="#h5-0-154" id="h5-0-154" class="i">+	term.top = 0, term.bot = term.row - 1;
+</a><a href="#h5-0-155" id="h5-0-155" class="i">+	/* mode */
+</a><a href="#h5-0-156" id="h5-0-156" class="i">+	term.mode = TMwrap;
+</a><a href="#h5-0-157" id="h5-0-157" class="i">+	/* cursor */
+</a><a href="#h5-0-158" id="h5-0-158" class="i">+	term.c.attr.mode = ATnone;
+</a><a href="#h5-0-159" id="h5-0-159" class="i">+	term.c.attr.fg = DefaultFG;
+</a><a href="#h5-0-160" id="h5-0-160" class="i">+	term.c.attr.bg = DefaultBG;
+</a><a href="#h5-0-161" id="h5-0-161" class="i">+	term.c.x = term.c.y = 0;
+</a><a href="#h5-0-162" id="h5-0-162" class="i">+	term.c.hidden = 0;
+</a><a href="#h5-0-163" id="h5-0-163" class="i">+	/* allocate screen */
+</a><a href="#h5-0-164" id="h5-0-164" class="i">+	term.line = calloc(term.row, sizeof(Line));
+</a><a href="#h5-0-165" id="h5-0-165" class="i">+	for(row = 0 ; row &lt; term.row; row++)
+</a><a href="#h5-0-166" id="h5-0-166" class="i">+		term.line[row] = calloc(term.col, sizeof(Glyph));
+</a><a href="#h5-0-167" id="h5-0-167" class="i">+}
+</a><a href="#h5-0-168" id="h5-0-168" class="i">+
+</a><a href="#h5-0-169" id="h5-0-169" class="i">+void
+</a><a href="#h5-0-170" id="h5-0-170" class="i">+tscroll(void) {
+</a><a href="#h5-0-171" id="h5-0-171" class="i">+	Line temp = term.line[term.top];
+</a><a href="#h5-0-172" id="h5-0-172" class="i">+	int i;
+</a><a href="#h5-0-173" id="h5-0-173" class="i">+
+</a><a href="#h5-0-174" id="h5-0-174" class="i">+	for(i = term.top; i &lt; term.bot; i++)
+</a><a href="#h5-0-175" id="h5-0-175" class="i">+		term.line[i] = term.line[i+1];
+</a><a href="#h5-0-176" id="h5-0-176" class="i">+	memset(temp, 0, sizeof(Glyph) * term.col);
+</a><a href="#h5-0-177" id="h5-0-177" class="i">+	term.line[term.bot] = temp;
+</a><a href="#h5-0-178" id="h5-0-178" class="i">+	xscroll();    
+</a><a href="#h5-0-179" id="h5-0-179" class="i">+}
+</a><a href="#h5-0-180" id="h5-0-180" class="i">+
+</a><a href="#h5-0-181" id="h5-0-181" class="i">+void
+</a><a href="#h5-0-182" id="h5-0-182" class="i">+tnewline(void) {
+</a><a href="#h5-0-183" id="h5-0-183" class="i">+	int y = term.c.y + 1;
+</a><a href="#h5-0-184" id="h5-0-184" class="i">+
+</a><a href="#h5-0-185" id="h5-0-185" class="i">+	if(y &gt; term.bot) {
+</a><a href="#h5-0-186" id="h5-0-186" class="i">+		tscroll(), y = term.bot;
+</a> 	}
+<a href="#h5-0-188" id="h5-0-188" class="d">-	else if(argc != 1) {
+</a><a href="#h5-0-189" id="h5-0-189" class="d">-		fprintf(stderr, &quot;usage: st [-v]\n&quot;);
+</a><a href="#h5-0-190" id="h5-0-190" class="d">-		exit(EXIT_FAILURE);
+</a><a href="#h5-0-191" id="h5-0-191" class="i">+	tmoveto(0, y);
+</a><a href="#h5-0-192" id="h5-0-192" class="i">+}
+</a><a href="#h5-0-193" id="h5-0-193" class="i">+
+</a><a href="#h5-0-194" id="h5-0-194" class="i">+int
+</a><a href="#h5-0-195" id="h5-0-195" class="i">+escaddc(char c) {
+</a><a href="#h5-0-196" id="h5-0-196" class="i">+	escseq.buf[escseq.len++] = c;
+</a><a href="#h5-0-197" id="h5-0-197" class="i">+	if(escfinal(c) || escseq.len &gt;= ESCSIZ) {
+</a><a href="#h5-0-198" id="h5-0-198" class="i">+		escparse(), eschandle();
+</a><a href="#h5-0-199" id="h5-0-199" class="i">+		return 0;
+</a> 	}
+<a href="#h5-0-201" id="h5-0-201" class="i">+	return 1;
+</a><a href="#h5-0-202" id="h5-0-202" class="i">+}
+</a><a href="#h5-0-203" id="h5-0-203" class="i">+
+</a><a href="#h5-0-204" id="h5-0-204" class="i">+void
+</a><a href="#h5-0-205" id="h5-0-205" class="i">+escparse(void) {
+</a><a href="#h5-0-206" id="h5-0-206" class="i">+	/* int noarg = 1; */
+</a><a href="#h5-0-207" id="h5-0-207" class="i">+	char *p = escseq.buf;
+</a><a href="#h5-0-208" id="h5-0-208" class="i">+
+</a><a href="#h5-0-209" id="h5-0-209" class="i">+	escseq.narg = 0;
+</a><a href="#h5-0-210" id="h5-0-210" class="i">+	switch(escseq.pre = *p++) {
+</a><a href="#h5-0-211" id="h5-0-211" class="i">+	case &#39;[&#39;: /* CSI */
+</a><a href="#h5-0-212" id="h5-0-212" class="i">+		if(*p == &#39;?&#39;)
+</a><a href="#h5-0-213" id="h5-0-213" class="i">+			escseq.priv = 1, p++;
+</a><a href="#h5-0-214" id="h5-0-214" class="i">+
+</a><a href="#h5-0-215" id="h5-0-215" class="i">+		while(p &lt; escseq.buf+escseq.len) {
+</a><a href="#h5-0-216" id="h5-0-216" class="i">+			while(isdigit(*p)) {
+</a><a href="#h5-0-217" id="h5-0-217" class="i">+				escseq.arg[escseq.narg] *= 10;
+</a><a href="#h5-0-218" id="h5-0-218" class="i">+				escseq.arg[escseq.narg] += *(p++) - &#39;0&#39;/*, noarg = 0 */;
+</a><a href="#h5-0-219" id="h5-0-219" class="i">+			}
+</a><a href="#h5-0-220" id="h5-0-220" class="i">+			if(*p == &#39;;&#39;)
+</a><a href="#h5-0-221" id="h5-0-221" class="i">+				escseq.narg++, p++;
+</a><a href="#h5-0-222" id="h5-0-222" class="i">+			else {
+</a><a href="#h5-0-223" id="h5-0-223" class="i">+				escseq.mode = *p;
+</a><a href="#h5-0-224" id="h5-0-224" class="i">+				escseq.narg++;
+</a><a href="#h5-0-225" id="h5-0-225" class="i">+				return;
+</a><a href="#h5-0-226" id="h5-0-226" class="i">+			}
+</a><a href="#h5-0-227" id="h5-0-227" class="i">+		}
+</a><a href="#h5-0-228" id="h5-0-228" class="i">+		break;
+</a><a href="#h5-0-229" id="h5-0-229" class="i">+	case &#39;(&#39;:
+</a><a href="#h5-0-230" id="h5-0-230" class="i">+		/* humf charset stuff */
+</a><a href="#h5-0-231" id="h5-0-231" class="i">+		break;
+</a><a href="#h5-0-232" id="h5-0-232" class="i">+	}
+</a><a href="#h5-0-233" id="h5-0-233" class="i">+}
+</a><a href="#h5-0-234" id="h5-0-234" class="i">+
+</a><a href="#h5-0-235" id="h5-0-235" class="i">+void
+</a><a href="#h5-0-236" id="h5-0-236" class="i">+tmoveto(int x, int y) {
+</a><a href="#h5-0-237" id="h5-0-237" class="i">+	term.c.x = x &lt; 0 ? 0 : x &gt;= term.col ? term.col-1 : x;
+</a><a href="#h5-0-238" id="h5-0-238" class="i">+	term.c.y = y &lt; 0 ? 0 : y &gt;= term.row ? term.row-1 : y;
+</a><a href="#h5-0-239" id="h5-0-239" class="i">+}
+</a><a href="#h5-0-240" id="h5-0-240" class="i">+
+</a><a href="#h5-0-241" id="h5-0-241" class="i">+void
+</a><a href="#h5-0-242" id="h5-0-242" class="i">+tcursor(int dir) {
+</a><a href="#h5-0-243" id="h5-0-243" class="i">+	int xi = term.c.x, yi = term.c.y;
+</a><a href="#h5-0-244" id="h5-0-244" class="i">+	int xf = xi, yf = yi;
+</a><a href="#h5-0-245" id="h5-0-245" class="i">+
+</a><a href="#h5-0-246" id="h5-0-246" class="i">+	switch(dir) {
+</a><a href="#h5-0-247" id="h5-0-247" class="i">+	case CSup:
+</a><a href="#h5-0-248" id="h5-0-248" class="i">+		yf--;
+</a><a href="#h5-0-249" id="h5-0-249" class="i">+		break;
+</a><a href="#h5-0-250" id="h5-0-250" class="i">+	case CSdown:
+</a><a href="#h5-0-251" id="h5-0-251" class="i">+		yf++;
+</a><a href="#h5-0-252" id="h5-0-252" class="i">+		break;
+</a><a href="#h5-0-253" id="h5-0-253" class="i">+	case CSleft:
+</a><a href="#h5-0-254" id="h5-0-254" class="i">+		xf--;
+</a><a href="#h5-0-255" id="h5-0-255" class="i">+		if(xf &lt; 0) {
+</a><a href="#h5-0-256" id="h5-0-256" class="i">+			xf = term.col-1, yf--;
+</a><a href="#h5-0-257" id="h5-0-257" class="i">+			if(yf &lt; term.top)
+</a><a href="#h5-0-258" id="h5-0-258" class="i">+				yf = term.top, xf = 0;
+</a><a href="#h5-0-259" id="h5-0-259" class="i">+		}
+</a><a href="#h5-0-260" id="h5-0-260" class="i">+		break;
+</a><a href="#h5-0-261" id="h5-0-261" class="i">+	case CSright:
+</a><a href="#h5-0-262" id="h5-0-262" class="i">+		xf++;
+</a><a href="#h5-0-263" id="h5-0-263" class="i">+		if(xf &gt;= term.col) {
+</a><a href="#h5-0-264" id="h5-0-264" class="i">+			xf = 0, yf++;
+</a><a href="#h5-0-265" id="h5-0-265" class="i">+			if(yf &gt; term.bot)
+</a><a href="#h5-0-266" id="h5-0-266" class="i">+				yf = term.bot, tscroll();
+</a><a href="#h5-0-267" id="h5-0-267" class="i">+		}
+</a><a href="#h5-0-268" id="h5-0-268" class="i">+		break;
+</a><a href="#h5-0-269" id="h5-0-269" class="i">+	}
+</a><a href="#h5-0-270" id="h5-0-270" class="i">+	tmoveto(xf, yf);
+</a><a href="#h5-0-271" id="h5-0-271" class="i">+}
+</a><a href="#h5-0-272" id="h5-0-272" class="i">+
+</a><a href="#h5-0-273" id="h5-0-273" class="i">+void
+</a><a href="#h5-0-274" id="h5-0-274" class="i">+tsetchar(char c) {
+</a><a href="#h5-0-275" id="h5-0-275" class="i">+	term.line[term.c.y][term.c.x] = term.c.attr;
+</a><a href="#h5-0-276" id="h5-0-276" class="i">+	term.line[term.c.y][term.c.x].c = c;
+</a><a href="#h5-0-277" id="h5-0-277" class="i">+	term.line[term.c.y][term.c.x].state |= CRset | CRupdate;
+</a><a href="#h5-0-278" id="h5-0-278" class="i">+}
+</a><a href="#h5-0-279" id="h5-0-279" class="i">+
+</a><a href="#h5-0-280" id="h5-0-280" class="i">+void
+</a><a href="#h5-0-281" id="h5-0-281" class="i">+tclearregion(int x1, int y1, int x2, int y2) {
+</a><a href="#h5-0-282" id="h5-0-282" class="i">+	int x, y;
+</a><a href="#h5-0-283" id="h5-0-283" class="i">+
+</a><a href="#h5-0-284" id="h5-0-284" class="i">+	LIMIT(x1, 0, term.col-1);
+</a><a href="#h5-0-285" id="h5-0-285" class="i">+	LIMIT(x2, 0, term.col-1);
+</a><a href="#h5-0-286" id="h5-0-286" class="i">+	LIMIT(y1, 0, term.row-1);
+</a><a href="#h5-0-287" id="h5-0-287" class="i">+	LIMIT(y2, 0, term.row-1);
+</a><a href="#h5-0-288" id="h5-0-288" class="i">+
+</a><a href="#h5-0-289" id="h5-0-289" class="i">+	/* XXX: could be optimized */
+</a><a href="#h5-0-290" id="h5-0-290" class="i">+	for(x = x1; x &lt;= x2; x++)
+</a><a href="#h5-0-291" id="h5-0-291" class="i">+		for(y = y1; y &lt;= y2; y++)
+</a><a href="#h5-0-292" id="h5-0-292" class="i">+			memset(&amp;term.line[y][x], 0, sizeof(Glyph));
+</a><a href="#h5-0-293" id="h5-0-293" class="i">+
+</a><a href="#h5-0-294" id="h5-0-294" class="i">+	xclear(x1, y1, x2, y2);
+</a><a href="#h5-0-295" id="h5-0-295" class="i">+}
+</a><a href="#h5-0-296" id="h5-0-296" class="i">+
+</a><a href="#h5-0-297" id="h5-0-297" class="i">+void
+</a><a href="#h5-0-298" id="h5-0-298" class="i">+tdeletechar(int n) {
+</a><a href="#h5-0-299" id="h5-0-299" class="i">+	int src = term.c.x + n;
+</a><a href="#h5-0-300" id="h5-0-300" class="i">+	int dst = term.c.x;
+</a><a href="#h5-0-301" id="h5-0-301" class="i">+	int size = term.col - src;
+</a><a href="#h5-0-302" id="h5-0-302" class="i">+
+</a><a href="#h5-0-303" id="h5-0-303" class="i">+	if(src &gt;= term.col) {
+</a><a href="#h5-0-304" id="h5-0-304" class="i">+		tclearregion(term.c.x, term.c.y, term.col-1, term.c.y);
+</a><a href="#h5-0-305" id="h5-0-305" class="i">+		return;
+</a><a href="#h5-0-306" id="h5-0-306" class="i">+	}
+</a><a href="#h5-0-307" id="h5-0-307" class="i">+	memmove(&amp;term.line[term.c.y][dst], &amp;term.line[term.c.y][src], size * sizeof(Glyph));
+</a><a href="#h5-0-308" id="h5-0-308" class="i">+	tclearregion(term.col-size, term.c.y, term.col-1, term.c.y);
+</a><a href="#h5-0-309" id="h5-0-309" class="i">+}
+</a><a href="#h5-0-310" id="h5-0-310" class="i">+
+</a><a href="#h5-0-311" id="h5-0-311" class="i">+void
+</a><a href="#h5-0-312" id="h5-0-312" class="i">+tinsertblank(int n) {
+</a><a href="#h5-0-313" id="h5-0-313" class="i">+	int src = term.c.x;
+</a><a href="#h5-0-314" id="h5-0-314" class="i">+	int dst = src + n;
+</a><a href="#h5-0-315" id="h5-0-315" class="i">+	int size = term.col - n - src;
+</a><a href="#h5-0-316" id="h5-0-316" class="i">+
+</a><a href="#h5-0-317" id="h5-0-317" class="i">+	if(dst &gt;= term.col) {
+</a><a href="#h5-0-318" id="h5-0-318" class="i">+		tclearregion(term.c.x, term.c.y, term.col-1, term.c.y);
+</a><a href="#h5-0-319" id="h5-0-319" class="i">+		return;
+</a><a href="#h5-0-320" id="h5-0-320" class="i">+	}
+</a><a href="#h5-0-321" id="h5-0-321" class="i">+	memmove(&amp;term.line[term.c.y][dst], &amp;term.line[term.c.y][src], size * sizeof(Glyph));
+</a><a href="#h5-0-322" id="h5-0-322" class="i">+	tclearregion(src, term.c.y, dst, term.c.y);
+</a><a href="#h5-0-323" id="h5-0-323" class="i">+}
+</a><a href="#h5-0-324" id="h5-0-324" class="i">+
+</a><a href="#h5-0-325" id="h5-0-325" class="i">+void
+</a><a href="#h5-0-326" id="h5-0-326" class="i">+tinsertblankline (int n) {
+</a><a href="#h5-0-327" id="h5-0-327" class="i">+	int i;
+</a><a href="#h5-0-328" id="h5-0-328" class="i">+	Line blank;
+</a><a href="#h5-0-329" id="h5-0-329" class="i">+	int bot = term.bot;
+</a><a href="#h5-0-330" id="h5-0-330" class="i">+
+</a><a href="#h5-0-331" id="h5-0-331" class="i">+	if(term.c.y &gt; term.bot)
+</a><a href="#h5-0-332" id="h5-0-332" class="i">+		bot = term.row - 1;
+</a><a href="#h5-0-333" id="h5-0-333" class="i">+	else if(term.c.y &lt; term.top)
+</a><a href="#h5-0-334" id="h5-0-334" class="i">+		bot = term.top - 1;
+</a><a href="#h5-0-335" id="h5-0-335" class="i">+	if(term.c.y + n &gt;= bot) {
+</a><a href="#h5-0-336" id="h5-0-336" class="i">+		tclearregion(0, term.c.y, term.col-1, bot);
+</a><a href="#h5-0-337" id="h5-0-337" class="i">+		return;
+</a><a href="#h5-0-338" id="h5-0-338" class="i">+	}
+</a><a href="#h5-0-339" id="h5-0-339" class="i">+	for(i = bot; i &gt;= term.c.y+n; i--) {
+</a><a href="#h5-0-340" id="h5-0-340" class="i">+		/* swap deleted line &lt;-&gt; blanked line */
+</a><a href="#h5-0-341" id="h5-0-341" class="i">+		blank = term.line[i];
+</a><a href="#h5-0-342" id="h5-0-342" class="i">+		term.line[i] = term.line[i-n];
+</a><a href="#h5-0-343" id="h5-0-343" class="i">+		term.line[i-n] = blank;
+</a><a href="#h5-0-344" id="h5-0-344" class="i">+		/* blank it */
+</a><a href="#h5-0-345" id="h5-0-345" class="i">+		memset(blank, 0, term.col * sizeof(Glyph));
+</a><a href="#h5-0-346" id="h5-0-346" class="i">+	}
+</a><a href="#h5-0-347" id="h5-0-347" class="i">+}
+</a><a href="#h5-0-348" id="h5-0-348" class="i">+
+</a><a href="#h5-0-349" id="h5-0-349" class="i">+
+</a><a href="#h5-0-350" id="h5-0-350" class="i">+void
+</a><a href="#h5-0-351" id="h5-0-351" class="i">+tdeleteline(int n) {
+</a><a href="#h5-0-352" id="h5-0-352" class="i">+	int i;
+</a><a href="#h5-0-353" id="h5-0-353" class="i">+	Line blank;
+</a><a href="#h5-0-354" id="h5-0-354" class="i">+	int bot = term.bot;
+</a><a href="#h5-0-355" id="h5-0-355" class="i">+
+</a><a href="#h5-0-356" id="h5-0-356" class="i">+	if(term.c.y &gt; term.bot)
+</a><a href="#h5-0-357" id="h5-0-357" class="i">+		bot = term.row - 1;
+</a><a href="#h5-0-358" id="h5-0-358" class="i">+	else if(term.c.y &lt; term.top)
+</a><a href="#h5-0-359" id="h5-0-359" class="i">+		bot = term.top - 1;
+</a><a href="#h5-0-360" id="h5-0-360" class="i">+	if(term.c.y + n &gt;= bot) {
+</a><a href="#h5-0-361" id="h5-0-361" class="i">+		tclearregion(0, term.c.y, term.col-1, bot);
+</a><a href="#h5-0-362" id="h5-0-362" class="i">+		return;
+</a><a href="#h5-0-363" id="h5-0-363" class="i">+	}
+</a><a href="#h5-0-364" id="h5-0-364" class="i">+	for(i = term.c.y; i &lt;= bot-n; i++) {
+</a><a href="#h5-0-365" id="h5-0-365" class="i">+		/* swap deleted line &lt;-&gt; blanked line */
+</a><a href="#h5-0-366" id="h5-0-366" class="i">+		blank = term.line[i];
+</a><a href="#h5-0-367" id="h5-0-367" class="i">+		term.line[i] = term.line[i+n];
+</a><a href="#h5-0-368" id="h5-0-368" class="i">+		term.line[i+n] = blank;
+</a><a href="#h5-0-369" id="h5-0-369" class="i">+		/* blank it */
+</a><a href="#h5-0-370" id="h5-0-370" class="i">+		memset(blank, 0, term.col * sizeof(Glyph));
+</a><a href="#h5-0-371" id="h5-0-371" class="i">+	}
+</a><a href="#h5-0-372" id="h5-0-372" class="i">+}
+</a><a href="#h5-0-373" id="h5-0-373" class="i">+
+</a><a href="#h5-0-374" id="h5-0-374" class="i">+void
+</a><a href="#h5-0-375" id="h5-0-375" class="i">+tsetattr(int *attr, int l) {
+</a><a href="#h5-0-376" id="h5-0-376" class="i">+	int i;
+</a><a href="#h5-0-377" id="h5-0-377" class="i">+
+</a><a href="#h5-0-378" id="h5-0-378" class="i">+#ifdef TRUECOLOR /* ESC [ ? &lt;fg/bg&gt; ; &lt;r&gt; ; &lt;g&gt; ; &lt;b&gt; m */
+</a><a href="#h5-0-379" id="h5-0-379" class="i">+	Color col;
+</a><a href="#h5-0-380" id="h5-0-380" class="i">+	if(escseq.priv &amp;&amp; escseq.len == 4) { /* True color extension :) */
+</a><a href="#h5-0-381" id="h5-0-381" class="i">+		col = (escseq.arg[1]&lt;&lt;16) + (escseq.arg[2]&lt;&lt;8) + escseq.arg[3];
+</a><a href="#h5-0-382" id="h5-0-382" class="i">+		switch(escseq.arg[0]) {
+</a><a href="#h5-0-383" id="h5-0-383" class="i">+		case 3: /* foreground */
+</a><a href="#h5-0-384" id="h5-0-384" class="i">+			term.c.attr.fg = col;
+</a><a href="#h5-0-385" id="h5-0-385" class="i">+			break;
+</a><a href="#h5-0-386" id="h5-0-386" class="i">+		case 4: /* background */
+</a><a href="#h5-0-387" id="h5-0-387" class="i">+			term.c.attr.bg = col;
+</a><a href="#h5-0-388" id="h5-0-388" class="i">+			break;
+</a><a href="#h5-0-389" id="h5-0-389" class="i">+		}
+</a><a href="#h5-0-390" id="h5-0-390" class="i">+	}
+</a><a href="#h5-0-391" id="h5-0-391" class="i">+	else
+</a><a href="#h5-0-392" id="h5-0-392" class="i">+#endif
+</a><a href="#h5-0-393" id="h5-0-393" class="i">+		for(i = 0; i &lt; l; i++) {
+</a><a href="#h5-0-394" id="h5-0-394" class="i">+			switch(attr[i]) {
+</a><a href="#h5-0-395" id="h5-0-395" class="i">+			case 0:
+</a><a href="#h5-0-396" id="h5-0-396" class="i">+				memset(&amp;term.c.attr, 0, sizeof(term.c.attr));
+</a><a href="#h5-0-397" id="h5-0-397" class="i">+				term.c.attr.fg = DefaultFG;
+</a><a href="#h5-0-398" id="h5-0-398" class="i">+				term.c.attr.bg = DefaultBG;
+</a><a href="#h5-0-399" id="h5-0-399" class="i">+				break;
+</a><a href="#h5-0-400" id="h5-0-400" class="i">+			case 1:
+</a><a href="#h5-0-401" id="h5-0-401" class="i">+				term.c.attr.mode |= ATbold;  
+</a><a href="#h5-0-402" id="h5-0-402" class="i">+				break;
+</a><a href="#h5-0-403" id="h5-0-403" class="i">+			case 4: 
+</a><a href="#h5-0-404" id="h5-0-404" class="i">+				term.c.attr.mode |= ATunderline;
+</a><a href="#h5-0-405" id="h5-0-405" class="i">+				break;
+</a><a href="#h5-0-406" id="h5-0-406" class="i">+			case 7: 
+</a><a href="#h5-0-407" id="h5-0-407" class="i">+				term.c.attr.mode |= ATreverse;  
+</a><a href="#h5-0-408" id="h5-0-408" class="i">+				break;
+</a><a href="#h5-0-409" id="h5-0-409" class="i">+			case 8:
+</a><a href="#h5-0-410" id="h5-0-410" class="i">+				term.c.hidden = CShide;
+</a><a href="#h5-0-411" id="h5-0-411" class="i">+				break;
+</a><a href="#h5-0-412" id="h5-0-412" class="i">+			case 22: 
+</a><a href="#h5-0-413" id="h5-0-413" class="i">+				term.c.attr.mode &amp;= ~ATbold;  
+</a><a href="#h5-0-414" id="h5-0-414" class="i">+				break;
+</a><a href="#h5-0-415" id="h5-0-415" class="i">+			case 24: 
+</a><a href="#h5-0-416" id="h5-0-416" class="i">+				term.c.attr.mode &amp;= ~ATunderline;
+</a><a href="#h5-0-417" id="h5-0-417" class="i">+				break;
+</a><a href="#h5-0-418" id="h5-0-418" class="i">+			case 27: 
+</a><a href="#h5-0-419" id="h5-0-419" class="i">+				term.c.attr.mode &amp;= ~ATreverse;  
+</a><a href="#h5-0-420" id="h5-0-420" class="i">+				break;
+</a><a href="#h5-0-421" id="h5-0-421" class="i">+			case 39:
+</a><a href="#h5-0-422" id="h5-0-422" class="i">+				term.c.attr.fg = DefaultFG;
+</a><a href="#h5-0-423" id="h5-0-423" class="i">+				break;
+</a><a href="#h5-0-424" id="h5-0-424" class="i">+			case 49:
+</a><a href="#h5-0-425" id="h5-0-425" class="i">+				term.c.attr.fg = DefaultBG;
+</a><a href="#h5-0-426" id="h5-0-426" class="i">+				break;
+</a><a href="#h5-0-427" id="h5-0-427" class="i">+			default:
+</a><a href="#h5-0-428" id="h5-0-428" class="i">+				if(BETWEEN(attr[i], 30, 37))
+</a><a href="#h5-0-429" id="h5-0-429" class="i">+					term.c.attr.fg = attr[i] - 30;
+</a><a href="#h5-0-430" id="h5-0-430" class="i">+				else if(BETWEEN(attr[i], 40, 47))
+</a><a href="#h5-0-431" id="h5-0-431" class="i">+					term.c.attr.bg = attr[i] - 40;
+</a><a href="#h5-0-432" id="h5-0-432" class="i">+				break;
+</a><a href="#h5-0-433" id="h5-0-433" class="i">+			}
+</a><a href="#h5-0-434" id="h5-0-434" class="i">+		}
+</a><a href="#h5-0-435" id="h5-0-435" class="i">+}
+</a><a href="#h5-0-436" id="h5-0-436" class="i">+
+</a><a href="#h5-0-437" id="h5-0-437" class="i">+void
+</a><a href="#h5-0-438" id="h5-0-438" class="i">+tsetscroll(int t, int b) {
+</a><a href="#h5-0-439" id="h5-0-439" class="i">+	int temp;
+</a><a href="#h5-0-440" id="h5-0-440" class="i">+
+</a><a href="#h5-0-441" id="h5-0-441" class="i">+	LIMIT(t, 0, term.row-1);
+</a><a href="#h5-0-442" id="h5-0-442" class="i">+	LIMIT(b, 0, term.row-1);
+</a><a href="#h5-0-443" id="h5-0-443" class="i">+	if(t &gt; b) {
+</a><a href="#h5-0-444" id="h5-0-444" class="i">+		temp = t;
+</a><a href="#h5-0-445" id="h5-0-445" class="i">+		t = b;
+</a><a href="#h5-0-446" id="h5-0-446" class="i">+		b = temp;
+</a><a href="#h5-0-447" id="h5-0-447" class="i">+	}
+</a><a href="#h5-0-448" id="h5-0-448" class="i">+	term.top = t;
+</a><a href="#h5-0-449" id="h5-0-449" class="i">+	term.bot = b;    
+</a><a href="#h5-0-450" id="h5-0-450" class="i">+}
+</a><a href="#h5-0-451" id="h5-0-451" class="i">+
+</a><a href="#h5-0-452" id="h5-0-452" class="i">+
+</a><a href="#h5-0-453" id="h5-0-453" class="i">+void
+</a><a href="#h5-0-454" id="h5-0-454" class="i">+eschandle(void) { 
+</a><a href="#h5-0-455" id="h5-0-455" class="i">+	/* escdump(); */
+</a><a href="#h5-0-456" id="h5-0-456" class="i">+	switch(escseq.pre) {
+</a><a href="#h5-0-457" id="h5-0-457" class="i">+	case &#39;[&#39;:
+</a><a href="#h5-0-458" id="h5-0-458" class="i">+		switch(escseq.mode) {
+</a><a href="#h5-0-459" id="h5-0-459" class="i">+		case &#39;@&#39;: /* Insert &lt;n&gt; blank char */
+</a><a href="#h5-0-460" id="h5-0-460" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-461" id="h5-0-461" class="i">+			tinsertblank(escseq.arg[0]);
+</a><a href="#h5-0-462" id="h5-0-462" class="i">+			break;
+</a><a href="#h5-0-463" id="h5-0-463" class="i">+		case &#39;A&#39;: /* Cursor &lt;n&gt; Up */
+</a><a href="#h5-0-464" id="h5-0-464" class="i">+		case &#39;e&#39;:
+</a><a href="#h5-0-465" id="h5-0-465" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-466" id="h5-0-466" class="i">+			tmoveto(term.c.x, term.c.y-escseq.arg[0]);
+</a><a href="#h5-0-467" id="h5-0-467" class="i">+			break;
+</a><a href="#h5-0-468" id="h5-0-468" class="i">+		case &#39;B&#39;: /* Cursor &lt;n&gt; Down */
+</a><a href="#h5-0-469" id="h5-0-469" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-470" id="h5-0-470" class="i">+			tmoveto(term.c.x, term.c.y+escseq.arg[0]);
+</a><a href="#h5-0-471" id="h5-0-471" class="i">+			break;
+</a><a href="#h5-0-472" id="h5-0-472" class="i">+		case &#39;C&#39;: /* Cursor &lt;n&gt; Forward */
+</a><a href="#h5-0-473" id="h5-0-473" class="i">+		case &#39;a&#39;:
+</a><a href="#h5-0-474" id="h5-0-474" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-475" id="h5-0-475" class="i">+			tmoveto(term.c.x+escseq.arg[0], term.c.y);
+</a><a href="#h5-0-476" id="h5-0-476" class="i">+			break;
+</a><a href="#h5-0-477" id="h5-0-477" class="i">+		case &#39;D&#39;: /* Cursor &lt;n&gt; Backward */
+</a><a href="#h5-0-478" id="h5-0-478" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-479" id="h5-0-479" class="i">+			tmoveto(term.c.x-escseq.arg[0], term.c.y);
+</a><a href="#h5-0-480" id="h5-0-480" class="i">+			break;
+</a><a href="#h5-0-481" id="h5-0-481" class="i">+		case &#39;E&#39;: /* Cursor &lt;n&gt; Down and first col */
+</a><a href="#h5-0-482" id="h5-0-482" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-483" id="h5-0-483" class="i">+			tmoveto(0, term.c.y+escseq.arg[0]);
+</a><a href="#h5-0-484" id="h5-0-484" class="i">+			break;
+</a><a href="#h5-0-485" id="h5-0-485" class="i">+		case &#39;F&#39;: /* Cursor &lt;n&gt; Up and first col */
+</a><a href="#h5-0-486" id="h5-0-486" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-487" id="h5-0-487" class="i">+			tmoveto(0, term.c.y-escseq.arg[0]);
+</a><a href="#h5-0-488" id="h5-0-488" class="i">+			break;
+</a><a href="#h5-0-489" id="h5-0-489" class="i">+		case &#39;G&#39;: /* Move to &lt;col&gt; */
+</a><a href="#h5-0-490" id="h5-0-490" class="i">+		case &#39;`&#39;:
+</a><a href="#h5-0-491" id="h5-0-491" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-492" id="h5-0-492" class="i">+			tmoveto(escseq.arg[0]-1, term.c.y);
+</a><a href="#h5-0-493" id="h5-0-493" class="i">+			break;
+</a><a href="#h5-0-494" id="h5-0-494" class="i">+		case &#39;H&#39;: /* Move to &lt;row&gt; &lt;col&gt; */
+</a><a href="#h5-0-495" id="h5-0-495" class="i">+		case &#39;f&#39;:
+</a><a href="#h5-0-496" id="h5-0-496" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-497" id="h5-0-497" class="i">+			DEFAULT(escseq.arg[1], 1);
+</a><a href="#h5-0-498" id="h5-0-498" class="i">+			tmoveto(escseq.arg[1]-1, escseq.arg[0]-1);
+</a><a href="#h5-0-499" id="h5-0-499" class="i">+			break;
+</a><a href="#h5-0-500" id="h5-0-500" class="i">+		case &#39;J&#39;: /* Clear screen */
+</a><a href="#h5-0-501" id="h5-0-501" class="i">+			switch(escseq.arg[0]) {
+</a><a href="#h5-0-502" id="h5-0-502" class="i">+			case 0: /* below */
+</a><a href="#h5-0-503" id="h5-0-503" class="i">+				tclearregion(term.c.x, term.c.y, term.col-1, term.row-1);
+</a><a href="#h5-0-504" id="h5-0-504" class="i">+				break;
+</a><a href="#h5-0-505" id="h5-0-505" class="i">+			case 1: /* above */
+</a><a href="#h5-0-506" id="h5-0-506" class="i">+				tclearregion(0, 0, term.c.x, term.c.y);
+</a><a href="#h5-0-507" id="h5-0-507" class="i">+				break;
+</a><a href="#h5-0-508" id="h5-0-508" class="i">+			case 2: /* all */
+</a><a href="#h5-0-509" id="h5-0-509" class="i">+				tclearregion(0, 0, term.col-1, term.row-1);
+</a><a href="#h5-0-510" id="h5-0-510" class="i">+				break;                
+</a><a href="#h5-0-511" id="h5-0-511" class="i">+			}
+</a><a href="#h5-0-512" id="h5-0-512" class="i">+			break;
+</a><a href="#h5-0-513" id="h5-0-513" class="i">+		case &#39;K&#39;: /* Clear line */
+</a><a href="#h5-0-514" id="h5-0-514" class="i">+			switch(escseq.arg[0]) {
+</a><a href="#h5-0-515" id="h5-0-515" class="i">+			case 0: /* right */
+</a><a href="#h5-0-516" id="h5-0-516" class="i">+				tclearregion(term.c.x, term.c.y, term.col-1, term.c.y);
+</a><a href="#h5-0-517" id="h5-0-517" class="i">+				break;
+</a><a href="#h5-0-518" id="h5-0-518" class="i">+			case 1: /* left */
+</a><a href="#h5-0-519" id="h5-0-519" class="i">+				tclearregion(0, term.c.y, term.c.x, term.c.y);
+</a><a href="#h5-0-520" id="h5-0-520" class="i">+				break;
+</a><a href="#h5-0-521" id="h5-0-521" class="i">+			case 2: /* all */
+</a><a href="#h5-0-522" id="h5-0-522" class="i">+				tclearregion(0, term.c.y, term.col-1, term.c.y);
+</a><a href="#h5-0-523" id="h5-0-523" class="i">+				break;
+</a><a href="#h5-0-524" id="h5-0-524" class="i">+			}
+</a><a href="#h5-0-525" id="h5-0-525" class="i">+			break;
+</a><a href="#h5-0-526" id="h5-0-526" class="i">+		case &#39;L&#39;: /* Insert &lt;n&gt; blank lines */
+</a><a href="#h5-0-527" id="h5-0-527" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-528" id="h5-0-528" class="i">+			tinsertblankline(escseq.arg[0]);
+</a><a href="#h5-0-529" id="h5-0-529" class="i">+			break;
+</a><a href="#h5-0-530" id="h5-0-530" class="i">+		case &#39;M&#39;: /* Delete &lt;n&gt; lines */
+</a><a href="#h5-0-531" id="h5-0-531" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-532" id="h5-0-532" class="i">+			tdeleteline(escseq.arg[0]);
+</a><a href="#h5-0-533" id="h5-0-533" class="i">+			break;
+</a><a href="#h5-0-534" id="h5-0-534" class="i">+		case &#39;P&#39;: /* Delete &lt;n&gt; char */
+</a><a href="#h5-0-535" id="h5-0-535" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-536" id="h5-0-536" class="i">+			tdeletechar(escseq.arg[0]);
+</a><a href="#h5-0-537" id="h5-0-537" class="i">+			break;
+</a><a href="#h5-0-538" id="h5-0-538" class="i">+		case &#39;d&#39;: /* Move to &lt;row&gt; */
+</a><a href="#h5-0-539" id="h5-0-539" class="i">+			DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-540" id="h5-0-540" class="i">+			tmoveto(term.c.x, escseq.arg[0]-1);
+</a><a href="#h5-0-541" id="h5-0-541" class="i">+			break;
+</a><a href="#h5-0-542" id="h5-0-542" class="i">+		case &#39;h&#39;: /* Set terminal mode */
+</a><a href="#h5-0-543" id="h5-0-543" class="i">+			break;
+</a><a href="#h5-0-544" id="h5-0-544" class="i">+		case &#39;m&#39;: /* Terminal attribute (color) */
+</a><a href="#h5-0-545" id="h5-0-545" class="i">+			tsetattr(escseq.arg, escseq.narg);
+</a><a href="#h5-0-546" id="h5-0-546" class="i">+			break;
+</a><a href="#h5-0-547" id="h5-0-547" class="i">+		case &#39;r&#39;:
+</a><a href="#h5-0-548" id="h5-0-548" class="i">+			if(escseq.priv)
+</a><a href="#h5-0-549" id="h5-0-549" class="i">+				;
+</a><a href="#h5-0-550" id="h5-0-550" class="i">+			else {
+</a><a href="#h5-0-551" id="h5-0-551" class="i">+				DEFAULT(escseq.arg[0], 1);
+</a><a href="#h5-0-552" id="h5-0-552" class="i">+				DEFAULT(escseq.arg[1], term.row);
+</a><a href="#h5-0-553" id="h5-0-553" class="i">+				tsetscroll(escseq.arg[0]-1, escseq.arg[1]-1);
+</a><a href="#h5-0-554" id="h5-0-554" class="i">+			}
+</a><a href="#h5-0-555" id="h5-0-555" class="i">+			break;
+</a><a href="#h5-0-556" id="h5-0-556" class="i">+		case &#39;s&#39;: /* Save cursor position */
+</a><a href="#h5-0-557" id="h5-0-557" class="i">+			tcpos(CSsave);
+</a><a href="#h5-0-558" id="h5-0-558" class="i">+			break;
+</a><a href="#h5-0-559" id="h5-0-559" class="i">+		case &#39;u&#39;: /* Load cursor position */
+</a><a href="#h5-0-560" id="h5-0-560" class="i">+			tcpos(CSload);
+</a><a href="#h5-0-561" id="h5-0-561" class="i">+			break;
+</a><a href="#h5-0-562" id="h5-0-562" class="i">+		}
+</a><a href="#h5-0-563" id="h5-0-563" class="i">+		break;
+</a><a href="#h5-0-564" id="h5-0-564" class="i">+	}
+</a><a href="#h5-0-565" id="h5-0-565" class="i">+}
+</a><a href="#h5-0-566" id="h5-0-566" class="i">+
+</a><a href="#h5-0-567" id="h5-0-567" class="i">+void
+</a><a href="#h5-0-568" id="h5-0-568" class="i">+escdump(void) { 
+</a><a href="#h5-0-569" id="h5-0-569" class="i">+	int i;
+</a><a href="#h5-0-570" id="h5-0-570" class="i">+	puts(&quot;------&quot;);
+</a><a href="#h5-0-571" id="h5-0-571" class="i">+	printf(&quot;rawbuf  : %s\n&quot;, escseq.buf);
+</a><a href="#h5-0-572" id="h5-0-572" class="i">+	printf(&quot;prechar : %c\n&quot;, escseq.pre);
+</a><a href="#h5-0-573" id="h5-0-573" class="i">+	printf(&quot;private : %c\n&quot;, escseq.priv ? &#39;?&#39; : &#39; &#39;);
+</a><a href="#h5-0-574" id="h5-0-574" class="i">+	printf(&quot;narg    : %d\n&quot;, escseq.narg);
+</a><a href="#h5-0-575" id="h5-0-575" class="i">+	if(escseq.narg) {
+</a><a href="#h5-0-576" id="h5-0-576" class="i">+		for(i = 0; i &lt; escseq.narg; i++)
+</a><a href="#h5-0-577" id="h5-0-577" class="i">+			printf(&quot;\targ %d = %d\n&quot;, i, escseq.arg[i]);
+</a><a href="#h5-0-578" id="h5-0-578" class="i">+	}
+</a><a href="#h5-0-579" id="h5-0-579" class="i">+	printf(&quot;mode    : %c\n&quot;, escseq.mode);
+</a><a href="#h5-0-580" id="h5-0-580" class="i">+}
+</a><a href="#h5-0-581" id="h5-0-581" class="i">+
+</a><a href="#h5-0-582" id="h5-0-582" class="i">+void
+</a><a href="#h5-0-583" id="h5-0-583" class="i">+escreset(void) {
+</a><a href="#h5-0-584" id="h5-0-584" class="i">+	memset(&amp;escseq, 0, sizeof(escseq));
+</a><a href="#h5-0-585" id="h5-0-585" class="i">+}
+</a><a href="#h5-0-586" id="h5-0-586" class="i">+
+</a><a href="#h5-0-587" id="h5-0-587" class="i">+void
+</a><a href="#h5-0-588" id="h5-0-588" class="i">+tputc(char c) {
+</a><a href="#h5-0-589" id="h5-0-589" class="i">+	static int inesc = 0;
+</a><a href="#h5-0-590" id="h5-0-590" class="i">+
+</a><a href="#h5-0-591" id="h5-0-591" class="i">+	dump(c);
+</a><a href="#h5-0-592" id="h5-0-592" class="i">+	/* start of escseq */
+</a><a href="#h5-0-593" id="h5-0-593" class="i">+	if(c == &#39;\033&#39;)
+</a><a href="#h5-0-594" id="h5-0-594" class="i">+		escreset(), inesc = 1;
+</a><a href="#h5-0-595" id="h5-0-595" class="i">+	else if(inesc) {
+</a><a href="#h5-0-596" id="h5-0-596" class="i">+		inesc = escaddc(c);
+</a><a href="#h5-0-597" id="h5-0-597" class="i">+	} /* normal char */ 
+</a><a href="#h5-0-598" id="h5-0-598" class="i">+	else switch(c) { 
+</a><a href="#h5-0-599" id="h5-0-599" class="i">+		default:
+</a><a href="#h5-0-600" id="h5-0-600" class="i">+			tsetchar(c);
+</a><a href="#h5-0-601" id="h5-0-601" class="i">+			tcursor(CSright);
+</a><a href="#h5-0-602" id="h5-0-602" class="i">+			break;
+</a><a href="#h5-0-603" id="h5-0-603" class="i">+		case &#39;\b&#39;:
+</a><a href="#h5-0-604" id="h5-0-604" class="i">+			tcursor(CSleft);
+</a><a href="#h5-0-605" id="h5-0-605" class="i">+			break;
+</a><a href="#h5-0-606" id="h5-0-606" class="i">+		case &#39;\r&#39;:
+</a><a href="#h5-0-607" id="h5-0-607" class="i">+			tmoveto(0, term.c.y);
+</a><a href="#h5-0-608" id="h5-0-608" class="i">+			break;
+</a><a href="#h5-0-609" id="h5-0-609" class="i">+		case &#39;\n&#39;:
+</a><a href="#h5-0-610" id="h5-0-610" class="i">+			tnewline();
+</a><a href="#h5-0-611" id="h5-0-611" class="i">+			break;
+</a><a href="#h5-0-612" id="h5-0-612" class="i">+		case &#39;\a&#39;:
+</a><a href="#h5-0-613" id="h5-0-613" class="i">+			xbell();
+</a><a href="#h5-0-614" id="h5-0-614" class="i">+			break;
+</a><a href="#h5-0-615" id="h5-0-615" class="i">+	}
+</a><a href="#h5-0-616" id="h5-0-616" class="i">+}
+</a><a href="#h5-0-617" id="h5-0-617" class="i">+
+</a><a href="#h5-0-618" id="h5-0-618" class="i">+void
+</a><a href="#h5-0-619" id="h5-0-619" class="i">+tputs(char *s, int len) { 
+</a><a href="#h5-0-620" id="h5-0-620" class="i">+	for(; len &gt; 0; len--)
+</a><a href="#h5-0-621" id="h5-0-621" class="i">+		tputc(*s++);
+</a><a href="#h5-0-622" id="h5-0-622" class="i">+}
+</a><a href="#h5-0-623" id="h5-0-623" class="i">+
+</a><a href="#h5-0-624" id="h5-0-624" class="i">+void
+</a><a href="#h5-0-625" id="h5-0-625" class="i">+tdump(void) {
+</a><a href="#h5-0-626" id="h5-0-626" class="i">+	int row, col;
+</a><a href="#h5-0-627" id="h5-0-627" class="i">+	Glyph c;
+</a><a href="#h5-0-628" id="h5-0-628" class="i">+
+</a><a href="#h5-0-629" id="h5-0-629" class="i">+	for(row = 0; row &lt; term.row; row++) {
+</a><a href="#h5-0-630" id="h5-0-630" class="i">+		for(col = 0; col &lt; term.col; col++) {
+</a><a href="#h5-0-631" id="h5-0-631" class="i">+			if(col == term.c.x &amp;&amp; row == term.c.y)
+</a><a href="#h5-0-632" id="h5-0-632" class="i">+				putchar(&#39;#&#39;);
+</a><a href="#h5-0-633" id="h5-0-633" class="i">+			else {
+</a><a href="#h5-0-634" id="h5-0-634" class="i">+				c = term.line[row][col];
+</a><a href="#h5-0-635" id="h5-0-635" class="i">+				putchar(c.state &amp; CRset ? c.c : &#39;.&#39;);
+</a><a href="#h5-0-636" id="h5-0-636" class="i">+			}
+</a><a href="#h5-0-637" id="h5-0-637" class="i">+		}
+</a><a href="#h5-0-638" id="h5-0-638" class="i">+		putchar(&#39;\n&#39;);
+</a><a href="#h5-0-639" id="h5-0-639" class="i">+	}
+</a><a href="#h5-0-640" id="h5-0-640" class="i">+}
+</a><a href="#h5-0-641" id="h5-0-641" class="i">+
+</a><a href="#h5-0-642" id="h5-0-642" class="i">+void
+</a><a href="#h5-0-643" id="h5-0-643" class="i">+tresize(int col, int row) {
+</a><a href="#h5-0-644" id="h5-0-644" class="i">+	int i;
+</a><a href="#h5-0-645" id="h5-0-645" class="i">+	Line *line;
+</a><a href="#h5-0-646" id="h5-0-646" class="i">+	int minrow = MIN(row, term.row);
+</a><a href="#h5-0-647" id="h5-0-647" class="i">+	int mincol = MIN(col, term.col);
+</a><a href="#h5-0-648" id="h5-0-648" class="i">+
+</a><a href="#h5-0-649" id="h5-0-649" class="i">+	if(col &lt; 1 || row &lt; 1)
+</a><a href="#h5-0-650" id="h5-0-650" class="i">+		return;
+</a><a href="#h5-0-651" id="h5-0-651" class="i">+	line = calloc(row, sizeof(Line));
+</a><a href="#h5-0-652" id="h5-0-652" class="i">+	for(i = 0 ; i &lt; row; i++)
+</a><a href="#h5-0-653" id="h5-0-653" class="i">+		line[i] = calloc(col, sizeof(Glyph));
+</a><a href="#h5-0-654" id="h5-0-654" class="i">+	for(i = 0 ; i &lt; minrow; i++) {
+</a><a href="#h5-0-655" id="h5-0-655" class="i">+		memcpy(line[i], term.line[i], mincol * sizeof(Glyph));
+</a><a href="#h5-0-656" id="h5-0-656" class="i">+		free(term.line[i]);
+</a><a href="#h5-0-657" id="h5-0-657" class="i">+	}
+</a><a href="#h5-0-658" id="h5-0-658" class="i">+	free(term.line);
+</a><a href="#h5-0-659" id="h5-0-659" class="i">+	LIMIT(term.c.x, 0, col-1);
+</a><a href="#h5-0-660" id="h5-0-660" class="i">+	LIMIT(term.c.y, 0, row-1);
+</a><a href="#h5-0-661" id="h5-0-661" class="i">+	LIMIT(term.top, 0, row-1);
+</a><a href="#h5-0-662" id="h5-0-662" class="i">+	LIMIT(term.bot, 0, row-1);
+</a><a href="#h5-0-663" id="h5-0-663" class="i">+	//    if(term.bot == term.row-1)
+</a><a href="#h5-0-664" id="h5-0-664" class="i">+	term.bot = row-1;
+</a><a href="#h5-0-665" id="h5-0-665" class="i">+	term.line = line;
+</a><a href="#h5-0-666" id="h5-0-666" class="i">+	term.col = col, term.row = row;
+</a><a href="#h5-0-667" id="h5-0-667" class="i">+}
+</a><a href="#h5-0-668" id="h5-0-668" class="i">+
+</a><a href="#h5-0-669" id="h5-0-669" class="i">+unsigned long
+</a><a href="#h5-0-670" id="h5-0-670" class="i">+xgetcol(const char *s) {
+</a><a href="#h5-0-671" id="h5-0-671" class="i">+	XColor color;
+</a><a href="#h5-0-672" id="h5-0-672" class="i">+	Colormap cmap = DefaultColormap(xw.dis, xw.scr);
+</a><a href="#h5-0-673" id="h5-0-673" class="i">+
+</a><a href="#h5-0-674" id="h5-0-674" class="i">+	if(!XAllocNamedColor(xw.dis, cmap, s, &amp;color, &amp;color)) {
+</a><a href="#h5-0-675" id="h5-0-675" class="i">+		color.pixel = WhitePixel(xw.dis, xw.scr);
+</a><a href="#h5-0-676" id="h5-0-676" class="i">+		fprintf(stderr, &quot;Could not allocate color &#39;%s&#39;\n&quot;, s);
+</a><a href="#h5-0-677" id="h5-0-677" class="i">+	}
+</a><a href="#h5-0-678" id="h5-0-678" class="i">+	return color.pixel;
+</a><a href="#h5-0-679" id="h5-0-679" class="i">+}
+</a><a href="#h5-0-680" id="h5-0-680" class="i">+
+</a><a href="#h5-0-681" id="h5-0-681" class="i">+
+</a><a href="#h5-0-682" id="h5-0-682" class="i">+void
+</a><a href="#h5-0-683" id="h5-0-683" class="i">+xclear(int x1, int y1, int x2, int y2) {
+</a><a href="#h5-0-684" id="h5-0-684" class="i">+	XClearArea(xw.dis, xw.win, 
+</a><a href="#h5-0-685" id="h5-0-685" class="i">+			x1 * xw.cw, y1 * xw.ch, 
+</a><a href="#h5-0-686" id="h5-0-686" class="i">+			(x2-x1+1) * xw.cw, (y2-y1+1) * xw.ch, 
+</a><a href="#h5-0-687" id="h5-0-687" class="i">+			False);
+</a><a href="#h5-0-688" id="h5-0-688" class="i">+}
+</a><a href="#h5-0-689" id="h5-0-689" class="i">+
+</a><a href="#h5-0-690" id="h5-0-690" class="i">+
+</a><a href="#h5-0-691" id="h5-0-691" class="i">+void
+</a><a href="#h5-0-692" id="h5-0-692" class="i">+xscroll(void) {
+</a><a href="#h5-0-693" id="h5-0-693" class="i">+	int srcy = (term.top+1) * xw.ch;
+</a><a href="#h5-0-694" id="h5-0-694" class="i">+	int dsty = term.top * xw.ch;
+</a><a href="#h5-0-695" id="h5-0-695" class="i">+	int height = (term.bot-term.top) * xw.ch;
+</a><a href="#h5-0-696" id="h5-0-696" class="i">+
+</a><a href="#h5-0-697" id="h5-0-697" class="i">+	xcursor(CShide);
+</a><a href="#h5-0-698" id="h5-0-698" class="i">+	XCopyArea(xw.dis, xw.win, xw.win, dc.gc, 0, srcy, xw.w, height, 0, dsty);
+</a><a href="#h5-0-699" id="h5-0-699" class="i">+	xclear(0, term.bot, term.col-1, term.bot);
+</a><a href="#h5-0-700" id="h5-0-700" class="i">+}
+</a><a href="#h5-0-701" id="h5-0-701" class="i">+
+</a><a href="#h5-0-702" id="h5-0-702" class="i">+
+</a><a href="#h5-0-703" id="h5-0-703" class="i">+
+</a><a href="#h5-0-704" id="h5-0-704" class="i">+
+</a><a href="#h5-0-705" id="h5-0-705" class="i">+void
+</a><a href="#h5-0-706" id="h5-0-706" class="i">+xinit(void) {
+</a><a href="#h5-0-707" id="h5-0-707" class="i">+	XGCValues values;
+</a><a href="#h5-0-708" id="h5-0-708" class="i">+	unsigned long valuemask;
+</a><a href="#h5-0-709" id="h5-0-709" class="i">+	XClassHint chint;
+</a><a href="#h5-0-710" id="h5-0-710" class="i">+	XWMHints wmhint;
+</a><a href="#h5-0-711" id="h5-0-711" class="i">+	XSizeHints shint;
+</a><a href="#h5-0-712" id="h5-0-712" class="i">+	char *args[] = {NULL};
+</a><a href="#h5-0-713" id="h5-0-713" class="i">+	int i;
+</a><a href="#h5-0-714" id="h5-0-714" class="i">+
+</a><a href="#h5-0-715" id="h5-0-715" class="i">+	xw.dis = XOpenDisplay(NULL);
+</a><a href="#h5-0-716" id="h5-0-716" class="i">+	xw.scr = XDefaultScreen(xw.dis);
+</a><a href="#h5-0-717" id="h5-0-717" class="i">+	/* font */
+</a><a href="#h5-0-718" id="h5-0-718" class="i">+	dc.font = XLoadQueryFont(xw.dis, FONT);
+</a><a href="#h5-0-719" id="h5-0-719" class="i">+	xw.cw = dc.font-&gt;max_bounds.rbearing - dc.font-&gt;min_bounds.lbearing;
+</a><a href="#h5-0-720" id="h5-0-720" class="i">+	xw.ch = dc.font-&gt;ascent + dc.font-&gt;descent + LINESPACE;
+</a><a href="#h5-0-721" id="h5-0-721" class="i">+	/* colors */
+</a><a href="#h5-0-722" id="h5-0-722" class="i">+	for(i = 0; i &lt; LEN(colorname); i++)
+</a><a href="#h5-0-723" id="h5-0-723" class="i">+		dc.col[i] = xgetcol(colorname[i]);
+</a><a href="#h5-0-724" id="h5-0-724" class="i">+	term.c.attr.fg = DefaultFG;
+</a><a href="#h5-0-725" id="h5-0-725" class="i">+	term.c.attr.bg = DefaultBG;
+</a><a href="#h5-0-726" id="h5-0-726" class="i">+	term.c.attr.mode = ATnone;
+</a><a href="#h5-0-727" id="h5-0-727" class="i">+	/* windows */
+</a><a href="#h5-0-728" id="h5-0-728" class="i">+	xw.h = term.row * xw.ch;
+</a><a href="#h5-0-729" id="h5-0-729" class="i">+	xw.w = term.col * xw.cw;
+</a><a href="#h5-0-730" id="h5-0-730" class="i">+	/* XXX: this BORDER is useless after the first resize, handle it in xdraws() */
+</a><a href="#h5-0-731" id="h5-0-731" class="i">+	xw.win = XCreateSimpleWindow(xw.dis, XRootWindow(xw.dis, xw.scr), 0, 0,
+</a><a href="#h5-0-732" id="h5-0-732" class="i">+			xw.w, xw.h, BORDER, 
+</a><a href="#h5-0-733" id="h5-0-733" class="i">+			dc.col[DefaultBG],
+</a><a href="#h5-0-734" id="h5-0-734" class="i">+			dc.col[DefaultBG]);
+</a><a href="#h5-0-735" id="h5-0-735" class="i">+	/* gc */
+</a><a href="#h5-0-736" id="h5-0-736" class="i">+	values.foreground = XWhitePixel(xw.dis, xw.scr);
+</a><a href="#h5-0-737" id="h5-0-737" class="i">+	values.font = dc.font-&gt;fid;
+</a><a href="#h5-0-738" id="h5-0-738" class="i">+	valuemask = GCForeground | GCFont;
+</a><a href="#h5-0-739" id="h5-0-739" class="i">+	dc.gc = XCreateGC(xw.dis, xw.win, valuemask, &amp;values);
+</a><a href="#h5-0-740" id="h5-0-740" class="i">+	XMapWindow(xw.dis, xw.win);
+</a><a href="#h5-0-741" id="h5-0-741" class="i">+	/* wm stuff */
+</a><a href="#h5-0-742" id="h5-0-742" class="i">+	chint.res_name = TNAME, chint.res_class = TNAME;
+</a><a href="#h5-0-743" id="h5-0-743" class="i">+	wmhint.input = 1, wmhint.flags = InputHint;
+</a><a href="#h5-0-744" id="h5-0-744" class="i">+	shint.height_inc = xw.ch, shint.width_inc = xw.cw;
+</a><a href="#h5-0-745" id="h5-0-745" class="i">+	shint.height = xw.h, shint.width = xw.w;
+</a><a href="#h5-0-746" id="h5-0-746" class="i">+	shint.flags = PSize | PResizeInc;
+</a><a href="#h5-0-747" id="h5-0-747" class="i">+	XSetWMProperties(xw.dis, xw.win, NULL, NULL, &amp;args[0], 0, &amp;shint, &amp;wmhint, &amp;chint);
+</a><a href="#h5-0-748" id="h5-0-748" class="i">+	XStoreName(xw.dis, xw.win, TNAME);
+</a><a href="#h5-0-749" id="h5-0-749" class="i">+	XSync(xw.dis, 0);
+</a><a href="#h5-0-750" id="h5-0-750" class="i">+}
+</a><a href="#h5-0-751" id="h5-0-751" class="i">+
+</a><a href="#h5-0-752" id="h5-0-752" class="i">+void
+</a><a href="#h5-0-753" id="h5-0-753" class="i">+xdrawc(int x, int y, Glyph g) {
+</a><a href="#h5-0-754" id="h5-0-754" class="i">+	XRectangle r = { x * xw.cw, y * xw.ch, xw.cw, xw.ch };
+</a><a href="#h5-0-755" id="h5-0-755" class="i">+	unsigned long xfg, xbg;
+</a><a href="#h5-0-756" id="h5-0-756" class="i">+
+</a><a href="#h5-0-757" id="h5-0-757" class="i">+	/* reverse video */
+</a><a href="#h5-0-758" id="h5-0-758" class="i">+	if(g.mode &amp; ATreverse)
+</a><a href="#h5-0-759" id="h5-0-759" class="i">+		xfg = dc.col[g.bg], xbg = dc.col[g.fg];
+</a><a href="#h5-0-760" id="h5-0-760" class="i">+	else
+</a><a href="#h5-0-761" id="h5-0-761" class="i">+		xfg = dc.col[g.fg], xbg = dc.col[g.bg];
+</a><a href="#h5-0-762" id="h5-0-762" class="i">+	/* background */
+</a><a href="#h5-0-763" id="h5-0-763" class="i">+	XSetForeground(xw.dis, dc.gc, xbg);
+</a><a href="#h5-0-764" id="h5-0-764" class="i">+	XFillRectangles(xw.dis, xw.win, dc.gc, &amp;r, 1);
+</a><a href="#h5-0-765" id="h5-0-765" class="i">+	/* string */
+</a><a href="#h5-0-766" id="h5-0-766" class="i">+	XSetForeground(xw.dis, dc.gc, xfg);
+</a><a href="#h5-0-767" id="h5-0-767" class="i">+	XDrawString(xw.dis, xw.win, dc.gc, r.x, r.y+dc.font-&gt;ascent, &amp;(g.c), 1);
+</a><a href="#h5-0-768" id="h5-0-768" class="i">+	if(g.mode &amp; ATbold)  /* XXX: bold hack (draw again at x+1) */
+</a><a href="#h5-0-769" id="h5-0-769" class="i">+		XDrawString(xw.dis, xw.win, dc.gc, r.x+1, r.y+dc.font-&gt;ascent, &amp;(g.c), 1);
+</a><a href="#h5-0-770" id="h5-0-770" class="i">+	/* underline */
+</a><a href="#h5-0-771" id="h5-0-771" class="i">+	if(g.mode &amp; ATunderline) {
+</a><a href="#h5-0-772" id="h5-0-772" class="i">+		r.y += dc.font-&gt;ascent + 1;
+</a><a href="#h5-0-773" id="h5-0-773" class="i">+		XDrawLine(xw.dis, xw.win, dc.gc, r.x, r.y, r.x+r.width-1, r.y);
+</a><a href="#h5-0-774" id="h5-0-774" class="i">+	}
+</a><a href="#h5-0-775" id="h5-0-775" class="i">+}
+</a><a href="#h5-0-776" id="h5-0-776" class="i">+
+</a><a href="#h5-0-777" id="h5-0-777" class="i">+void
+</a><a href="#h5-0-778" id="h5-0-778" class="i">+xcursor(int mode) {
+</a><a href="#h5-0-779" id="h5-0-779" class="i">+	static int oldx = 0;
+</a><a href="#h5-0-780" id="h5-0-780" class="i">+	static int oldy = 0;
+</a><a href="#h5-0-781" id="h5-0-781" class="i">+	Glyph g = {&#39; &#39;, ATnone, DefaultBG, DefaultCS, 0};
+</a><a href="#h5-0-782" id="h5-0-782" class="i">+
+</a><a href="#h5-0-783" id="h5-0-783" class="i">+	if(term.line[term.c.y][term.c.x].state &amp; CRset)
+</a><a href="#h5-0-784" id="h5-0-784" class="i">+		g.c = term.line[term.c.y][term.c.x].c;
+</a><a href="#h5-0-785" id="h5-0-785" class="i">+	/* remove the old cursor */
+</a><a href="#h5-0-786" id="h5-0-786" class="i">+	if(term.line[oldy][oldx].state &amp; CRset)
+</a><a href="#h5-0-787" id="h5-0-787" class="i">+		xdrawc(oldx, oldy, term.line[oldy][oldx]);
+</a><a href="#h5-0-788" id="h5-0-788" class="i">+	else xclear(oldx, oldy, oldx, oldy); /* XXX: maybe a bug */
+</a><a href="#h5-0-789" id="h5-0-789" class="i">+	if(mode == CSdraw &amp;&amp; !term.c.hidden) {
+</a><a href="#h5-0-790" id="h5-0-790" class="i">+		xdrawc(term.c.x, term.c.y, g);
+</a><a href="#h5-0-791" id="h5-0-791" class="i">+		oldx = term.c.x, oldy = term.c.y;
+</a><a href="#h5-0-792" id="h5-0-792" class="i">+	}
+</a><a href="#h5-0-793" id="h5-0-793" class="i">+}
+</a><a href="#h5-0-794" id="h5-0-794" class="i">+
+</a><a href="#h5-0-795" id="h5-0-795" class="i">+
+</a><a href="#h5-0-796" id="h5-0-796" class="i">+void
+</a><a href="#h5-0-797" id="h5-0-797" class="i">+draw(int redraw_all) {
+</a><a href="#h5-0-798" id="h5-0-798" class="i">+	int x, y;
+</a><a href="#h5-0-799" id="h5-0-799" class="i">+	int changed, set;
+</a><a href="#h5-0-800" id="h5-0-800" class="i">+
+</a><a href="#h5-0-801" id="h5-0-801" class="i">+	if(redraw_all)
+</a><a href="#h5-0-802" id="h5-0-802" class="i">+		XClearWindow(xw.dis, xw.win);
+</a><a href="#h5-0-803" id="h5-0-803" class="i">+	/* XXX: drawing could be optimised */
+</a><a href="#h5-0-804" id="h5-0-804" class="i">+	for(y = 0; y &lt; term.row; y++) {
+</a><a href="#h5-0-805" id="h5-0-805" class="i">+		for(x = 0; x &lt; term.col; x++) {
+</a><a href="#h5-0-806" id="h5-0-806" class="i">+			changed = term.line[y][x].state &amp; CRupdate;
+</a><a href="#h5-0-807" id="h5-0-807" class="i">+			set = term.line[y][x].state &amp; CRset;
+</a><a href="#h5-0-808" id="h5-0-808" class="i">+			if((changed &amp;&amp; set) || (redraw_all &amp;&amp; set)) {
+</a><a href="#h5-0-809" id="h5-0-809" class="i">+				term.line[y][x].state &amp;= ~CRupdate;
+</a><a href="#h5-0-810" id="h5-0-810" class="i">+				xdrawc(x, y, term.line[y][x]);
+</a><a href="#h5-0-811" id="h5-0-811" class="i">+			}
+</a><a href="#h5-0-812" id="h5-0-812" class="i">+		}
+</a><a href="#h5-0-813" id="h5-0-813" class="i">+	}
+</a><a href="#h5-0-814" id="h5-0-814" class="i">+	xcursor(CSdraw);
+</a><a href="#h5-0-815" id="h5-0-815" class="i">+}
+</a><a href="#h5-0-816" id="h5-0-816" class="i">+
+</a><a href="#h5-0-817" id="h5-0-817" class="i">+void
+</a><a href="#h5-0-818" id="h5-0-818" class="i">+kpress(XKeyEvent *e) {
+</a><a href="#h5-0-819" id="h5-0-819" class="i">+	KeySym ksym;
+</a><a href="#h5-0-820" id="h5-0-820" class="i">+	char buf[32];
+</a><a href="#h5-0-821" id="h5-0-821" class="i">+	int len;
+</a><a href="#h5-0-822" id="h5-0-822" class="i">+	int meta;
+</a><a href="#h5-0-823" id="h5-0-823" class="i">+	int shift;
+</a><a href="#h5-0-824" id="h5-0-824" class="i">+
+</a><a href="#h5-0-825" id="h5-0-825" class="i">+	meta  = e-&gt;state &amp; Mod4Mask;
+</a><a href="#h5-0-826" id="h5-0-826" class="i">+	shift = e-&gt;state &amp; ShiftMask;
+</a><a href="#h5-0-827" id="h5-0-827" class="i">+	len = XLookupString(e, buf, sizeof(buf), &amp;ksym, NULL);
+</a><a href="#h5-0-828" id="h5-0-828" class="i">+	if(len &gt; 0) {
+</a><a href="#h5-0-829" id="h5-0-829" class="i">+		buf[sizeof(buf)-1] = &#39;\0&#39;;
+</a><a href="#h5-0-830" id="h5-0-830" class="i">+		if(meta &amp;&amp; len == 1)
+</a><a href="#h5-0-831" id="h5-0-831" class="i">+			ttywrite(&quot;\033&quot;, 1);
+</a><a href="#h5-0-832" id="h5-0-832" class="i">+		ttywrite(buf, len);
+</a><a href="#h5-0-833" id="h5-0-833" class="i">+		return;
+</a><a href="#h5-0-834" id="h5-0-834" class="i">+	}
+</a><a href="#h5-0-835" id="h5-0-835" class="i">+	switch(ksym) {
+</a><a href="#h5-0-836" id="h5-0-836" class="i">+#ifdef DEBUG1
+</a><a href="#h5-0-837" id="h5-0-837" class="i">+	default:
+</a><a href="#h5-0-838" id="h5-0-838" class="i">+		printf(&quot;errkey: %d\n&quot;, (int)ksym);
+</a><a href="#h5-0-839" id="h5-0-839" class="i">+		break;
+</a><a href="#h5-0-840" id="h5-0-840" class="i">+#endif
+</a><a href="#h5-0-841" id="h5-0-841" class="i">+	case XK_Up:
+</a><a href="#h5-0-842" id="h5-0-842" class="i">+	case XK_Down:
+</a><a href="#h5-0-843" id="h5-0-843" class="i">+	case XK_Left:
+</a><a href="#h5-0-844" id="h5-0-844" class="i">+	case XK_Right:
+</a><a href="#h5-0-845" id="h5-0-845" class="i">+		sprintf(buf, &quot;\033[%c&quot;, &quot;DACB&quot;[ksym - XK_Left]);
+</a><a href="#h5-0-846" id="h5-0-846" class="i">+		ttywrite(buf, 3);
+</a><a href="#h5-0-847" id="h5-0-847" class="i">+		break;
+</a><a href="#h5-0-848" id="h5-0-848" class="i">+	case XK_Delete: ttywrite(KEYDELETE, sizeof(KEYDELETE)-1); break;
+</a><a href="#h5-0-849" id="h5-0-849" class="i">+	case XK_Home:   ttywrite(  KEYHOME, sizeof(  KEYHOME)-1); break;
+</a><a href="#h5-0-850" id="h5-0-850" class="i">+	case XK_End:    ttywrite(   KEYEND, sizeof(   KEYEND)-1); break;
+</a><a href="#h5-0-851" id="h5-0-851" class="i">+	case XK_Prior:	ttywrite(  KEYPREV, sizeof(  KEYPREV)-1); break;
+</a><a href="#h5-0-852" id="h5-0-852" class="i">+	case XK_Next:	ttywrite(  KEYNEXT, sizeof(  KEYNEXT)-1); break;
+</a><a href="#h5-0-853" id="h5-0-853" class="i">+	case XK_Insert:
+</a><a href="#h5-0-854" id="h5-0-854" class="i">+		/* XXX: paste X clipboard */
+</a><a href="#h5-0-855" id="h5-0-855" class="i">+		if(shift);
+</a><a href="#h5-0-856" id="h5-0-856" class="i">+		break;
+</a><a href="#h5-0-857" id="h5-0-857" class="i">+	}
+</a><a href="#h5-0-858" id="h5-0-858" class="i">+}
+</a><a href="#h5-0-859" id="h5-0-859" class="i">+
+</a><a href="#h5-0-860" id="h5-0-860" class="i">+void
+</a><a href="#h5-0-861" id="h5-0-861" class="i">+resize(XEvent *e) {
+</a><a href="#h5-0-862" id="h5-0-862" class="i">+	int col, row;
+</a><a href="#h5-0-863" id="h5-0-863" class="i">+	col = e-&gt;xconfigure.width / xw.cw;
+</a><a href="#h5-0-864" id="h5-0-864" class="i">+	row = e-&gt;xconfigure.height / xw.ch;
+</a><a href="#h5-0-865" id="h5-0-865" class="i">+    
+</a><a href="#h5-0-866" id="h5-0-866" class="i">+	if(term.col != col &amp;&amp; term.row != row) {
+</a><a href="#h5-0-867" id="h5-0-867" class="i">+		tresize(col, row);
+</a><a href="#h5-0-868" id="h5-0-868" class="i">+		ttyresize(col, row);
+</a><a href="#h5-0-869" id="h5-0-869" class="i">+		xw.w = e-&gt;xconfigure.width;
+</a><a href="#h5-0-870" id="h5-0-870" class="i">+		xw.h = e-&gt;xconfigure.height;
+</a><a href="#h5-0-871" id="h5-0-871" class="i">+		draw(SCredraw);
+</a><a href="#h5-0-872" id="h5-0-872" class="i">+	}
+</a><a href="#h5-0-873" id="h5-0-873" class="i">+}
+</a><a href="#h5-0-874" id="h5-0-874" class="i">+
+</a><a href="#h5-0-875" id="h5-0-875" class="i">+
+</a><a href="#h5-0-876" id="h5-0-876" class="i">+void
+</a><a href="#h5-0-877" id="h5-0-877" class="i">+run(void) {
+</a><a href="#h5-0-878" id="h5-0-878" class="i">+	int ret;
+</a><a href="#h5-0-879" id="h5-0-879" class="i">+	XEvent ev;
+</a><a href="#h5-0-880" id="h5-0-880" class="i">+	fd_set rfd;
+</a><a href="#h5-0-881" id="h5-0-881" class="i">+	struct timeval tv = {0, 10000};
+</a><a href="#h5-0-882" id="h5-0-882" class="i">+
+</a><a href="#h5-0-883" id="h5-0-883" class="i">+	running = 1;
+</a><a href="#h5-0-884" id="h5-0-884" class="i">+	XSelectInput(xw.dis, xw.win, ExposureMask | KeyPressMask | StructureNotifyMask);
+</a><a href="#h5-0-885" id="h5-0-885" class="i">+	XResizeWindow(xw.dis, xw.win, xw.w , xw.h); /* seems to fix the resize bug in wmii */
+</a><a href="#h5-0-886" id="h5-0-886" class="i">+	while(running) {
+</a><a href="#h5-0-887" id="h5-0-887" class="i">+		while(XPending(xw.dis)) {
+</a><a href="#h5-0-888" id="h5-0-888" class="i">+			XNextEvent(xw.dis, &amp;ev);
+</a><a href="#h5-0-889" id="h5-0-889" class="i">+			switch (ev.type) {
+</a><a href="#h5-0-890" id="h5-0-890" class="i">+			default:
+</a><a href="#h5-0-891" id="h5-0-891" class="i">+				break;
+</a><a href="#h5-0-892" id="h5-0-892" class="i">+			case KeyPress:
+</a><a href="#h5-0-893" id="h5-0-893" class="i">+				kpress(&amp;ev.xkey);
+</a><a href="#h5-0-894" id="h5-0-894" class="i">+				break;
+</a><a href="#h5-0-895" id="h5-0-895" class="i">+			case Expose:
+</a><a href="#h5-0-896" id="h5-0-896" class="i">+				draw(SCredraw);
+</a><a href="#h5-0-897" id="h5-0-897" class="i">+				break;
+</a><a href="#h5-0-898" id="h5-0-898" class="i">+			case ConfigureNotify:
+</a><a href="#h5-0-899" id="h5-0-899" class="i">+				resize(&amp;ev);
+</a><a href="#h5-0-900" id="h5-0-900" class="i">+				break;
+</a><a href="#h5-0-901" id="h5-0-901" class="i">+			}
+</a><a href="#h5-0-902" id="h5-0-902" class="i">+		}
+</a><a href="#h5-0-903" id="h5-0-903" class="i">+		FD_ZERO(&amp;rfd);
+</a><a href="#h5-0-904" id="h5-0-904" class="i">+		FD_SET(cmdfd, &amp;rfd);
+</a><a href="#h5-0-905" id="h5-0-905" class="i">+		ret = select(cmdfd+1, &amp;rfd, NULL, NULL, &amp;tv);
+</a><a href="#h5-0-906" id="h5-0-906" class="i">+		if(ret &lt; 0) {
+</a><a href="#h5-0-907" id="h5-0-907" class="i">+			fprintf(stderr, &quot;select: %m\n&quot;);
+</a><a href="#h5-0-908" id="h5-0-908" class="i">+			running = 0;
+</a><a href="#h5-0-909" id="h5-0-909" class="i">+		}
+</a><a href="#h5-0-910" id="h5-0-910" class="i">+		if(!ret)
+</a><a href="#h5-0-911" id="h5-0-911" class="i">+			continue;
+</a><a href="#h5-0-912" id="h5-0-912" class="i">+		if(FD_ISSET(cmdfd, &amp;rfd)) {
+</a><a href="#h5-0-913" id="h5-0-913" class="i">+			ttyread();
+</a><a href="#h5-0-914" id="h5-0-914" class="i">+			draw(SCupdate);
+</a><a href="#h5-0-915" id="h5-0-915" class="i">+		}
+</a><a href="#h5-0-916" id="h5-0-916" class="i">+	}
+</a><a href="#h5-0-917" id="h5-0-917" class="i">+}
+</a><a href="#h5-0-918" id="h5-0-918" class="i">+
+</a><a href="#h5-0-919" id="h5-0-919" class="i">+int
+</a><a href="#h5-0-920" id="h5-0-920" class="i">+main(int argc, char *argv[]) {
+</a><a href="#h5-0-921" id="h5-0-921" class="i">+	if(argc == 2 &amp;&amp; !strncmp(&quot;-v&quot;, argv[1], 3))
+</a><a href="#h5-0-922" id="h5-0-922" class="i">+		die(&quot;st-&quot;VERSION&quot;, © 2009 st engineers\n&quot;);
+</a><a href="#h5-0-923" id="h5-0-923" class="i">+	else if(argc != 1)
+</a><a href="#h5-0-924" id="h5-0-924" class="i">+		die(&quot;usage: st [-v]\n&quot;);
+</a><a href="#h5-0-925" id="h5-0-925" class="i">+	setlocale(LC_CTYPE, &quot;&quot;);
+</a><a href="#h5-0-926" id="h5-0-926" class="i">+	tnew(80, 24);
+</a><a href="#h5-0-927" id="h5-0-927" class="i">+	ttynew();
+</a><a href="#h5-0-928" id="h5-0-928" class="i">+	xinit();
+</a><a href="#h5-0-929" id="h5-0-929" class="i">+	run();
+</a> 	return 0;
+ }
+<b>diff --git a/<a id="h6" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -0,0 +1,181 @@
+</a><a href="#h6-0-0" id="h6-0-0" class="i">+/* See LICENSE for licence details. */
+</a><a href="#h6-0-1" id="h6-0-1" class="i">+
+</a><a href="#h6-0-2" id="h6-0-2" class="i">+#define _XOPEN_SOURCE
+</a><a href="#h6-0-3" id="h6-0-3" class="i">+#include &lt;ctype.h&gt;
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+#include &lt;fcntl.h&gt;
+</a><a href="#h6-0-5" id="h6-0-5" class="i">+#include &lt;locale.h&gt;
+</a><a href="#h6-0-6" id="h6-0-6" class="i">+#include &lt;stdarg.h&gt;
+</a><a href="#h6-0-7" id="h6-0-7" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h6-0-9" id="h6-0-9" class="i">+#include &lt;string.h&gt;
+</a><a href="#h6-0-10" id="h6-0-10" class="i">+#include &lt;unistd.h&gt;
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+#include &lt;sys/types.h&gt;
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+#include &lt;sys/stat.h&gt;
+</a><a href="#h6-0-13" id="h6-0-13" class="i">+#include &lt;sys/select.h&gt;
+</a><a href="#h6-0-14" id="h6-0-14" class="i">+#include &lt;sys/ioctl.h&gt;
+</a><a href="#h6-0-15" id="h6-0-15" class="i">+#include &lt;X11/Xlib.h&gt;
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+#include &lt;X11/keysym.h&gt;
+</a><a href="#h6-0-17" id="h6-0-17" class="i">+#include &lt;X11/Xutil.h&gt;
+</a><a href="#h6-0-18" id="h6-0-18" class="i">+
+</a><a href="#h6-0-19" id="h6-0-19" class="i">+/* special keys */
+</a><a href="#h6-0-20" id="h6-0-20" class="i">+#define KEYDELETE &quot;\033[3~&quot;
+</a><a href="#h6-0-21" id="h6-0-21" class="i">+#define KEYHOME   &quot;\033[1~&quot;
+</a><a href="#h6-0-22" id="h6-0-22" class="i">+#define KEYEND    &quot;\033[4~&quot;
+</a><a href="#h6-0-23" id="h6-0-23" class="i">+#define KEYPREV   &quot;\033[5~&quot;
+</a><a href="#h6-0-24" id="h6-0-24" class="i">+#define KEYNEXT   &quot;\033[6~&quot;
+</a><a href="#h6-0-25" id="h6-0-25" class="i">+
+</a><a href="#h6-0-26" id="h6-0-26" class="i">+#define TNAME &quot;st&quot;
+</a><a href="#h6-0-27" id="h6-0-27" class="i">+#define SHELL &quot;/bin/bash&quot;
+</a><a href="#h6-0-28" id="h6-0-28" class="i">+#define TAB    8
+</a><a href="#h6-0-29" id="h6-0-29" class="i">+
+</a><a href="#h6-0-30" id="h6-0-30" class="i">+#define FONT &quot;-*-terminus-medium-r-normal-*-14-*-*-*-*-*-*-*&quot;
+</a><a href="#h6-0-31" id="h6-0-31" class="i">+#define BORDER 3
+</a><a href="#h6-0-32" id="h6-0-32" class="i">+#define LINESPACE 1 /* additional pixel between each line */
+</a><a href="#h6-0-33" id="h6-0-33" class="i">+
+</a><a href="#h6-0-34" id="h6-0-34" class="i">+/* Default colors */
+</a><a href="#h6-0-35" id="h6-0-35" class="i">+#define DefaultFG 7
+</a><a href="#h6-0-36" id="h6-0-36" class="i">+#define DefaultBG 0
+</a><a href="#h6-0-37" id="h6-0-37" class="i">+#define DefaultCS 1
+</a><a href="#h6-0-38" id="h6-0-38" class="i">+#define BellCol   DefaultFG /* visual bell color */
+</a><a href="#h6-0-39" id="h6-0-39" class="i">+
+</a><a href="#h6-0-40" id="h6-0-40" class="i">+static char* colorname[] = {
+</a><a href="#h6-0-41" id="h6-0-41" class="i">+	&quot;black&quot;,
+</a><a href="#h6-0-42" id="h6-0-42" class="i">+	&quot;red&quot;,
+</a><a href="#h6-0-43" id="h6-0-43" class="i">+	&quot;green&quot;,
+</a><a href="#h6-0-44" id="h6-0-44" class="i">+	&quot;yellow&quot;,
+</a><a href="#h6-0-45" id="h6-0-45" class="i">+	&quot;blue&quot;,
+</a><a href="#h6-0-46" id="h6-0-46" class="i">+	&quot;magenta&quot;,
+</a><a href="#h6-0-47" id="h6-0-47" class="i">+	&quot;cyan&quot;,
+</a><a href="#h6-0-48" id="h6-0-48" class="i">+	&quot;white&quot;,
+</a><a href="#h6-0-49" id="h6-0-49" class="i">+};
+</a><a href="#h6-0-50" id="h6-0-50" class="i">+
+</a><a href="#h6-0-51" id="h6-0-51" class="i">+
+</a><a href="#h6-0-52" id="h6-0-52" class="i">+/* Arbitrary sizes */
+</a><a href="#h6-0-53" id="h6-0-53" class="i">+#define ESCSIZ 256
+</a><a href="#h6-0-54" id="h6-0-54" class="i">+#define ESCARG 16
+</a><a href="#h6-0-55" id="h6-0-55" class="i">+
+</a><a href="#h6-0-56" id="h6-0-56" class="i">+#define MIN(a, b)  ((a) &lt; (b) ? (a) : (b))
+</a><a href="#h6-0-57" id="h6-0-57" class="i">+#define MAX(a, b)  ((a) &lt; (b) ? (b) : (a))
+</a><a href="#h6-0-58" id="h6-0-58" class="i">+#define LEN(a)     (sizeof(a) / sizeof(a[0]))
+</a><a href="#h6-0-59" id="h6-0-59" class="i">+#define DEFAULT(a, b)     (a) = (a) ? (a) : (b)    
+</a><a href="#h6-0-60" id="h6-0-60" class="i">+#define BETWEEN(x, a, b)  ((a) &lt;= (x) &amp;&amp; (x) &lt;= (b))
+</a><a href="#h6-0-61" id="h6-0-61" class="i">+#define LIMIT(x, a, b)    (x) = (x) &lt; (a) ? (a) : (x) &gt; (b) ? (b) : (x)
+</a><a href="#h6-0-62" id="h6-0-62" class="i">+
+</a><a href="#h6-0-63" id="h6-0-63" class="i">+
+</a><a href="#h6-0-64" id="h6-0-64" class="i">+enum { ATnone=0 , ATreverse=1 , ATunderline=2, ATbold=4 }; /* Attribute */
+</a><a href="#h6-0-65" id="h6-0-65" class="i">+enum { CSup, CSdown, CSright, CSleft, CShide, CSdraw, CSwrap, CSsave, CSload }; /* Cursor */
+</a><a href="#h6-0-66" id="h6-0-66" class="i">+enum { CRset=1 , CRupdate=2 }; /* Character state */
+</a><a href="#h6-0-67" id="h6-0-67" class="i">+enum { TMwrap=1 , TMinsert=2 }; /* Terminal mode */
+</a><a href="#h6-0-68" id="h6-0-68" class="i">+enum { SCupdate, SCredraw }; /* screen draw mode */
+</a><a href="#h6-0-69" id="h6-0-69" class="i">+
+</a><a href="#h6-0-70" id="h6-0-70" class="i">+#ifdef TRUECOLOR
+</a><a href="#h6-0-71" id="h6-0-71" class="i">+#error Truecolor not implemented yet
+</a><a href="#h6-0-72" id="h6-0-72" class="i">+typedef int Color;
+</a><a href="#h6-0-73" id="h6-0-73" class="i">+#else
+</a><a href="#h6-0-74" id="h6-0-74" class="i">+typedef char Color;
+</a><a href="#h6-0-75" id="h6-0-75" class="i">+#endif
+</a><a href="#h6-0-76" id="h6-0-76" class="i">+
+</a><a href="#h6-0-77" id="h6-0-77" class="i">+
+</a><a href="#h6-0-78" id="h6-0-78" class="i">+typedef struct {
+</a><a href="#h6-0-79" id="h6-0-79" class="i">+	char c;     /* character code  */
+</a><a href="#h6-0-80" id="h6-0-80" class="i">+	char mode;  /* attribute flags */
+</a><a href="#h6-0-81" id="h6-0-81" class="i">+	Color fg;   /* foreground      */
+</a><a href="#h6-0-82" id="h6-0-82" class="i">+	Color bg;   /* background      */
+</a><a href="#h6-0-83" id="h6-0-83" class="i">+	char state; /* state flag      */
+</a><a href="#h6-0-84" id="h6-0-84" class="i">+} Glyph;
+</a><a href="#h6-0-85" id="h6-0-85" class="i">+
+</a><a href="#h6-0-86" id="h6-0-86" class="i">+typedef Glyph* Line;
+</a><a href="#h6-0-87" id="h6-0-87" class="i">+
+</a><a href="#h6-0-88" id="h6-0-88" class="i">+typedef struct {
+</a><a href="#h6-0-89" id="h6-0-89" class="i">+	Glyph attr;  /* current char attributes */
+</a><a href="#h6-0-90" id="h6-0-90" class="i">+	char hidden;
+</a><a href="#h6-0-91" id="h6-0-91" class="i">+	int x;
+</a><a href="#h6-0-92" id="h6-0-92" class="i">+	int y;
+</a><a href="#h6-0-93" id="h6-0-93" class="i">+} TCursor;
+</a><a href="#h6-0-94" id="h6-0-94" class="i">+
+</a><a href="#h6-0-95" id="h6-0-95" class="i">+/* Escape sequence structs */
+</a><a href="#h6-0-96" id="h6-0-96" class="i">+typedef struct {
+</a><a href="#h6-0-97" id="h6-0-97" class="i">+	char buf[ESCSIZ+1]; /* raw string */
+</a><a href="#h6-0-98" id="h6-0-98" class="i">+	int len;            /* raw string length */
+</a><a href="#h6-0-99" id="h6-0-99" class="i">+	/* ESC &lt;pre&gt; [[ [&lt;priv&gt;] &lt;arg&gt; [;]] &lt;mode&gt;] */
+</a><a href="#h6-0-100" id="h6-0-100" class="i">+	char pre;           
+</a><a href="#h6-0-101" id="h6-0-101" class="i">+	char priv;
+</a><a href="#h6-0-102" id="h6-0-102" class="i">+	int arg[ESCARG+1];
+</a><a href="#h6-0-103" id="h6-0-103" class="i">+	int narg;           /* nb of args */
+</a><a href="#h6-0-104" id="h6-0-104" class="i">+	char mode;
+</a><a href="#h6-0-105" id="h6-0-105" class="i">+} Escseq;
+</a><a href="#h6-0-106" id="h6-0-106" class="i">+
+</a><a href="#h6-0-107" id="h6-0-107" class="i">+/* Internal representation of the screen */
+</a><a href="#h6-0-108" id="h6-0-108" class="i">+typedef struct {
+</a><a href="#h6-0-109" id="h6-0-109" class="i">+	int row;    /* nb row */  
+</a><a href="#h6-0-110" id="h6-0-110" class="i">+	int col;    /* nb col */
+</a><a href="#h6-0-111" id="h6-0-111" class="i">+	Line* line; /* screen */
+</a><a href="#h6-0-112" id="h6-0-112" class="i">+	TCursor c;  /* cursor */
+</a><a href="#h6-0-113" id="h6-0-113" class="i">+	int top;    /* top    scroll limit */
+</a><a href="#h6-0-114" id="h6-0-114" class="i">+	int bot;    /* bottom scroll limit */
+</a><a href="#h6-0-115" id="h6-0-115" class="i">+	int mode;   /* terminal mode */
+</a><a href="#h6-0-116" id="h6-0-116" class="i">+} Term;
+</a><a href="#h6-0-117" id="h6-0-117" class="i">+
+</a><a href="#h6-0-118" id="h6-0-118" class="i">+/* Purely graphic info */
+</a><a href="#h6-0-119" id="h6-0-119" class="i">+typedef struct {
+</a><a href="#h6-0-120" id="h6-0-120" class="i">+	Display* dis;
+</a><a href="#h6-0-121" id="h6-0-121" class="i">+	Window win;
+</a><a href="#h6-0-122" id="h6-0-122" class="i">+	int scr;
+</a><a href="#h6-0-123" id="h6-0-123" class="i">+	int w;  /* window width  */
+</a><a href="#h6-0-124" id="h6-0-124" class="i">+	int h;  /* window height */
+</a><a href="#h6-0-125" id="h6-0-125" class="i">+	int ch; /* char height */
+</a><a href="#h6-0-126" id="h6-0-126" class="i">+	int cw; /* char width  */
+</a><a href="#h6-0-127" id="h6-0-127" class="i">+} XWindow; 
+</a><a href="#h6-0-128" id="h6-0-128" class="i">+
+</a><a href="#h6-0-129" id="h6-0-129" class="i">+/* Drawing Context */
+</a><a href="#h6-0-130" id="h6-0-130" class="i">+typedef struct {
+</a><a href="#h6-0-131" id="h6-0-131" class="i">+	unsigned long col[LEN(colorname)];
+</a><a href="#h6-0-132" id="h6-0-132" class="i">+	XFontStruct* font;
+</a><a href="#h6-0-133" id="h6-0-133" class="i">+	GC gc;
+</a><a href="#h6-0-134" id="h6-0-134" class="i">+} DC;
+</a><a href="#h6-0-135" id="h6-0-135" class="i">+
+</a><a href="#h6-0-136" id="h6-0-136" class="i">+
+</a><a href="#h6-0-137" id="h6-0-137" class="i">+void die(const char *errstr, ...);
+</a><a href="#h6-0-138" id="h6-0-138" class="i">+void draw(int);
+</a><a href="#h6-0-139" id="h6-0-139" class="i">+void execsh(void);
+</a><a href="#h6-0-140" id="h6-0-140" class="i">+void kpress(XKeyEvent *);
+</a><a href="#h6-0-141" id="h6-0-141" class="i">+void resize(XEvent *);
+</a><a href="#h6-0-142" id="h6-0-142" class="i">+void run(void);
+</a><a href="#h6-0-143" id="h6-0-143" class="i">+
+</a><a href="#h6-0-144" id="h6-0-144" class="i">+int escaddc(char);
+</a><a href="#h6-0-145" id="h6-0-145" class="i">+int escfinal(char);
+</a><a href="#h6-0-146" id="h6-0-146" class="i">+void escdump(void);
+</a><a href="#h6-0-147" id="h6-0-147" class="i">+void eschandle(void);
+</a><a href="#h6-0-148" id="h6-0-148" class="i">+void escparse(void);
+</a><a href="#h6-0-149" id="h6-0-149" class="i">+void escreset(void);
+</a><a href="#h6-0-150" id="h6-0-150" class="i">+
+</a><a href="#h6-0-151" id="h6-0-151" class="i">+void tclearregion(int, int, int, int);
+</a><a href="#h6-0-152" id="h6-0-152" class="i">+void tcpos(int);
+</a><a href="#h6-0-153" id="h6-0-153" class="i">+void tcursor(int);
+</a><a href="#h6-0-154" id="h6-0-154" class="i">+void tdeletechar(int);
+</a><a href="#h6-0-155" id="h6-0-155" class="i">+void tdeleteline(int);
+</a><a href="#h6-0-156" id="h6-0-156" class="i">+void tdump(void);
+</a><a href="#h6-0-157" id="h6-0-157" class="i">+void tinsertblank(int);
+</a><a href="#h6-0-158" id="h6-0-158" class="i">+void tinsertblankline(int);
+</a><a href="#h6-0-159" id="h6-0-159" class="i">+void tmoveto(int, int);
+</a><a href="#h6-0-160" id="h6-0-160" class="i">+void tnew(int, int);
+</a><a href="#h6-0-161" id="h6-0-161" class="i">+void tnewline(void);
+</a><a href="#h6-0-162" id="h6-0-162" class="i">+void tputc(char);
+</a><a href="#h6-0-163" id="h6-0-163" class="i">+void tputs(char*, int);
+</a><a href="#h6-0-164" id="h6-0-164" class="i">+void tresize(int, int);
+</a><a href="#h6-0-165" id="h6-0-165" class="i">+void tscroll(void);
+</a><a href="#h6-0-166" id="h6-0-166" class="i">+void tsetattr(int*, int);
+</a><a href="#h6-0-167" id="h6-0-167" class="i">+void tsetchar(char);
+</a><a href="#h6-0-168" id="h6-0-168" class="i">+void tsetscroll(int, int);
+</a><a href="#h6-0-169" id="h6-0-169" class="i">+
+</a><a href="#h6-0-170" id="h6-0-170" class="i">+void ttynew(void);
+</a><a href="#h6-0-171" id="h6-0-171" class="i">+void ttyread(void);
+</a><a href="#h6-0-172" id="h6-0-172" class="i">+void ttyresize(int, int);
+</a><a href="#h6-0-173" id="h6-0-173" class="i">+void ttywrite(char *, size_t);
+</a><a href="#h6-0-174" id="h6-0-174" class="i">+
+</a><a href="#h6-0-175" id="h6-0-175" class="i">+unsigned long xgetcol(const char *);
+</a><a href="#h6-0-176" id="h6-0-176" class="i">+void xclear(int, int, int, int);
+</a><a href="#h6-0-177" id="h6-0-177" class="i">+void xcursor(int);
+</a><a href="#h6-0-178" id="h6-0-178" class="i">+void xdrawc(int, int, Glyph);
+</a><a href="#h6-0-179" id="h6-0-179" class="i">+void xinit(void);
+</a><a href="#h6-0-180" id="h6-0-180" class="i">+void xscroll(void);
+</a><b>diff --git a/<a id="h7" href="../file/st.info.html">st.info</a> b/<a href="../file/st.info.html">st.info</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -0,0 +1,54 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="i">+#	Reconstructed via infocmp from file: /lib/terminfo/p/pcansi
+</a><a href="#h7-0-1" id="h7-0-1" class="i">+st| simpleterm,
+</a><a href="#h7-0-2" id="h7-0-2" class="i">+	am,
+</a><a href="#h7-0-3" id="h7-0-3" class="i">+    ul,
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+	mir,
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+	msgr,
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+	colors#8,
+</a><a href="#h7-0-7" id="h7-0-7" class="i">+	cols#80,
+</a><a href="#h7-0-8" id="h7-0-8" class="i">+	it#8,
+</a><a href="#h7-0-9" id="h7-0-9" class="i">+	lines#24,
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+	ncv#3,
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+	pairs#64,
+</a><a href="#h7-0-12" id="h7-0-12" class="i">+    acsc=*`#aof+g+j+k+l+m+n-o-p-q-r-s+t+u+v+w|x&lt;y&gt;z{{||}}-~,
+</a><a href="#h7-0-13" id="h7-0-13" class="i">+	bel=^G,
+</a><a href="#h7-0-14" id="h7-0-14" class="i">+	bold=\E[1m,
+</a><a href="#h7-0-15" id="h7-0-15" class="i">+	cbt=\E[Z,
+</a><a href="#h7-0-16" id="h7-0-16" class="i">+	clear=\E[H\E[2J,
+</a><a href="#h7-0-17" id="h7-0-17" class="i">+	cr=^M,
+</a><a href="#h7-0-18" id="h7-0-18" class="i">+	cub1=\E[D,
+</a><a href="#h7-0-19" id="h7-0-19" class="i">+	cud1=\E[B,
+</a><a href="#h7-0-20" id="h7-0-20" class="i">+	cuf1=\E[C,
+</a><a href="#h7-0-21" id="h7-0-21" class="i">+	cup=\E[%i%p1%d;%p2%dH,
+</a><a href="#h7-0-22" id="h7-0-22" class="i">+	cuu1=\E[A,
+</a><a href="#h7-0-23" id="h7-0-23" class="i">+	dch1=\E[P,
+</a><a href="#h7-0-24" id="h7-0-24" class="i">+	dl1=\E[M,
+</a><a href="#h7-0-25" id="h7-0-25" class="i">+	ed=\E[J,
+</a><a href="#h7-0-26" id="h7-0-26" class="i">+	el=\E[K,
+</a><a href="#h7-0-27" id="h7-0-27" class="i">+	home=\E[H,
+</a><a href="#h7-0-28" id="h7-0-28" class="i">+	ht=^I,
+</a><a href="#h7-0-29" id="h7-0-29" class="i">+	hts=\EH,
+</a><a href="#h7-0-30" id="h7-0-30" class="i">+	il1=\E[L,
+</a><a href="#h7-0-31" id="h7-0-31" class="i">+	ind=^J,
+</a><a href="#h7-0-32" id="h7-0-32" class="i">+	invis=\E[8m,
+</a><a href="#h7-0-33" id="h7-0-33" class="i">+	kbs=^H,
+</a><a href="#h7-0-34" id="h7-0-34" class="i">+	kcub1=\E[D,
+</a><a href="#h7-0-35" id="h7-0-35" class="i">+	kcud1=\E[B,
+</a><a href="#h7-0-36" id="h7-0-36" class="i">+	kcuf1=\E[C,
+</a><a href="#h7-0-37" id="h7-0-37" class="i">+	kcuu1=\E[A,
+</a><a href="#h7-0-38" id="h7-0-38" class="i">+	khome=\E[1~,
+</a><a href="#h7-0-39" id="h7-0-39" class="i">+    knp=\E[6~,
+</a><a href="#h7-0-40" id="h7-0-40" class="i">+    kpp=\E[5~,
+</a><a href="#h7-0-41" id="h7-0-41" class="i">+	op=\E[37;40m,
+</a><a href="#h7-0-42" id="h7-0-42" class="i">+	rev=\E[7m,
+</a><a href="#h7-0-43" id="h7-0-43" class="i">+	rmacs=\E[10m,
+</a><a href="#h7-0-44" id="h7-0-44" class="i">+	rmso=\E[m,
+</a><a href="#h7-0-45" id="h7-0-45" class="i">+	rmul=\E[m,
+</a><a href="#h7-0-46" id="h7-0-46" class="i">+	setab=\E[4%p1%dm,
+</a><a href="#h7-0-47" id="h7-0-47" class="i">+	setaf=\E[3%p1%dm,
+</a><a href="#h7-0-48" id="h7-0-48" class="i">+#	sgr=\E[0;10%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p6%t;1%;%?%p7%t;8%;%?%p9%t;12%;m,
+</a><a href="#h7-0-49" id="h7-0-49" class="i">+	sgr0=\E[0m,
+</a><a href="#h7-0-50" id="h7-0-50" class="i">+	smacs=\E[12m,
+</a><a href="#h7-0-51" id="h7-0-51" class="i">+	smso=\E[7m,
+</a><a href="#h7-0-52" id="h7-0-52" class="i">+	smul=\E[4m,
+</a><a href="#h7-0-53" id="h7-0-53" class="i">+	tbc=\E[2g,
+</a><b>diff --git a/<a id="h8" href="../file/std.c.html">std.c</a> b/<a href="../file/std.c.html">std.c</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -1,363 +0,0 @@
+</a><a href="#h8-0-0" id="h8-0-0" class="d">-/* See LICENSE file for copyright and license details.
+</a><a href="#h8-0-1" id="h8-0-1" class="d">- *
+</a><a href="#h8-0-2" id="h8-0-2" class="d">- * Simple terminal daemon is a terminal emulator. It can be used in
+</a><a href="#h8-0-3" id="h8-0-3" class="d">- * combination with simple terminal to emulate a mostly VT100-compatible
+</a><a href="#h8-0-4" id="h8-0-4" class="d">- * terminal.
+</a><a href="#h8-0-5" id="h8-0-5" class="d">- * 
+</a><a href="#h8-0-6" id="h8-0-6" class="d">- * In this process std works like a filter. It reads data from a
+</a><a href="#h8-0-7" id="h8-0-7" class="d">- * pseudo-terminal and parses the escape sequences and transforms them
+</a><a href="#h8-0-8" id="h8-0-8" class="d">- * into an ed(1)-like language. The resulting data is buffered and
+</a><a href="#h8-0-9" id="h8-0-9" class="d">- * written to stdout.
+</a><a href="#h8-0-10" id="h8-0-10" class="d">- * Parallely it reads data from stdin and parses and executes the
+</a><a href="#h8-0-11" id="h8-0-11" class="d">- * commands. The resulting data is written to the pseudo-terminal.
+</a><a href="#h8-0-12" id="h8-0-12" class="d">- */
+</a><a href="#h8-0-13" id="h8-0-13" class="d">-#include &lt;sys/types.h&gt;
+</a><a href="#h8-0-14" id="h8-0-14" class="d">-#include &lt;sys/wait.h&gt;
+</a><a href="#h8-0-15" id="h8-0-15" class="d">-#include &lt;ctype.h&gt;
+</a><a href="#h8-0-16" id="h8-0-16" class="d">-#include &lt;err.h&gt;
+</a><a href="#h8-0-17" id="h8-0-17" class="d">-#include &lt;errno.h&gt;
+</a><a href="#h8-0-18" id="h8-0-18" class="d">-#include &lt;fcntl.h&gt;
+</a><a href="#h8-0-19" id="h8-0-19" class="d">-#if !(_POSIX_C_SOURCE &gt;= 200112L || _XOPEN_SOURCE &gt;= 600)
+</a><a href="#h8-0-20" id="h8-0-20" class="d">-#include &lt;pty.h&gt;
+</a><a href="#h8-0-21" id="h8-0-21" class="d">-#endif
+</a><a href="#h8-0-22" id="h8-0-22" class="d">-#include &lt;signal.h&gt;
+</a><a href="#h8-0-23" id="h8-0-23" class="d">-#include &lt;stdarg.h&gt;
+</a><a href="#h8-0-24" id="h8-0-24" class="d">-#include &lt;stdio.h&gt;
+</a><a href="#h8-0-25" id="h8-0-25" class="d">-#include &lt;stdlib.h&gt;
+</a><a href="#h8-0-26" id="h8-0-26" class="d">-#include &lt;string.h&gt;
+</a><a href="#h8-0-27" id="h8-0-27" class="d">-#include &lt;unistd.h&gt;
+</a><a href="#h8-0-28" id="h8-0-28" class="d">-
+</a><a href="#h8-0-29" id="h8-0-29" class="d">-#define LENGTH(x)	(sizeof(x) / sizeof((x)[0]))
+</a><a href="#h8-0-30" id="h8-0-30" class="d">-#define MAX(a,b)	(((a) &gt; (b)) ? (a) : (b))
+</a><a href="#h8-0-31" id="h8-0-31" class="d">-#define MIN(a,b)	(((a) &lt; (b)) ? (a) : (b))
+</a><a href="#h8-0-32" id="h8-0-32" class="d">-
+</a><a href="#h8-0-33" id="h8-0-33" class="d">-typedef struct {
+</a><a href="#h8-0-34" id="h8-0-34" class="d">-	unsigned char data[BUFSIZ];
+</a><a href="#h8-0-35" id="h8-0-35" class="d">-	int s, e;
+</a><a href="#h8-0-36" id="h8-0-36" class="d">-	int n;
+</a><a href="#h8-0-37" id="h8-0-37" class="d">-} RingBuffer;
+</a><a href="#h8-0-38" id="h8-0-38" class="d">-
+</a><a href="#h8-0-39" id="h8-0-39" class="d">-static void buffer(char c);
+</a><a href="#h8-0-40" id="h8-0-40" class="d">-static void cmd(const char *cmdstr, ...);
+</a><a href="#h8-0-41" id="h8-0-41" class="d">-static void getpty(void);
+</a><a href="#h8-0-42" id="h8-0-42" class="d">-static void movea(int x, int y);
+</a><a href="#h8-0-43" id="h8-0-43" class="d">-static void mover(int x, int y);
+</a><a href="#h8-0-44" id="h8-0-44" class="d">-static void parsecmd(void);
+</a><a href="#h8-0-45" id="h8-0-45" class="d">-static void parseesc(void);
+</a><a href="#h8-0-46" id="h8-0-46" class="d">-static void scroll(int l);
+</a><a href="#h8-0-47" id="h8-0-47" class="d">-static void shell(void);
+</a><a href="#h8-0-48" id="h8-0-48" class="d">-static void sigchld(int n);
+</a><a href="#h8-0-49" id="h8-0-49" class="d">-static char unbuffer(void);
+</a><a href="#h8-0-50" id="h8-0-50" class="d">-
+</a><a href="#h8-0-51" id="h8-0-51" class="d">-static int cols = 80, lines = 25;
+</a><a href="#h8-0-52" id="h8-0-52" class="d">-static int cx = 0, cy = 0;
+</a><a href="#h8-0-53" id="h8-0-53" class="d">-static int c;
+</a><a href="#h8-0-54" id="h8-0-54" class="d">-static int ptm, pts;
+</a><a href="#h8-0-55" id="h8-0-55" class="d">-static _Bool bold, digit, qmark;
+</a><a href="#h8-0-56" id="h8-0-56" class="d">-static pid_t pid;
+</a><a href="#h8-0-57" id="h8-0-57" class="d">-static RingBuffer buf;
+</a><a href="#h8-0-58" id="h8-0-58" class="d">-static FILE *fptm;
+</a><a href="#h8-0-59" id="h8-0-59" class="d">-
+</a><a href="#h8-0-60" id="h8-0-60" class="d">-void
+</a><a href="#h8-0-61" id="h8-0-61" class="d">-buffer(char c) {
+</a><a href="#h8-0-62" id="h8-0-62" class="d">-	if(buf.n &lt; LENGTH(buf.data))
+</a><a href="#h8-0-63" id="h8-0-63" class="d">-		buf.n++;
+</a><a href="#h8-0-64" id="h8-0-64" class="d">-	else
+</a><a href="#h8-0-65" id="h8-0-65" class="d">-		buf.s = (buf.s + 1) % LENGTH(buf.data);
+</a><a href="#h8-0-66" id="h8-0-66" class="d">-	buf.data[buf.e++] = c;
+</a><a href="#h8-0-67" id="h8-0-67" class="d">-	buf.e %= LENGTH(buf.data);
+</a><a href="#h8-0-68" id="h8-0-68" class="d">-}
+</a><a href="#h8-0-69" id="h8-0-69" class="d">-
+</a><a href="#h8-0-70" id="h8-0-70" class="d">-void
+</a><a href="#h8-0-71" id="h8-0-71" class="d">-cmd(const char *cmdstr, ...) {
+</a><a href="#h8-0-72" id="h8-0-72" class="d">-	va_list ap;
+</a><a href="#h8-0-73" id="h8-0-73" class="d">-
+</a><a href="#h8-0-74" id="h8-0-74" class="d">-	putchar(&#39;\n&#39;);
+</a><a href="#h8-0-75" id="h8-0-75" class="d">-	putchar(&#39;:&#39;);
+</a><a href="#h8-0-76" id="h8-0-76" class="d">-	va_start(ap, cmdstr);
+</a><a href="#h8-0-77" id="h8-0-77" class="d">-	vfprintf(stdout, cmdstr, ap);
+</a><a href="#h8-0-78" id="h8-0-78" class="d">-	va_end(ap);
+</a><a href="#h8-0-79" id="h8-0-79" class="d">-}
+</a><a href="#h8-0-80" id="h8-0-80" class="d">-
+</a><a href="#h8-0-81" id="h8-0-81" class="d">-void
+</a><a href="#h8-0-82" id="h8-0-82" class="d">-movea(int x, int y) {
+</a><a href="#h8-0-83" id="h8-0-83" class="d">-	x = MAX(x, cols);
+</a><a href="#h8-0-84" id="h8-0-84" class="d">-	y = MAX(y, lines);
+</a><a href="#h8-0-85" id="h8-0-85" class="d">-	cx = x;
+</a><a href="#h8-0-86" id="h8-0-86" class="d">-	cy = y;
+</a><a href="#h8-0-87" id="h8-0-87" class="d">-	cmd(&quot;seek(%d,%d)&quot;, x, y);
+</a><a href="#h8-0-88" id="h8-0-88" class="d">-}
+</a><a href="#h8-0-89" id="h8-0-89" class="d">-
+</a><a href="#h8-0-90" id="h8-0-90" class="d">-void
+</a><a href="#h8-0-91" id="h8-0-91" class="d">-mover(int x, int y) {
+</a><a href="#h8-0-92" id="h8-0-92" class="d">-	movea(cx + x, cy + y);
+</a><a href="#h8-0-93" id="h8-0-93" class="d">-}
+</a><a href="#h8-0-94" id="h8-0-94" class="d">-
+</a><a href="#h8-0-95" id="h8-0-95" class="d">-void
+</a><a href="#h8-0-96" id="h8-0-96" class="d">-parsecmd(void) {
+</a><a href="#h8-0-97" id="h8-0-97" class="d">-}
+</a><a href="#h8-0-98" id="h8-0-98" class="d">-
+</a><a href="#h8-0-99" id="h8-0-99" class="d">-void
+</a><a href="#h8-0-100" id="h8-0-100" class="d">-parseesc(void) {
+</a><a href="#h8-0-101" id="h8-0-101" class="d">-	int i, j;
+</a><a href="#h8-0-102" id="h8-0-102" class="d">-	int arg[16];
+</a><a href="#h8-0-103" id="h8-0-103" class="d">-
+</a><a href="#h8-0-104" id="h8-0-104" class="d">-	memset(arg, 0, LENGTH(arg));
+</a><a href="#h8-0-105" id="h8-0-105" class="d">-	c = getc(fptm);
+</a><a href="#h8-0-106" id="h8-0-106" class="d">-	switch(c) {
+</a><a href="#h8-0-107" id="h8-0-107" class="d">-	case &#39;[&#39;:
+</a><a href="#h8-0-108" id="h8-0-108" class="d">-		c = getc(fptm);
+</a><a href="#h8-0-109" id="h8-0-109" class="d">-		for(j = 0; j &lt; LENGTH(arg);) {
+</a><a href="#h8-0-110" id="h8-0-110" class="d">-			if(isdigit(c)) {
+</a><a href="#h8-0-111" id="h8-0-111" class="d">-				digit = 1;
+</a><a href="#h8-0-112" id="h8-0-112" class="d">-				arg[j] *= 10;
+</a><a href="#h8-0-113" id="h8-0-113" class="d">-				arg[j] += c - &#39;0&#39;;
+</a><a href="#h8-0-114" id="h8-0-114" class="d">-			}
+</a><a href="#h8-0-115" id="h8-0-115" class="d">-			else if(c == &#39;?&#39;)
+</a><a href="#h8-0-116" id="h8-0-116" class="d">-				qmark = 1;
+</a><a href="#h8-0-117" id="h8-0-117" class="d">-			else if(c == &#39;;&#39;) {
+</a><a href="#h8-0-118" id="h8-0-118" class="d">-				if(!digit)
+</a><a href="#h8-0-119" id="h8-0-119" class="d">-					errx(EXIT_FAILURE, &quot;syntax error&quot;);
+</a><a href="#h8-0-120" id="h8-0-120" class="d">-				digit = 0;
+</a><a href="#h8-0-121" id="h8-0-121" class="d">-				j++;
+</a><a href="#h8-0-122" id="h8-0-122" class="d">-			}
+</a><a href="#h8-0-123" id="h8-0-123" class="d">-			else {
+</a><a href="#h8-0-124" id="h8-0-124" class="d">-				if(digit) {
+</a><a href="#h8-0-125" id="h8-0-125" class="d">-					digit = 0;
+</a><a href="#h8-0-126" id="h8-0-126" class="d">-					j++;
+</a><a href="#h8-0-127" id="h8-0-127" class="d">-				}
+</a><a href="#h8-0-128" id="h8-0-128" class="d">-				break;
+</a><a href="#h8-0-129" id="h8-0-129" class="d">-			}
+</a><a href="#h8-0-130" id="h8-0-130" class="d">-			c = getc(fptm);
+</a><a href="#h8-0-131" id="h8-0-131" class="d">-		}
+</a><a href="#h8-0-132" id="h8-0-132" class="d">-		switch(c) {
+</a><a href="#h8-0-133" id="h8-0-133" class="d">-		case &#39;@&#39;:
+</a><a href="#h8-0-134" id="h8-0-134" class="d">-			break;
+</a><a href="#h8-0-135" id="h8-0-135" class="d">-		case &#39;A&#39;:
+</a><a href="#h8-0-136" id="h8-0-136" class="d">-			mover(0, j ? arg[0] : 1);
+</a><a href="#h8-0-137" id="h8-0-137" class="d">-			break;
+</a><a href="#h8-0-138" id="h8-0-138" class="d">-		case &#39;B&#39;:
+</a><a href="#h8-0-139" id="h8-0-139" class="d">-			mover(0, j ? -arg[0] : -1);
+</a><a href="#h8-0-140" id="h8-0-140" class="d">-			break;
+</a><a href="#h8-0-141" id="h8-0-141" class="d">-		case &#39;C&#39;:
+</a><a href="#h8-0-142" id="h8-0-142" class="d">-			mover(j ? arg[0] : 1, 0);
+</a><a href="#h8-0-143" id="h8-0-143" class="d">-			break;
+</a><a href="#h8-0-144" id="h8-0-144" class="d">-		case &#39;D&#39;:
+</a><a href="#h8-0-145" id="h8-0-145" class="d">-			mover(j ? -arg[0] : -1, 0);
+</a><a href="#h8-0-146" id="h8-0-146" class="d">-			break;
+</a><a href="#h8-0-147" id="h8-0-147" class="d">-		case &#39;E&#39;:
+</a><a href="#h8-0-148" id="h8-0-148" class="d">-			/* movel(j ? arg[0] : 1); */
+</a><a href="#h8-0-149" id="h8-0-149" class="d">-			break;
+</a><a href="#h8-0-150" id="h8-0-150" class="d">-		case &#39;F&#39;:
+</a><a href="#h8-0-151" id="h8-0-151" class="d">-			/* movel(j ? -arg[0] : -1); */
+</a><a href="#h8-0-152" id="h8-0-152" class="d">-			break;
+</a><a href="#h8-0-153" id="h8-0-153" class="d">-		case &#39;`&#39;:
+</a><a href="#h8-0-154" id="h8-0-154" class="d">-		case &#39;G&#39;:
+</a><a href="#h8-0-155" id="h8-0-155" class="d">-			movea(j ? arg[0] : 1, cy);
+</a><a href="#h8-0-156" id="h8-0-156" class="d">-			break;
+</a><a href="#h8-0-157" id="h8-0-157" class="d">-		case &#39;f&#39;:
+</a><a href="#h8-0-158" id="h8-0-158" class="d">-		case &#39;H&#39;:
+</a><a href="#h8-0-159" id="h8-0-159" class="d">-			movea(arg[1] ? arg[1] : 1, arg[0] ? arg[0] : 1);
+</a><a href="#h8-0-160" id="h8-0-160" class="d">-		case &#39;L&#39;:
+</a><a href="#h8-0-161" id="h8-0-161" class="d">-			/* insline(j ? arg[0] : 1); */
+</a><a href="#h8-0-162" id="h8-0-162" class="d">-			break;
+</a><a href="#h8-0-163" id="h8-0-163" class="d">-		case &#39;M&#39;:
+</a><a href="#h8-0-164" id="h8-0-164" class="d">-			/* delline(j ? arg[0] : 1); */
+</a><a href="#h8-0-165" id="h8-0-165" class="d">-			break;
+</a><a href="#h8-0-166" id="h8-0-166" class="d">-		case &#39;P&#39;:
+</a><a href="#h8-0-167" id="h8-0-167" class="d">-			break;
+</a><a href="#h8-0-168" id="h8-0-168" class="d">-		case &#39;S&#39;:
+</a><a href="#h8-0-169" id="h8-0-169" class="d">-			scroll(j ? arg[0] : 1);
+</a><a href="#h8-0-170" id="h8-0-170" class="d">-			break;
+</a><a href="#h8-0-171" id="h8-0-171" class="d">-		case &#39;T&#39;:
+</a><a href="#h8-0-172" id="h8-0-172" class="d">-			scroll(j ? -arg[0] : -1);
+</a><a href="#h8-0-173" id="h8-0-173" class="d">-			break;
+</a><a href="#h8-0-174" id="h8-0-174" class="d">-		case &#39;d&#39;:
+</a><a href="#h8-0-175" id="h8-0-175" class="d">-			movea(cx, j ? arg[0] : 1);
+</a><a href="#h8-0-176" id="h8-0-176" class="d">-			break;
+</a><a href="#h8-0-177" id="h8-0-177" class="d">-		case &#39;m&#39;:
+</a><a href="#h8-0-178" id="h8-0-178" class="d">-			for(i = 0; i &lt; j; i++) {
+</a><a href="#h8-0-179" id="h8-0-179" class="d">-				if(arg[i] &gt;= 30 &amp;&amp; arg[i] &lt;= 37)
+</a><a href="#h8-0-180" id="h8-0-180" class="d">-					cmd(&quot;#%d&quot;, arg[i] - 30);
+</a><a href="#h8-0-181" id="h8-0-181" class="d">-				if(arg[i] &gt;= 40 &amp;&amp; arg[i] &lt;= 47)
+</a><a href="#h8-0-182" id="h8-0-182" class="d">-					cmd(&quot;|%d&quot;, arg[i] - 40);
+</a><a href="#h8-0-183" id="h8-0-183" class="d">-				/* xterm bright colors */
+</a><a href="#h8-0-184" id="h8-0-184" class="d">-				if(arg[i] &gt;= 90 &amp;&amp; arg[i] &lt;= 97)
+</a><a href="#h8-0-185" id="h8-0-185" class="d">-					cmd(&quot;#%d&quot;, arg[i] - 90);
+</a><a href="#h8-0-186" id="h8-0-186" class="d">-				if(arg[i] &gt;= 100 &amp;&amp; arg[i] &lt;= 107)
+</a><a href="#h8-0-187" id="h8-0-187" class="d">-					cmd(&quot;|%d&quot;, arg[i] - 100);
+</a><a href="#h8-0-188" id="h8-0-188" class="d">-				switch(arg[i]) {
+</a><a href="#h8-0-189" id="h8-0-189" class="d">-				case 0:
+</a><a href="#h8-0-190" id="h8-0-190" class="d">-				case 22:
+</a><a href="#h8-0-191" id="h8-0-191" class="d">-					if(bold)
+</a><a href="#h8-0-192" id="h8-0-192" class="d">-						cmd(&quot;bold&quot;);
+</a><a href="#h8-0-193" id="h8-0-193" class="d">-				case 1:
+</a><a href="#h8-0-194" id="h8-0-194" class="d">-					if(!bold)
+</a><a href="#h8-0-195" id="h8-0-195" class="d">-						cmd(&quot;bold&quot;);
+</a><a href="#h8-0-196" id="h8-0-196" class="d">-					break;
+</a><a href="#h8-0-197" id="h8-0-197" class="d">-				}
+</a><a href="#h8-0-198" id="h8-0-198" class="d">-			}
+</a><a href="#h8-0-199" id="h8-0-199" class="d">-			break;
+</a><a href="#h8-0-200" id="h8-0-200" class="d">-		}
+</a><a href="#h8-0-201" id="h8-0-201" class="d">-		break;
+</a><a href="#h8-0-202" id="h8-0-202" class="d">-	default:
+</a><a href="#h8-0-203" id="h8-0-203" class="d">-		putchar(&#39;\033&#39;);
+</a><a href="#h8-0-204" id="h8-0-204" class="d">-		ungetc(c, fptm);
+</a><a href="#h8-0-205" id="h8-0-205" class="d">-	}
+</a><a href="#h8-0-206" id="h8-0-206" class="d">-}
+</a><a href="#h8-0-207" id="h8-0-207" class="d">-
+</a><a href="#h8-0-208" id="h8-0-208" class="d">-void
+</a><a href="#h8-0-209" id="h8-0-209" class="d">-scroll(int l) {
+</a><a href="#h8-0-210" id="h8-0-210" class="d">-	cmd(&quot;seek(%d,%d)&quot;, cx, cy + l);
+</a><a href="#h8-0-211" id="h8-0-211" class="d">-}
+</a><a href="#h8-0-212" id="h8-0-212" class="d">-
+</a><a href="#h8-0-213" id="h8-0-213" class="d">-void
+</a><a href="#h8-0-214" id="h8-0-214" class="d">-getpty(void) {
+</a><a href="#h8-0-215" id="h8-0-215" class="d">-	char *ptsdev;
+</a><a href="#h8-0-216" id="h8-0-216" class="d">-
+</a><a href="#h8-0-217" id="h8-0-217" class="d">-#if defined(_GNU_SOURCE)
+</a><a href="#h8-0-218" id="h8-0-218" class="d">-	ptm = getpt();
+</a><a href="#h8-0-219" id="h8-0-219" class="d">-#elif _POSIX_C_SOURCE &gt;= 200112L || _XOPEN_SOURCE &gt;= 600
+</a><a href="#h8-0-220" id="h8-0-220" class="d">-	ptm = posix_openpt(O_RDWR);
+</a><a href="#h8-0-221" id="h8-0-221" class="d">-#else
+</a><a href="#h8-0-222" id="h8-0-222" class="d">-	ptm = open(&quot;/dev/ptmx&quot;, O_RDWR);
+</a><a href="#h8-0-223" id="h8-0-223" class="d">-	if(ptm == -1)
+</a><a href="#h8-0-224" id="h8-0-224" class="d">-		if(openpty(&amp;ptm, &amp;pts, NULL, NULL, NULL) == -1)
+</a><a href="#h8-0-225" id="h8-0-225" class="d">-			err(EXIT_FAILURE, &quot;cannot open pty&quot;);
+</a><a href="#h8-0-226" id="h8-0-226" class="d">-#endif
+</a><a href="#h8-0-227" id="h8-0-227" class="d">-#if defined(_XOPEN_SOURCE)
+</a><a href="#h8-0-228" id="h8-0-228" class="d">-	if(ptm != -1) {
+</a><a href="#h8-0-229" id="h8-0-229" class="d">-		if(grantpt(ptm) == -1)
+</a><a href="#h8-0-230" id="h8-0-230" class="d">-			err(EXIT_FAILURE, &quot;cannot grant access to pty&quot;);
+</a><a href="#h8-0-231" id="h8-0-231" class="d">-		if(unlockpt(ptm) == -1)
+</a><a href="#h8-0-232" id="h8-0-232" class="d">-			err(EXIT_FAILURE, &quot;cannot unlock pty&quot;);
+</a><a href="#h8-0-233" id="h8-0-233" class="d">-		ptsdev = ptsname(ptm);
+</a><a href="#h8-0-234" id="h8-0-234" class="d">-		if(!ptsdev)
+</a><a href="#h8-0-235" id="h8-0-235" class="d">-			err(EXIT_FAILURE, &quot;slave pty name undefined&quot;);
+</a><a href="#h8-0-236" id="h8-0-236" class="d">-		pts = open(ptsdev, O_RDWR);
+</a><a href="#h8-0-237" id="h8-0-237" class="d">-		if(pts == -1)
+</a><a href="#h8-0-238" id="h8-0-238" class="d">-			err(EXIT_FAILURE, &quot;cannot open slave pty&quot;);
+</a><a href="#h8-0-239" id="h8-0-239" class="d">-	}
+</a><a href="#h8-0-240" id="h8-0-240" class="d">-	else
+</a><a href="#h8-0-241" id="h8-0-241" class="d">-		err(EXIT_FAILURE, &quot;cannot open pty&quot;);
+</a><a href="#h8-0-242" id="h8-0-242" class="d">-#endif
+</a><a href="#h8-0-243" id="h8-0-243" class="d">-}
+</a><a href="#h8-0-244" id="h8-0-244" class="d">-
+</a><a href="#h8-0-245" id="h8-0-245" class="d">-void
+</a><a href="#h8-0-246" id="h8-0-246" class="d">-shell(void) {
+</a><a href="#h8-0-247" id="h8-0-247" class="d">-	static char *shell = NULL;
+</a><a href="#h8-0-248" id="h8-0-248" class="d">-
+</a><a href="#h8-0-249" id="h8-0-249" class="d">-	if(!shell &amp;&amp; !(shell = getenv(&quot;SHELL&quot;)))
+</a><a href="#h8-0-250" id="h8-0-250" class="d">-		shell = &quot;/bin/sh&quot;;
+</a><a href="#h8-0-251" id="h8-0-251" class="d">-	pid = fork();
+</a><a href="#h8-0-252" id="h8-0-252" class="d">-	switch(pid) {
+</a><a href="#h8-0-253" id="h8-0-253" class="d">-	case -1:
+</a><a href="#h8-0-254" id="h8-0-254" class="d">-		err(EXIT_FAILURE, &quot;cannot fork&quot;);
+</a><a href="#h8-0-255" id="h8-0-255" class="d">-	case 0:
+</a><a href="#h8-0-256" id="h8-0-256" class="d">-		setsid();
+</a><a href="#h8-0-257" id="h8-0-257" class="d">-		dup2(pts, STDIN_FILENO);
+</a><a href="#h8-0-258" id="h8-0-258" class="d">-		dup2(pts, STDOUT_FILENO);
+</a><a href="#h8-0-259" id="h8-0-259" class="d">-		dup2(pts, STDERR_FILENO);
+</a><a href="#h8-0-260" id="h8-0-260" class="d">-		close(ptm);
+</a><a href="#h8-0-261" id="h8-0-261" class="d">-		putenv(&quot;TERM=vt102&quot;);
+</a><a href="#h8-0-262" id="h8-0-262" class="d">-		execvp(shell, NULL);
+</a><a href="#h8-0-263" id="h8-0-263" class="d">-		break;
+</a><a href="#h8-0-264" id="h8-0-264" class="d">-	default:
+</a><a href="#h8-0-265" id="h8-0-265" class="d">-		close(pts);
+</a><a href="#h8-0-266" id="h8-0-266" class="d">-		signal(SIGCHLD, sigchld);
+</a><a href="#h8-0-267" id="h8-0-267" class="d">-	}
+</a><a href="#h8-0-268" id="h8-0-268" class="d">-}
+</a><a href="#h8-0-269" id="h8-0-269" class="d">-
+</a><a href="#h8-0-270" id="h8-0-270" class="d">-void
+</a><a href="#h8-0-271" id="h8-0-271" class="d">-sigchld(int n) {
+</a><a href="#h8-0-272" id="h8-0-272" class="d">-	int ret;
+</a><a href="#h8-0-273" id="h8-0-273" class="d">-
+</a><a href="#h8-0-274" id="h8-0-274" class="d">-	if(waitpid(pid, &amp;ret, 0) == -1)
+</a><a href="#h8-0-275" id="h8-0-275" class="d">-		err(EXIT_FAILURE, &quot;waiting for child failed&quot;);
+</a><a href="#h8-0-276" id="h8-0-276" class="d">-	if(WIFEXITED(ret))
+</a><a href="#h8-0-277" id="h8-0-277" class="d">-		exit(WEXITSTATUS(ret));
+</a><a href="#h8-0-278" id="h8-0-278" class="d">-	else
+</a><a href="#h8-0-279" id="h8-0-279" class="d">-		exit(EXIT_SUCCESS);
+</a><a href="#h8-0-280" id="h8-0-280" class="d">-}
+</a><a href="#h8-0-281" id="h8-0-281" class="d">-
+</a><a href="#h8-0-282" id="h8-0-282" class="d">-char
+</a><a href="#h8-0-283" id="h8-0-283" class="d">-unbuffer(void) {
+</a><a href="#h8-0-284" id="h8-0-284" class="d">-	char c;
+</a><a href="#h8-0-285" id="h8-0-285" class="d">-
+</a><a href="#h8-0-286" id="h8-0-286" class="d">-	c = buf.data[buf.s++];
+</a><a href="#h8-0-287" id="h8-0-287" class="d">-	buf.s %= LENGTH(buf.data);
+</a><a href="#h8-0-288" id="h8-0-288" class="d">-	buf.n--;
+</a><a href="#h8-0-289" id="h8-0-289" class="d">-	return c;
+</a><a href="#h8-0-290" id="h8-0-290" class="d">-}
+</a><a href="#h8-0-291" id="h8-0-291" class="d">-
+</a><a href="#h8-0-292" id="h8-0-292" class="d">-int
+</a><a href="#h8-0-293" id="h8-0-293" class="d">-main(int argc, char *argv[]) {
+</a><a href="#h8-0-294" id="h8-0-294" class="d">-	fd_set rfds;
+</a><a href="#h8-0-295" id="h8-0-295" class="d">-
+</a><a href="#h8-0-296" id="h8-0-296" class="d">-	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+</a><a href="#h8-0-297" id="h8-0-297" class="d">-		errx(EXIT_SUCCESS, &quot;std-&quot;VERSION&quot;, © 2008 Matthias-Christian Ott&quot;);
+</a><a href="#h8-0-298" id="h8-0-298" class="d">-	else if(argc == 1)
+</a><a href="#h8-0-299" id="h8-0-299" class="d">-		errx(EXIT_FAILURE, &quot;usage: std [-v]&quot;);
+</a><a href="#h8-0-300" id="h8-0-300" class="d">-	getpty();
+</a><a href="#h8-0-301" id="h8-0-301" class="d">-	shell();
+</a><a href="#h8-0-302" id="h8-0-302" class="d">-	FD_ZERO(&amp;rfds);
+</a><a href="#h8-0-303" id="h8-0-303" class="d">-	FD_SET(STDIN_FILENO, &amp;rfds);
+</a><a href="#h8-0-304" id="h8-0-304" class="d">-	FD_SET(ptm, &amp;rfds);
+</a><a href="#h8-0-305" id="h8-0-305" class="d">-	if(!(fptm = fdopen(ptm, &quot;r+&quot;)))
+</a><a href="#h8-0-306" id="h8-0-306" class="d">-		err(EXIT_FAILURE, &quot;cannot open pty&quot;);
+</a><a href="#h8-0-307" id="h8-0-307" class="d">-	if(fcntl(ptm, F_SETFL, O_NONBLOCK) == -1)
+</a><a href="#h8-0-308" id="h8-0-308" class="d">-		err(EXIT_FAILURE, &quot;cannot set pty to non-blocking mode&quot;);
+</a><a href="#h8-0-309" id="h8-0-309" class="d">-	if(fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK) == -1)
+</a><a href="#h8-0-310" id="h8-0-310" class="d">-		err(EXIT_FAILURE, &quot;cannot set stdin to non-blocking mode&quot;);
+</a><a href="#h8-0-311" id="h8-0-311" class="d">-	for(;;) {
+</a><a href="#h8-0-312" id="h8-0-312" class="d">-		if(select(MAX(ptm, STDIN_FILENO) + 1, &amp;rfds, NULL, NULL, NULL) == -1)
+</a><a href="#h8-0-313" id="h8-0-313" class="d">-			err(EXIT_FAILURE, &quot;cannot select&quot;);
+</a><a href="#h8-0-314" id="h8-0-314" class="d">-		if(FD_ISSET(ptm, &amp;rfds)) {
+</a><a href="#h8-0-315" id="h8-0-315" class="d">-			for(;;) {
+</a><a href="#h8-0-316" id="h8-0-316" class="d">-				if((c = getc(fptm)) == EOF) {
+</a><a href="#h8-0-317" id="h8-0-317" class="d">-					if(feof(fptm)) {
+</a><a href="#h8-0-318" id="h8-0-318" class="d">-						FD_CLR(ptm, &amp;rfds);
+</a><a href="#h8-0-319" id="h8-0-319" class="d">-						fflush(fptm);
+</a><a href="#h8-0-320" id="h8-0-320" class="d">-						break;
+</a><a href="#h8-0-321" id="h8-0-321" class="d">-					}
+</a><a href="#h8-0-322" id="h8-0-322" class="d">-					if(errno != EAGAIN)
+</a><a href="#h8-0-323" id="h8-0-323" class="d">-						err(EXIT_FAILURE, &quot;cannot read from pty&quot;);
+</a><a href="#h8-0-324" id="h8-0-324" class="d">-					fflush(stdout);
+</a><a href="#h8-0-325" id="h8-0-325" class="d">-					break;
+</a><a href="#h8-0-326" id="h8-0-326" class="d">-				}
+</a><a href="#h8-0-327" id="h8-0-327" class="d">-				switch(c) {
+</a><a href="#h8-0-328" id="h8-0-328" class="d">-				case &#39;\033&#39;:
+</a><a href="#h8-0-329" id="h8-0-329" class="d">-					parseesc();
+</a><a href="#h8-0-330" id="h8-0-330" class="d">-					break;
+</a><a href="#h8-0-331" id="h8-0-331" class="d">-				default:
+</a><a href="#h8-0-332" id="h8-0-332" class="d">-					putchar(c);
+</a><a href="#h8-0-333" id="h8-0-333" class="d">-				}
+</a><a href="#h8-0-334" id="h8-0-334" class="d">-			}
+</a><a href="#h8-0-335" id="h8-0-335" class="d">-			fflush(stdout);
+</a><a href="#h8-0-336" id="h8-0-336" class="d">-		}
+</a><a href="#h8-0-337" id="h8-0-337" class="d">-		if(FD_ISSET(STDIN_FILENO, &amp;rfds)) {
+</a><a href="#h8-0-338" id="h8-0-338" class="d">-			for(;;) {
+</a><a href="#h8-0-339" id="h8-0-339" class="d">-				if((c = getchar()) == EOF) {
+</a><a href="#h8-0-340" id="h8-0-340" class="d">-					if(feof(stdin)) {
+</a><a href="#h8-0-341" id="h8-0-341" class="d">-						FD_CLR(STDIN_FILENO, &amp;rfds);
+</a><a href="#h8-0-342" id="h8-0-342" class="d">-						fflush(fptm);
+</a><a href="#h8-0-343" id="h8-0-343" class="d">-						break;
+</a><a href="#h8-0-344" id="h8-0-344" class="d">-					}
+</a><a href="#h8-0-345" id="h8-0-345" class="d">-					if(errno != EAGAIN)
+</a><a href="#h8-0-346" id="h8-0-346" class="d">-						err(EXIT_FAILURE, &quot;cannot read from stdin&quot;);
+</a><a href="#h8-0-347" id="h8-0-347" class="d">-					fflush(fptm);
+</a><a href="#h8-0-348" id="h8-0-348" class="d">-					break;
+</a><a href="#h8-0-349" id="h8-0-349" class="d">-				}
+</a><a href="#h8-0-350" id="h8-0-350" class="d">-				switch(c) {
+</a><a href="#h8-0-351" id="h8-0-351" class="d">-				case &#39;:&#39;:
+</a><a href="#h8-0-352" id="h8-0-352" class="d">-					parsecmd();
+</a><a href="#h8-0-353" id="h8-0-353" class="d">-					break;
+</a><a href="#h8-0-354" id="h8-0-354" class="d">-				default:
+</a><a href="#h8-0-355" id="h8-0-355" class="d">-					putc(c, fptm);
+</a><a href="#h8-0-356" id="h8-0-356" class="d">-				}
+</a><a href="#h8-0-357" id="h8-0-357" class="d">-			}
+</a><a href="#h8-0-358" id="h8-0-358" class="d">-			fflush(fptm);
+</a><a href="#h8-0-359" id="h8-0-359" class="d">-		}
+</a><a href="#h8-0-360" id="h8-0-360" class="d">-	}
+</a><a href="#h8-0-361" id="h8-0-361" class="d">-	return 0;
+</a><a href="#h8-0-362" id="h8-0-362" class="d">-}
+</a></pre>
+</div>
+</body>
+</html>

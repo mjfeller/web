@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adopting arg.h with more flexible cmd handling. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b1813b14d956978ae8af37166b3cccc3a7b4b720.html">b1813b14d956978ae8af37166b3cccc3a7b4b720</a>
+<b>parent</b> <a href="../commit/580c8bbd4691218849c9a809acaa4c95f65cb846.html">580c8bbd4691218849c9a809acaa4c95f65cb846</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Wed,  3 Apr 2013 21:00:38 +0200
+
+Adopting arg.h with more flexible cmd handling.
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">arg.h</a></td><td> | </td><td class="num">55</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">118</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 112 insertions(+), 61 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/arg.h.html">arg.h</a> b/<a href="../file/arg.h.html">arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,55 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+/*
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+ * Copy me if you can.
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+ * by 20h
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+ */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#ifndef __ARG_H__
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#define __ARG_H__
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+extern char *argv0;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+#define USED(x)		((void)(x))
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+/* use main(int argc, char *argv[]) */
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+#define ARGBEGIN	for (argv0 = *argv, argv++, argc--;\
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+					argv[0] &amp;&amp; argv[0][1]\
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+					&amp;&amp; argv[0][0] == &#39;-&#39;;\
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+					argc--, argv++) {\
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+				char _argc;\
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+				char **_argv;\
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+				int brk;\
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+				if (argv[0][1] == &#39;-&#39; &amp;&amp; argv[0][2] == &#39;\0&#39;) {\
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+					argv++;\
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+					argc--;\
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+					break;\
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+				}\
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+				for (brk = 0, argv[0]++, _argv = argv;\
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+						argv[0][0] &amp;&amp; !brk;\
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+						argv[0]++) {\
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+					if (_argv != argv)\
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+						break;\
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+					_argc = argv[0][0];\
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+					switch (_argc)
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+#define ARGEND			}\
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+				USED(_argc);\
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+			}\
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+			USED(argv);\
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+			USED(argc);
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+#define ARGC()		_argc
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+#define EARGF(x)	((argv[0][1] == &#39;\0&#39; &amp;&amp; argv[1] == NULL)?\
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+				((x), abort(), (char *)0) :\
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+				(brk = 1, (argv[0][1] != &#39;\0&#39;)?\
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+					(&amp;argv[0][1]) :\
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+					(argc--, argv++, argv[0])))
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+#define ARGF()		((argv[0][1] == &#39;\0&#39; &amp;&amp; argv[1] == NULL)?\
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+				(char *)0 :\
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+				(brk = 1, (argv[0][1] != &#39;\0&#39;)?\
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+					(&amp;argv[0][1]) :\
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+					(argc--, argv++, argv[0])))
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+#endif
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+
+</a><b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -27,6 +27,10 @@
+</a> #include &lt;X11/Xft/Xft.h&gt;
+ #include &lt;fontconfig/fontconfig.h&gt;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+#include &quot;arg.h&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+char *argv0;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a> #define Glyph Glyph_
+ #define Font Font_
+ #define Draw XftDraw *
+<a href="#h1-1" id="h1-1" class="h">@@ -41,10 +45,6 @@
+</a>  #include &lt;libutil.h&gt;
+ #endif
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-#define USAGE \
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	&quot;st &quot; VERSION &quot; (c) 2010-2013 st engineers\n&quot; \
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	&quot;usage: st [-a] [-v] [-c class] [-f font] [-g geometry] [-o file]&quot; \
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	&quot; [-t title] [-w windowid] [-e command ...]\n&quot;
+</a> 
+ /* XEMBED messages */
+ #define XEMBED_FOCUS_IN  4
+<a href="#h1-2" id="h1-2" class="h">@@ -3308,70 +3308,66 @@ run(void) {
+</a> 	}
+ }
+ 
+<a href="#h1-2-3" id="h1-2-3" class="i">+void
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+usage(void) {
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	die(&quot;%s &quot; VERSION &quot; (c) 2010-2013 st engineers\n&quot; \
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+	&quot;usage: st [-a] [-v] [-c class] [-f font] [-g geometry] [-o file]&quot; \
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+	&quot; [-t title] [-w windowid] [-e command ...]\n&quot;, argv0);
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+}
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+
+</a> int
+ main(int argc, char *argv[]) {
+<a href="#h1-2-12" id="h1-2-12" class="d">-	int i, bitm, xr, yr;
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+	int bitm, xr, yr;
+</a> 	uint wr, hr;
+ 
+ 	xw.fw = xw.fh = xw.fx = xw.fy = 0;
+ 	xw.isfixed = False;
+ 
+<a href="#h1-2-19" id="h1-2-19" class="d">-	for(i = 1; i &lt; argc; i++) {
+</a><a href="#h1-2-20" id="h1-2-20" class="d">-		switch(argv[i][0] != &#39;-&#39; || argv[i][2] ? -1 : argv[i][1]) {
+</a><a href="#h1-2-21" id="h1-2-21" class="d">-		case &#39;a&#39;:
+</a><a href="#h1-2-22" id="h1-2-22" class="d">-			allowaltscreen = false;
+</a><a href="#h1-2-23" id="h1-2-23" class="d">-			break;
+</a><a href="#h1-2-24" id="h1-2-24" class="d">-		case &#39;c&#39;:
+</a><a href="#h1-2-25" id="h1-2-25" class="d">-			if(++i &lt; argc)
+</a><a href="#h1-2-26" id="h1-2-26" class="d">-				opt_class = argv[i];
+</a><a href="#h1-2-27" id="h1-2-27" class="d">-			break;
+</a><a href="#h1-2-28" id="h1-2-28" class="d">-		case &#39;e&#39;:
+</a><a href="#h1-2-29" id="h1-2-29" class="d">-			/* eat all remaining arguments */
+</a><a href="#h1-2-30" id="h1-2-30" class="d">-			if(++i &lt; argc)
+</a><a href="#h1-2-31" id="h1-2-31" class="d">-				opt_cmd = &amp;argv[i];
+</a><a href="#h1-2-32" id="h1-2-32" class="d">-			goto run;
+</a><a href="#h1-2-33" id="h1-2-33" class="d">-		case &#39;f&#39;:
+</a><a href="#h1-2-34" id="h1-2-34" class="d">-			if(++i &lt; argc)
+</a><a href="#h1-2-35" id="h1-2-35" class="d">-				opt_font = argv[i];
+</a><a href="#h1-2-36" id="h1-2-36" class="d">-			break;
+</a><a href="#h1-2-37" id="h1-2-37" class="d">-		case &#39;g&#39;:
+</a><a href="#h1-2-38" id="h1-2-38" class="d">-			if(++i &gt;= argc)
+</a><a href="#h1-2-39" id="h1-2-39" class="d">-				break;
+</a><a href="#h1-2-40" id="h1-2-40" class="d">-
+</a><a href="#h1-2-41" id="h1-2-41" class="d">-			bitm = XParseGeometry(argv[i], &amp;xr, &amp;yr, &amp;wr, &amp;hr);
+</a><a href="#h1-2-42" id="h1-2-42" class="d">-			if(bitm &amp; XValue)
+</a><a href="#h1-2-43" id="h1-2-43" class="d">-				xw.fx = xr;
+</a><a href="#h1-2-44" id="h1-2-44" class="d">-			if(bitm &amp; YValue)
+</a><a href="#h1-2-45" id="h1-2-45" class="d">-				xw.fy = yr;
+</a><a href="#h1-2-46" id="h1-2-46" class="d">-			if(bitm &amp; WidthValue)
+</a><a href="#h1-2-47" id="h1-2-47" class="d">-				xw.fw = (int)wr;
+</a><a href="#h1-2-48" id="h1-2-48" class="d">-			if(bitm &amp; HeightValue)
+</a><a href="#h1-2-49" id="h1-2-49" class="d">-				xw.fh = (int)hr;
+</a><a href="#h1-2-50" id="h1-2-50" class="d">-			if(bitm &amp; XNegative &amp;&amp; xw.fx == 0)
+</a><a href="#h1-2-51" id="h1-2-51" class="d">-				xw.fx = -1;
+</a><a href="#h1-2-52" id="h1-2-52" class="d">-			if(bitm &amp; XNegative &amp;&amp; xw.fy == 0)
+</a><a href="#h1-2-53" id="h1-2-53" class="d">-				xw.fy = -1;
+</a><a href="#h1-2-54" id="h1-2-54" class="d">-
+</a><a href="#h1-2-55" id="h1-2-55" class="d">-			if(xw.fh != 0 &amp;&amp; xw.fw != 0)
+</a><a href="#h1-2-56" id="h1-2-56" class="d">-				xw.isfixed = True;
+</a><a href="#h1-2-57" id="h1-2-57" class="d">-			break;
+</a><a href="#h1-2-58" id="h1-2-58" class="d">-		case &#39;o&#39;:
+</a><a href="#h1-2-59" id="h1-2-59" class="d">-			if(++i &lt; argc)
+</a><a href="#h1-2-60" id="h1-2-60" class="d">-				opt_io = argv[i];
+</a><a href="#h1-2-61" id="h1-2-61" class="d">-			break;
+</a><a href="#h1-2-62" id="h1-2-62" class="d">-		case &#39;t&#39;:
+</a><a href="#h1-2-63" id="h1-2-63" class="d">-			if(++i &lt; argc)
+</a><a href="#h1-2-64" id="h1-2-64" class="d">-				opt_title = argv[i];
+</a><a href="#h1-2-65" id="h1-2-65" class="d">-			break;
+</a><a href="#h1-2-66" id="h1-2-66" class="d">-		case &#39;v&#39;:
+</a><a href="#h1-2-67" id="h1-2-67" class="d">-		default:
+</a><a href="#h1-2-68" id="h1-2-68" class="d">-			die(USAGE);
+</a><a href="#h1-2-69" id="h1-2-69" class="d">-		case &#39;w&#39;:
+</a><a href="#h1-2-70" id="h1-2-70" class="d">-			if(++i &lt; argc)
+</a><a href="#h1-2-71" id="h1-2-71" class="d">-				opt_embed = argv[i];
+</a><a href="#h1-2-72" id="h1-2-72" class="d">-			break;
+</a><a href="#h1-2-73" id="h1-2-73" class="d">-		}
+</a><a href="#h1-2-74" id="h1-2-74" class="d">-	}
+</a><a href="#h1-2-75" id="h1-2-75" class="i">+	ARGBEGIN {
+</a><a href="#h1-2-76" id="h1-2-76" class="i">+	case &#39;a&#39;:
+</a><a href="#h1-2-77" id="h1-2-77" class="i">+		allowaltscreen = false;
+</a><a href="#h1-2-78" id="h1-2-78" class="i">+		break;
+</a><a href="#h1-2-79" id="h1-2-79" class="i">+	case &#39;c&#39;:
+</a><a href="#h1-2-80" id="h1-2-80" class="i">+		opt_class = EARGF(usage());
+</a><a href="#h1-2-81" id="h1-2-81" class="i">+		break;
+</a><a href="#h1-2-82" id="h1-2-82" class="i">+	case &#39;e&#39;:
+</a><a href="#h1-2-83" id="h1-2-83" class="i">+		/* eat all remaining arguments */
+</a><a href="#h1-2-84" id="h1-2-84" class="i">+		opt_cmd = &amp;argv[1];
+</a><a href="#h1-2-85" id="h1-2-85" class="i">+		goto run;
+</a><a href="#h1-2-86" id="h1-2-86" class="i">+	case &#39;f&#39;:
+</a><a href="#h1-2-87" id="h1-2-87" class="i">+		opt_font = EARGF(usage());
+</a><a href="#h1-2-88" id="h1-2-88" class="i">+		break;
+</a><a href="#h1-2-89" id="h1-2-89" class="i">+	case &#39;g&#39;:
+</a><a href="#h1-2-90" id="h1-2-90" class="i">+		bitm = XParseGeometry(EARGF(usage()), &amp;xr, &amp;yr, &amp;wr, &amp;hr);
+</a><a href="#h1-2-91" id="h1-2-91" class="i">+		if(bitm &amp; XValue)
+</a><a href="#h1-2-92" id="h1-2-92" class="i">+			xw.fx = xr;
+</a><a href="#h1-2-93" id="h1-2-93" class="i">+		if(bitm &amp; YValue)
+</a><a href="#h1-2-94" id="h1-2-94" class="i">+			xw.fy = yr;
+</a><a href="#h1-2-95" id="h1-2-95" class="i">+		if(bitm &amp; WidthValue)
+</a><a href="#h1-2-96" id="h1-2-96" class="i">+			xw.fw = (int)wr;
+</a><a href="#h1-2-97" id="h1-2-97" class="i">+		if(bitm &amp; HeightValue)
+</a><a href="#h1-2-98" id="h1-2-98" class="i">+			xw.fh = (int)hr;
+</a><a href="#h1-2-99" id="h1-2-99" class="i">+		if(bitm &amp; XNegative &amp;&amp; xw.fx == 0)
+</a><a href="#h1-2-100" id="h1-2-100" class="i">+			xw.fx = -1;
+</a><a href="#h1-2-101" id="h1-2-101" class="i">+		if(bitm &amp; XNegative &amp;&amp; xw.fy == 0)
+</a><a href="#h1-2-102" id="h1-2-102" class="i">+			xw.fy = -1;
+</a><a href="#h1-2-103" id="h1-2-103" class="i">+
+</a><a href="#h1-2-104" id="h1-2-104" class="i">+		if(xw.fh != 0 &amp;&amp; xw.fw != 0)
+</a><a href="#h1-2-105" id="h1-2-105" class="i">+			xw.isfixed = True;
+</a><a href="#h1-2-106" id="h1-2-106" class="i">+		break;
+</a><a href="#h1-2-107" id="h1-2-107" class="i">+	case &#39;o&#39;:
+</a><a href="#h1-2-108" id="h1-2-108" class="i">+		opt_io = EARGF(usage());
+</a><a href="#h1-2-109" id="h1-2-109" class="i">+		break;
+</a><a href="#h1-2-110" id="h1-2-110" class="i">+	case &#39;t&#39;:
+</a><a href="#h1-2-111" id="h1-2-111" class="i">+		opt_title = EARGF(usage());
+</a><a href="#h1-2-112" id="h1-2-112" class="i">+		break;
+</a><a href="#h1-2-113" id="h1-2-113" class="i">+	case &#39;w&#39;:
+</a><a href="#h1-2-114" id="h1-2-114" class="i">+		opt_embed = EARGF(usage());
+</a><a href="#h1-2-115" id="h1-2-115" class="i">+		break;
+</a><a href="#h1-2-116" id="h1-2-116" class="i">+	case &#39;v&#39;:
+</a><a href="#h1-2-117" id="h1-2-117" class="i">+	default:
+</a><a href="#h1-2-118" id="h1-2-118" class="i">+		usage();
+</a><a href="#h1-2-119" id="h1-2-119" class="i">+	} ARGEND;
+</a> 
+ run:
+ 	setlocale(LC_CTYPE, &quot;&quot;);
+</pre>
+</div>
+</body>
+</html>

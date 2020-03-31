@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Peter/Andreas NetActiveWindow patch in a slightly modified version - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3c2d303c0e8efc9a08f2e70867794b003b886810.html">3c2d303c0e8efc9a08f2e70867794b003b886810</a>
+<b>parent</b> <a href="../commit/1e20a0f78a580ebf4ad521d0e074125bb0a7d4b8.html">1e20a0f78a580ebf4ad521d0e074125bb0a7d4b8</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Thu, 14 Apr 2011 13:46:25 +0000
+
+applied Peter/Andreas NetActiveWindow patch in a slightly modified version
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">31</td><td><span class="i">++++++++++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 22 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -58,7 +58,7 @@
+</a> enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+ enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
+ enum { NetSupported, NetWMName, NetWMState,
+<a href="#h0-0-3" id="h0-0-3" class="d">-       NetWMFullscreen, NetLast };                      /* EWMH atoms */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+       NetWMFullscreen, NetActiveWindow, NetLast };     /* EWMH atoms */
+</a> enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
+ enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
+        ClkClientWin, ClkRootWin, ClkLast };             /* clicks */
+<a href="#h0-1" id="h0-1" class="h">@@ -1259,11 +1259,11 @@ propertynotify(XEvent *e) {
+</a> void
+ clientmessage(XEvent *e) {
+ 	XClientMessageEvent *cme = &amp;e-&gt;xclient;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	Client *c;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	Client *c = wintoclient(cme-&gt;window);
+</a> 
+<a href="#h0-1-6" id="h0-1-6" class="d">-	if((c = wintoclient(cme-&gt;window))
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	&amp;&amp; (cme-&gt;message_type == netatom[NetWMState] &amp;&amp; cme-&gt;data.l[1] == netatom[NetWMFullscreen]))
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	{
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	if(!c)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		return;
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	if(cme-&gt;message_type == netatom[NetWMState] &amp;&amp; cme-&gt;data.l[1] == netatom[NetWMFullscreen]) {
+</a> 		if(cme-&gt;data.l[0]) {
+ 			XChangeProperty(dpy, cme-&gt;window, netatom[NetWMState], XA_ATOM, 32,
+ 			                PropModeReplace, (unsigned char*)&amp;netatom[NetWMFullscreen], 1);
+<a href="#h0-2" id="h0-2" class="h">@@ -1287,6 +1287,16 @@ clientmessage(XEvent *e) {
+</a> 			arrange(c-&gt;mon);
+ 		}
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="i">+	else if(cme-&gt;message_type == netatom[NetActiveWindow]) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		if(!ISVISIBLE(c)) {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+			Arg a = { .ui = c-&gt;tags };
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			view(&amp;a); 
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		}
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+		detach(c);
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+		attach(c);
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+		focus(c);
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+		arrange(c-&gt;mon);
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	}
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -1460,7 +1470,7 @@ sendevent(Client *c, Atom proto) {
+</a> 			exists = protocols[n] == proto;
+ 		XFree(protocols);
+ 	}
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if (exists) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	if(exists) {
+</a> 		ev.type = ClientMessage;
+ 		ev.xclient.window = c-&gt;win;
+ 		ev.xclient.message_type = wmatom[WMProtocols];
+<a href="#h0-4" id="h0-4" class="h">@@ -1474,7 +1484,7 @@ sendevent(Client *c, Atom proto) {
+</a> 
+ void
+ setfocus(Client *c) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-	if (!c-&gt;neverfocus)
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	if(!c-&gt;neverfocus)
+</a> 		XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+ 	sendevent(c, wmatom[WMTakeFocus]);
+ }
+<a href="#h0-5" id="h0-5" class="h">@@ -1525,6 +1535,7 @@ setup(void) {
+</a> 	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+ 	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+ 	wmatom[WMState] = XInternAtom(dpy, &quot;WM_STATE&quot;, False);
+<a href="#h0-5-3" id="h0-5-3" class="i">+        netatom[NetActiveWindow] = XInternAtom(dpy, &quot;_NET_ACTIVE_WINDOW&quot;, False);
+</a> 	wmatom[WMTakeFocus] = XInternAtom(dpy, &quot;WM_TAKE_FOCUS&quot;, False);
+ 	netatom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+ 	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+<a href="#h0-6" id="h0-6" class="h">@@ -1942,8 +1953,10 @@ updatewmhints(Client *c) {
+</a> 		}
+ 		else
+ 			c-&gt;isurgent = (wmh-&gt;flags &amp; XUrgencyHint) ? True : False;
+<a href="#h0-6-3" id="h0-6-3" class="d">-		if (wmh-&gt;flags &amp; InputHint) c-&gt;neverfocus = !wmh-&gt;input;
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-		else                        c-&gt;neverfocus = False;
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+		if(wmh-&gt;flags &amp; InputHint)
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+			c-&gt;neverfocus = !wmh-&gt;input;
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+		else
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+			c-&gt;neverfocus = False;
+</a> 		XFree(wmh);
+ 	}
+ }
+</pre>
+</div>
+</body>
+</html>

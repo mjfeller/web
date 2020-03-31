@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>clean and name enum definitions. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/53ac69e90d95e52dedf99129e39a993d45c812ea.html">53ac69e90d95e52dedf99129e39a993d45c812ea</a>
+<b>parent</b> <a href="../commit/751fb765e4f26ce1500b4e8ee9f4cd5b6039b495.html">751fb765e4f26ce1500b4e8ee9f4cd5b6039b495</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 16 Feb 2012 00:33:11 +0100
+
+clean and name enum definitions.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">64</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------</span></td></tr>
+</table></pre><pre>1 file changed, 54 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -66,17 +66,61 @@
+</a> #define X2COL(x) (((x) - BORDER)/xw.cw)
+ #define Y2ROW(y) (((y) - BORDER)/xw.ch)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-/* Attribute, Cursor, Character state, Terminal mode, Screen draw mode */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-enum { ATTR_NULL=0 , ATTR_REVERSE=1 , ATTR_UNDERLINE=2, ATTR_BOLD=4, ATTR_GFX=8 };
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-enum { CURSOR_UP, CURSOR_DOWN, CURSOR_LEFT, CURSOR_RIGHT,
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-       CURSOR_SAVE, CURSOR_LOAD };
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-enum { CURSOR_DEFAULT = 0, CURSOR_HIDE = 1, CURSOR_WRAPNEXT = 2 };
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-enum { GLYPH_SET=1, GLYPH_DIRTY=2 };
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-enum { MODE_WRAP=1, MODE_INSERT=2, MODE_APPKEYPAD=4, MODE_ALTSCREEN=8,
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-       MODE_CRLF=16, MODE_MOUSEBTN=32, MODE_MOUSEMOTION=64, MODE_MOUSE=32|64, MODE_REVERSE=128 };
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-enum { ESC_START=1, ESC_CSI=2, ESC_OSC=4, ESC_TITLE=8, ESC_ALTCHARSET=16 };
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-enum { WIN_VISIBLE=1, WIN_REDRAW=2, WIN_FOCUSED=4 };
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+enum glyph_attribute {
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	ATTR_NULL      = 0,
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	ATTR_REVERSE   = 1,
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	ATTR_UNDERLINE = 2,
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	ATTR_BOLD      = 4,
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	ATTR_GFX       = 8,
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+};
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+enum cursor_movement {
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	CURSOR_UP,
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	CURSOR_DOWN,
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	CURSOR_LEFT,
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	CURSOR_RIGHT,
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	CURSOR_SAVE,
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	CURSOR_LOAD
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+};
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+enum cursor_state {
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	CURSOR_DEFAULT  = 0,
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+	CURSOR_HIDE     = 1,
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+	CURSOR_WRAPNEXT = 2
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+};
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+enum glyph_state {
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+	GLYPH_SET   = 1,
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+	GLYPH_DIRTY = 2
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+};
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+enum term_mode {
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	MODE_WRAP        = 1,
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+	MODE_INSERT      = 2,
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+	MODE_APPKEYPAD   = 4,
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+	MODE_ALTSCREEN   = 8,
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+	MODE_CRLF        = 16,
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+	MODE_MOUSEBTN    = 32,
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+	MODE_MOUSEMOTION = 64,
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+	MODE_MOUSE       = 32|64,
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+	MODE_REVERSE     = 128
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+};
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+enum escape_state {
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+	ESC_START      = 1,
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+	ESC_CSI        = 2,
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+	ESC_OSC        = 4,
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+	ESC_TITLE      = 8,
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+	ESC_ALTCHARSET = 16
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+};
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+enum window_state {
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+	WIN_VISIBLE = 1,
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+	WIN_REDRAW  = 2,
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+	WIN_FOCUSED = 4
+</a><a href="#h0-0-65" id="h0-0-65" class="i">+};
+</a> 
+<a href="#h0-0-67" id="h0-0-67" class="i">+/* bit macro */
+</a> #undef B0
+ enum { B0=1, B1=2, B2=4, B3=8, B4=16, B5=32, B6=64, B7=128 };
+ 
+</pre>
+</div>
+</body>
+</html>

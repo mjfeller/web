@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cleaned up (removed space indentation). select/event bug fixed. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2f35cef54b5a32b5498aded0a25f78d0d973a152.html">2f35cef54b5a32b5498aded0a25f78d0d973a152</a>
+<b>parent</b> <a href="../commit/129bcd7586968ed882e41c0df76c5c0c0c414e6d.html">129bcd7586968ed882e41c0df76c5c0c0c414e6d</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 28 May 2009 01:33:01 +0200
+
+cleaned up (removed space indentation). select/event bug fixed.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">167</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 88 insertions(+), 79 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,4 +1,4 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="d">-/* See LICENSE for licence details.  */
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+/* See LICENSE for licence details.	 */
+</a> #include &quot;st.h&quot;
+ 
+ /* Globals */
+<a href="#h0-1" id="h0-1" class="h">@@ -27,11 +27,10 @@ execsh(void) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="d">-xbell(void) {   /* visual bell */
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+xbell(void) {	/* visual bell */
+</a> 	XRectangle r = { 0, 0, xw.w, xw.h };
+ 	XSetForeground(xw.dis, dc.gc, dc.col[BellCol]);
+ 	XFillRectangles(xw.dis, xw.win, dc.gc, &amp;r, 1);
+<a href="#h0-1-8" id="h0-1-8" class="d">-	XFlush(xw.dis);
+</a> 	usleep(30000);
+ 	draw(SCredraw);
+ }
+<a href="#h0-2" id="h0-2" class="h">@@ -127,7 +126,7 @@ escfinal(char c) {
+</a> 		}
+ 	else if(BETWEEN(c, 0x40, 0x7E))
+ 		return 1;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	return 0;     
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	return 0;	  
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -168,7 +167,7 @@ tscroll(void) {
+</a> 		term.line[i] = term.line[i+1];
+ 	memset(temp, 0, sizeof(Glyph) * term.col);
+ 	term.line[term.bot] = temp;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	xscroll();    
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	xscroll();	  
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -372,13 +371,13 @@ tsetattr(int *attr, int l) {
+</a> 				term.c.attr.bg = DefaultBG;
+ 				break;
+ 			case 1:
+<a href="#h0-4-3" id="h0-4-3" class="d">-				term.c.attr.mode |= ATbold;  
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+				term.c.attr.mode |= ATbold;	 
+</a> 				break;
+ 			case 4: 
+ 				term.c.attr.mode |= ATunderline;
+ 				break;
+ 			case 7: 
+<a href="#h0-4-10" id="h0-4-10" class="d">-				term.c.attr.mode |= ATreverse;  
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+				term.c.attr.mode |= ATreverse;	
+</a> 				break;
+ 			case 8:
+ 				term.c.hidden = CShide;
+<a href="#h0-5" id="h0-5" class="h">@@ -390,7 +389,7 @@ tsetattr(int *attr, int l) {
+</a> 				term.c.attr.mode &amp;= ~ATunderline;
+ 				break;
+ 			case 27: 
+<a href="#h0-5-3" id="h0-5-3" class="d">-				term.c.attr.mode &amp;= ~ATreverse;  
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+				term.c.attr.mode &amp;= ~ATreverse;	 
+</a> 				break;
+ 			case 39:
+ 				term.c.attr.fg = DefaultFG;
+<a href="#h0-6" id="h0-6" class="h">@@ -420,7 +419,7 @@ tsetscroll(int t, int b) {
+</a> 		b = temp;
+ 	}
+ 	term.top = t;
+<a href="#h0-6-3" id="h0-6-3" class="d">-	term.bot = b;    
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	term.bot = b;	 
+</a> }
+ 
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -481,7 +480,7 @@ eschandle(void) {
+</a> 				break;
+ 			case 2: /* all */
+ 				tclearregion(0, 0, term.col-1, term.row-1);
+<a href="#h0-7-3" id="h0-7-3" class="d">-				break;                
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+				break;				  
+</a> 			}
+ 			break;
+ 		case &#39;K&#39;: /* Clear line */
+<a href="#h0-8" id="h0-8" class="h">@@ -501,6 +500,10 @@ eschandle(void) {
+</a> 			DEFAULT(escseq.arg[0], 1);
+ 			tinsertblankline(escseq.arg[0]);
+ 			break;
+<a href="#h0-8-3" id="h0-8-3" class="i">+		case &#39;l&#39;:
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+			if(escseq.priv &amp;&amp; escseq.arg[0] == 25)
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+				term.c.hidden = 1;
+</a><a href="#h0-8-6" id="h0-8-6" class="i">+			break;
+</a> 		case &#39;M&#39;: /* Delete &lt;n&gt; lines */
+ 			DEFAULT(escseq.arg[0], 1);
+ 			tdeleteline(escseq.arg[0]);
+<a href="#h0-9" id="h0-9" class="h">@@ -514,6 +517,8 @@ eschandle(void) {
+</a> 			tmoveto(term.c.x, escseq.arg[0]-1);
+ 			break;
+ 		case &#39;h&#39;: /* Set terminal mode */
+<a href="#h0-9-3" id="h0-9-3" class="i">+			if(escseq.priv &amp;&amp; escseq.arg[0] == 25)
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+				term.c.hidden = 0;
+</a> 			break;
+ 		case &#39;m&#39;: /* Terminal attribute (color) */
+ 			tsetattr(escseq.arg, escseq.narg);
+<a href="#h0-10" id="h0-10" class="h">@@ -542,15 +547,15 @@ void
+</a> escdump(void) { 
+ 	int i;
+ 	puts(&quot;------&quot;);
+<a href="#h0-10-3" id="h0-10-3" class="d">-	printf(&quot;rawbuf  : %s\n&quot;, escseq.buf);
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+	printf(&quot;rawbuf	: %s\n&quot;, escseq.buf);
+</a> 	printf(&quot;prechar : %c\n&quot;, escseq.pre);
+ 	printf(&quot;private : %c\n&quot;, escseq.priv ? &#39;?&#39; : &#39; &#39;);
+<a href="#h0-10-7" id="h0-10-7" class="d">-	printf(&quot;narg    : %d\n&quot;, escseq.narg);
+</a><a href="#h0-10-8" id="h0-10-8" class="i">+	printf(&quot;narg	: %d\n&quot;, escseq.narg);
+</a> 	if(escseq.narg) {
+ 		for(i = 0; i &lt; escseq.narg; i++)
+ 			printf(&quot;\targ %d = %d\n&quot;, i, escseq.arg[i]);
+ 	}
+<a href="#h0-10-13" id="h0-10-13" class="d">-	printf(&quot;mode    : %c\n&quot;, escseq.mode);
+</a><a href="#h0-10-14" id="h0-10-14" class="i">+	printf(&quot;mode	: %c\n&quot;, escseq.mode);
+</a> }
+ 
+ void
+<a href="#h0-11" id="h0-11" class="h">@@ -560,20 +565,21 @@ escreset(void) {
+</a> 
+ void
+ tputtab(void) {
+<a href="#h0-11-3" id="h0-11-3" class="d">-    int space = TAB - term.c.x % TAB;
+</a><a href="#h0-11-4" id="h0-11-4" class="d">-    
+</a><a href="#h0-11-5" id="h0-11-5" class="d">-    if(term.c.x + space &gt;= term.col)
+</a><a href="#h0-11-6" id="h0-11-6" class="d">-        space--;
+</a><a href="#h0-11-7" id="h0-11-7" class="d">-    
+</a><a href="#h0-11-8" id="h0-11-8" class="d">-    for(; space &gt; 0; space--)
+</a><a href="#h0-11-9" id="h0-11-9" class="d">-        tcursor(CSright);
+</a><a href="#h0-11-10" id="h0-11-10" class="i">+	int space = TAB - term.c.x % TAB;
+</a><a href="#h0-11-11" id="h0-11-11" class="i">+	
+</a><a href="#h0-11-12" id="h0-11-12" class="i">+	if(term.c.x + space &gt;= term.col)
+</a><a href="#h0-11-13" id="h0-11-13" class="i">+		space--;
+</a><a href="#h0-11-14" id="h0-11-14" class="i">+	
+</a><a href="#h0-11-15" id="h0-11-15" class="i">+	for(; space &gt; 0; space--)
+</a><a href="#h0-11-16" id="h0-11-16" class="i">+		tcursor(CSright);
+</a> }
+ 
+ void
+ tputc(char c) {
+ 	static int inesc = 0;
+<a href="#h0-11-22" id="h0-11-22" class="d">-
+</a><a href="#h0-11-23" id="h0-11-23" class="d">-	//dump(c);
+</a><a href="#h0-11-24" id="h0-11-24" class="i">+#if 0
+</a><a href="#h0-11-25" id="h0-11-25" class="i">+	dump(c);
+</a><a href="#h0-11-26" id="h0-11-26" class="i">+#endif	
+</a> 	/* start of escseq */
+ 	if(c == &#39;\033&#39;)
+ 		escreset(), inesc = 1;
+<a href="#h0-12" id="h0-12" class="h">@@ -585,9 +591,9 @@ tputc(char c) {
+</a> 			tsetchar(c);
+ 			tcursor(CSright);
+ 			break;
+<a href="#h0-12-3" id="h0-12-3" class="d">-        case &#39;\t&#39;:
+</a><a href="#h0-12-4" id="h0-12-4" class="d">-            tputtab();
+</a><a href="#h0-12-5" id="h0-12-5" class="d">-            break;
+</a><a href="#h0-12-6" id="h0-12-6" class="i">+		case &#39;\t&#39;:
+</a><a href="#h0-12-7" id="h0-12-7" class="i">+			tputtab();
+</a><a href="#h0-12-8" id="h0-12-8" class="i">+			break;
+</a> 		case &#39;\b&#39;:
+ 			tcursor(CSleft);
+ 			break;
+<a href="#h0-13" id="h0-13" class="h">@@ -636,24 +642,24 @@ tresize(int col, int row) {
+</a> 
+ 	if(col &lt; 1 || row &lt; 1)
+ 		return;
+<a href="#h0-13-3" id="h0-13-3" class="d">-    /* alloc */
+</a><a href="#h0-13-4" id="h0-13-4" class="i">+	/* alloc */
+</a> 	line = calloc(row, sizeof(Line));
+ 	for(i = 0 ; i &lt; row; i++)
+ 		line[i] = calloc(col, sizeof(Glyph));
+<a href="#h0-13-8" id="h0-13-8" class="d">-    /* copy */
+</a><a href="#h0-13-9" id="h0-13-9" class="d">-    for(i = 0 ; i &lt; minrow; i++)
+</a><a href="#h0-13-10" id="h0-13-10" class="d">-        memcpy(line[i], term.line[i], mincol * sizeof(Glyph));
+</a><a href="#h0-13-11" id="h0-13-11" class="d">-    /* free */
+</a><a href="#h0-13-12" id="h0-13-12" class="d">-    for(i = 0; i &lt; term.row; i++)
+</a><a href="#h0-13-13" id="h0-13-13" class="d">-        free(term.line[i]);
+</a><a href="#h0-13-14" id="h0-13-14" class="i">+	/* copy */
+</a><a href="#h0-13-15" id="h0-13-15" class="i">+	for(i = 0 ; i &lt; minrow; i++)
+</a><a href="#h0-13-16" id="h0-13-16" class="i">+		memcpy(line[i], term.line[i], mincol * sizeof(Glyph));
+</a><a href="#h0-13-17" id="h0-13-17" class="i">+	/* free */
+</a><a href="#h0-13-18" id="h0-13-18" class="i">+	for(i = 0; i &lt; term.row; i++)
+</a><a href="#h0-13-19" id="h0-13-19" class="i">+		free(term.line[i]);
+</a> 	free(term.line);
+<a href="#h0-13-21" id="h0-13-21" class="d">-
+</a><a href="#h0-13-22" id="h0-13-22" class="i">+	
+</a> 	LIMIT(term.c.x, 0, col-1);
+ 	LIMIT(term.c.y, 0, row-1);
+ 	LIMIT(term.top, 0, row-1);
+ 	LIMIT(term.bot, 0, row-1);
+<a href="#h0-13-27" id="h0-13-27" class="d">-
+</a><a href="#h0-13-28" id="h0-13-28" class="d">-    term.bot = row-1;
+</a><a href="#h0-13-29" id="h0-13-29" class="i">+	
+</a><a href="#h0-13-30" id="h0-13-30" class="i">+	term.bot = row-1;
+</a> 	term.line = line;
+ 	term.col = col, term.row = row;
+ }
+<a href="#h0-14" id="h0-14" class="h">@@ -706,12 +712,12 @@ xinit(void) {
+</a> 
+ 	xw.dis = XOpenDisplay(NULL);
+ 	xw.scr = XDefaultScreen(xw.dis);
+<a href="#h0-14-3" id="h0-14-3" class="d">-    if(!xw.dis)
+</a><a href="#h0-14-4" id="h0-14-4" class="d">-        die(&quot;can not open display&quot;);
+</a><a href="#h0-14-5" id="h0-14-5" class="d">-    
+</a><a href="#h0-14-6" id="h0-14-6" class="i">+	if(!xw.dis)
+</a><a href="#h0-14-7" id="h0-14-7" class="i">+		die(&quot;can not open display&quot;);
+</a><a href="#h0-14-8" id="h0-14-8" class="i">+	
+</a> 	/* font */
+ 	if(!(dc.font = XLoadQueryFont(xw.dis, FONT)))
+<a href="#h0-14-11" id="h0-14-11" class="d">-        die(&quot;can not find font &quot; FONT);
+</a><a href="#h0-14-12" id="h0-14-12" class="i">+		die(&quot;can not find font &quot; FONT);
+</a> 
+ 	xw.cw = dc.font-&gt;max_bounds.rbearing - dc.font-&gt;min_bounds.lbearing;
+ 	xw.ch = dc.font-&gt;ascent + dc.font-&gt;descent + LINESPACE;
+<a href="#h0-15" id="h0-15" class="h">@@ -724,7 +730,7 @@ xinit(void) {
+</a> 	term.c.attr.bg = DefaultBG;
+ 	term.c.attr.mode = ATnone;
+ 	/* windows */
+<a href="#h0-15-3" id="h0-15-3" class="d">-    xw.h = term.row * xw.ch;
+</a><a href="#h0-15-4" id="h0-15-4" class="i">+	xw.h = term.row * xw.ch;
+</a> 	xw.w = term.col * xw.cw;
+ 	/* XXX: this BORDER is useless after the first resize, handle it in xdraws() */
+ 	xw.win = XCreateSimpleWindow(xw.dis, XRootWindow(xw.dis, xw.scr), 0, 0,
+<a href="#h0-16" id="h0-16" class="h">@@ -746,7 +752,6 @@ xinit(void) {
+</a> 	XSetWMProperties(xw.dis, xw.win, NULL, NULL, &amp;args[0], 0, &amp;shint, &amp;wmhint, &amp;chint);
+ 	XStoreName(xw.dis, xw.win, TNAME);
+ 	XSync(xw.dis, 0);
+<a href="#h0-16-3" id="h0-16-3" class="d">-    
+</a> }
+ 
+ void
+<a href="#h0-17" id="h0-17" class="h">@@ -765,7 +770,7 @@ xdrawc(int x, int y, Glyph g) {
+</a> 	/* string */
+ 	XSetForeground(xw.dis, dc.gc, xfg);
+ 	XDrawString(xw.dis, xw.win, dc.gc, r.x, r.y+dc.font-&gt;ascent, &amp;(g.c), 1);
+<a href="#h0-17-3" id="h0-17-3" class="d">-	if(g.mode &amp; ATbold)  /* XXX: bold hack (draw again at x+1) */
+</a><a href="#h0-17-4" id="h0-17-4" class="i">+	if(g.mode &amp; ATbold)	 /* XXX: bold hack (draw again at x+1) */
+</a> 		XDrawString(xw.dis, xw.win, dc.gc, r.x+1, r.y+dc.font-&gt;ascent, &amp;(g.c), 1);
+ 	/* underline */
+ 	if(g.mode &amp; ATunderline) {
+<a href="#h0-18" id="h0-18" class="h">@@ -779,10 +784,10 @@ xcursor(int mode) {
+</a> 	static int oldx = 0;
+ 	static int oldy = 0;
+ 	Glyph g = {&#39; &#39;, ATnone, DefaultBG, DefaultCS, 0};
+<a href="#h0-18-3" id="h0-18-3" class="d">-    
+</a><a href="#h0-18-4" id="h0-18-4" class="d">-    LIMIT(oldx, 0, term.col-1);
+</a><a href="#h0-18-5" id="h0-18-5" class="i">+	
+</a><a href="#h0-18-6" id="h0-18-6" class="i">+	LIMIT(oldx, 0, term.col-1);
+</a> 	LIMIT(oldy, 0, term.row-1);
+<a href="#h0-18-8" id="h0-18-8" class="d">-    
+</a><a href="#h0-18-9" id="h0-18-9" class="i">+	
+</a> 	if(term.line[term.c.y][term.c.x].state &amp; CRset)
+ 		g.c = term.line[term.c.y][term.c.x].c;
+ 	/* remove the old cursor */
+<a href="#h0-19" id="h0-19" class="h">@@ -825,7 +830,7 @@ kpress(XKeyEvent *e) {
+</a> 	int meta;
+ 	int shift;
+ 
+<a href="#h0-19-3" id="h0-19-3" class="d">-	meta  = e-&gt;state &amp; Mod4Mask;
+</a><a href="#h0-19-4" id="h0-19-4" class="i">+	meta  = e-&gt;state &amp; Mod1Mask;
+</a> 	shift = e-&gt;state &amp; ShiftMask;
+ 	len = XLookupString(e, buf, sizeof(buf), &amp;ksym, NULL);
+ 	if(len &gt; 0) {
+<a href="#h0-20" id="h0-20" class="h">@@ -836,11 +841,9 @@ kpress(XKeyEvent *e) {
+</a> 		return;
+ 	}
+ 	switch(ksym) {
+<a href="#h0-20-3" id="h0-20-3" class="d">-#ifdef DEBUG1
+</a> 	default:
+<a href="#h0-20-5" id="h0-20-5" class="d">-		printf(&quot;errkey: %d\n&quot;, (int)ksym);
+</a><a href="#h0-20-6" id="h0-20-6" class="i">+		fprintf(stderr, &quot;errkey: %d\n&quot;, (int)ksym);
+</a> 		break;
+<a href="#h0-20-8" id="h0-20-8" class="d">-#endif
+</a> 	case XK_Up:
+ 	case XK_Down:
+ 	case XK_Left:
+<a href="#h0-21" id="h0-21" class="h">@@ -849,13 +852,14 @@ kpress(XKeyEvent *e) {
+</a> 		ttywrite(buf, 3);
+ 		break;
+ 	case XK_Delete: ttywrite(KEYDELETE, sizeof(KEYDELETE)-1); break;
+<a href="#h0-21-3" id="h0-21-3" class="d">-	case XK_Home:   ttywrite(  KEYHOME, sizeof(  KEYHOME)-1); break;
+</a><a href="#h0-21-4" id="h0-21-4" class="d">-	case XK_End:    ttywrite(   KEYEND, sizeof(   KEYEND)-1); break;
+</a><a href="#h0-21-5" id="h0-21-5" class="d">-	case XK_Prior:	ttywrite(  KEYPREV, sizeof(  KEYPREV)-1); break;
+</a><a href="#h0-21-6" id="h0-21-6" class="d">-	case XK_Next:	ttywrite(  KEYNEXT, sizeof(  KEYNEXT)-1); break;
+</a><a href="#h0-21-7" id="h0-21-7" class="i">+	case XK_Home:  ttywrite(KEYHOME, sizeof(KEYHOME)-1); break;
+</a><a href="#h0-21-8" id="h0-21-8" class="i">+	case XK_End:   ttywrite(KEYEND,  sizeof(KEYEND) -1); break;
+</a><a href="#h0-21-9" id="h0-21-9" class="i">+	case XK_Prior: ttywrite(KEYPREV, sizeof(KEYPREV)-1); break;
+</a><a href="#h0-21-10" id="h0-21-10" class="i">+	case XK_Next:  ttywrite(KEYNEXT, sizeof(KEYNEXT)-1); break;
+</a> 	case XK_Insert:
+ 		/* XXX: paste X clipboard */
+<a href="#h0-21-13" id="h0-21-13" class="d">-		if(shift);
+</a><a href="#h0-21-14" id="h0-21-14" class="i">+		if(shift)
+</a><a href="#h0-21-15" id="h0-21-15" class="i">+			;
+</a> 		break;
+ 	}
+ }
+<a href="#h0-22" id="h0-22" class="h">@@ -865,7 +869,7 @@ resize(XEvent *e) {
+</a> 	int col, row;
+ 	col = e-&gt;xconfigure.width / xw.cw;
+ 	row = e-&gt;xconfigure.height / xw.ch;
+<a href="#h0-22-3" id="h0-22-3" class="d">-    
+</a><a href="#h0-22-4" id="h0-22-4" class="i">+	
+</a> 	if(term.col != col || term.row != row) {
+ 		tresize(col, row);
+ 		ttyresize(col, row);
+<a href="#h0-23" id="h0-23" class="h">@@ -881,37 +885,42 @@ run(void) {
+</a> 	int ret;
+ 	XEvent ev;
+ 	fd_set rfd;
+<a href="#h0-23-3" id="h0-23-3" class="d">-	struct timeval tv = {0, 10000};
+</a><a href="#h0-23-4" id="h0-23-4" class="i">+	int xfd = XConnectionNumber(xw.dis);
+</a> 
+ 	running = 1;
+ 	XSelectInput(xw.dis, xw.win, ExposureMask | KeyPressMask | StructureNotifyMask);
+ 	XResizeWindow(xw.dis, xw.win, xw.w , xw.h); /* seems to fix the resize bug in wmii */
+<a href="#h0-23-9" id="h0-23-9" class="i">+	
+</a> 	while(running) {
+<a href="#h0-23-11" id="h0-23-11" class="d">-		while(XPending(xw.dis)) {
+</a><a href="#h0-23-12" id="h0-23-12" class="d">-			XNextEvent(xw.dis, &amp;ev);
+</a><a href="#h0-23-13" id="h0-23-13" class="d">-			switch (ev.type) {
+</a><a href="#h0-23-14" id="h0-23-14" class="d">-			default:
+</a><a href="#h0-23-15" id="h0-23-15" class="d">-				break;
+</a><a href="#h0-23-16" id="h0-23-16" class="d">-			case KeyPress:
+</a><a href="#h0-23-17" id="h0-23-17" class="d">-				kpress(&amp;ev.xkey);
+</a><a href="#h0-23-18" id="h0-23-18" class="d">-				break;
+</a><a href="#h0-23-19" id="h0-23-19" class="d">-			case Expose:
+</a><a href="#h0-23-20" id="h0-23-20" class="d">-				draw(SCredraw);
+</a><a href="#h0-23-21" id="h0-23-21" class="d">-				break;
+</a><a href="#h0-23-22" id="h0-23-22" class="d">-			case ConfigureNotify:
+</a><a href="#h0-23-23" id="h0-23-23" class="d">-				resize(&amp;ev);
+</a><a href="#h0-23-24" id="h0-23-24" class="d">-				break;
+</a><a href="#h0-23-25" id="h0-23-25" class="d">-			}
+</a><a href="#h0-23-26" id="h0-23-26" class="d">-		}
+</a> 		FD_ZERO(&amp;rfd);
+ 		FD_SET(cmdfd, &amp;rfd);
+<a href="#h0-23-29" id="h0-23-29" class="d">-		ret = select(cmdfd+1, &amp;rfd, NULL, NULL, &amp;tv);
+</a><a href="#h0-23-30" id="h0-23-30" class="i">+		FD_SET(xfd, &amp;rfd);
+</a><a href="#h0-23-31" id="h0-23-31" class="i">+		XFlush(xw.dis);
+</a><a href="#h0-23-32" id="h0-23-32" class="i">+		ret = select(MAX(xfd, cmdfd)+1, &amp;rfd, NULL, NULL, NULL);
+</a><a href="#h0-23-33" id="h0-23-33" class="i">+
+</a> 		if(ret &lt; 0) {
+ 			fprintf(stderr, &quot;select: %m\n&quot;);
+ 			running = 0;
+ 		}
+<a href="#h0-23-38" id="h0-23-38" class="d">-		if(!ret)
+</a><a href="#h0-23-39" id="h0-23-39" class="d">-			continue;
+</a><a href="#h0-23-40" id="h0-23-40" class="i">+		
+</a><a href="#h0-23-41" id="h0-23-41" class="i">+		if(FD_ISSET(xfd, &amp;rfd)) {
+</a><a href="#h0-23-42" id="h0-23-42" class="i">+			while(XPending(xw.dis)) {
+</a><a href="#h0-23-43" id="h0-23-43" class="i">+				XNextEvent(xw.dis, &amp;ev);
+</a><a href="#h0-23-44" id="h0-23-44" class="i">+				switch (ev.type) {
+</a><a href="#h0-23-45" id="h0-23-45" class="i">+				default:
+</a><a href="#h0-23-46" id="h0-23-46" class="i">+					break;
+</a><a href="#h0-23-47" id="h0-23-47" class="i">+				case KeyPress:
+</a><a href="#h0-23-48" id="h0-23-48" class="i">+					kpress(&amp;ev.xkey);
+</a><a href="#h0-23-49" id="h0-23-49" class="i">+					break;
+</a><a href="#h0-23-50" id="h0-23-50" class="i">+				case Expose:
+</a><a href="#h0-23-51" id="h0-23-51" class="i">+					draw(SCredraw);
+</a><a href="#h0-23-52" id="h0-23-52" class="i">+					break;
+</a><a href="#h0-23-53" id="h0-23-53" class="i">+				case ConfigureNotify:
+</a><a href="#h0-23-54" id="h0-23-54" class="i">+					resize(&amp;ev);
+</a><a href="#h0-23-55" id="h0-23-55" class="i">+					break;
+</a><a href="#h0-23-56" id="h0-23-56" class="i">+				}
+</a><a href="#h0-23-57" id="h0-23-57" class="i">+			}
+</a><a href="#h0-23-58" id="h0-23-58" class="i">+		}
+</a> 		if(FD_ISSET(cmdfd, &amp;rfd)) {
+ 			ttyread();
+ 			draw(SCupdate);
+<a href="#h0-24" id="h0-24" class="h">@@ -926,9 +935,9 @@ main(int argc, char *argv[]) {
+</a> 	else if(argc != 1)
+ 		die(&quot;usage: st [-v]\n&quot;);
+ 	setlocale(LC_CTYPE, &quot;&quot;);
+<a href="#h0-24-3" id="h0-24-3" class="d">-    tnew(80, 24);
+</a><a href="#h0-24-4" id="h0-24-4" class="d">-    ttynew();
+</a><a href="#h0-24-5" id="h0-24-5" class="d">-    xinit();
+</a><a href="#h0-24-6" id="h0-24-6" class="d">-    run();
+</a><a href="#h0-24-7" id="h0-24-7" class="i">+	tnew(80, 24);
+</a><a href="#h0-24-8" id="h0-24-8" class="i">+	ttynew();
+</a><a href="#h0-24-9" id="h0-24-9" class="i">+	xinit();
+</a><a href="#h0-24-10" id="h0-24-10" class="i">+	run();
+</a> 	return 0;
+ }
+</pre>
+</div>
+</body>
+</html>

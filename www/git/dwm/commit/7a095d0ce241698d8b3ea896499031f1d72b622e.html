@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>I didn&#39;t knew of c-&gt;isfixed, that should fix Jukkas issue with gkrellm ;) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7a095d0ce241698d8b3ea896499031f1d72b622e.html">7a095d0ce241698d8b3ea896499031f1d72b622e</a>
+<b>parent</b> <a href="../commit/5052c538d9c14b46f298240cefa8a0062323d249.html">5052c538d9c14b46f298240cefa8a0062323d249</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Tue, 13 Feb 2007 22:53:58 +0100
+
+I didn&#39;t knew of c-&gt;isfixed, that should fix Jukkas issue with gkrellm ;)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">event.c</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -156,8 +156,9 @@ buttonpress(XEvent *e) {
+</a> 		}
+ 		else if(ev-&gt;button == Button2)
+ 			zoom(NULL);
+<a href="#h0-0-3" id="h0-0-3" class="d">-		else if(ev-&gt;button == Button3 &amp;&amp; (arrange == dofloat || c-&gt;isfloat) &amp;&amp;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-				!c-&gt;isfixed) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		else if(ev-&gt;button == Button3 &amp;&amp; (arrange == dofloat || c-&gt;isfloat)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+				&amp;&amp; !c-&gt;isfixed)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		{
+</a> 			restack();
+ 			resizemouse(c);
+ 		}
+<a href="#h0-1" id="h0-1" class="h">@@ -173,18 +174,19 @@ configurerequest(XEvent *e) {
+</a> 	if((c = getclient(ev-&gt;window))) {
+ 		c-&gt;ismax = False;
+ 		c-&gt;border = (ev-&gt;value_mask &amp; CWBorderWidth) ? ev-&gt;border_width : c-&gt;border;
+<a href="#h0-1-3" id="h0-1-3" class="d">-		if((!c-&gt;isfloat &amp;&amp; (arrange != dofloat))
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			|| ((ev-&gt;value_mask &amp; (CWX | CWY)) &amp;&amp; !(ev-&gt;value_mask &amp; (CWWidth | CWHeight))))
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-			configure(c);
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-		else {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		if(c-&gt;isfixed || c-&gt;isfloat || (arrange == dofloat)) {
+</a> 			c-&gt;x = (ev-&gt;value_mask &amp; CWX) ? ev-&gt;x : c-&gt;x;
+ 			c-&gt;y = (ev-&gt;value_mask &amp; CWY) ? ev-&gt;y : c-&gt;y;
+ 			c-&gt;w = (ev-&gt;value_mask &amp; CWWidth) ? ev-&gt;width : c-&gt;w;
+ 			c-&gt;h = (ev-&gt;value_mask &amp; CWHeight) ? ev-&gt;height : c-&gt;h;
+<a href="#h0-1-12" id="h0-1-12" class="i">+			if((ev-&gt;value_mask &amp; (CWX | CWY)) &amp;&amp; !(ev-&gt;value_mask &amp; (CWWidth | CWHeight)))
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+				configure(c);
+</a> 			resize(c, False);
+ 			if(!isvisible(c))
+ 				XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+ 		}
+<a href="#h0-1-18" id="h0-1-18" class="i">+		else
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+			configure(c);
+</a> 	}
+ 	else {
+ 		wc.x = ev-&gt;x;
+</pre>
+</div>
+</body>
+</html>

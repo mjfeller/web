@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>reusing config.h&#39;s color values, note we have to use const char *, instead of const char [] here, because the pointer might change - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d2305e4b136b3bdfccf7de897a9f14583a1ca35a.html">d2305e4b136b3bdfccf7de897a9f14583a1ca35a</a>
+<b>parent</b> <a href="../commit/fcf26a38f1ad291cd794daa52e44af252b728b6a.html">fcf26a38f1ad291cd794daa52e44af252b728b6a</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 14 Jun 2008 10:55:13 +0100
+
+reusing config.h&#39;s color values, note we have to use const char *, instead of const char [] here, because the pointer might change
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.h</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">21</td><td><span class="i">++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>2 files changed, 15 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,14 +1,14 @@
+</a> /* See LICENSE file for copyright and license details. */
+ 
+ /* appearance */
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define FONT          &quot;-*-terminus-medium-r-normal-*-14-*-*-*-*-*-*-*&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-#define NORMBGCOLOR   &quot;#cccccc&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-#define NORMFGCOLOR   &quot;#000000&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-#define SELBGCOLOR    &quot;#0066ff&quot;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-#define SELFGCOLOR    &quot;#ffffff&quot;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+static const char *font        = &quot;-*-terminus-medium-r-normal-*-14-*-*-*-*-*-*-*&quot;;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+static const char *normbgcolor = &quot;#cccccc&quot;;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+static const char *normfgcolor = &quot;#000000&quot;;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+static const char *selbgcolor  = &quot;#0066ff&quot;;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+static const char *selfgcolor  = &quot;#ffffff&quot;;
+</a> 
+<a href="#h0-0-14" id="h0-0-14" class="d">-static uint spaceitem = 30; /* px between menu items */
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+static uint spaceitem          = 30; /* px between menu items */
+</a> 
+ #ifdef XINERAMA
+<a href="#h0-0-18" id="h0-0-18" class="d">-static uint xidx      = 0;        /* Xinerama screen index to use */
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+static uint xidx               = 0;  /* Xinerama screen index to use */
+</a> #endif
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -68,13 +68,8 @@ static int textw(const char *text);
+</a> #include &quot;config.h&quot;
+ 
+ /* variables */
+<a href="#h1-0-3" id="h1-0-3" class="d">-static char *font = FONT;
+</a> static char *maxname = NULL;
+<a href="#h1-0-5" id="h1-0-5" class="d">-static char *normbg = NORMBGCOLOR;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-static char *normfg = NORMFGCOLOR;
+</a> static char *prompt = NULL;
+<a href="#h1-0-8" id="h1-0-8" class="d">-static char *selbg = SELBGCOLOR;
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-static char *selfg = SELFGCOLOR;
+</a> static char text[4096];
+ static int cmdw = 0;
+ static int promptw = 0;
+<a href="#h1-1" id="h1-1" class="h">@@ -618,10 +613,10 @@ setup(Bool topbar) {
+</a> 	XFreeModifiermap(modmap);
+ 
+ 	/* style */
+<a href="#h1-1-3" id="h1-1-3" class="d">-	dc.norm[ColBG] = getcolor(normbg);
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	dc.norm[ColFG] = getcolor(normfg);
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	dc.sel[ColBG] = getcolor(selbg);
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	dc.sel[ColFG] = getcolor(selfg);
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	dc.norm[ColBG] = getcolor(normbgcolor);
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	dc.norm[ColFG] = getcolor(normfgcolor);
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+	dc.sel[ColBG] = getcolor(selbgcolor);
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+	dc.sel[ColFG] = getcolor(selfgcolor);
+</a> 	initfont(font);
+ 
+ 	/* menu window */
+<a href="#h1-2" id="h1-2" class="h">@@ -704,19 +699,19 @@ main(int argc, char *argv[]) {
+</a> 			if(++i &lt; argc) font = argv[i];
+ 		}
+ 		else if(!strcmp(argv[i], &quot;-nb&quot;)) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-			if(++i &lt; argc) normbg = argv[i];
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+			if(++i &lt; argc) normbgcolor = argv[i];
+</a> 		}
+ 		else if(!strcmp(argv[i], &quot;-nf&quot;)) {
+<a href="#h1-2-7" id="h1-2-7" class="d">-			if(++i &lt; argc) normfg = argv[i];
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+			if(++i &lt; argc) normfgcolor = argv[i];
+</a> 		}
+ 		else if(!strcmp(argv[i], &quot;-p&quot;)) {
+ 			if(++i &lt; argc) prompt = argv[i];
+ 		}
+ 		else if(!strcmp(argv[i], &quot;-sb&quot;)) {
+<a href="#h1-2-14" id="h1-2-14" class="d">-			if(++i &lt; argc) selbg = argv[i];
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+			if(++i &lt; argc) selbgcolor = argv[i];
+</a> 		}
+ 		else if(!strcmp(argv[i], &quot;-sf&quot;)) {
+<a href="#h1-2-18" id="h1-2-18" class="d">-			if(++i &lt; argc) selfg = argv[i];
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+			if(++i &lt; argc) selfgcolor = argv[i];
+</a> 		}
+ 		else if(!strcmp(argv[i], &quot;-v&quot;))
+ 			eprint(&quot;dmenu-&quot;VERSION&quot;, © 2006-2008 dmenu engineers, see LICENSE for details\n&quot;);
+</pre>
+</div>
+</body>
+</html>

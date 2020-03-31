@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed focus steeling bug done by clients like opera - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/68ff133857244347cc6c8512040f1eb32fe2ed2f.html">68ff133857244347cc6c8512040f1eb32fe2ed2f</a>
+<b>parent</b> <a href="../commit/4380db468aa81f73e3a31f434bc5bd4a2fe35bf0.html">4380db468aa81f73e3a31f434bc5bd4a2fe35bf0</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 17 Nov 2007 19:59:13 +0100
+
+fixed focus steeling bug done by clients like opera
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">15</td><td><span class="i">++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -137,6 +137,7 @@ void eprint(const char *errstr, ...);
+</a> void expose(XEvent *e);
+ void floating(void); /* default floating layout */
+ void focus(Client *c);
+<a href="#h0-0-3" id="h0-0-3" class="i">+void focusin(XEvent *e);
+</a> void focusnext(const char *arg);
+ void focusprev(const char *arg);
+ Client *getclient(Window w);
+<a href="#h0-1" id="h0-1" class="h">@@ -206,9 +207,10 @@ void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[ConfigureNotify] = configurenotify,
+ 	[DestroyNotify] = destroynotify,
+ 	[EnterNotify] = enternotify,
+<a href="#h0-1-3" id="h0-1-3" class="d">-	[LeaveNotify] = leavenotify,
+</a> 	[Expose] = expose,
+<a href="#h0-1-5" id="h0-1-5" class="i">+	[FocusIn] = focusin,
+</a> 	[KeyPress] = keypress,
+<a href="#h0-1-7" id="h0-1-7" class="i">+	[LeaveNotify] = leavenotify,
+</a> 	[MappingNotify] = mappingnotify,
+ 	[MapRequest] = maprequest,
+ 	[PropertyNotify] = propertynotify,
+<a href="#h0-2" id="h0-2" class="h">@@ -710,6 +712,14 @@ focus(Client *c) {
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="i">+focusin(XEvent *e) { /* there are some broken focus acquiring clients */
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	XFocusChangeEvent *ev = &amp;e-&gt;xfocus;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	if(sel &amp;&amp; ev-&gt;window != sel-&gt;win)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		XSetInputFocus(dpy, sel-&gt;win, RevertToPointerRoot, CurrentTime);
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+}
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+void
+</a> focusnext(const char *arg) {
+ 	Client *c;
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -1026,8 +1036,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	XSetWindowBorder(dpy, w, dc.norm[ColBorder]);
+ 	configure(c); /* propagates border_width, if size doesn&#39;t change */
+ 	updatesizehints(c);
+<a href="#h0-3-3" id="h0-3-3" class="d">-	XSelectInput(dpy, w,
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		StructureNotifyMask | PropertyChangeMask | EnterWindowMask);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	XSelectInput(dpy, w, EnterWindowMask | FocusChangeMask | PropertyChangeMask | StructureNotifyMask);
+</a> 	grabbuttons(c, False);
+ 	updatetitle(c);
+ 	if((rettrans = XGetTransientForHint(dpy, w, &amp;trans) == Success))
+</pre>
+</div>
+</body>
+</html>

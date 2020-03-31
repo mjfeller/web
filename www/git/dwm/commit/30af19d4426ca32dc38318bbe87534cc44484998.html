@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added some new convenience functions - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/30af19d4426ca32dc38318bbe87534cc44484998.html">30af19d4426ca32dc38318bbe87534cc44484998</a>
+<b>parent</b> <a href="../commit/5d9146ff372ae0c5196e290fb2c1f828d4137e20.html">5d9146ff372ae0c5196e290fb2c1f828d4137e20</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Mon, 19 Feb 2007 13:42:39 +0100
+
+added some new convenience functions
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">49</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">tile.c</a></td><td> | </td><td class="num">5</td><td><span class="i">+</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">view.c</a></td><td> | </td><td class="num">11</td><td><span class="i"></span><span class="d">-----------</span></td></tr>
+</table></pre><pre>4 files changed, 40 insertions(+), 30 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,13 +10,6 @@
+</a> /* static */
+ 
+ static void
+<a href="#h0-0-3" id="h0-0-3" class="d">-detachstack(Client *c) {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	Client **tc;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	for(tc=&amp;stack; *tc &amp;&amp; *tc != c; tc=&amp;(*tc)-&gt;snext);
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	*tc = c-&gt;snext;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-}
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-static void
+</a> grabbuttons(Client *c, Bool focused) {
+ 	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -68,6 +61,20 @@ xerrordummy(Display *dsply, XErrorEvent *ee) {
+</a> /* extern */
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="i">+attach(Client *c) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if(clients)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		clients-&gt;prev = c;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	c-&gt;next = clients;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	clients = c;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+}
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+void
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+attachstack(Client *c) {
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	c-&gt;snext = stack;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	stack = c;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+}
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+void
+</a> configure(Client *c) {
+ 	XConfigureEvent ce;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -86,6 +93,24 @@ configure(Client *c) {
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="i">+detach(Client *c) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if(c-&gt;prev)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		c-&gt;prev-&gt;next = c-&gt;next;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	if(c-&gt;next)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		c-&gt;next-&gt;prev = c-&gt;prev;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	if(c == clients)
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+		clients = c-&gt;next;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	c-&gt;next = c-&gt;prev = NULL;
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+}
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+void
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+detachstack(Client *c) {
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	Client **tc;
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+	for(tc=&amp;stack; *tc &amp;&amp; *tc != c; tc=&amp;(*tc)-&gt;snext);
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+	*tc = c-&gt;snext;
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+}
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+void
+</a> focus(Client *c) {
+ 	if(c &amp;&amp; !isvisible(c))
+ 		return;
+<a href="#h0-3" id="h0-3" class="h">@@ -95,8 +120,7 @@ focus(Client *c) {
+</a> 	}
+ 	if(c) {
+ 		detachstack(c);
+<a href="#h0-3-3" id="h0-3-3" class="d">-		c-&gt;snext = stack;
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		stack = c;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+		attachstack(c);
+</a> 		grabbuttons(c, True);
+ 	}
+ 	sel = c;
+<a href="#h0-4" id="h0-4" class="h">@@ -189,11 +213,8 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	settags(c, t);
+ 	if(!c-&gt;isfloat)
+ 		c-&gt;isfloat = (t != 0) || c-&gt;isfixed;
+<a href="#h0-4-3" id="h0-4-3" class="d">-	if(clients)
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		clients-&gt;prev = c;
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-	c-&gt;next = clients;
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-	c-&gt;snext = stack;
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-	stack = clients = c;
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+	attach(c);
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+	attachstack(c);
+</a> 	c-&gt;isbanned = True;
+ 	XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+ 	XMapWindow(dpy, c-&gt;win);
+<b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -99,7 +99,11 @@ extern Display *dpy;
+</a> extern Window root, barwin;
+ 
+ /* client.c */
+<a href="#h1-0-3" id="h1-0-3" class="i">+extern void attach(Client *c);			/* attaches c to global client list */
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+extern void attachstack(Client *c);		/* attaches client to stack */
+</a> extern void configure(Client *c);		/* send synthetic configure event */
+<a href="#h1-0-6" id="h1-0-6" class="i">+extern void detach(Client *c);			/* detaches c from global client list */
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+extern void detachstack(Client *c);		/* detaches client from stack */
+</a> extern void focus(Client *c);			/* focus c, c may be NULL */
+ extern Client *getclient(Window w);		/* return client of w */
+ extern Bool isprotodel(Client *c);		/* returns True if c-&gt;win supports wmatom[WMDelete] */
+<a href="#h1-1" id="h1-1" class="h">@@ -144,7 +148,6 @@ extern void eprint(const char *errstr, ...);	/* prints errstr and exits with 1 *
+</a> extern void spawn(Arg *arg);			/* forks a new subprocess with to arg&#39;s cmd */
+ 
+ /* view.c */
+<a href="#h1-1-3" id="h1-1-3" class="d">-extern void detach(Client *c);			/* detaches c from global client list */
+</a> extern void dofloat(void);			/* arranges all windows floating */
+ extern void focusnext(Arg *arg);		/* focuses next visible client, arg is ignored  */
+ extern void focusprev(Arg *arg);		/* focuses previous visible client, arg is ignored */
+<b>diff --git a/<a id="h2" href="../file/tile.c.html">tile.c</a> b/<a href="../file/tile.c.html">tile.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -125,10 +125,7 @@ zoom(Arg *arg) {
+</a> 		if(!(c = nextmanaged(c-&gt;next)))
+ 			return;
+ 	detach(c);
+<a href="#h2-0-3" id="h2-0-3" class="d">-	if(clients)
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-		clients-&gt;prev = c;
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-	c-&gt;next = clients;
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-	clients = c;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	attach(c);
+</a> 	focus(c);
+ 	arrange();
+ }
+<b>diff --git a/<a id="h3" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -8,17 +8,6 @@
+</a> void (*arrange)(void) = DEFMODE;
+ 
+ void
+<a href="#h3-0-3" id="h3-0-3" class="d">-detach(Client *c) {
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-	if(c-&gt;prev)
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-		c-&gt;prev-&gt;next = c-&gt;next;
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-	if(c-&gt;next)
+</a><a href="#h3-0-7" id="h3-0-7" class="d">-		c-&gt;next-&gt;prev = c-&gt;prev;
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-	if(c == clients)
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-		clients = c-&gt;next;
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-	c-&gt;next = c-&gt;prev = NULL;
+</a><a href="#h3-0-11" id="h3-0-11" class="d">-}
+</a><a href="#h3-0-12" id="h3-0-12" class="d">-
+</a><a href="#h3-0-13" id="h3-0-13" class="d">-void
+</a> dofloat(void) {
+ 	Client *c;
+ 
+</pre>
+</div>
+</body>
+</html>

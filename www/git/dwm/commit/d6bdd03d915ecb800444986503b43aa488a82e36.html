@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>it&#39;s debug season for upcoming dwm 5.8, so only use this if you really want to run experimental code or debug code - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d6bdd03d915ecb800444986503b43aa488a82e36.html">d6bdd03d915ecb800444986503b43aa488a82e36</a>
+<b>parent</b> <a href="../commit/1144e983949878ea75e5d40e93b063ff7d1e1150.html">1144e983949878ea75e5d40e93b063ff7d1e1150</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Wed, 31 Mar 2010 23:24:22 +0100
+
+it&#39;s debug season for upcoming dwm 5.8, so only use this if you really want to run experimental code or debug code
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">BUGS</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">24</td><td><span class="i">++++++++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>3 files changed, 37 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/BUGS.html">BUGS</a> b/<a href="../file/BUGS.html">BUGS</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -44,3 +44,16 @@ Donald Allen reported this:
+</a> starting emacs from dmenu in archlinux results in missing configure of emacs, but mod1-space or mod1-shift-space fix this problem. this problem is new and did not happen in 1.6 xorg servers
+ 
+ Starting emacs from xterm doesnt show this problem, he uses tag 8 for emacs
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+---
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+2009/12/7 Alexandr Krylovskiy &lt;wing_AT_tversu.ru&gt;: 
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+&gt;  Fullscreen mode with flash applications (youtube, for example) doesn&#39;t 
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+&gt; work properly neither in tiled nor in floating mode. 
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+&gt;  Fullscreen window closes immediately after opening. 
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+This is a known bug (for some curiosity I received the same report via 
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+privmail from 2 other people within one week, really strange). 
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+The quick fix is commenting out the code in lines 817/818 in hg tip 
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+dwm. I cannot confirm this has no side effects (I think it does) and I 
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+will address this issue shortly with a real fix. 
+</a><b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -20,10 +20,10 @@ LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 ${XINERAMALIBS}
+</a> 
+ # flags
+ CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; ${XINERAMAFLAGS}
+<a href="#h1-0-3" id="h1-0-3" class="d">-#CFLAGS = -g -std=c99 -pedantic -Wall -O0 ${INCS} ${CPPFLAGS}
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-CFLAGS = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-#LDFLAGS = -g ${LIBS}
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-LDFLAGS = -s ${LIBS}
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+CFLAGS = -g -std=c99 -pedantic -Wall -O0 ${INCS} ${CPPFLAGS}
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#CFLAGS = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+LDFLAGS = -g ${LIBS}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+#LDFLAGS = -s ${LIBS}
+</a> 
+ # Solaris
+ #CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -41,6 +41,7 @@
+</a> #endif /* XINERAMA */
+ 
+ /* macros */
+<a href="#h2-0-3" id="h2-0-3" class="i">+#define D                       if(1)
+</a> #define BUTTONMASK              (ButtonPressMask|ButtonReleaseMask)
+ #define CLEANMASK(mask)         (mask &amp; ~(numlockmask|LockMask))
+ #define INRECT(X,Y,RX,RY,RW,RH) ((X) &gt;= (RX) &amp;&amp; (X) &lt; (RX) + (RW) &amp;&amp; (Y) &gt;= (RY) &amp;&amp; (Y) &lt; (RY) + (RH))
+<a href="#h2-1" id="h2-1" class="h">@@ -814,8 +815,8 @@ void
+</a> focus(Client *c) {
+ 	if(!c || !ISVISIBLE(c))
+ 		for(c = selmon-&gt;stack; c &amp;&amp; !ISVISIBLE(c); c = c-&gt;snext);
+<a href="#h2-1-3" id="h2-1-3" class="d">-	if(selmon-&gt;sel)
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-		unfocus(selmon-&gt;sel);
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+//	if(selmon-&gt;sel)
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+//		unfocus(selmon-&gt;sel);
+</a> 	if(c) {
+ 		if(c-&gt;mon != selmon)
+ 			selmon = c-&gt;mon;
+<a href="#h2-2" id="h2-2" class="h">@@ -1388,12 +1389,27 @@ restack(Monitor *m) {
+</a> void
+ run(void) {
+ 	XEvent ev;
+<a href="#h2-2-3" id="h2-2-3" class="d">-
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+	static const char *evname[LASTEvent] = {
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+		[ButtonPress] = &quot;buttonpress&quot;,
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+		[ConfigureRequest] = &quot;configurerequest&quot;,
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+		[ConfigureNotify] = &quot;configurenotify&quot;,
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+		[DestroyNotify] = &quot;destroynotify&quot;,
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+		[EnterNotify] = &quot;enternotify&quot;,
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+		[Expose] = &quot;expose&quot;,
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+		[FocusIn] = &quot;focusin&quot;,
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+		[KeyPress] = &quot;keypress&quot;,
+</a><a href="#h2-2-13" id="h2-2-13" class="i">+		[MappingNotify] = &quot;mappingnotify&quot;,
+</a><a href="#h2-2-14" id="h2-2-14" class="i">+		[MapRequest] = &quot;maprequest&quot;,
+</a><a href="#h2-2-15" id="h2-2-15" class="i">+		[PropertyNotify] = &quot;propertynotify&quot;,
+</a><a href="#h2-2-16" id="h2-2-16" class="i">+		[UnmapNotify] = &quot;unmapnotify&quot;
+</a><a href="#h2-2-17" id="h2-2-17" class="i">+	};
+</a> 	/* main event loop */
+ 	XSync(dpy, False);
+<a href="#h2-2-20" id="h2-2-20" class="d">-	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev))
+</a><a href="#h2-2-21" id="h2-2-21" class="i">+	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev)) {
+</a><a href="#h2-2-22" id="h2-2-22" class="i">+		D fprintf(stderr, &quot;run event %s\n&quot;, evname[ev.type]);
+</a> 		if(handler[ev.type])
+ 			handler[ev.type](&amp;ev); /* call handler */
+<a href="#h2-2-25" id="h2-2-25" class="i">+	}
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

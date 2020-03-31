@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Remove libtool depencency, reorganise Makefile - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3321c42d36ce79ebecd8b2ea7e93ca2e5c2ff98d.html">3321c42d36ce79ebecd8b2ea7e93ca2e5c2ff98d</a>
+<b>parent</b> <a href="../commit/e7c629b258653a5237ca72cf2087a391e55829f1.html">e7c629b258653a5237ca72cf2087a391e55829f1</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Mon,  8 Oct 2018 13:47:25 +0200
+
+Remove libtool depencency, reorganise Makefile
+
+We don&#39;t need libtool anymore, just build the library directly.
+This lets us simplify the Makefile too.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">65</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">--------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>2 files changed, 34 insertions(+), 52 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,44 +6,38 @@ include config.mk
+</a> 
+ SRC = surf.c common.c
+ OBJ = $(SRC:.c=.o)
+<a href="#h0-0-3" id="h0-0-3" class="d">-LIBSRC = libsurf-webext.c common.c
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-LIBOBJ = $(LIBSRC:.c=.lo)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+WEBEXTSRC = libsurf-webext.c
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+WEBEXTOBJ = $(WEBEXTSRC:.c=.o)
+</a> 
+<a href="#h0-0-8" id="h0-0-8" class="d">-all: options libsurf-webext.la surf
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+all: options libsurf-webext.so surf
+</a> 
+ options:
+ 	@echo surf build options:
+<a href="#h0-0-13" id="h0-0-13" class="d">-	@echo &quot;CFLAGS     = $(SURFCFLAGS)&quot;
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-	@echo &quot;LDFLAGS    = $(SURFLDFLAGS)&quot;
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-	@echo &quot;CC         = $(CC)&quot;
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	@echo &quot;LIBCFLAGS  = $(LIBCFLAGS)&quot;
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	@echo &quot;LIBLDFLAGS = $(LIBLDFLAGS)&quot;
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-	@echo &quot;LIBTOOL    = $(LIBTOOL)&quot;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	@echo &quot;CC            = $(CC)&quot;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	@echo &quot;CFLAGS        = $(SURFCFLAGS) $(CFLAGS)&quot;
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	@echo &quot;WEBEXTCFLAGS  = $(WEBEXTCFLAGS) $(CFLAGS)&quot;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	@echo &quot;LDFLAGS       = $(LDFLAGS)&quot;
+</a> 
+ .c.o:
+<a href="#h0-0-25" id="h0-0-25" class="d">-	$(CC) $(SURFCFLAGS) -c $&lt;
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	$(CC) $(SURFCFLAGS) $(CFLAGS) -c $&lt;
+</a> 
+<a href="#h0-0-28" id="h0-0-28" class="d">-.c.lo:
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-	$(LIBTOOL) --mode compile --tag CC $(CC) $(LIBCFLAGS) -c $&lt;
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+config.h:
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	cp config.def.h $@
+</a> 
+ $(OBJ): config.h config.mk
+<a href="#h0-0-34" id="h0-0-34" class="d">-$(LIBOBJ): config.h config.mk
+</a> 
+<a href="#h0-0-36" id="h0-0-36" class="d">-config.h:
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-	cp config.def.h $@
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+$(WEBEXTOBJ): config.h config.mk
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+	$(CC) $(WEBEXTCFLAGS) $(CFLAGS) -c $(WEBEXTSRC)
+</a> 
+<a href="#h0-0-41" id="h0-0-41" class="d">-libsurf-webext.la: $(LIBOBJ)
+</a><a href="#h0-0-42" id="h0-0-42" class="d">-	$(LIBTOOL) --mode link --tag CC $(CC) $(LIBLDFLAGS) -o $@ \
+</a><a href="#h0-0-43" id="h0-0-43" class="d">-	    $(LIBOBJ) $(LIB) -rpath $(DESTDIR)$(LIBPREFIX)
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+libsurf-webext.so: $(WEBEXTOBJ)
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+	$(CC) -shared -Wl,-soname,$@ $(LDFLAGS) -o $@ $&lt; $(WEBEXTLIBS) -lc
+</a> 
+ surf: $(OBJ)
+<a href="#h0-0-48" id="h0-0-48" class="d">-	$(CC) $(SURFCFLAGS) -o $@ $(OBJ) $(SURFLDFLAGS)
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+	$(CC) $(SURFLDLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+</a> 
+<a href="#h0-0-51" id="h0-0-51" class="d">-clean-lib:
+</a><a href="#h0-0-52" id="h0-0-52" class="d">-	rm -rf libsurf-webext.la .libs $(LIBOBJ) $(LIBOBJ:.lo=.o)
+</a><a href="#h0-0-53" id="h0-0-53" class="d">-
+</a><a href="#h0-0-54" id="h0-0-54" class="d">-clean: clean-lib
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+clean:
+</a> 	rm -f surf $(OBJ)
+<a href="#h0-0-57" id="h0-0-57" class="i">+	rm -f libsurf-webext.so $(WEBEXTOBJ)
+</a> 
+ distclean: clean
+ 	rm -f config.h surf-$(VERSION).tar.gz
+<a href="#h0-1" id="h0-1" class="h">@@ -52,32 +46,27 @@ dist: distclean
+</a> 	mkdir -p surf-$(VERSION)
+ 	cp -R LICENSE Makefile config.mk config.def.h README \
+ 	    surf-open.sh arg.h TODO.md surf.png \
+<a href="#h0-1-3" id="h0-1-3" class="d">-	    surf.1 $(SRC) $(LIBSRC) surf-$(VERSION)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	    surf.1 $(SRC) $(WEBEXTSRC) surf-$(VERSION)
+</a> 	tar -cf surf-$(VERSION).tar surf-$(VERSION)
+ 	gzip surf-$(VERSION).tar
+ 	rm -rf surf-$(VERSION)
+ 
+<a href="#h0-1-9" id="h0-1-9" class="d">-install-lib: libsurf-webext.la
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	mkdir -p $(DESTDIR)$(LIBPREFIX)
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-	$(LIBTOOL) --mode install install -c libsurf-webext.la \
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-	    $(DESTDIR)$(LIBPREFIX)/libsurf-webext.la
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-install: all install-lib
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+install: all
+</a> 	mkdir -p $(DESTDIR)$(PREFIX)/bin
+ 	cp -f surf $(DESTDIR)$(PREFIX)/bin
+ 	chmod 755 $(DESTDIR)$(PREFIX)/bin/surf
+<a href="#h0-1-19" id="h0-1-19" class="i">+	mkdir -p $(DESTDIR)$(WEBEXTDIR)
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	cp -f libsurf-webext.so $(DESTDIR)$(WEBEXTDIR)
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	chmod 644 $(DESTDIR)$(PREFIX)/bin/surf
+</a> 	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
+ 	sed &quot;s/VERSION/$(VERSION)/g&quot; &lt; surf.1 &gt; $(DESTDIR)$(MANPREFIX)/man1/surf.1
+ 	chmod 644 $(DESTDIR)$(MANPREFIX)/man1/surf.1
+ 
+<a href="#h0-1-26" id="h0-1-26" class="d">-uninstall-lib:
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-	$(LIBTOOL) --mode uninstall rm -f \
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-	    $(DESTDIR)$(LIBPREFIX)/libsurf-webext.la
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-	- rm -df $(DESTDIR)$(LIBPREFIX)
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-uninstall: uninstall-lib
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+uninstall:
+</a> 	rm -f $(DESTDIR)$(PREFIX)/bin/surf
+ 	rm -f $(DESTDIR)$(MANPREFIX)/man1/surf.1
+<a href="#h0-1-35" id="h0-1-35" class="i">+	rm -f $(DESTDIR)$(WEBEXTDIR)/libsurf-webext.so
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+	- rmdir $(DESTDIR)$(WEBEXTDIR)
+</a> 
+<a href="#h0-1-38" id="h0-1-38" class="d">-.SUFFIXES: .la .lo .o .c
+</a><a href="#h0-1-39" id="h0-1-39" class="d">-.PHONY: all options clean-dist clean dist install-lib install uninstall-lib uninstall
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+.SUFFIXES: .so .o .c
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+.PHONY: all options clean-dist clean dist install uninstall
+</a><b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -6,7 +6,8 @@ VERSION = 2.0
+</a> # paths
+ PREFIX = /usr/local
+ MANPREFIX = $(PREFIX)/share/man
+<a href="#h1-0-3" id="h1-0-3" class="d">-LIBPREFIX = $(PREFIX)/lib/surf
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+LIBPREFIX = $(PREFIX)/lib
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+LIBDIR = $(LIBPREFIX)/surf
+</a> 
+ X11INC = /usr/X11R6/include
+ X11LIB = /usr/X11R6/lib
+<a href="#h1-1" id="h1-1" class="h">@@ -14,25 +15,17 @@ X11LIB = /usr/X11R6/lib
+</a> GTKINC = `pkg-config --cflags gtk+-3.0 gcr-3 webkit2gtk-4.0`
+ GTKLIB = `pkg-config --libs gtk+-3.0 gcr-3 webkit2gtk-4.0`
+ WEBEXTINC = `pkg-config --cflags webkit2gtk-4.0 webkit2gtk-web-extension-4.0`
+<a href="#h1-1-3" id="h1-1-3" class="d">-WEBEXTLIB = `pkg-config --libs webkit2gtk-4.0 webkit2gtk-web-extension-4.0`
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+WEBEXTLIBS = `pkg-config --libs webkit2gtk-4.0 webkit2gtk-web-extension-4.0`
+</a> 
+ # includes and libs
+ INCS = -I$(X11INC) $(GTKINC)
+ LIBS = -L$(X11LIB) -lX11 $(GTKLIB) -lgthread-2.0
+ 
+ # flags
+<a href="#h1-1-11" id="h1-1-11" class="d">-CPPFLAGS = -DVERSION=\&quot;$(VERSION)\&quot; -DWEBEXTDIR=\&quot;$(LIBPREFIX)\&quot; \
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+CPPFLAGS = -DVERSION=\&quot;$(VERSION)\&quot; -DWEBEXTDIR=\&quot;$(LIBDIR)\&quot; \
+</a>            -D_DEFAULT_SOURCE -DGCR_API_SUBJECT_TO_CHANGE
+<a href="#h1-1-14" id="h1-1-14" class="d">-SURFCFLAGS = $(INCS) $(CPPFLAGS) $(CFLAGS)
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-SURFLDFLAGS = $(LIBS) $(LDFLAGS)
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-LIBCPPFLAGS = -DWEBEXTDIR=\&quot;$(LIBPREFIX)\&quot;
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-LIBCFLAGS = $(WEBEXTINC) $(LIBCPPFLAGS) $(CFLAGS)
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-LIBLDFLAGS = $(WEBEXTLIB) $(LDFLAGS)
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+SURFCFLAGS = $(INCS) $(CPPFLAGS)
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+WEBEXTCFLAGS = -fPIC $(WEBEXTINC)
+</a> 
+<a href="#h1-1-22" id="h1-1-22" class="d">-# Solaris
+</a><a href="#h1-1-23" id="h1-1-23" class="d">-#CFLAGS = -fast $(INCS) -DVERSION=\&quot;$(VERSION)\&quot;
+</a><a href="#h1-1-24" id="h1-1-24" class="d">-#LDFLAGS = $(LIBS)
+</a><a href="#h1-1-25" id="h1-1-25" class="d">-
+</a><a href="#h1-1-26" id="h1-1-26" class="d">-# compiler and linker
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+# compiler
+</a> #CC = c99
+<a href="#h1-1-29" id="h1-1-29" class="d">-LIBTOOL = libtool --quiet
+</a></pre>
+</div>
+</body>
+</html>

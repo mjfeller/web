@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed ugly ban(), extended resize() that it only resets the size if necessary, added border_width commit to manage() - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6e22ccf7b1602b33624692eefd51b6398ffa5454.html">6e22ccf7b1602b33624692eefd51b6398ffa5454</a>
+<b>parent</b> <a href="../commit/8a5f002c4182abf6dcaac354a3da04cc18830ad9.html">8a5f002c4182abf6dcaac354a3da04cc18830ad9</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Fri, 16 Feb 2007 16:38:40 +0100
+
+removed ugly ban(), extended resize() that it only resets the size if necessary, added border_width commit to manage()
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">81</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">event.c</a></td><td> | </td><td class="num">42</td><td><span class="i">++++++++++++++++++++</span><span class="d">----------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">main.c</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">view.c</a></td><td> | </td><td class="num">63</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------</span></td></tr>
+</table></pre><pre>5 files changed, 100 insertions(+), 93 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -158,6 +158,7 @@ void
+</a> manage(Window w, XWindowAttributes *wa) {
+ 	Client *c, *t;
+ 	Window trans;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	XWindowChanges wc;
+</a> 
+ 	c = emallocz(sizeof(Client));
+ 	c-&gt;tags = emallocz(ntags * sizeof(Bool));
+<a href="#h0-1" id="h0-1" class="h">@@ -187,7 +188,10 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 		StructureNotifyMask | PropertyChangeMask | EnterWindowMask);
+ 	XGetTransientForHint(dpy, c-&gt;win, &amp;trans);
+ 	grabbuttons(c, False);
+<a href="#h0-1-3" id="h0-1-3" class="i">+	wc.border_width = c-&gt;border;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	XConfigureWindow(dpy, c-&gt;win, CWBorderWidth, &amp;wc);
+</a> 	XSetWindowBorder(dpy, c-&gt;win, dc.norm[ColBorder]);
+<a href="#h0-1-6" id="h0-1-6" class="i">+	configure(c); /* propagates border_width, if size doesn&#39;t change */
+</a> 	updatetitle(c);
+ 	t = getclient(trans);
+ 	settags(c, t);
+<a href="#h0-2" id="h0-2" class="h">@@ -198,7 +202,8 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	c-&gt;next = clients;
+ 	c-&gt;snext = stack;
+ 	stack = clients = c;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	ban(c);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	c-&gt;isbanned = True;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a> 	XMapWindow(dpy, c-&gt;win);
+ 	setclientstate(c, NormalState);
+ 	if(isvisible(c))
+<a href="#h0-3" id="h0-3" class="h">@@ -207,25 +212,25 @@ manage(Window w, XWindowAttributes *wa) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="d">-resize(Client *c, Bool sizehints) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> 	float actual, dx, dy, max, min;
+ 	XWindowChanges wc;
+ 
+<a href="#h0-3-8" id="h0-3-8" class="d">-	if(c-&gt;w &lt;= 0 || c-&gt;h &lt;= 0)
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+	if(w &lt;= 0 || h &lt;= 0)
+</a> 		return;
+ 	if(sizehints) {
+<a href="#h0-3-12" id="h0-3-12" class="d">-		if(c-&gt;minw &amp;&amp; c-&gt;w &lt; c-&gt;minw)
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-			c-&gt;w = c-&gt;minw;
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-		if(c-&gt;minh &amp;&amp; c-&gt;h &lt; c-&gt;minh)
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-			c-&gt;h = c-&gt;minh;
+</a><a href="#h0-3-16" id="h0-3-16" class="d">-		if(c-&gt;maxw &amp;&amp; c-&gt;w &gt; c-&gt;maxw)
+</a><a href="#h0-3-17" id="h0-3-17" class="d">-			c-&gt;w = c-&gt;maxw;
+</a><a href="#h0-3-18" id="h0-3-18" class="d">-		if(c-&gt;maxh &amp;&amp; c-&gt;h &gt; c-&gt;maxh)
+</a><a href="#h0-3-19" id="h0-3-19" class="d">-			c-&gt;h = c-&gt;maxh;
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+		if(c-&gt;minw &amp;&amp; w &lt; c-&gt;minw)
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+			w = c-&gt;minw;
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+		if(c-&gt;minh &amp;&amp; h &lt; c-&gt;minh)
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+			h = c-&gt;minh;
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+		if(c-&gt;maxw &amp;&amp; w &gt; c-&gt;maxw)
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+			w = c-&gt;maxw;
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+		if(c-&gt;maxh &amp;&amp; h &gt; c-&gt;maxh)
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+			h = c-&gt;maxh;
+</a> 		/* inspired by algorithm from fluxbox */
+<a href="#h0-3-29" id="h0-3-29" class="d">-		if(c-&gt;minay &gt; 0 &amp;&amp; c-&gt;maxay &amp;&amp; (c-&gt;h - c-&gt;baseh) &gt; 0) {
+</a><a href="#h0-3-30" id="h0-3-30" class="d">-			dx = (float)(c-&gt;w - c-&gt;basew);
+</a><a href="#h0-3-31" id="h0-3-31" class="d">-			dy = (float)(c-&gt;h - c-&gt;baseh);
+</a><a href="#h0-3-32" id="h0-3-32" class="i">+		if(c-&gt;minay &gt; 0 &amp;&amp; c-&gt;maxay &amp;&amp; (h - c-&gt;baseh) &gt; 0) {
+</a><a href="#h0-3-33" id="h0-3-33" class="i">+			dx = (float)(w - c-&gt;basew);
+</a><a href="#h0-3-34" id="h0-3-34" class="i">+			dy = (float)(h - c-&gt;baseh);
+</a> 			min = (float)(c-&gt;minax) / (float)(c-&gt;minay);
+ 			max = (float)(c-&gt;maxax) / (float)(c-&gt;maxay);
+ 			actual = dx / dy;
+<a href="#h0-4" id="h0-4" class="h">@@ -233,43 +238,45 @@ resize(Client *c, Bool sizehints) {
+</a> 				if(actual &lt; min) {
+ 					dy = (dx * min + dy) / (min * min + 1);
+ 					dx = dy * min;
+<a href="#h0-4-3" id="h0-4-3" class="d">-					c-&gt;w = (int)dx + c-&gt;basew;
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-					c-&gt;h = (int)dy + c-&gt;baseh;
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+					w = (int)dx + c-&gt;basew;
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+					h = (int)dy + c-&gt;baseh;
+</a> 				}
+ 				else if(actual &gt; max) {
+ 					dy = (dx * min + dy) / (max * max + 1);
+ 					dx = dy * min;
+<a href="#h0-4-11" id="h0-4-11" class="d">-					c-&gt;w = (int)dx + c-&gt;basew;
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-					c-&gt;h = (int)dy + c-&gt;baseh;
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+					w = (int)dx + c-&gt;basew;
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+					h = (int)dy + c-&gt;baseh;
+</a> 				}
+ 			}
+ 		}
+ 		if(c-&gt;incw)
+<a href="#h0-4-19" id="h0-4-19" class="d">-			c-&gt;w -= (c-&gt;w - c-&gt;basew) % c-&gt;incw;
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+			w -= (w - c-&gt;basew) % c-&gt;incw;
+</a> 		if(c-&gt;inch)
+<a href="#h0-4-22" id="h0-4-22" class="d">-			c-&gt;h -= (c-&gt;h - c-&gt;baseh) % c-&gt;inch;
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+			h -= (h - c-&gt;baseh) % c-&gt;inch;
+</a> 	}
+<a href="#h0-4-25" id="h0-4-25" class="d">-	if(c-&gt;w == sw &amp;&amp; c-&gt;h == sh)
+</a><a href="#h0-4-26" id="h0-4-26" class="i">+	if(w == sw &amp;&amp; h == sh)
+</a> 		c-&gt;border = 0;
+ 	else
+ 		c-&gt;border = BORDERPX;
+ 	/* offscreen appearance fixes */
+<a href="#h0-4-31" id="h0-4-31" class="d">-	if(c-&gt;x &gt; sw)
+</a><a href="#h0-4-32" id="h0-4-32" class="d">-		c-&gt;x = sw - c-&gt;w - 2 * c-&gt;border;
+</a><a href="#h0-4-33" id="h0-4-33" class="d">-	if(c-&gt;y &gt; sh)
+</a><a href="#h0-4-34" id="h0-4-34" class="d">-		c-&gt;y = sh - c-&gt;h - 2 * c-&gt;border;
+</a><a href="#h0-4-35" id="h0-4-35" class="d">-	if(c-&gt;x + c-&gt;w + 2 * c-&gt;border &lt; sx)
+</a><a href="#h0-4-36" id="h0-4-36" class="d">-		c-&gt;x = sx;
+</a><a href="#h0-4-37" id="h0-4-37" class="d">-	if(c-&gt;y + c-&gt;h + 2 * c-&gt;border &lt; sy)
+</a><a href="#h0-4-38" id="h0-4-38" class="d">-		c-&gt;y = sy;
+</a><a href="#h0-4-39" id="h0-4-39" class="d">-	wc.x = c-&gt;x;
+</a><a href="#h0-4-40" id="h0-4-40" class="d">-	wc.y = c-&gt;y;
+</a><a href="#h0-4-41" id="h0-4-41" class="d">-	wc.width = c-&gt;w;
+</a><a href="#h0-4-42" id="h0-4-42" class="d">-	wc.height = c-&gt;h;
+</a><a href="#h0-4-43" id="h0-4-43" class="d">-	wc.border_width = c-&gt;border;
+</a><a href="#h0-4-44" id="h0-4-44" class="d">-	XConfigureWindow(dpy, c-&gt;win, CWX | CWY | CWWidth | CWHeight | CWBorderWidth, &amp;wc);
+</a><a href="#h0-4-45" id="h0-4-45" class="d">-	configure(c);
+</a><a href="#h0-4-46" id="h0-4-46" class="d">-	XSync(dpy, False);
+</a><a href="#h0-4-47" id="h0-4-47" class="i">+	if(x &gt; sw)
+</a><a href="#h0-4-48" id="h0-4-48" class="i">+		x = sw - w - 2 * c-&gt;border;
+</a><a href="#h0-4-49" id="h0-4-49" class="i">+	if(y &gt; sh)
+</a><a href="#h0-4-50" id="h0-4-50" class="i">+		y = sh - h - 2 * c-&gt;border;
+</a><a href="#h0-4-51" id="h0-4-51" class="i">+	if(x + w + 2 * c-&gt;border &lt; sx)
+</a><a href="#h0-4-52" id="h0-4-52" class="i">+		x = sx;
+</a><a href="#h0-4-53" id="h0-4-53" class="i">+	if(y + h + 2 * c-&gt;border &lt; sy)
+</a><a href="#h0-4-54" id="h0-4-54" class="i">+		y = sy;
+</a><a href="#h0-4-55" id="h0-4-55" class="i">+	if(c-&gt;x != x || c-&gt;y != y || c-&gt;w != w || c-&gt;h != h) {
+</a><a href="#h0-4-56" id="h0-4-56" class="i">+		c-&gt;x = wc.x = x;
+</a><a href="#h0-4-57" id="h0-4-57" class="i">+		c-&gt;y = wc.y = y;
+</a><a href="#h0-4-58" id="h0-4-58" class="i">+		c-&gt;w = wc.width = w;
+</a><a href="#h0-4-59" id="h0-4-59" class="i">+		c-&gt;h = wc.height = h;
+</a><a href="#h0-4-60" id="h0-4-60" class="i">+		wc.border_width = c-&gt;border;
+</a><a href="#h0-4-61" id="h0-4-61" class="i">+		XConfigureWindow(dpy, c-&gt;win, CWX | CWY | CWWidth | CWHeight | CWBorderWidth, &amp;wc);
+</a><a href="#h0-4-62" id="h0-4-62" class="i">+		configure(c);
+</a><a href="#h0-4-63" id="h0-4-63" class="i">+		XSync(dpy, False);
+</a><a href="#h0-4-64" id="h0-4-64" class="i">+	}
+</a> }
+ 
+ void
+<b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -99,14 +99,14 @@ extern Display *dpy;
+</a> extern Window root, barwin;
+ 
+ /* client.c */
+<a href="#h1-0-3" id="h1-0-3" class="d">-extern void ban(Client *c);			/* ban c */
+</a> extern void configure(Client *c);		/* send synthetic configure event */
+ extern void focus(Client *c);			/* focus c, c may be NULL */
+ extern Client *getclient(Window w);		/* return client of w */
+ extern Bool isprotodel(Client *c);		/* returns True if c-&gt;win supports wmatom[WMDelete] */
+ extern void killclient(Arg *arg);		/* kill c nicely */
+ extern void manage(Window w, XWindowAttributes *wa);	/* manage new client */
+<a href="#h1-0-10" id="h1-0-10" class="d">-extern void resize(Client *c, Bool sizehints);	/* resize c*/
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+extern void resize(Client *c, int x, int y,
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+		int w, int h, Bool sizehints);	/* resize c*/
+</a> extern void updatesizehints(Client *c);		/* update the size hint variables of c */
+ extern void updatetitle(Client *c);		/* update the name of c */
+ extern void unmanage(Client *c);		/* destroy c */
+<b>diff --git a/<a id="h2" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -22,13 +22,13 @@ KEYS
+</a> 
+ static void
+ movemouse(Client *c) {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	int x1, y1, ocx, ocy, di;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	int x1, y1, ocx, ocy, di, nx, ny;
+</a> 	unsigned int dui;
+ 	Window dummy;
+ 	XEvent ev;
+ 
+<a href="#h2-0-9" id="h2-0-9" class="d">-	ocx = c-&gt;x;
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-	ocy = c-&gt;y;
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	ocx = nx = c-&gt;x;
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	ocy = ny =  c-&gt;y;
+</a> 	if(XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+ 			None, cursor[CurMove], CurrentTime) != GrabSuccess)
+ 		return;
+<a href="#h2-1" id="h2-1" class="h">@@ -38,7 +38,6 @@ movemouse(Client *c) {
+</a> 		XMaskEvent(dpy, MOUSEMASK | ExposureMask | SubstructureRedirectMask, &amp;ev);
+ 		switch (ev.type) {
+ 		case ButtonRelease:
+<a href="#h2-1-3" id="h2-1-3" class="d">-			resize(c, True);
+</a> 			XUngrabPointer(dpy, CurrentTime);
+ 			return;
+ 		case ConfigureRequest:
+<a href="#h2-2" id="h2-2" class="h">@@ -48,17 +47,17 @@ movemouse(Client *c) {
+</a> 			break;
+ 		case MotionNotify:
+ 			XSync(dpy, False);
+<a href="#h2-2-3" id="h2-2-3" class="d">-			c-&gt;x = ocx + (ev.xmotion.x - x1);
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-			c-&gt;y = ocy + (ev.xmotion.y - y1);
+</a><a href="#h2-2-5" id="h2-2-5" class="d">-			if(abs(wax + c-&gt;x) &lt; SNAP)
+</a><a href="#h2-2-6" id="h2-2-6" class="d">-				c-&gt;x = wax;
+</a><a href="#h2-2-7" id="h2-2-7" class="d">-			else if(abs((wax + waw) - (c-&gt;x + c-&gt;w + 2 * c-&gt;border)) &lt; SNAP)
+</a><a href="#h2-2-8" id="h2-2-8" class="d">-				c-&gt;x = wax + waw - c-&gt;w - 2 * c-&gt;border;
+</a><a href="#h2-2-9" id="h2-2-9" class="d">-			if(abs(way - c-&gt;y) &lt; SNAP)
+</a><a href="#h2-2-10" id="h2-2-10" class="d">-				c-&gt;y = way;
+</a><a href="#h2-2-11" id="h2-2-11" class="d">-			else if(abs((way + wah) - (c-&gt;y + c-&gt;h + 2 * c-&gt;border)) &lt; SNAP)
+</a><a href="#h2-2-12" id="h2-2-12" class="d">-				c-&gt;y = way + wah - c-&gt;h - 2 * c-&gt;border;
+</a><a href="#h2-2-13" id="h2-2-13" class="d">-			resize(c, False);
+</a><a href="#h2-2-14" id="h2-2-14" class="i">+			nx = ocx + (ev.xmotion.x - x1);
+</a><a href="#h2-2-15" id="h2-2-15" class="i">+			ny = ocy + (ev.xmotion.y - y1);
+</a><a href="#h2-2-16" id="h2-2-16" class="i">+			if(abs(wax + nx) &lt; SNAP)
+</a><a href="#h2-2-17" id="h2-2-17" class="i">+				nx = wax;
+</a><a href="#h2-2-18" id="h2-2-18" class="i">+			else if(abs((wax + waw) - (nx + c-&gt;w + 2 * c-&gt;border)) &lt; SNAP)
+</a><a href="#h2-2-19" id="h2-2-19" class="i">+				nx = wax + waw - c-&gt;w - 2 * c-&gt;border;
+</a><a href="#h2-2-20" id="h2-2-20" class="i">+			if(abs(way - ny) &lt; SNAP)
+</a><a href="#h2-2-21" id="h2-2-21" class="i">+				ny = way;
+</a><a href="#h2-2-22" id="h2-2-22" class="i">+			else if(abs((way + wah) - (ny + c-&gt;h + 2 * c-&gt;border)) &lt; SNAP)
+</a><a href="#h2-2-23" id="h2-2-23" class="i">+				ny = way + wah - c-&gt;h - 2 * c-&gt;border;
+</a><a href="#h2-2-24" id="h2-2-24" class="i">+			resize(c, nx, ny, c-&gt;w, c-&gt;h, False);
+</a> 			break;
+ 		}
+ 	}
+<a href="#h2-3" id="h2-3" class="h">@@ -81,7 +80,6 @@ resizemouse(Client *c) {
+</a> 		XMaskEvent(dpy, MOUSEMASK | ExposureMask | SubstructureRedirectMask , &amp;ev);
+ 		switch(ev.type) {
+ 		case ButtonRelease:
+<a href="#h2-3-3" id="h2-3-3" class="d">-			resize(c, True);
+</a> 			XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0,
+ 					c-&gt;w + c-&gt;border - 1, c-&gt;h + c-&gt;border - 1);
+ 			XUngrabPointer(dpy, CurrentTime);
+<a href="#h2-4" id="h2-4" class="h">@@ -94,11 +92,11 @@ resizemouse(Client *c) {
+</a> 			break;
+ 		case MotionNotify:
+ 			XSync(dpy, False);
+<a href="#h2-4-3" id="h2-4-3" class="d">-			nw = ev.xmotion.x - ocx - 2 * c-&gt;border + 1;
+</a><a href="#h2-4-4" id="h2-4-4" class="d">-			c-&gt;w = nw &gt; 0 ? nw : 1;
+</a><a href="#h2-4-5" id="h2-4-5" class="d">-			nh = ev.xmotion.y - ocy - 2 * c-&gt;border + 1;
+</a><a href="#h2-4-6" id="h2-4-6" class="d">-			c-&gt;h = nh &gt; 0 ? nh : 1;
+</a><a href="#h2-4-7" id="h2-4-7" class="d">-			resize(c, True);
+</a><a href="#h2-4-8" id="h2-4-8" class="i">+			if((nw = ev.xmotion.x - ocx - 2 * c-&gt;border + 1) &lt;= 0)
+</a><a href="#h2-4-9" id="h2-4-9" class="i">+				nw = 1;
+</a><a href="#h2-4-10" id="h2-4-10" class="i">+			if((nh = ev.xmotion.y - ocy - 2 * c-&gt;border + 1) &lt;= 0)
+</a><a href="#h2-4-11" id="h2-4-11" class="i">+				nh = 1;
+</a><a href="#h2-4-12" id="h2-4-12" class="i">+			resize(c, c-&gt;x, c-&gt;y, nw, nh, True);
+</a> 			break;
+ 		}
+ 	}
+<a href="#h2-5" id="h2-5" class="h">@@ -187,7 +185,7 @@ configurerequest(XEvent *e) {
+</a> 			if((ev-&gt;value_mask &amp; (CWX | CWY))
+ 			&amp;&amp; !(ev-&gt;value_mask &amp; (CWWidth | CWHeight)))
+ 				configure(c);
+<a href="#h2-5-3" id="h2-5-3" class="d">-			resize(c, False);
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, False);
+</a> 			if(!isvisible(c))
+ 				ban(c);
+ 		}
+<b>diff --git a/<a id="h3" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -41,7 +41,8 @@ static void
+</a> cleanup(void) {
+ 	close(STDIN_FILENO);
+ 	while(stack) {
+<a href="#h3-0-3" id="h3-0-3" class="d">-		resize(stack, True);
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+		if(stack-&gt;isbanned)
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+			XMoveWindow(dpy, stack-&gt;win, stack-&gt;x, stack-&gt;y);
+</a> 		unmanage(stack);
+ 	}
+ 	if(dc.font.set)
+<b>diff --git a/<a id="h4" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -20,18 +20,14 @@ togglemax(Client *c) {
+</a> 		return;
+ 
+ 	if((c-&gt;ismax = !c-&gt;ismax)) {
+<a href="#h4-0-3" id="h4-0-3" class="d">-		c-&gt;rx = c-&gt;x; c-&gt;x = wax;
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-		c-&gt;ry = c-&gt;y; c-&gt;y = way;
+</a><a href="#h4-0-5" id="h4-0-5" class="d">-		c-&gt;rw = c-&gt;w; c-&gt;w = waw - 2 * BORDERPX;
+</a><a href="#h4-0-6" id="h4-0-6" class="d">-		c-&gt;rh = c-&gt;h; c-&gt;h = wah - 2 * BORDERPX;
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+		c-&gt;rx = c-&gt;x;
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+		c-&gt;ry = c-&gt;y;
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+		c-&gt;rw = c-&gt;w;
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+		c-&gt;rh = c-&gt;h;
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+		resize(c, wax, way, waw - 2 * BORDERPX, wah - 2 * BORDERPX, True);
+</a> 	}
+<a href="#h4-0-13" id="h4-0-13" class="d">-	else {
+</a><a href="#h4-0-14" id="h4-0-14" class="d">-		c-&gt;x = c-&gt;rx;
+</a><a href="#h4-0-15" id="h4-0-15" class="d">-		c-&gt;y = c-&gt;ry;
+</a><a href="#h4-0-16" id="h4-0-16" class="d">-		c-&gt;w = c-&gt;rw;
+</a><a href="#h4-0-17" id="h4-0-17" class="d">-		c-&gt;h = c-&gt;rh;
+</a><a href="#h4-0-18" id="h4-0-18" class="d">-	}
+</a><a href="#h4-0-19" id="h4-0-19" class="d">-	resize(c, True);
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+	else
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+		resize(c, c-&gt;rx, c-&gt;ry, c-&gt;rw, c-&gt;rh, True);
+</a> 	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+ }
+ 
+<a href="#h4-1" id="h4-1" class="h">@@ -56,11 +52,14 @@ dofloat(void) {
+</a> 
+ 	for(c = clients; c; c = c-&gt;next) {
+ 		if(isvisible(c)) {
+<a href="#h4-1-3" id="h4-1-3" class="i">+			if(c-&gt;isbanned)
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+				XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a> 			c-&gt;isbanned = False;
+<a href="#h4-1-6" id="h4-1-6" class="d">-			resize(c, True);
+</a> 		}
+<a href="#h4-1-8" id="h4-1-8" class="d">-		else
+</a><a href="#h4-1-9" id="h4-1-9" class="d">-			ban(c);
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+		else {
+</a><a href="#h4-1-11" id="h4-1-11" class="i">+			c-&gt;isbanned = True;
+</a><a href="#h4-1-12" id="h4-1-12" class="i">+			XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h4-1-13" id="h4-1-13" class="i">+		}
+</a> 	}
+ 	if(!sel || !isvisible(sel)) {
+ 		for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+<a href="#h4-2" id="h4-2" class="h">@@ -71,7 +70,7 @@ dofloat(void) {
+</a> 
+ void
+ dotile(void) {
+<a href="#h4-2-3" id="h4-2-3" class="d">-	unsigned int i, n, mw, mh, tw, th;
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+	unsigned int i, n, nx, ny, nw, nh, mw, mh, tw, th;
+</a> 	Client *c;
+ 
+ 	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+<a href="#h4-3" id="h4-3" class="h">@@ -84,34 +83,36 @@ dotile(void) {
+</a> 
+ 	for(i = 0, c = clients; c; c = c-&gt;next)
+ 		if(isvisible(c)) {
+<a href="#h4-3-3" id="h4-3-3" class="i">+			if(c-&gt;isbanned)
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+				XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a> 			c-&gt;isbanned = False;
+<a href="#h4-3-6" id="h4-3-6" class="d">-			if(c-&gt;isfloat) {
+</a><a href="#h4-3-7" id="h4-3-7" class="d">-				resize(c, True);
+</a><a href="#h4-3-8" id="h4-3-8" class="i">+			if(c-&gt;isfloat)
+</a> 				continue;
+<a href="#h4-3-10" id="h4-3-10" class="d">-			}
+</a> 			c-&gt;ismax = False;
+<a href="#h4-3-12" id="h4-3-12" class="d">-			c-&gt;x = wax;
+</a><a href="#h4-3-13" id="h4-3-13" class="d">-			c-&gt;y = way;
+</a><a href="#h4-3-14" id="h4-3-14" class="i">+			nx = wax;
+</a><a href="#h4-3-15" id="h4-3-15" class="i">+			ny = way;
+</a> 			if(i &lt; nmaster) {
+<a href="#h4-3-17" id="h4-3-17" class="d">-				c-&gt;y += i * mh;
+</a><a href="#h4-3-18" id="h4-3-18" class="d">-				c-&gt;w = mw - 2 * BORDERPX;
+</a><a href="#h4-3-19" id="h4-3-19" class="d">-				c-&gt;h = mh - 2 * BORDERPX;
+</a><a href="#h4-3-20" id="h4-3-20" class="i">+				ny += i * mh;
+</a><a href="#h4-3-21" id="h4-3-21" class="i">+				nw = mw - 2 * BORDERPX;
+</a><a href="#h4-3-22" id="h4-3-22" class="i">+				nh = mh - 2 * BORDERPX;
+</a> 			}
+ 			else {  /* tile window */
+<a href="#h4-3-25" id="h4-3-25" class="d">-				c-&gt;x += mw;
+</a><a href="#h4-3-26" id="h4-3-26" class="d">-				c-&gt;w = tw - 2 * BORDERPX;
+</a><a href="#h4-3-27" id="h4-3-27" class="i">+				nx += mw;
+</a><a href="#h4-3-28" id="h4-3-28" class="i">+				nw = tw - 2 * BORDERPX;
+</a> 				if(th &gt; 2 * BORDERPX) {
+<a href="#h4-3-30" id="h4-3-30" class="d">-					c-&gt;y += (i - nmaster) * th;
+</a><a href="#h4-3-31" id="h4-3-31" class="d">-					c-&gt;h = th - 2 * BORDERPX;
+</a><a href="#h4-3-32" id="h4-3-32" class="i">+					ny += (i - nmaster) * th;
+</a><a href="#h4-3-33" id="h4-3-33" class="i">+					nh = th - 2 * BORDERPX;
+</a> 				}
+ 				else /* fallback if th &lt;= 2 * BORDERPX */
+<a href="#h4-3-36" id="h4-3-36" class="d">-					c-&gt;h = wah - 2 * BORDERPX;
+</a><a href="#h4-3-37" id="h4-3-37" class="i">+					nh = wah - 2 * BORDERPX;
+</a> 			}
+<a href="#h4-3-39" id="h4-3-39" class="d">-			resize(c, False);
+</a><a href="#h4-3-40" id="h4-3-40" class="i">+			resize(c, nx, ny, nw, nh, False);
+</a> 			i++;
+ 		}
+<a href="#h4-3-43" id="h4-3-43" class="d">-		else
+</a><a href="#h4-3-44" id="h4-3-44" class="d">-			ban(c);
+</a><a href="#h4-3-45" id="h4-3-45" class="i">+		else {
+</a><a href="#h4-3-46" id="h4-3-46" class="i">+			c-&gt;isbanned = True;
+</a><a href="#h4-3-47" id="h4-3-47" class="i">+			XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h4-3-48" id="h4-3-48" class="i">+		}
+</a> 	if(!sel || !isvisible(sel)) {
+ 		for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+ 		focus(c);
+</pre>
+</div>
+</body>
+</html>

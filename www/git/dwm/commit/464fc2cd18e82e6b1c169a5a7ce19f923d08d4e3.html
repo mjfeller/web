@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>changed border handling - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/464fc2cd18e82e6b1c169a5a7ce19f923d08d4e3.html">464fc2cd18e82e6b1c169a5a7ce19f923d08d4e3</a>
+<b>parent</b> <a href="../commit/be8d6d40f60b45f941bd9cb6896b83ce223b6406.html">be8d6d40f60b45f941bd9cb6896b83ce223b6406</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Tue, 17 Apr 2007 14:56:46 +0200
+
+changed border handling
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">9</td><td><span class="i">++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">layout.c</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>3 files changed, 11 insertions(+), 18 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -185,13 +185,12 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	c-&gt;y = wa-&gt;y;
+ 	c-&gt;w = wa-&gt;width;
+ 	c-&gt;h = wa-&gt;height;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	c-&gt;border = wa-&gt;border_width;
+</a> 	if(c-&gt;w == sw &amp;&amp; c-&gt;h == sh) {
+<a href="#h0-0-5" id="h0-0-5" class="d">-		c-&gt;border = 0;
+</a> 		c-&gt;x = sx;
+ 		c-&gt;y = sy;
+ 	}
+ 	else {
+<a href="#h0-0-10" id="h0-0-10" class="d">-		c-&gt;border = BORDERPX;
+</a> 		if(c-&gt;x + c-&gt;w + 2 * c-&gt;border &gt; wax + waw)
+ 			c-&gt;x = wax + waw - c-&gt;w - 2 * c-&gt;border;
+ 		if(c-&gt;y + c-&gt;h + 2 * c-&gt;border &gt; way + wah)
+<a href="#h0-1" id="h0-1" class="h">@@ -205,7 +204,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	XSelectInput(dpy, w,
+ 		StructureNotifyMask | PropertyChangeMask | EnterWindowMask);
+ 	grabbuttons(c, False);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	wc.border_width = c-&gt;border;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	wc.border_width = BORDERPX;
+</a> 	XConfigureWindow(dpy, w, CWBorderWidth, &amp;wc);
+ 	XSetWindowBorder(dpy, w, dc.norm[ColBorder]);
+ 	configure(c); /* propagates border_width, if size doesn&#39;t change */
+<a href="#h0-2" id="h0-2" class="h">@@ -270,10 +269,6 @@ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> 	}
+ 	if(w &lt;= 0 || h &lt;= 0)
+ 		return;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(w == sw &amp;&amp; h == sh)
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		c-&gt;border = 0;
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	else
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-		c-&gt;border = BORDERPX;
+</a> 	/* offscreen appearance fixes */
+ 	if(x &gt; sw)
+ 		x = sw - w - 2 * c-&gt;border;
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -191,10 +191,8 @@ configurerequest(XEvent *e) {
+</a> 			if(isvisible(c))
+ 				XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+ 		}
+<a href="#h1-0-3" id="h1-0-3" class="d">-		else {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		else
+</a> 			configure(c);
+<a href="#h1-0-6" id="h1-0-6" class="d">-		}
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-		c-&gt;border = BORDERPX;
+</a> 	}
+ 	else {
+ 		wc.x = ev-&gt;x;
+<b>diff --git a/<a id="h2" href="../file/layout.c.html">layout.c</a> b/<a href="../file/layout.c.html">layout.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -38,18 +38,18 @@ tile(void) {
+</a> 			ny = way;
+ 			if(i &lt; nmaster) {
+ 				ny += i * mh;
+<a href="#h2-0-3" id="h2-0-3" class="d">-				nw = mw - 2 * BORDERPX;
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-				nh = mh - 2 * BORDERPX;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+				nw = mw - 2 * c-&gt;border;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+				nh = mh - 2 * c-&gt;border;
+</a> 			}
+ 			else {  /* tile window */
+ 				nx += mw;
+<a href="#h2-0-10" id="h2-0-10" class="d">-				nw = tw - 2 * BORDERPX;
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-				if(th &gt; 2 * BORDERPX) {
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+				nw = tw - 2 * c-&gt;border;
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+				if(th &gt; 2 * c-&gt;border) {
+</a> 					ny += (i - nmaster) * th;
+<a href="#h2-0-15" id="h2-0-15" class="d">-					nh = th - 2 * BORDERPX;
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+					nh = th - 2 * c-&gt;border;
+</a> 				}
+<a href="#h2-0-18" id="h2-0-18" class="d">-				else /* fallback if th &lt;= 2 * BORDERPX */
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-					nh = wah - 2 * BORDERPX;
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+				else /* fallback if th &lt;= 2 * c-&gt;border */
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+					nh = wah - 2 * c-&gt;border;
+</a> 			}
+ 			resize(c, nx, ny, nw, nh, False);
+ 			i++;
+<a href="#h2-1" id="h2-1" class="h">@@ -125,7 +125,7 @@ incmasterw(const char *arg) {
+</a> 		masterw = MASTERWIDTH;
+ 	else {
+ 		i = atoi(arg);
+<a href="#h2-1-3" id="h2-1-3" class="d">-		if(waw * (masterw + i) / 1000 &gt;= waw - 2 * BORDERPX
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+		if(waw * (masterw + i) / 1000 &gt;= waw - 2 * BORDERPX 
+</a> 		|| waw * (masterw + i) / 1000 &lt;= 2 * BORDERPX)
+ 			return;
+ 		masterw += i;
+</pre>
+</div>
+</body>
+</html>

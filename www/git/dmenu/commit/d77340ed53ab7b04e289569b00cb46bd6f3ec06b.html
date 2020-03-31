@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed vlist select - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d77340ed53ab7b04e289569b00cb46bd6f3ec06b.html">d77340ed53ab7b04e289569b00cb46bd6f3ec06b</a>
+<b>parent</b> <a href="../commit/da7a79912124743e7fbbef81c2450aeaf4ccca87.html">da7a79912124743e7fbbef81c2450aeaf4ccca87</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Fri, 30 Jul 2010 09:18:35 +0100
+
+fixed vlist select
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -24,6 +24,7 @@ static void calcoffsetsv(void);
+</a> static char *cistrstr(const char *s, const char *sub);
+ static void cleanup(void);
+ static void dinput(void);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void drawitem(char *s, unsigned long col[ColLast]);
+</a> static void drawmenuh(void);
+ static void drawmenuv(void);
+ static void match(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -155,8 +156,13 @@ drawbar(void) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="i">+drawitem(char *s, unsigned long col[ColLast]) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	drawbox(&amp;dc, col);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	drawtext(&amp;dc, s, col);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+}
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+void
+</a> drawmenuh(void) {
+<a href="#h0-1-10" id="h0-1-10" class="d">-	unsigned long *col;
+</a> 	Item *i;
+ 
+ 	dc.x += cmdw;
+<a href="#h0-2" id="h0-2" class="h">@@ -165,9 +171,7 @@ drawmenuh(void) {
+</a> 	dc.x += dc.w;
+ 	for(i = curr; i != next; i = i-&gt;right) {
+ 		dc.w = MIN(textw(&amp;dc, i-&gt;text), mw / 3);
+<a href="#h0-2-3" id="h0-2-3" class="d">-		col = (sel == i) ? selcol : normcol;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		drawbox(&amp;dc, col);
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-		drawtext(&amp;dc, i-&gt;text, col);
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		drawitem(i-&gt;text, (sel == i) ? selcol : normcol);
+</a> 		dc.x += dc.w;
+ 	}
+ 	dc.w = textw(&amp;dc, &quot;&gt;&quot;);
+<a href="#h0-3" id="h0-3" class="h">@@ -183,7 +187,7 @@ drawmenuv(void) {
+</a> 	dc.y = topbar ? dc.h : 0;
+ 	dc.w = mw - dc.x;
+ 	for(i = curr; i != next; i = i-&gt;right) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-		drawtext(&amp;dc, i-&gt;text, (sel == i) ? selcol : normcol);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		drawitem(i-&gt;text, (sel == i) ? selcol : normcol);
+</a> 		dc.y += dc.h;
+ 	}
+ 	if(!XGetWindowAttributes(dpy, win, &amp;wa))
+</pre>
+</div>
+</body>
+</html>

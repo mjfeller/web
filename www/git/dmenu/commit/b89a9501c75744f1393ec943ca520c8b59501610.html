@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>reverted uint/ulong introduction - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b89a9501c75744f1393ec943ca520c8b59501610.html">b89a9501c75744f1393ec943ca520c8b59501610</a>
+<b>parent</b> <a href="../commit/65d655b371cbe2472ee0dd905b427b30311d9355.html">65d655b371cbe2472ee0dd905b427b30311d9355</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 16 Jul 2008 18:18:38 +0100
+
+reverted uint/ulong introduction
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">38</td><td><span class="i">++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>2 files changed, 20 insertions(+), 22 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -7,8 +7,8 @@ static const char *normfgcolor = &quot;#000000&quot;;
+</a> static const char *selbgcolor  = &quot;#0066ff&quot;;
+ static const char *selfgcolor  = &quot;#ffffff&quot;;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static uint spaceitem          = 30; /* px between menu items */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static unsigned int spaceitem  = 30; /* px between menu items */
+</a> 
+ #ifdef XINERAMA
+<a href="#h0-0-7" id="h0-0-7" class="d">-static uint xidx               = 0;  /* Xinerama screen index to use */
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+static unsigned int xidx       = 0;  /* Xinerama screen index to use */
+</a> #endif
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -22,12 +22,10 @@
+</a> enum { ColFG, ColBG, ColLast };
+ 
+ /* typedefs */
+<a href="#h1-0-3" id="h1-0-3" class="d">-typedef unsigned int uint;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-typedef unsigned long ulong;
+</a> typedef struct {
+ 	int x, y, w, h;
+<a href="#h1-0-7" id="h1-0-7" class="d">-	ulong norm[ColLast];
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	ulong sel[ColLast];
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	unsigned long norm[ColLast];
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	unsigned long sel[ColLast];
+</a> 	Drawable drawable;
+ 	GC gc;
+ 	struct {
+<a href="#h1-1" id="h1-1" class="h">@@ -52,9 +50,9 @@ static void calcoffsets(void);
+</a> static char *cistrstr(const char *s, const char *sub);
+ static void cleanup(void);
+ static void drawmenu(void);
+<a href="#h1-1-3" id="h1-1-3" class="d">-static void drawtext(const char *text, ulong col[ColLast]);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+static void drawtext(const char *text, unsigned long col[ColLast]);
+</a> static void eprint(const char *errstr, ...);
+<a href="#h1-1-6" id="h1-1-6" class="d">-static ulong getcolor(const char *colstr);
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+static unsigned long getcolor(const char *colstr);
+</a> static Bool grabkeyboard(void);
+ static void initfont(const char *fontstr);
+ static void kpress(XKeyEvent * e);
+<a href="#h1-2" id="h1-2" class="h">@@ -62,7 +60,7 @@ static void match(char *pattern);
+</a> static void readstdin(void);
+ static void run(void);
+ static void setup(Bool topbar);
+<a href="#h1-2-3" id="h1-2-3" class="d">-static int textnw(const char *text, uint len);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+static int textnw(const char *text, unsigned int len);
+</a> static int textw(const char *text);
+ 
+ #include &quot;config.h&quot;
+<a href="#h1-3" id="h1-3" class="h">@@ -75,8 +73,8 @@ static int cmdw = 0;
+</a> static int promptw = 0;
+ static int ret = 0;
+ static int screen;
+<a href="#h1-3-3" id="h1-3-3" class="d">-static uint mw, mh;
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-static uint numlockmask = 0;
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+static unsigned int mw, mh;
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+static unsigned int numlockmask = 0;
+</a> static Bool running = True;
+ static Display *dpy;
+ static DC dc = {0};
+<a href="#h1-4" id="h1-4" class="h">@@ -104,7 +102,7 @@ appenditem(Item *i, Item **list, Item **last) {
+</a> void
+ calcoffsets(void) {
+ 	int tw;
+<a href="#h1-4-3" id="h1-4-3" class="d">-	uint w;
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+	unsigned int w;
+</a> 
+ 	if(!curr)
+ 		return;
+<a href="#h1-5" id="h1-5" class="h">@@ -131,7 +129,7 @@ calcoffsets(void) {
+</a> char *
+ cistrstr(const char *s, const char *sub) {
+ 	int c, csub;
+<a href="#h1-5-3" id="h1-5-3" class="d">-	uint len;
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	unsigned int len;
+</a> 
+ 	if(!sub)
+ 		return (char *)s;
+<a href="#h1-6" id="h1-6" class="h">@@ -213,10 +211,10 @@ drawmenu(void) {
+</a> }
+ 
+ void
+<a href="#h1-6-3" id="h1-6-3" class="d">-drawtext(const char *text, ulong col[ColLast]) {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+drawtext(const char *text, unsigned long col[ColLast]) {
+</a> 	int x, y, w, h;
+ 	static char buf[256];
+<a href="#h1-6-7" id="h1-6-7" class="d">-	uint len, olen;
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+	unsigned int len, olen;
+</a> 	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+ 
+ 	XSetForeground(dpy, dc.gc, col[ColBG]);
+<a href="#h1-7" id="h1-7" class="h">@@ -262,7 +260,7 @@ eprint(const char *errstr, ...) {
+</a> 	exit(EXIT_FAILURE);
+ }
+ 
+<a href="#h1-7-3" id="h1-7-3" class="d">-ulong
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+unsigned long
+</a> getcolor(const char *colstr) {
+ 	Colormap cmap = DefaultColormap(dpy, screen);
+ 	XColor color;
+<a href="#h1-8" id="h1-8" class="h">@@ -274,7 +272,7 @@ getcolor(const char *colstr) {
+</a> 
+ Bool
+ grabkeyboard(void) {
+<a href="#h1-8-3" id="h1-8-3" class="d">-	uint len;
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	unsigned int len;
+</a> 
+ 	for(len = 1000; len; len--) {
+ 		if(XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+<a href="#h1-9" id="h1-9" class="h">@@ -330,7 +328,7 @@ void
+</a> kpress(XKeyEvent * e) {
+ 	char buf[32];
+ 	int i, num;
+<a href="#h1-9-3" id="h1-9-3" class="d">-	uint len;
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+	unsigned int len;
+</a> 	KeySym ksym;
+ 
+ 	len = strlen(text);
+<a href="#h1-10" id="h1-10" class="h">@@ -498,7 +496,7 @@ kpress(XKeyEvent * e) {
+</a> 
+ void
+ match(char *pattern) {
+<a href="#h1-10-3" id="h1-10-3" class="d">-	uint plen;
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+	unsigned int plen;
+</a> 	Item *i, *itemend, *lexact, *lprefix, *lsubstr, *exactend, *prefixend, *substrend;
+ 
+ 	if(!pattern)
+<a href="#h1-11" id="h1-11" class="h">@@ -540,7 +538,7 @@ match(char *pattern) {
+</a> void
+ readstdin(void) {
+ 	char *p, buf[1024];
+<a href="#h1-11-3" id="h1-11-3" class="d">-	uint len = 0, max = 0;
+</a><a href="#h1-11-4" id="h1-11-4" class="i">+	unsigned int len = 0, max = 0;
+</a> 	Item *i, *new;
+ 
+ 	i = 0;
+<a href="#h1-12" id="h1-12" class="h">@@ -659,7 +657,7 @@ setup(Bool topbar) {
+</a> }
+ 
+ int
+<a href="#h1-12-3" id="h1-12-3" class="d">-textnw(const char *text, uint len) {
+</a><a href="#h1-12-4" id="h1-12-4" class="i">+textnw(const char *text, unsigned int len) {
+</a> 	XRectangle r;
+ 
+ 	if(dc.font.set) {
+<a href="#h1-13" id="h1-13" class="h">@@ -676,7 +674,7 @@ textw(const char *text) {
+</a> 
+ int
+ main(int argc, char *argv[]) {
+<a href="#h1-13-3" id="h1-13-3" class="d">-	uint i;
+</a><a href="#h1-13-4" id="h1-13-4" class="i">+	unsigned int i;
+</a> 	Bool topbar = True;
+ 
+ 	/* command line args */
+</pre>
+</div>
+</body>
+</html>

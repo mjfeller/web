@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adapting the whole surf structure to new settings - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/75e3fe5b95bc94d5309bd78d9cc98f0034595c3e.html">75e3fe5b95bc94d5309bd78d9cc98f0034595c3e</a>
+<b>parent</b> <a href="../commit/11b34c08146928754ade63b285ba861f0be6a416.html">11b34c08146928754ade63b285ba861f0be6a416</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sun, 29 Nov 2015 17:42:42 +0100
+
+Adapting the whole surf structure to new settings
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">387</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 233 insertions(+), 155 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -139,7 +139,6 @@ static Key keys[] = {
+</a> 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_a,      togglecookiepolicy, { 0 } },
+ 	{ 0,                     GDK_KEY_F11,    togglefullscreen, { 0 } },
+ 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_o,      toggleinspector, { 0 } },
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_m,      togglestyle, { 0 } },
+</a> 
+ 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_c,      toggle,     { .i = CaretBrowsing } },
+ 	{ MODKEY|GDK_SHIFT_MASK, GDK_KEY_f,      toggle,     { .i = FrameFlattening } },
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -42,6 +42,17 @@
+</a> 
+ enum { AtomFind, AtomGo, AtomUri, AtomLast };
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+enum {
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	OnDoc   = WEBKIT_HIT_TEST_RESULT_CONTEXT_DOCUMENT,
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	OnLink  = WEBKIT_HIT_TEST_RESULT_CONTEXT_LINK,
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	OnImg   = WEBKIT_HIT_TEST_RESULT_CONTEXT_IMAGE,
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	OnMedia = WEBKIT_HIT_TEST_RESULT_CONTEXT_MEDIA,
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	OnEdit  = WEBKIT_HIT_TEST_RESULT_CONTEXT_EDITABLE,
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	OnBar   = WEBKIT_HIT_TEST_RESULT_CONTEXT_SCROLLBAR,
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	OnSel   = WEBKIT_HIT_TEST_RESULT_CONTEXT_SELECTION,
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	OnAny   = OnDoc | OnLink | OnImg | OnMedia | OnEdit | OnBar | OnSel,
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+};
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+
+</a> typedef enum {
+ 	CaretBrowsing,
+ 	CookiePolicies,
+<a href="#h1-1" id="h1-1" class="h">@@ -68,17 +79,6 @@ typedef enum {
+</a> 	ParameterLast,
+ } ParamName;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-enum {
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	OnDoc   = WEBKIT_HIT_TEST_RESULT_CONTEXT_DOCUMENT,
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	OnLink  = WEBKIT_HIT_TEST_RESULT_CONTEXT_LINK,
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	OnImg   = WEBKIT_HIT_TEST_RESULT_CONTEXT_IMAGE,
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-	OnMedia = WEBKIT_HIT_TEST_RESULT_CONTEXT_MEDIA,
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-	OnEdit  = WEBKIT_HIT_TEST_RESULT_CONTEXT_EDITABLE,
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-	OnBar   = WEBKIT_HIT_TEST_RESULT_CONTEXT_SCROLLBAR,
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-	OnSel   = WEBKIT_HIT_TEST_RESULT_CONTEXT_SELECTION,
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-	OnAny   = OnDoc | OnLink | OnImg | OnMedia | OnEdit | OnBar | OnSel,
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-};
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-
+</a> typedef union {
+ 	int b;
+ 	int i;
+<a href="#h1-2" id="h1-2" class="h">@@ -150,6 +150,8 @@ static void gettogglestats(Client *c);
+</a> static void getpagestats(Client *c);
+ static WebKitCookieAcceptPolicy cookiepolicy_get(void);
+ static char cookiepolicy_set(const WebKitCookieAcceptPolicy p);
+<a href="#h1-2-3" id="h1-2-3" class="i">+static void seturiparameters(Client *c, const char *uri);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+static void setparameter(Client *c, int refresh, ParamName p, const Arg *a);
+</a> static const char *getstyle(const char *uri);
+ static void setstyle(Client *c, const char *stylefile);
+ static void runscript(Client *c);
+<a href="#h1-3" id="h1-3" class="h">@@ -203,7 +205,6 @@ static void stop(Client *c, const Arg *a);
+</a> static void toggle(Client *c, const Arg *a);
+ static void togglefullscreen(Client *c, const Arg *a);
+ static void togglecookiepolicy(Client *c, const Arg *a);
+<a href="#h1-3-3" id="h1-3-3" class="d">-static void togglestyle(Client *c, const Arg *a);
+</a> static void toggleinspector(Client *c, const Arg *a);
+ static void find(Client *c, const Arg *a);
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -224,6 +225,7 @@ static Client *clients;
+</a> static GdkDevice *gdkkb;
+ static char *stylefile;
+ static const char *useragent;
+<a href="#h1-4-3" id="h1-4-3" class="i">+static Parameter *curconfig;
+</a> char *argv0;
+ 
+ /* configuration, allows nested code to access above variables */
+<a href="#h1-5" id="h1-5" class="h">@@ -251,7 +253,7 @@ die(const char *errstr, ...)
+</a> void
+ setup(void)
+ {
+<a href="#h1-5-3" id="h1-5-3" class="d">-	int i;
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	int i, j;
+</a> 
+ 	/* clean up any zombies immediately */
+ 	sigchld(0);
+<a href="#h1-6" id="h1-6" class="h">@@ -259,6 +261,8 @@ setup(void)
+</a> 
+ 	dpy = GDK_DISPLAY_XDISPLAY(gdk_display_get_default());
+ 
+<a href="#h1-6-3" id="h1-6-3" class="i">+	curconfig = defconfig;
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+
+</a> 	/* atoms */
+ 	atoms[AtomFind] = XInternAtom(dpy, &quot;_SURF_FIND&quot;, False);
+ 	atoms[AtomGo] = XInternAtom(dpy, &quot;_SURF_GO&quot;, False);
+<a href="#h1-7" id="h1-7" class="h">@@ -288,6 +292,24 @@ setup(void)
+</a> 	} else {
+ 		stylefile = buildfile(stylefile);
+ 	}
+<a href="#h1-7-3" id="h1-7-3" class="i">+
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	for (i = 0; i &lt; LENGTH(uriparams); ++i) {
+</a><a href="#h1-7-5" id="h1-7-5" class="i">+		if (!regcomp(&amp;(uriparams[i].re), uriparams[i].uri,
+</a><a href="#h1-7-6" id="h1-7-6" class="i">+		    REG_EXTENDED)) {
+</a><a href="#h1-7-7" id="h1-7-7" class="i">+			/* copy default parameters if they are not already set
+</a><a href="#h1-7-8" id="h1-7-8" class="i">+			 * or if they are forced */
+</a><a href="#h1-7-9" id="h1-7-9" class="i">+			for (j = 0; j &lt; ParameterLast; ++j) {
+</a><a href="#h1-7-10" id="h1-7-10" class="i">+				if (!uriparams[i].config[j].force ||
+</a><a href="#h1-7-11" id="h1-7-11" class="i">+				    defconfig[j].force)
+</a><a href="#h1-7-12" id="h1-7-12" class="i">+					uriparams[i].config[j] = defconfig[j];
+</a><a href="#h1-7-13" id="h1-7-13" class="i">+			}
+</a><a href="#h1-7-14" id="h1-7-14" class="i">+		} else {
+</a><a href="#h1-7-15" id="h1-7-15" class="i">+			fprintf(stderr,
+</a><a href="#h1-7-16" id="h1-7-16" class="i">+			        &quot;Could not compile regex: %s\n&quot;,
+</a><a href="#h1-7-17" id="h1-7-17" class="i">+			        uriparams[i].uri);
+</a><a href="#h1-7-18" id="h1-7-18" class="i">+			uriparams[i].uri = NULL;
+</a><a href="#h1-7-19" id="h1-7-19" class="i">+		}
+</a><a href="#h1-7-20" id="h1-7-20" class="i">+	}
+</a> }
+ 
+ void
+<a href="#h1-8" id="h1-8" class="h">@@ -456,7 +478,7 @@ updatetitle(Client *c)
+</a> 	const char *name = c-&gt;overtitle ? c-&gt;overtitle :
+ 	                   c-&gt;title ? c-&gt;title : &quot;&quot;;
+ 
+<a href="#h1-8-3" id="h1-8-3" class="d">-	if (showindicators) {
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	if (curconfig[ShowIndicators].val.b) {
+</a> 		gettogglestats(c);
+ 		getpagestats(c);
+ 
+<a href="#h1-9" id="h1-9" class="h">@@ -478,14 +500,14 @@ void
+</a> gettogglestats(Client *c)
+ {
+ 	togglestats[0] = cookiepolicy_set(cookiepolicy_get());
+<a href="#h1-9-3" id="h1-9-3" class="d">-	togglestats[1] = enablecaretbrowsing ?   &#39;C&#39; : &#39;c&#39;;
+</a><a href="#h1-9-4" id="h1-9-4" class="d">-	togglestats[2] = allowgeolocation ?      &#39;G&#39; : &#39;g&#39;;
+</a><a href="#h1-9-5" id="h1-9-5" class="d">-	togglestats[3] = enablecache ?           &#39;D&#39; : &#39;d&#39;;
+</a><a href="#h1-9-6" id="h1-9-6" class="d">-	togglestats[4] = loadimages ?            &#39;I&#39; : &#39;i&#39;;
+</a><a href="#h1-9-7" id="h1-9-7" class="d">-	togglestats[5] = enablescripts ?         &#39;S&#39; : &#39;s&#39;;
+</a><a href="#h1-9-8" id="h1-9-8" class="d">-	togglestats[6] = enableplugins ?         &#39;V&#39; : &#39;v&#39;;
+</a><a href="#h1-9-9" id="h1-9-9" class="d">-	togglestats[7] = enablestyle ?           &#39;M&#39; : &#39;m&#39;;
+</a><a href="#h1-9-10" id="h1-9-10" class="d">-	togglestats[8] = enableframeflattening ? &#39;F&#39; : &#39;f&#39;;
+</a><a href="#h1-9-11" id="h1-9-11" class="i">+	togglestats[1] = curconfig[CaretBrowsing].val.b ?   &#39;C&#39; : &#39;c&#39;;
+</a><a href="#h1-9-12" id="h1-9-12" class="i">+	togglestats[2] = curconfig[Geolocation].val.b ?     &#39;G&#39; : &#39;g&#39;;
+</a><a href="#h1-9-13" id="h1-9-13" class="i">+	togglestats[3] = curconfig[DiskCache].val.b ?       &#39;D&#39; : &#39;d&#39;;
+</a><a href="#h1-9-14" id="h1-9-14" class="i">+	togglestats[4] = curconfig[LoadImages].val.b ?      &#39;I&#39; : &#39;i&#39;;
+</a><a href="#h1-9-15" id="h1-9-15" class="i">+	togglestats[5] = curconfig[JavaScript].val.b ?      &#39;S&#39; : &#39;s&#39;;
+</a><a href="#h1-9-16" id="h1-9-16" class="i">+	togglestats[6] = curconfig[Plugins].val.b ?         &#39;V&#39; : &#39;v&#39;;
+</a><a href="#h1-9-17" id="h1-9-17" class="i">+	togglestats[7] = curconfig[Style].val.b ?           &#39;M&#39; : &#39;m&#39;;
+</a><a href="#h1-9-18" id="h1-9-18" class="i">+	togglestats[8] = curconfig[FrameFlattening].val.b ? &#39;F&#39; : &#39;f&#39;;
+</a> 	togglestats[9] = &#39;\0&#39;;
+ }
+ 
+<a href="#h1-10" id="h1-10" class="h">@@ -500,7 +522,7 @@ getpagestats(Client *c)
+</a> WebKitCookieAcceptPolicy
+ cookiepolicy_get(void)
+ {
+<a href="#h1-10-3" id="h1-10-3" class="d">-	switch (cookiepolicies[cookiepolicy]) {
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+	switch (((char *)curconfig[CookiePolicies].val.v)[cookiepolicy]) {
+</a> 	case &#39;a&#39;:
+ 		return WEBKIT_COOKIE_POLICY_ACCEPT_NEVER;
+ 	case &#39;@&#39;:
+<a href="#h1-11" id="h1-11" class="h">@@ -509,7 +531,6 @@ cookiepolicy_get(void)
+</a> 	case &#39;A&#39;:
+ 		return WEBKIT_COOKIE_POLICY_ACCEPT_ALWAYS;
+ 	}
+<a href="#h1-11-3" id="h1-11-3" class="d">-
+</a> }
+ 
+ char
+<a href="#h1-12" id="h1-12" class="h">@@ -524,7 +545,122 @@ cookiepolicy_set(const WebKitCookieAcceptPolicy p)
+</a> 	case WEBKIT_COOKIE_POLICY_ACCEPT_ALWAYS:
+ 		return &#39;A&#39;;
+ 	}
+<a href="#h1-12-3" id="h1-12-3" class="i">+}
+</a><a href="#h1-12-4" id="h1-12-4" class="i">+
+</a><a href="#h1-12-5" id="h1-12-5" class="i">+void
+</a><a href="#h1-12-6" id="h1-12-6" class="i">+seturiparameters(Client *c, const char *uri)
+</a><a href="#h1-12-7" id="h1-12-7" class="i">+{
+</a><a href="#h1-12-8" id="h1-12-8" class="i">+	int i;
+</a><a href="#h1-12-9" id="h1-12-9" class="i">+
+</a><a href="#h1-12-10" id="h1-12-10" class="i">+	for (i = 0; i &lt; LENGTH(uriparams); ++i) {
+</a><a href="#h1-12-11" id="h1-12-11" class="i">+		if (uriparams[i].uri &amp;&amp;
+</a><a href="#h1-12-12" id="h1-12-12" class="i">+		    !regexec(&amp;(uriparams[i].re), uri, 0, NULL, 0)) {
+</a><a href="#h1-12-13" id="h1-12-13" class="i">+			curconfig = uriparams[i].config;
+</a><a href="#h1-12-14" id="h1-12-14" class="i">+			break;
+</a><a href="#h1-12-15" id="h1-12-15" class="i">+		}
+</a><a href="#h1-12-16" id="h1-12-16" class="i">+	}
+</a><a href="#h1-12-17" id="h1-12-17" class="i">+
+</a><a href="#h1-12-18" id="h1-12-18" class="i">+	for (i = 0; i &lt; ParameterLast; ++i)
+</a><a href="#h1-12-19" id="h1-12-19" class="i">+		setparameter(c, 0, i, &amp;curconfig[i].val);
+</a><a href="#h1-12-20" id="h1-12-20" class="i">+}
+</a><a href="#h1-12-21" id="h1-12-21" class="i">+
+</a><a href="#h1-12-22" id="h1-12-22" class="i">+void
+</a><a href="#h1-12-23" id="h1-12-23" class="i">+setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a><a href="#h1-12-24" id="h1-12-24" class="i">+{
+</a><a href="#h1-12-25" id="h1-12-25" class="i">+	WebKitSettings *s = webkit_web_view_get_settings(c-&gt;view);
+</a><a href="#h1-12-26" id="h1-12-26" class="i">+
+</a><a href="#h1-12-27" id="h1-12-27" class="i">+	switch (p) {
+</a><a href="#h1-12-28" id="h1-12-28" class="i">+	case CaretBrowsing:
+</a><a href="#h1-12-29" id="h1-12-29" class="i">+		webkit_settings_set_enable_caret_browsing(s, a-&gt;b);
+</a><a href="#h1-12-30" id="h1-12-30" class="i">+		refresh = 0;
+</a><a href="#h1-12-31" id="h1-12-31" class="i">+		break;
+</a><a href="#h1-12-32" id="h1-12-32" class="i">+	case CookiePolicies:
+</a><a href="#h1-12-33" id="h1-12-33" class="i">+		webkit_cookie_manager_set_accept_policy(
+</a><a href="#h1-12-34" id="h1-12-34" class="i">+		    webkit_web_context_get_cookie_manager(
+</a><a href="#h1-12-35" id="h1-12-35" class="i">+		    webkit_web_view_get_context(c-&gt;view)),
+</a><a href="#h1-12-36" id="h1-12-36" class="i">+		    cookiepolicy_get());
+</a><a href="#h1-12-37" id="h1-12-37" class="i">+		refresh = 0;
+</a><a href="#h1-12-38" id="h1-12-38" class="i">+		break;
+</a><a href="#h1-12-39" id="h1-12-39" class="i">+	case DiskCache:
+</a><a href="#h1-12-40" id="h1-12-40" class="i">+		webkit_web_context_set_cache_model(
+</a><a href="#h1-12-41" id="h1-12-41" class="i">+		    webkit_web_view_get_context(c-&gt;view),
+</a><a href="#h1-12-42" id="h1-12-42" class="i">+		    curconfig[DiskCache].val.b ?
+</a><a href="#h1-12-43" id="h1-12-43" class="i">+		    WEBKIT_CACHE_MODEL_WEB_BROWSER :
+</a><a href="#h1-12-44" id="h1-12-44" class="i">+		    WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
+</a><a href="#h1-12-45" id="h1-12-45" class="i">+		break;
+</a><a href="#h1-12-46" id="h1-12-46" class="i">+	case DNSPrefetch:
+</a><a href="#h1-12-47" id="h1-12-47" class="i">+		refresh = 0;
+</a><a href="#h1-12-48" id="h1-12-48" class="i">+		break;
+</a><a href="#h1-12-49" id="h1-12-49" class="i">+	case FontSize:
+</a><a href="#h1-12-50" id="h1-12-50" class="i">+		webkit_settings_set_default_font_size(
+</a><a href="#h1-12-51" id="h1-12-51" class="i">+		    webkit_web_view_get_settings(c-&gt;view),
+</a><a href="#h1-12-52" id="h1-12-52" class="i">+		    curconfig[FontSize].val.i);
+</a><a href="#h1-12-53" id="h1-12-53" class="i">+		break;
+</a><a href="#h1-12-54" id="h1-12-54" class="i">+	case FrameFlattening:
+</a><a href="#h1-12-55" id="h1-12-55" class="i">+		webkit_settings_set_enable_frame_flattening(s, a-&gt;b);
+</a><a href="#h1-12-56" id="h1-12-56" class="i">+		break;
+</a><a href="#h1-12-57" id="h1-12-57" class="i">+	case Geolocation:
+</a><a href="#h1-12-58" id="h1-12-58" class="i">+		break;
+</a><a href="#h1-12-59" id="h1-12-59" class="i">+	case HideBackground:
+</a><a href="#h1-12-60" id="h1-12-60" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-61" id="h1-12-61" class="i">+	case Inspector:
+</a><a href="#h1-12-62" id="h1-12-62" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-63" id="h1-12-63" class="i">+	case JavaScript:
+</a><a href="#h1-12-64" id="h1-12-64" class="i">+		webkit_settings_set_enable_javascript(s, a-&gt;b);
+</a><a href="#h1-12-65" id="h1-12-65" class="i">+		break;
+</a><a href="#h1-12-66" id="h1-12-66" class="i">+	case KioskMode:
+</a><a href="#h1-12-67" id="h1-12-67" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-68" id="h1-12-68" class="i">+	case LoadImages:
+</a><a href="#h1-12-69" id="h1-12-69" class="i">+		webkit_settings_set_auto_load_images(s, a-&gt;b);
+</a><a href="#h1-12-70" id="h1-12-70" class="i">+		break;
+</a><a href="#h1-12-71" id="h1-12-71" class="i">+	case Plugins:
+</a><a href="#h1-12-72" id="h1-12-72" class="i">+		webkit_settings_set_enable_plugins(s, a-&gt;b);
+</a><a href="#h1-12-73" id="h1-12-73" class="i">+		break;
+</a><a href="#h1-12-74" id="h1-12-74" class="i">+	case PreferredLanguages:
+</a><a href="#h1-12-75" id="h1-12-75" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-76" id="h1-12-76" class="i">+	case RunInFullscreen:
+</a><a href="#h1-12-77" id="h1-12-77" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-78" id="h1-12-78" class="i">+	case ScrollBars:
+</a><a href="#h1-12-79" id="h1-12-79" class="i">+		/* Disabled until we write some WebKitWebExtension for
+</a><a href="#h1-12-80" id="h1-12-80" class="i">+		 * manipulating the DOM directly.
+</a><a href="#h1-12-81" id="h1-12-81" class="i">+		enablescrollbars = !enablescrollbars;
+</a><a href="#h1-12-82" id="h1-12-82" class="i">+		evalscript(c, &quot;document.documentElement.style.overflow = &#39;%s&#39;&quot;,
+</a><a href="#h1-12-83" id="h1-12-83" class="i">+		    enablescrollbars ? &quot;auto&quot; : &quot;hidden&quot;);
+</a><a href="#h1-12-84" id="h1-12-84" class="i">+		*/
+</a><a href="#h1-12-85" id="h1-12-85" class="i">+		refresh = 0;
+</a><a href="#h1-12-86" id="h1-12-86" class="i">+		break;
+</a><a href="#h1-12-87" id="h1-12-87" class="i">+	case ShowIndicators:
+</a><a href="#h1-12-88" id="h1-12-88" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-89" id="h1-12-89" class="i">+	case SpellChecking:
+</a><a href="#h1-12-90" id="h1-12-90" class="i">+		webkit_web_context_set_spell_checking_enabled(
+</a><a href="#h1-12-91" id="h1-12-91" class="i">+		    webkit_web_view_get_context(c-&gt;view),
+</a><a href="#h1-12-92" id="h1-12-92" class="i">+		    curconfig[SpellChecking].val.b);
+</a><a href="#h1-12-93" id="h1-12-93" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-94" id="h1-12-94" class="i">+	case SpellLanguages:
+</a><a href="#h1-12-95" id="h1-12-95" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-96" id="h1-12-96" class="i">+	case StrictSSL:
+</a><a href="#h1-12-97" id="h1-12-97" class="i">+		webkit_web_context_set_tls_errors_policy(
+</a><a href="#h1-12-98" id="h1-12-98" class="i">+		    webkit_web_view_get_context(c-&gt;view),
+</a><a href="#h1-12-99" id="h1-12-99" class="i">+		    curconfig[StrictSSL].val.b ? WEBKIT_TLS_ERRORS_POLICY_FAIL :
+</a><a href="#h1-12-100" id="h1-12-100" class="i">+		    WEBKIT_TLS_ERRORS_POLICY_IGNORE);
+</a><a href="#h1-12-101" id="h1-12-101" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-102" id="h1-12-102" class="i">+	case Style:
+</a><a href="#h1-12-103" id="h1-12-103" class="i">+		if (curconfig[Style].val.b)
+</a><a href="#h1-12-104" id="h1-12-104" class="i">+			setstyle(c, getstyle(geturi(c)));
+</a><a href="#h1-12-105" id="h1-12-105" class="i">+		else
+</a><a href="#h1-12-106" id="h1-12-106" class="i">+			webkit_user_content_manager_remove_all_style_sheets(
+</a><a href="#h1-12-107" id="h1-12-107" class="i">+			    webkit_web_view_get_user_content_manager(c-&gt;view));
+</a><a href="#h1-12-108" id="h1-12-108" class="i">+		refresh = 0;
+</a><a href="#h1-12-109" id="h1-12-109" class="i">+		break;
+</a><a href="#h1-12-110" id="h1-12-110" class="i">+	case ZoomLevel:
+</a><a href="#h1-12-111" id="h1-12-111" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-112" id="h1-12-112" class="i">+	default:
+</a><a href="#h1-12-113" id="h1-12-113" class="i">+		return; /* do nothing */
+</a><a href="#h1-12-114" id="h1-12-114" class="i">+	}
+</a> 
+<a href="#h1-12-116" id="h1-12-116" class="i">+	updatetitle(c);
+</a><a href="#h1-12-117" id="h1-12-117" class="i">+	if (refresh)
+</a><a href="#h1-12-118" id="h1-12-118" class="i">+		reload(c, a);
+</a> }
+ 
+ const char *
+<a href="#h1-13" id="h1-13" class="h">@@ -612,30 +748,30 @@ newwindow(Client *c, const Arg *a, int noembed)
+</a> 
+ 	cmd[i++] = argv0;
+ 	cmd[i++] = &quot;-a&quot;;
+<a href="#h1-13-3" id="h1-13-3" class="d">-	cmd[i++] = cookiepolicies;
+</a><a href="#h1-13-4" id="h1-13-4" class="d">-	cmd[i++] = enablescrollbars ? &quot;-B&quot; : &quot;-b&quot;;
+</a><a href="#h1-13-5" id="h1-13-5" class="i">+	cmd[i++] = curconfig[CookiePolicies].val.v;
+</a><a href="#h1-13-6" id="h1-13-6" class="i">+	cmd[i++] = curconfig[ScrollBars].val.b ? &quot;-B&quot; : &quot;-b&quot;;
+</a> 	if (cookiefile &amp;&amp; g_strcmp0(cookiefile, &quot;&quot;)) {
+ 		cmd[i++] = &quot;-c&quot;;
+ 		cmd[i++] = cookiefile;
+ 	}
+<a href="#h1-13-11" id="h1-13-11" class="d">-	cmd[i++] = enablecache ? &quot;-D&quot; : &quot;-d&quot;;
+</a><a href="#h1-13-12" id="h1-13-12" class="i">+	cmd[i++] = curconfig[DiskCache].val.b ? &quot;-D&quot; : &quot;-d&quot;;
+</a> 	if (embed &amp;&amp; !noembed) {
+ 		cmd[i++] = &quot;-e&quot;;
+ 		snprintf(tmp, LENGTH(tmp), &quot;%lu&quot;, embed);
+ 		cmd[i++] = tmp;
+ 	}
+<a href="#h1-13-18" id="h1-13-18" class="d">-	cmd[i++] = runinfullscreen ? &quot;-F&quot; : &quot;-f&quot;;
+</a><a href="#h1-13-19" id="h1-13-19" class="d">-	cmd[i++] = allowgeolocation ? &quot;-G&quot; : &quot;-g&quot;;
+</a><a href="#h1-13-20" id="h1-13-20" class="d">-	cmd[i++] = loadimages ? &quot;-I&quot; : &quot;-i&quot;;
+</a><a href="#h1-13-21" id="h1-13-21" class="d">-	cmd[i++] = kioskmode ? &quot;-K&quot; : &quot;-k&quot;;
+</a><a href="#h1-13-22" id="h1-13-22" class="d">-	cmd[i++] = enablestyle ? &quot;-M&quot; : &quot;-m&quot;;
+</a><a href="#h1-13-23" id="h1-13-23" class="d">-	cmd[i++] = enableinspector ? &quot;-N&quot; : &quot;-n&quot;;
+</a><a href="#h1-13-24" id="h1-13-24" class="d">-	cmd[i++] = enableplugins ? &quot;-P&quot; : &quot;-p&quot;;
+</a><a href="#h1-13-25" id="h1-13-25" class="i">+	cmd[i++] = curconfig[RunInFullscreen].val.b ? &quot;-F&quot; : &quot;-f&quot; ;
+</a><a href="#h1-13-26" id="h1-13-26" class="i">+	cmd[i++] = curconfig[Geolocation].val.b ?     &quot;-G&quot; : &quot;-g&quot; ;
+</a><a href="#h1-13-27" id="h1-13-27" class="i">+	cmd[i++] = curconfig[LoadImages].val.b ?      &quot;-I&quot; : &quot;-i&quot; ;
+</a><a href="#h1-13-28" id="h1-13-28" class="i">+	cmd[i++] = curconfig[KioskMode].val.b ?       &quot;-K&quot; : &quot;-k&quot; ;
+</a><a href="#h1-13-29" id="h1-13-29" class="i">+	cmd[i++] = curconfig[Style].val.b ?           &quot;-M&quot; : &quot;-m&quot; ;
+</a><a href="#h1-13-30" id="h1-13-30" class="i">+	cmd[i++] = curconfig[Inspector].val.b ?       &quot;-N&quot; : &quot;-n&quot; ;
+</a><a href="#h1-13-31" id="h1-13-31" class="i">+	cmd[i++] = curconfig[Plugins].val.b ?         &quot;-P&quot; : &quot;-p&quot; ;
+</a> 	if (scriptfile &amp;&amp; g_strcmp0(scriptfile, &quot;&quot;)) {
+ 		cmd[i++] = &quot;-r&quot;;
+ 		cmd[i++] = scriptfile;
+ 	}
+<a href="#h1-13-36" id="h1-13-36" class="d">-	cmd[i++] = enablescripts ? &quot;-S&quot; : &quot;-s&quot;;
+</a><a href="#h1-13-37" id="h1-13-37" class="i">+	cmd[i++] = curconfig[JavaScript].val.b ? &quot;-S&quot; : &quot;-s&quot;;
+</a> 	if (stylefile &amp;&amp; g_strcmp0(stylefile, &quot;&quot;)) {
+ 		cmd[i++] = &quot;-t&quot;;
+ 		cmd[i++] = stylefile;
+<a href="#h1-14" id="h1-14" class="h">@@ -729,17 +865,17 @@ newview(Client *c, WebKitWebView *rv)
+</a> 		    webkit_web_view_new_with_related_view(rv));
+ 	} else {
+ 		settings = webkit_settings_new_with_settings(
+<a href="#h1-14-3" id="h1-14-3" class="d">-		           &quot;auto-load-images&quot;, loadimages,
+</a><a href="#h1-14-4" id="h1-14-4" class="d">-		           &quot;default-font-size&quot;, defaultfontsize,
+</a><a href="#h1-14-5" id="h1-14-5" class="d">-		           &quot;enable-caret-browsing&quot;, enablecaretbrowsing,
+</a><a href="#h1-14-6" id="h1-14-6" class="d">-		           &quot;enable-developer-extras&quot;, enableinspector,
+</a><a href="#h1-14-7" id="h1-14-7" class="d">-		           &quot;enable-dns-prefetching&quot;, enablednsprefetching,
+</a><a href="#h1-14-8" id="h1-14-8" class="d">-		           &quot;enable-frame-flattening&quot;, enableframeflattening,
+</a><a href="#h1-14-9" id="h1-14-9" class="d">-		           &quot;enable-html5-database&quot;, enablecache,
+</a><a href="#h1-14-10" id="h1-14-10" class="d">-		           &quot;enable-html5-local-storage&quot;, enablecache,
+</a><a href="#h1-14-11" id="h1-14-11" class="d">-		           &quot;enable-javascript&quot;, enablescripts,
+</a><a href="#h1-14-12" id="h1-14-12" class="d">-		           &quot;enable-plugins&quot;, enableplugins,
+</a><a href="#h1-14-13" id="h1-14-13" class="d">-		           NULL);
+</a><a href="#h1-14-14" id="h1-14-14" class="i">+		   &quot;auto-load-images&quot;, curconfig[LoadImages].val.b,
+</a><a href="#h1-14-15" id="h1-14-15" class="i">+		   &quot;default-font-size&quot;, curconfig[FontSize].val.f,
+</a><a href="#h1-14-16" id="h1-14-16" class="i">+		   &quot;enable-caret-browsing&quot;, curconfig[CaretBrowsing].val.b,
+</a><a href="#h1-14-17" id="h1-14-17" class="i">+		   &quot;enable-developer-extras&quot;, curconfig[Inspector].val.b,
+</a><a href="#h1-14-18" id="h1-14-18" class="i">+		   &quot;enable-dns-prefetching&quot;, curconfig[DNSPrefetch].val.b,
+</a><a href="#h1-14-19" id="h1-14-19" class="i">+		   &quot;enable-frame-flattening&quot;, curconfig[FrameFlattening].val.b,
+</a><a href="#h1-14-20" id="h1-14-20" class="i">+		   &quot;enable-html5-database&quot;, curconfig[DiskCache].val.b,
+</a><a href="#h1-14-21" id="h1-14-21" class="i">+		   &quot;enable-html5-local-storage&quot;, curconfig[DiskCache].val.b,
+</a><a href="#h1-14-22" id="h1-14-22" class="i">+		   &quot;enable-javascript&quot;, curconfig[JavaScript].val.b,
+</a><a href="#h1-14-23" id="h1-14-23" class="i">+		   &quot;enable-plugins&quot;, curconfig[Plugins].val.b,
+</a><a href="#h1-14-24" id="h1-14-24" class="i">+		   NULL);
+</a> /* For mor interesting settings, have a look at
+  * http://webkitgtk.org/reference/webkit2gtk/stable/WebKitSettings.html */
+ 
+<a href="#h1-15" id="h1-15" class="h">@@ -764,12 +900,12 @@ newview(Client *c, WebKitWebView *rv)
+</a> 		webkit_web_context_set_process_model(context,
+ 		    WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES);
+ 		/* ssl */
+<a href="#h1-15-3" id="h1-15-3" class="d">-		webkit_web_context_set_tls_errors_policy(context, strictssl ?
+</a><a href="#h1-15-4" id="h1-15-4" class="d">-		    WEBKIT_TLS_ERRORS_POLICY_FAIL :
+</a><a href="#h1-15-5" id="h1-15-5" class="i">+		webkit_web_context_set_tls_errors_policy(context,
+</a><a href="#h1-15-6" id="h1-15-6" class="i">+		    curconfig[StrictSSL].val.b ? WEBKIT_TLS_ERRORS_POLICY_FAIL :
+</a> 		    WEBKIT_TLS_ERRORS_POLICY_IGNORE);
+ 		/* disk cache */
+<a href="#h1-15-9" id="h1-15-9" class="d">-		webkit_web_context_set_cache_model(context, enablecache ?
+</a><a href="#h1-15-10" id="h1-15-10" class="d">-		    WEBKIT_CACHE_MODEL_WEB_BROWSER :
+</a><a href="#h1-15-11" id="h1-15-11" class="i">+		webkit_web_context_set_cache_model(context,
+</a><a href="#h1-15-12" id="h1-15-12" class="i">+		    curconfig[DiskCache].val.b ? WEBKIT_CACHE_MODEL_WEB_BROWSER :
+</a> 		    WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
+ 
+ 		/* Currently only works with text file to be compatible with curl */
+<a href="#h1-16" id="h1-16" class="h">@@ -782,11 +918,11 @@ newview(Client *c, WebKitWebView *rv)
+</a> 		    cookiepolicy_get());
+ 		/* languages */
+ 		webkit_web_context_set_preferred_languages(context,
+<a href="#h1-16-3" id="h1-16-3" class="d">-		                                           preferedlanguages);
+</a><a href="#h1-16-4" id="h1-16-4" class="i">+		    curconfig[PreferredLanguages].val.v);
+</a> 		webkit_web_context_set_spell_checking_languages(context,
+<a href="#h1-16-6" id="h1-16-6" class="d">-		    spellinglanguages);
+</a><a href="#h1-16-7" id="h1-16-7" class="i">+		    curconfig[SpellLanguages].val.v);
+</a> 		webkit_web_context_set_spell_checking_enabled(context,
+<a href="#h1-16-9" id="h1-16-9" class="d">-		    enablespellchecking);
+</a><a href="#h1-16-10" id="h1-16-10" class="i">+		    curconfig[SpellChecking].val.b);
+</a> 
+ 		g_signal_connect(G_OBJECT(context), &quot;download-started&quot;,
+ 		                 G_CALLBACK(downloadstarted), c);
+<a href="#h1-17" id="h1-17" class="h">@@ -907,7 +1043,7 @@ winevent(GtkWidget *w, GdkEvent *e, Client *c)
+</a> 		updatetitle(c);
+ 		break;
+ 	case GDK_KEY_PRESS:
+<a href="#h1-17-3" id="h1-17-3" class="d">-		if (!kioskmode) {
+</a><a href="#h1-17-4" id="h1-17-4" class="i">+		if (!curconfig[KioskMode].val.b) {
+</a> 			for (i = 0; i &lt; LENGTH(keys); ++i) {
+ 				if (gdk_keyval_to_lower(e-&gt;key.keyval) ==
+ 				    keys[i].keyval &amp;&amp;
+<a href="#h1-18" id="h1-18" class="h">@@ -943,7 +1079,7 @@ showview(WebKitWebView *v, Client *c)
+</a> 	GdkWindow *gwin;
+ 
+ 	c-&gt;finder = webkit_web_view_get_find_controller(c-&gt;view);
+<a href="#h1-18-3" id="h1-18-3" class="d">-	if (enableinspector)
+</a><a href="#h1-18-4" id="h1-18-4" class="i">+	if (curconfig[Inspector].val.b)
+</a> 		c-&gt;inspector = webkit_web_view_get_inspector(c-&gt;view);
+ 
+ 	c-&gt;win = createwindow(c);
+<a href="#h1-19" id="h1-19" class="h">@@ -960,19 +1096,20 @@ showview(WebKitWebView *v, Client *c)
+</a> 		puts(winid);
+ 	}
+ 
+<a href="#h1-19-3" id="h1-19-3" class="d">-	if (hidebackground)
+</a><a href="#h1-19-4" id="h1-19-4" class="i">+	if (curconfig[HideBackground].val.b)
+</a> 		webkit_web_view_set_background_color(c-&gt;view, &amp;bgcolor);
+ 
+<a href="#h1-19-7" id="h1-19-7" class="d">-	if (!kioskmode) {
+</a><a href="#h1-19-8" id="h1-19-8" class="i">+	if (!curconfig[KioskMode].val.b) {
+</a> 		gdk_window_set_events(gwin, GDK_ALL_EVENTS_MASK);
+ 		gdk_window_add_filter(gwin, processx, c);
+ 	}
+ 
+<a href="#h1-19-13" id="h1-19-13" class="d">-	if (runinfullscreen)
+</a><a href="#h1-19-14" id="h1-19-14" class="i">+	if (curconfig[RunInFullscreen].val.b)
+</a> 		togglefullscreen(c, NULL);
+ 
+<a href="#h1-19-17" id="h1-19-17" class="d">-	if (zoomlevel != 1.0)
+</a><a href="#h1-19-18" id="h1-19-18" class="d">-		webkit_web_view_set_zoom_level(c-&gt;view, zoomlevel);
+</a><a href="#h1-19-19" id="h1-19-19" class="i">+	if (curconfig[ZoomLevel].val.f != 1.0)
+</a><a href="#h1-19-20" id="h1-19-20" class="i">+		webkit_web_view_set_zoom_level(c-&gt;view,
+</a><a href="#h1-19-21" id="h1-19-21" class="i">+		                               curconfig[ZoomLevel].val.f);
+</a> 
+ 	setatom(c, AtomFind, &quot;&quot;);
+ 	setatom(c, AtomUri, &quot;about:blank&quot;);
+<a href="#h1-20" id="h1-20" class="h">@@ -1022,6 +1159,7 @@ loadchanged(WebKitWebView *v, WebKitLoadEvent e, Client *c)
+</a> 
+ 	switch (e) {
+ 	case WEBKIT_LOAD_STARTED:
+<a href="#h1-20-3" id="h1-20-3" class="i">+		curconfig = defconfig;
+</a> 		setatom(c, AtomUri, title);
+ 		c-&gt;title = title;
+ 		c-&gt;tlsflags = G_TLS_CERTIFICATE_VALIDATE_ALL + 1;
+<a href="#h1-21" id="h1-21" class="h">@@ -1037,8 +1175,8 @@ loadchanged(WebKitWebView *v, WebKitLoadEvent e, Client *c)
+</a> 		    &amp;(c-&gt;tlsflags)))
+ 			c-&gt;tlsflags = G_TLS_CERTIFICATE_VALIDATE_ALL + 1;
+ 
+<a href="#h1-21-3" id="h1-21-3" class="d">-		if (enablestyle)
+</a><a href="#h1-21-4" id="h1-21-4" class="d">-			setstyle(c, getstyle(geturi(c)));
+</a><a href="#h1-21-5" id="h1-21-5" class="i">+		setatom(c, AtomUri, geturi(c));
+</a><a href="#h1-21-6" id="h1-21-6" class="i">+		seturiparameters(c, geturi(c));
+</a> 		break;
+ 	case WEBKIT_LOAD_FINISHED:
+ 		/* Disabled until we write some WebKitWebExtension for
+<a href="#h1-22" id="h1-22" class="h">@@ -1093,7 +1231,7 @@ gboolean
+</a> permissionrequested(WebKitWebView *v, WebKitPermissionRequest *r, Client *c)
+ {
+ 	if (WEBKIT_IS_GEOLOCATION_PERMISSION_REQUEST(r)) {
+<a href="#h1-22-3" id="h1-22-3" class="d">-		if (allowgeolocation)
+</a><a href="#h1-22-4" id="h1-22-4" class="i">+		if (curconfig[Geolocation].val.b)
+</a> 			webkit_permission_request_allow(r);
+ 		else
+ 			webkit_permission_request_deny(r);
+<a href="#h1-23" id="h1-23" class="h">@@ -1302,13 +1440,15 @@ void
+</a> zoom(Client *c, const Arg *a)
+ {
+ 	if (a-&gt;i &gt; 0)
+<a href="#h1-23-3" id="h1-23-3" class="d">-		webkit_web_view_set_zoom_level(c-&gt;view, zoomlevel + 0.1);
+</a><a href="#h1-23-4" id="h1-23-4" class="i">+		webkit_web_view_set_zoom_level(c-&gt;view,
+</a><a href="#h1-23-5" id="h1-23-5" class="i">+		                               curconfig[ZoomLevel].val.f + 0.1);
+</a> 	else if (a-&gt;i &lt; 0)
+<a href="#h1-23-7" id="h1-23-7" class="d">-		webkit_web_view_set_zoom_level(c-&gt;view, zoomlevel - 0.1);
+</a><a href="#h1-23-8" id="h1-23-8" class="i">+		webkit_web_view_set_zoom_level(c-&gt;view,
+</a><a href="#h1-23-9" id="h1-23-9" class="i">+		                               curconfig[ZoomLevel].val.f - 0.1);
+</a> 	else
+ 		webkit_web_view_set_zoom_level(c-&gt;view, 1.0);
+ 
+<a href="#h1-23-13" id="h1-23-13" class="d">-	zoomlevel = webkit_web_view_get_zoom_level(c-&gt;view);
+</a><a href="#h1-23-14" id="h1-23-14" class="i">+	curconfig[ZoomLevel].val.f = webkit_web_view_get_zoom_level(c-&gt;view);
+</a> }
+ 
+ void
+<a href="#h1-24" id="h1-24" class="h">@@ -1364,49 +1504,8 @@ stop(Client *c, const Arg *a)
+</a> void
+ toggle(Client *c, const Arg *a)
+ {
+<a href="#h1-24-3" id="h1-24-3" class="d">-	WebKitSettings *s = webkit_web_view_get_settings(c-&gt;view);
+</a><a href="#h1-24-4" id="h1-24-4" class="d">-
+</a><a href="#h1-24-5" id="h1-24-5" class="d">-	switch ((unsigned int)a-&gt;i) {
+</a><a href="#h1-24-6" id="h1-24-6" class="d">-	case CaretBrowsing:
+</a><a href="#h1-24-7" id="h1-24-7" class="d">-		enablecaretbrowsing = !enablecaretbrowsing;
+</a><a href="#h1-24-8" id="h1-24-8" class="d">-		webkit_settings_set_enable_caret_browsing(s,
+</a><a href="#h1-24-9" id="h1-24-9" class="d">-		    enablecaretbrowsing);
+</a><a href="#h1-24-10" id="h1-24-10" class="d">-		updatetitle(c);
+</a><a href="#h1-24-11" id="h1-24-11" class="d">-		return; /* do not reload */
+</a><a href="#h1-24-12" id="h1-24-12" class="d">-		break;
+</a><a href="#h1-24-13" id="h1-24-13" class="d">-	case FrameFlattening:
+</a><a href="#h1-24-14" id="h1-24-14" class="d">-		enableframeflattening = !enableframeflattening;
+</a><a href="#h1-24-15" id="h1-24-15" class="d">-		webkit_settings_set_enable_frame_flattening(s,
+</a><a href="#h1-24-16" id="h1-24-16" class="d">-		    enableframeflattening);
+</a><a href="#h1-24-17" id="h1-24-17" class="d">-		break;
+</a><a href="#h1-24-18" id="h1-24-18" class="d">-	case Geolocation:
+</a><a href="#h1-24-19" id="h1-24-19" class="d">-		allowgeolocation = !allowgeolocation;
+</a><a href="#h1-24-20" id="h1-24-20" class="d">-		break;
+</a><a href="#h1-24-21" id="h1-24-21" class="d">-	case JavaScript:
+</a><a href="#h1-24-22" id="h1-24-22" class="d">-		enablescripts = !enablescripts;
+</a><a href="#h1-24-23" id="h1-24-23" class="d">-		webkit_settings_set_enable_javascript(s, enablescripts);
+</a><a href="#h1-24-24" id="h1-24-24" class="d">-		break;
+</a><a href="#h1-24-25" id="h1-24-25" class="d">-	case LoadImages:
+</a><a href="#h1-24-26" id="h1-24-26" class="d">-		loadimages = !loadimages;
+</a><a href="#h1-24-27" id="h1-24-27" class="d">-		webkit_settings_set_auto_load_images(s, loadimages);
+</a><a href="#h1-24-28" id="h1-24-28" class="d">-		break;
+</a><a href="#h1-24-29" id="h1-24-29" class="d">-	case Plugins:
+</a><a href="#h1-24-30" id="h1-24-30" class="d">-		enableplugins = !enableplugins;
+</a><a href="#h1-24-31" id="h1-24-31" class="d">-		webkit_settings_set_enable_plugins(s, enableplugins);
+</a><a href="#h1-24-32" id="h1-24-32" class="d">-		break;
+</a><a href="#h1-24-33" id="h1-24-33" class="d">-	case ScrollBars:
+</a><a href="#h1-24-34" id="h1-24-34" class="d">-		/* Disabled until we write some WebKitWebExtension for
+</a><a href="#h1-24-35" id="h1-24-35" class="d">-		 * manipulating the DOM directly.
+</a><a href="#h1-24-36" id="h1-24-36" class="d">-		enablescrollbars = !enablescrollbars;
+</a><a href="#h1-24-37" id="h1-24-37" class="d">-		evalscript(c, &quot;document.documentElement.style.overflow = &#39;%s&#39;&quot;,
+</a><a href="#h1-24-38" id="h1-24-38" class="d">-		    enablescrollbars ? &quot;auto&quot; : &quot;hidden&quot;);
+</a><a href="#h1-24-39" id="h1-24-39" class="d">-		*/
+</a><a href="#h1-24-40" id="h1-24-40" class="d">-		return; /* do not reload */
+</a><a href="#h1-24-41" id="h1-24-41" class="d">-		break;
+</a><a href="#h1-24-42" id="h1-24-42" class="d">-	default:
+</a><a href="#h1-24-43" id="h1-24-43" class="d">-		break;
+</a><a href="#h1-24-44" id="h1-24-44" class="d">-	}
+</a><a href="#h1-24-45" id="h1-24-45" class="d">-	reload(c, a);
+</a><a href="#h1-24-46" id="h1-24-46" class="i">+	curconfig[a-&gt;i].val.b ^= 1;
+</a><a href="#h1-24-47" id="h1-24-47" class="i">+	setparameter(c, 1, (ParamName)a-&gt;i, &amp;curconfig[a-&gt;i].val);
+</a> }
+ 
+ void
+<a href="#h1-25" id="h1-25" class="h">@@ -1423,35 +1522,15 @@ void
+</a> togglecookiepolicy(Client *c, const Arg *a)
+ {
+ 	++cookiepolicy;
+<a href="#h1-25-3" id="h1-25-3" class="d">-	cookiepolicy %= strlen(cookiepolicies);
+</a><a href="#h1-25-4" id="h1-25-4" class="d">-
+</a><a href="#h1-25-5" id="h1-25-5" class="d">-	webkit_cookie_manager_set_accept_policy(
+</a><a href="#h1-25-6" id="h1-25-6" class="d">-	    webkit_web_context_get_cookie_manager(
+</a><a href="#h1-25-7" id="h1-25-7" class="d">-	    webkit_web_view_get_context(c-&gt;view)),
+</a><a href="#h1-25-8" id="h1-25-8" class="d">-	    cookiepolicy_get());
+</a><a href="#h1-25-9" id="h1-25-9" class="i">+	cookiepolicy %= strlen(curconfig[CookiePolicies].val.v);
+</a> 
+<a href="#h1-25-11" id="h1-25-11" class="d">-	updatetitle(c);
+</a><a href="#h1-25-12" id="h1-25-12" class="d">-	/* Do not reload. */
+</a><a href="#h1-25-13" id="h1-25-13" class="d">-}
+</a><a href="#h1-25-14" id="h1-25-14" class="d">-
+</a><a href="#h1-25-15" id="h1-25-15" class="d">-void
+</a><a href="#h1-25-16" id="h1-25-16" class="d">-togglestyle(Client *c, const Arg *a)
+</a><a href="#h1-25-17" id="h1-25-17" class="d">-{
+</a><a href="#h1-25-18" id="h1-25-18" class="d">-	enablestyle = !enablestyle;
+</a><a href="#h1-25-19" id="h1-25-19" class="d">-
+</a><a href="#h1-25-20" id="h1-25-20" class="d">-	if (enablestyle)
+</a><a href="#h1-25-21" id="h1-25-21" class="d">-		setstyle(c, getstyle(geturi(c)));
+</a><a href="#h1-25-22" id="h1-25-22" class="d">-	else
+</a><a href="#h1-25-23" id="h1-25-23" class="d">-		webkit_user_content_manager_remove_all_style_sheets(
+</a><a href="#h1-25-24" id="h1-25-24" class="d">-		    webkit_web_view_get_user_content_manager(c-&gt;view));
+</a><a href="#h1-25-25" id="h1-25-25" class="d">-
+</a><a href="#h1-25-26" id="h1-25-26" class="d">-	updatetitle(c);
+</a><a href="#h1-25-27" id="h1-25-27" class="i">+	setparameter(c, 0, CookiePolicies, NULL);
+</a> }
+ 
+ void
+ toggleinspector(Client *c, const Arg *a)
+ {
+<a href="#h1-25-33" id="h1-25-33" class="d">-	if (enableinspector) {
+</a><a href="#h1-25-34" id="h1-25-34" class="i">+	if (curconfig[Inspector].val.b) {
+</a> 		if (webkit_web_inspector_is_attached(c-&gt;inspector))
+ 			webkit_web_inspector_close(c-&gt;inspector);
+ 		else
+<a href="#h1-26" id="h1-26" class="h">@@ -1520,76 +1599,76 @@ main(int argc, char *argv[])
+</a> 	/* command line args */
+ 	ARGBEGIN {
+ 	case &#39;a&#39;:
+<a href="#h1-26-3" id="h1-26-3" class="d">-		cookiepolicies = EARGF(usage());
+</a><a href="#h1-26-4" id="h1-26-4" class="i">+		defconfig FSETV(CookiePolicies, EARGF(usage()));
+</a> 		break;
+ 	case &#39;b&#39;:
+<a href="#h1-26-7" id="h1-26-7" class="d">-		enablescrollbars = 0;
+</a><a href="#h1-26-8" id="h1-26-8" class="i">+		defconfig FSETB(ScrollBars, 0);
+</a> 		break;
+ 	case &#39;B&#39;:
+<a href="#h1-26-11" id="h1-26-11" class="d">-		enablescrollbars = 1;
+</a><a href="#h1-26-12" id="h1-26-12" class="i">+		defconfig FSETB(ScrollBars, 1);
+</a> 		break;
+ 	case &#39;c&#39;:
+ 		cookiefile = EARGF(usage());
+ 		break;
+ 	case &#39;d&#39;:
+<a href="#h1-26-18" id="h1-26-18" class="d">-		enablecache = 0;
+</a><a href="#h1-26-19" id="h1-26-19" class="i">+		defconfig FSETB(DiskCache, 0);
+</a> 		break;
+ 	case &#39;D&#39;:
+<a href="#h1-26-22" id="h1-26-22" class="d">-		enablecache = 1;
+</a><a href="#h1-26-23" id="h1-26-23" class="i">+		defconfig FSETB(DiskCache, 1);
+</a> 		break;
+ 	case &#39;e&#39;:
+ 		embed = strtol(EARGF(usage()), NULL, 0);
+ 		break;
+ 	case &#39;f&#39;:
+<a href="#h1-26-29" id="h1-26-29" class="d">-		runinfullscreen = 0;
+</a><a href="#h1-26-30" id="h1-26-30" class="i">+		defconfig FSETB(RunInFullscreen, 0);
+</a> 		break;
+ 	case &#39;F&#39;:
+<a href="#h1-26-33" id="h1-26-33" class="d">-		runinfullscreen = 1;
+</a><a href="#h1-26-34" id="h1-26-34" class="i">+		defconfig FSETB(RunInFullscreen, 1);
+</a> 		break;
+ 	case &#39;g&#39;:
+<a href="#h1-26-37" id="h1-26-37" class="d">-		allowgeolocation = 0;
+</a><a href="#h1-26-38" id="h1-26-38" class="i">+		defconfig FSETB(Geolocation, 0);
+</a> 		break;
+ 	case &#39;G&#39;:
+<a href="#h1-26-41" id="h1-26-41" class="d">-		allowgeolocation = 1;
+</a><a href="#h1-26-42" id="h1-26-42" class="i">+		defconfig FSETB(Geolocation, 1);
+</a> 		break;
+ 	case &#39;i&#39;:
+<a href="#h1-26-45" id="h1-26-45" class="d">-		loadimages = 0;
+</a><a href="#h1-26-46" id="h1-26-46" class="i">+		defconfig FSETB(LoadImages, 0);
+</a> 		break;
+ 	case &#39;I&#39;:
+<a href="#h1-26-49" id="h1-26-49" class="d">-		loadimages = 1;
+</a><a href="#h1-26-50" id="h1-26-50" class="i">+		defconfig FSETB(LoadImages, 1);
+</a> 		break;
+ 	case &#39;k&#39;:
+<a href="#h1-26-53" id="h1-26-53" class="d">-		kioskmode = 0;
+</a><a href="#h1-26-54" id="h1-26-54" class="i">+		defconfig FSETB(KioskMode, 0);
+</a> 		break;
+ 	case &#39;K&#39;:
+<a href="#h1-26-57" id="h1-26-57" class="d">-		kioskmode = 1;
+</a><a href="#h1-26-58" id="h1-26-58" class="i">+		defconfig FSETB(KioskMode, 1);
+</a> 		break;
+ 	case &#39;m&#39;:
+<a href="#h1-26-61" id="h1-26-61" class="d">-		enablestyle = 0;
+</a><a href="#h1-26-62" id="h1-26-62" class="i">+		defconfig FSETB(Style, 0);
+</a> 		break;
+ 	case &#39;M&#39;:
+<a href="#h1-26-65" id="h1-26-65" class="d">-		enablestyle = 1;
+</a><a href="#h1-26-66" id="h1-26-66" class="i">+		defconfig FSETB(Style, 1);
+</a> 		break;
+ 	case &#39;n&#39;:
+<a href="#h1-26-69" id="h1-26-69" class="d">-		enableinspector = 0;
+</a><a href="#h1-26-70" id="h1-26-70" class="i">+		defconfig FSETB(Inspector, 0);
+</a> 		break;
+ 	case &#39;N&#39;:
+<a href="#h1-26-73" id="h1-26-73" class="d">-		enableinspector = 1;
+</a><a href="#h1-26-74" id="h1-26-74" class="i">+		defconfig FSETB(Inspector, 1);
+</a> 		break;
+ 	case &#39;p&#39;:
+<a href="#h1-26-77" id="h1-26-77" class="d">-		enableplugins = 0;
+</a><a href="#h1-26-78" id="h1-26-78" class="i">+		defconfig FSETB(Plugins, 0);
+</a> 		break;
+ 	case &#39;P&#39;:
+<a href="#h1-26-81" id="h1-26-81" class="d">-		enableplugins = 1;
+</a><a href="#h1-26-82" id="h1-26-82" class="i">+		defconfig FSETB(Plugins, 1);
+</a> 		break;
+ 	case &#39;r&#39;:
+ 		scriptfile = EARGF(usage());
+ 		break;
+ 	case &#39;s&#39;:
+<a href="#h1-26-88" id="h1-26-88" class="d">-		enablescripts = 0;
+</a><a href="#h1-26-89" id="h1-26-89" class="i">+		defconfig FSETB(JavaScript, 0);
+</a> 		break;
+ 	case &#39;S&#39;:
+<a href="#h1-26-92" id="h1-26-92" class="d">-		enablescripts = 1;
+</a><a href="#h1-26-93" id="h1-26-93" class="i">+		defconfig FSETB(JavaScript, 1);
+</a> 		break;
+ 	case &#39;t&#39;:
+ 		stylefile = EARGF(usage());
+<a href="#h1-27" id="h1-27" class="h">@@ -1604,7 +1683,7 @@ main(int argc, char *argv[])
+</a> 		showxid = 1;
+ 		break;
+ 	case &#39;z&#39;:
+<a href="#h1-27-3" id="h1-27-3" class="d">-		zoomlevel = strtof(EARGF(usage()), NULL);
+</a><a href="#h1-27-4" id="h1-27-4" class="i">+		defconfig FSETF(ZoomLevel, strtof(EARGF(usage()), NULL));
+</a> 		break;
+ 	default:
+ 		usage();
+</pre>
+</div>
+</body>
+</html>

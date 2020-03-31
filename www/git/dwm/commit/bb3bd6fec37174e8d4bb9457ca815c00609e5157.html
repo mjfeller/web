@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Markus&#39; tagset purge of alternative view on _NET_ACTIVE_WINDOW event - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bb3bd6fec37174e8d4bb9457ca815c00609e5157.html">bb3bd6fec37174e8d4bb9457ca815c00609e5157</a>
+<b>parent</b> <a href="../commit/e63bf229485a576d68975dd4eb00c210394133ae.html">e63bf229485a576d68975dd4eb00c210394133ae</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon,  5 Dec 2016 10:16:46 +0100
+
+applied Markus&#39; tagset purge of alternative view on _NET_ACTIVE_WINDOW event
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">38</td><td><span class="i">++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>1 file changed, 18 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -153,7 +153,6 @@ static void buttonpress(XEvent *e);
+</a> static void checkotherwm(void);
+ static void cleanup(void);
+ static void cleanupmon(Monitor *mon);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void clearurgent(Client *c);
+</a> static void clientmessage(XEvent *e);
+ static void configure(Client *c);
+ static void configurenotify(XEvent *e);
+<a href="#h0-1" id="h0-1" class="h">@@ -204,6 +203,7 @@ static void setfullscreen(Client *c, int fullscreen);
+</a> static void setlayout(const Arg *arg);
+ static void setmfact(const Arg *arg);
+ static void setup(void);
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void seturgent(Client *c, int urg);
+</a> static void showhide(Client *c);
+ static void sigchld(int unused);
+ static void spawn(const Arg *arg);
+<a href="#h0-2" id="h0-2" class="h">@@ -509,19 +509,6 @@ cleanupmon(Monitor *mon)
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="d">-clearurgent(Client *c)
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-{
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	XWMHints *wmh;
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-	c-&gt;isurgent = 0;
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-	if (!(wmh = XGetWMHints(dpy, c-&gt;win)))
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-		return;
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-	wmh-&gt;flags &amp;= ~XUrgencyHint;
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-	XSetWMHints(dpy, c-&gt;win, wmh);
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-	XFree(wmh);
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-}
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-void
+</a> clientmessage(XEvent *e)
+ {
+ 	XClientMessageEvent *cme = &amp;e-&gt;xclient;
+<a href="#h0-3" id="h0-3" class="h">@@ -534,11 +521,8 @@ clientmessage(XEvent *e)
+</a> 			setfullscreen(c, (cme-&gt;data.l[0] == 1 /* _NET_WM_STATE_ADD    */
+ 			              || (cme-&gt;data.l[0] == 2 /* _NET_WM_STATE_TOGGLE */ &amp;&amp; !c-&gt;isfullscreen)));
+ 	} else if (cme-&gt;message_type == netatom[NetActiveWindow]) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-		if (!ISVISIBLE(c)) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-			c-&gt;mon-&gt;seltags ^= 1;
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-			c-&gt;mon-&gt;tagset[c-&gt;mon-&gt;seltags] = c-&gt;tags;
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-		}
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-		pop(c);
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+		if (c != selmon-&gt;sel &amp;&amp; !c-&gt;isurgent)
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+			seturgent(c, 1);
+</a> 	}
+ }
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -806,7 +790,7 @@ focus(Client *c)
+</a> 		if (c-&gt;mon != selmon)
+ 			selmon = c-&gt;mon;
+ 		if (c-&gt;isurgent)
+<a href="#h0-4-3" id="h0-4-3" class="d">-			clearurgent(c);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+			seturgent(c, 0);
+</a> 		detachstack(c);
+ 		attachstack(c);
+ 		grabbuttons(c, 1);
+<a href="#h0-5" id="h0-5" class="h">@@ -1616,6 +1600,20 @@ setup(void)
+</a> 	focus(NULL);
+ }
+ 
+<a href="#h0-5-3" id="h0-5-3" class="i">+
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+void
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+seturgent(Client *c, int urg)
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+{
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	XWMHints *wmh;
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+	c-&gt;isurgent = urg;
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+	if (!(wmh = XGetWMHints(dpy, c-&gt;win)))
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+		return;
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+	wmh-&gt;flags = urg ? (wmh-&gt;flags | XUrgencyHint) : (wmh-&gt;flags &amp; ~XUrgencyHint);
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+	XSetWMHints(dpy, c-&gt;win, wmh);
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+	XFree(wmh);
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+}
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+
+</a> void
+ showhide(Client *c)
+ {
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implemented focus on enterwindow on titlebars - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1d852259526e41ebaad7325ee42c118b1cc12f71.html">1d852259526e41ebaad7325ee42c118b1cc12f71</a>
+<b>parent</b> <a href="../commit/3af6434085aee75bd90e22aee95419dc0ae0b969.html">3af6434085aee75bd90e22aee95419dc0ae0b969</a>
+<b>Author:</b> arg@10ksloc.org &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Wed,  2 Aug 2006 11:28:27 +0200
+
+implemented focus on enterwindow on titlebars
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 2 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -230,7 +230,7 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	XGetTransientForHint(dpy, c-&gt;win, &amp;trans);
+ 	twa.override_redirect = 1;
+ 	twa.background_pixmap = ParentRelative;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	twa.event_mask = ExposureMask;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	twa.event_mask = ExposureMask | EnterWindowMask;
+</a> 
+ 	c-&gt;title = XCreateWindow(dpy, root, c-&gt;tx, c-&gt;ty, c-&gt;tw, c-&gt;th,
+ 			0, DefaultDepth(dpy, screen), CopyFromParent,
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -202,7 +202,7 @@ enternotify(XEvent *e)
+</a> 	if(ev-&gt;detail == NotifyInferior)
+ 		return;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-	if((c = getclient(ev-&gt;window)))
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	if((c = getclient(ev-&gt;window)) || (c = getctitle(ev-&gt;window)))
+</a> 		focus(c);
+ 	else if(ev-&gt;window == root)
+ 		issel = True;
+</pre>
+</div>
+</body>
+</html>

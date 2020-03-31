@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add config option for smooth scrolling activation - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4a1876eb80dca2c2a3636a7d3af55a34916bb03e.html">4a1876eb80dca2c2a3636a7d3af55a34916bb03e</a>
+<b>parent</b> <a href="../commit/93a3e4cda031d226549430e89b8119ce5c1ad7b3.html">93a3e4cda031d226549430e89b8119ce5c1ad7b3</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Thu, 11 May 2017 15:33:42 +0200
+
+Add config option for smooth scrolling activation
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 6 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -32,6 +32,7 @@ static Parameter defconfig[ParameterLast] = {
+</a> 	SETB(ScrollBars,         1),
+ 	SETB(ShowIndicators,     1),
+ 	SETB(SiteQuirks,         1),
+<a href="#h0-0-3" id="h0-0-3" class="i">+	SETB(SmoothScrolling,    0),
+</a> 	SETB(SpellChecking,      0),
+ 	SETV(SpellLanguages,     ((char *[]){ &quot;en_US&quot;, NULL })),
+ 	SETB(StrictTLS,          1),
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -83,6 +83,7 @@ typedef enum {
+</a> 	ScrollBars,
+ 	ShowIndicators,
+ 	SiteQuirks,
+<a href="#h1-0-3" id="h1-0-3" class="i">+	SmoothScrolling,
+</a> 	SpellChecking,
+ 	SpellLanguages,
+ 	StrictTLS,
+<a href="#h1-1" id="h1-1" class="h">@@ -750,6 +751,9 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a> 		return; /* do not update */
+ 	case ShowIndicators:
+ 		break;
+<a href="#h1-1-3" id="h1-1-3" class="i">+	case SmoothScrolling:
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		webkit_settings_set_enable_smooth_scrolling(s, a-&gt;b);
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+		return; /* do not update */
+</a> 	case SiteQuirks:
+ 		webkit_settings_set_enable_site_specific_quirks(s, a-&gt;b);
+ 		break;
+<a href="#h1-2" id="h1-2" class="h">@@ -1029,6 +1033,7 @@ newview(Client *c, WebKitWebView *rv)
+</a> 		   &quot;enable-plugins&quot;, curconfig[Plugins].val.b,
+ 		   &quot;enable-accelerated-2d-canvas&quot;, curconfig[AcceleratedCanvas].val.b,
+ 		   &quot;enable-site-specific-quirks&quot;, curconfig[SiteQuirks].val.b,
+<a href="#h1-2-3" id="h1-2-3" class="i">+		   &quot;enable-smooth-scrolling&quot;, curconfig[SmoothScrolling].val.b,
+</a> 		   &quot;media-playback-requires-user-gesture&quot;, curconfig[MediaManualPlay].val.b,
+ 		   NULL);
+ /* For more interesting settings, have a look at
+</pre>
+</div>
+</body>
+</html>

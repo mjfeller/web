@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fixing the style and making the inspector work again. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8c15f0e75880b7c1d80884f1dcf503e4097fe86b.html">8c15f0e75880b7c1d80884f1dcf503e4097fe86b</a>
+<b>parent</b> <a href="../commit/0415175e10880585c765613af0bd43e02de87116.html">0415175e10880585c765613af0bd43e02de87116</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sat, 26 Jan 2013 21:01:23 +0100
+
+Fixing the style and making the inspector work again.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">50</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>1 file changed, 37 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -42,14 +42,14 @@ union Arg {
+</a> };
+ 
+ typedef struct Client {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	GtkWidget *win, *scroll, *vbox, *indicator;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	GtkWidget *win, *scroll, *vbox, *indicator, *pane;
+</a> 	WebKitWebView *view;
+ 	WebKitWebInspector *inspector;
+ 	char *title, *linkhover;
+ 	const char *uri, *needle;
+ 	gint progress;
+ 	struct Client *next;
+<a href="#h0-0-11" id="h0-0-11" class="d">-	gboolean zoomed, fullscreen, isinspector, sslfailed;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	gboolean zoomed, fullscreen, isinspecting, sslfailed;
+</a> } Client;
+ 
+ typedef struct {
+<a href="#h0-1" id="h0-1" class="h">@@ -506,28 +506,45 @@ initdownload(WebKitWebView *view, WebKitDownload *o, Client *c) {
+</a> 
+ static void
+ inspector(Client *c, const Arg *arg) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(c-&gt;isinspector)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		return;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	webkit_web_inspector_show(c-&gt;inspector);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	if(c-&gt;isinspecting) {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		webkit_web_inspector_close(c-&gt;inspector);
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	} else {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		webkit_web_inspector_show(c-&gt;inspector);
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	}
+</a> }
+ 
+ static WebKitWebView *
+ inspector_new(WebKitWebInspector *i, WebKitWebView *v, Client *c) {
+<a href="#h0-1-15" id="h0-1-15" class="d">-	Client *n = newclient();
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-	n-&gt;isinspector = true;
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-	return n-&gt;view;
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	return WEBKIT_WEB_VIEW(webkit_web_view_new());
+</a> }
+ 
+ static gboolean
+ inspector_show(WebKitWebInspector *i, Client *c) {
+<a href="#h0-1-24" id="h0-1-24" class="d">-	gtk_widget_show(GTK_WIDGET(webkit_web_inspector_get_web_view(i)));
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	WebKitWebView *w;
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+	if(c-&gt;isinspecting)
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+		return false;
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+	w = webkit_web_inspector_get_web_view(i);
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+	gtk_paned_pack2(GTK_PANED(c-&gt;pane), GTK_WIDGET(w), TRUE, TRUE);
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+	gtk_widget_show(GTK_WIDGET(w));
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+	c-&gt;isinspecting = true;
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+
+</a> 	return true;
+ }
+ 
+ static gboolean
+ inspector_close(WebKitWebInspector *i, Client *c) {
+<a href="#h0-1-40" id="h0-1-40" class="d">-	gtk_widget_hide(GTK_WIDGET(webkit_web_inspector_get_web_view(i)));
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+	GtkWidget *w;
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+	if(!c-&gt;isinspecting)
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+		return false;
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+
+</a><a href="#h0-1-46" id="h0-1-46" class="i">+	w = GTK_WIDGET(webkit_web_inspector_get_web_view(i));
+</a><a href="#h0-1-47" id="h0-1-47" class="i">+	gtk_widget_hide(w);
+</a><a href="#h0-1-48" id="h0-1-48" class="i">+	gtk_widget_destroy(w);
+</a><a href="#h0-1-49" id="h0-1-49" class="i">+	c-&gt;isinspecting = false;
+</a><a href="#h0-1-50" id="h0-1-50" class="i">+
+</a> 	return true;
+ }
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -671,8 +688,12 @@ newclient(void) {
+</a> 			&quot;key-press-event&quot;,
+ 			G_CALLBACK(keypress), c);
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	/* Pane */
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	c-&gt;pane = gtk_vpaned_new();
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+
+</a> 	/* VBox */
+ 	c-&gt;vbox = gtk_vbox_new(FALSE, 0);
+<a href="#h0-2-8" id="h0-2-8" class="i">+	gtk_paned_pack1(GTK_PANED(c-&gt;pane), c-&gt;vbox, TRUE, TRUE);
+</a> 
+ 	/* Scrolled Window */
+ 	c-&gt;scroll = gtk_scrolled_window_new(NULL, NULL);
+<a href="#h0-3" id="h0-3" class="h">@@ -726,7 +747,7 @@ newclient(void) {
+</a> 
+ 	/* Arranging */
+ 	gtk_container_add(GTK_CONTAINER(c-&gt;scroll), GTK_WIDGET(c-&gt;view));
+<a href="#h0-3-3" id="h0-3-3" class="d">-	gtk_container_add(GTK_CONTAINER(c-&gt;win), c-&gt;vbox);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	gtk_container_add(GTK_CONTAINER(c-&gt;win), c-&gt;pane);
+</a> 	gtk_container_add(GTK_CONTAINER(c-&gt;vbox), c-&gt;scroll);
+ 	gtk_container_add(GTK_CONTAINER(c-&gt;vbox), c-&gt;indicator);
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -736,6 +757,7 @@ newclient(void) {
+</a> 	gtk_box_set_child_packing(GTK_BOX(c-&gt;vbox), c-&gt;scroll, TRUE,
+ 			TRUE, 0, GTK_PACK_START);
+ 	gtk_widget_grab_focus(GTK_WIDGET(c-&gt;view));
+<a href="#h0-4-3" id="h0-4-3" class="i">+	gtk_widget_show(c-&gt;pane);
+</a> 	gtk_widget_show(c-&gt;vbox);
+ 	gtk_widget_show(c-&gt;scroll);
+ 	gtk_widget_show(GTK_WIDGET(c-&gt;view));
+<a href="#h0-5" id="h0-5" class="h">@@ -776,7 +798,7 @@ newclient(void) {
+</a> 				G_CALLBACK(inspector_close), c);
+ 		g_signal_connect(G_OBJECT(c-&gt;inspector), &quot;finished&quot;,
+ 				G_CALLBACK(inspector_finished), c);
+<a href="#h0-5-3" id="h0-5-3" class="d">-		c-&gt;isinspector = false;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		c-&gt;isinspecting = false;
+</a> 	}
+ 
+ 	g_free(uri);
+<a href="#h0-6" id="h0-6" class="h">@@ -789,6 +811,7 @@ newclient(void) {
+</a> 	c-&gt;title = NULL;
+ 	c-&gt;next = clients;
+ 	clients = c;
+<a href="#h0-6-3" id="h0-6-3" class="i">+
+</a> 	if(showxid) {
+ 		gdk_display_sync(gtk_widget_get_display(c-&gt;win));
+ 		printf(&quot;%u\n&quot;,
+<a href="#h0-7" id="h0-7" class="h">@@ -798,6 +821,7 @@ newclient(void) {
+</a> 			die(&quot;Error closing stdout&quot;);
+                 }
+ 	}
+<a href="#h0-7-3" id="h0-7-3" class="i">+
+</a> 	return c;
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

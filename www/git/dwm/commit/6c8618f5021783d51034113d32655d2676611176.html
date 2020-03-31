@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>renamed domax into ismax - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6c8618f5021783d51034113d32655d2676611176.html">6c8618f5021783d51034113d32655d2676611176</a>
+<b>parent</b> <a href="../commit/9189f7a12dce4e3b38341e0704cca257994ab2ba.html">9189f7a12dce4e3b38341e0704cca257994ab2ba</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 26 May 2008 10:13:51 +0100
+
+renamed domax into ismax
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -212,7 +212,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[UnmapNotify] = unmapnotify
+ };
+ Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h0-0-3" id="h0-0-3" class="d">-Bool domax = False;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+Bool ismax = False;
+</a> Bool otherwm, readin;
+ Bool running = True;
+ uint tagset[] = {1, 1}; /* after start, first tag is selected */
+<a href="#h0-1" id="h0-1" class="h">@@ -273,7 +273,7 @@ arrange(void) {
+</a> 		}
+ 
+ 	focus(NULL);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(lt-&gt;arrange &amp;&amp; !domax)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if(lt-&gt;arrange &amp;&amp; !ismax)
+</a> 		lt-&gt;arrange();
+ 	restack();
+ }
+<a href="#h0-2" id="h0-2" class="h">@@ -328,7 +328,7 @@ buttonpress(XEvent *e) {
+</a> 	}
+ 	else if((c = getclient(ev-&gt;window))) {
+ 		focus(c);
+<a href="#h0-2-3" id="h0-2-3" class="d">-		if(CLEANMASK(ev-&gt;state) != MODKEY || domax)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		if(CLEANMASK(ev-&gt;state) != MODKEY || ismax)
+</a> 			return;
+ 		if(ev-&gt;button == Button1)
+ 			movemouse(c);
+<a href="#h0-3" id="h0-3" class="h">@@ -500,7 +500,7 @@ drawbar(void) {
+</a> 	}
+ 	if(blw &gt; 0) {
+ 		dc.w = blw;
+<a href="#h0-3-3" id="h0-3-3" class="d">-		drawtext(lt-&gt;symbol, dc.norm, domax);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		drawtext(lt-&gt;symbol, dc.norm, ismax);
+</a> 		x = dc.x + dc.w;
+ 	}
+ 	else
+<a href="#h0-4" id="h0-4" class="h">@@ -629,7 +629,7 @@ focus(Client *c) {
+</a> 	}
+ 	sel = c;
+ 	if(c) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-		if(domax) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		if(ismax) {
+</a> 			XMoveResizeWindow(dpy, c-&gt;win, wx, wy, ww - 2 * c-&gt;bw, wh - 2 * c-&gt;bw);
+ 			c-&gt;ismax = True;
+ 		}
+<a href="#h0-5" id="h0-5" class="h">@@ -1194,9 +1194,9 @@ restack(void) {
+</a> 	drawbar();
+ 	if(!sel)
+ 		return;
+<a href="#h0-5-3" id="h0-5-3" class="d">-	if(domax || sel-&gt;isfloating || !lt-&gt;arrange)
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	if(ismax || sel-&gt;isfloating || !lt-&gt;arrange)
+</a> 		XRaiseWindow(dpy, sel-&gt;win);
+<a href="#h0-5-6" id="h0-5-6" class="d">-	if(!domax &amp;&amp; lt-&gt;arrange) {
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	if(!ismax &amp;&amp; lt-&gt;arrange) {
+</a> 		wc.stack_mode = Below;
+ 		wc.sibling = barwin;
+ 		for(c = stack; c; c = c-&gt;snext)
+<a href="#h0-6" id="h0-6" class="h">@@ -1512,7 +1512,7 @@ togglelayout(const void *arg) {
+</a> 
+ void
+ togglemax(const void *arg) {
+<a href="#h0-6-3" id="h0-6-3" class="d">-	domax = !domax;
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	ismax = !ismax;
+</a> 	arrange();
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

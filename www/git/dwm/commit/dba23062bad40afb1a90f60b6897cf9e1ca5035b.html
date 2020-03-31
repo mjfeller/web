@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>rearranged several stuff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/dba23062bad40afb1a90f60b6897cf9e1ca5035b.html">dba23062bad40afb1a90f60b6897cf9e1ca5035b</a>
+<b>parent</b> <a href="../commit/c0705eeb65733e8c5091e47d5bdc701a0779a949.html">c0705eeb65733e8c5091e47d5bdc701a0779a949</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Sat, 15 Jul 2006 16:30:50 +0200
+
+rearranged several stuff
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">client.c</a></td><td> | </td><td class="num">145</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">draw.c</a></td><td> | </td><td class="num">37</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">-------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dwm.h</a></td><td> | </td><td class="num">36</td><td><span class="i">++++++++++++++++++++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">event.c</a></td><td> | </td><td class="num">89</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h5">key.c</a></td><td> | </td><td class="num">192</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">main.c</a></td><td> | </td><td class="num">112</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h7">screen.c</a></td><td> | </td><td class="num">100</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h8">tag.c</a></td><td> | </td><td class="num">171</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">util.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>10 files changed, 442 insertions(+), 444 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = client.c draw.c event.c key.c main.c screen.c util.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+SRC = client.c draw.c event.c main.c tag.c util.c
+</a> OBJ = ${SRC:.c=.o}
+ MAN1 = dwm.1 
+ BIN = dwm
+<b>diff --git a/<a id="h1" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -11,18 +11,6 @@
+</a> 
+ #include &quot;dwm.h&quot;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-static Rule rule[] = {
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	/* class			instance	tags						floating */
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	{ &quot;Firefox-bin&quot;,	&quot;Gecko&quot;,	{ [Twww] = &quot;www&quot; },			False },
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-};
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-Client *
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-getnext(Client *c)
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-{
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-	for(; c &amp;&amp; !c-&gt;tags[tsel]; c = c-&gt;next);
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	return c;
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-}
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-
+</a> void
+ ban(Client *c)
+ {
+<a href="#h1-1" id="h1-1" class="h">@@ -31,7 +19,7 @@ ban(Client *c)
+</a> }
+ 
+ static void
+<a href="#h1-1-3" id="h1-1-3" class="d">-resize_title(Client *c)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+resizetitle(Client *c)
+</a> {
+ 	int i;
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -72,7 +60,7 @@ settitle(Client *c)
+</a> 		}
+ 	}
+ 	XFree(name.value);
+<a href="#h1-2-3" id="h1-2-3" class="d">-	resize_title(c);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	resizetitle(c);
+</a> }
+ 
+ void
+<a href="#h1-3" id="h1-3" class="h">@@ -143,42 +131,6 @@ focus(Client *c)
+</a> 	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+ }
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-static void
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-init_tags(Client *c)
+</a><a href="#h1-3-5" id="h1-3-5" class="d">-{
+</a><a href="#h1-3-6" id="h1-3-6" class="d">-	XClassHint ch;
+</a><a href="#h1-3-7" id="h1-3-7" class="d">-	static unsigned int len = rule ? sizeof(rule) / sizeof(rule[0]) : 0;
+</a><a href="#h1-3-8" id="h1-3-8" class="d">-	unsigned int i, j;
+</a><a href="#h1-3-9" id="h1-3-9" class="d">-	Bool matched = False;
+</a><a href="#h1-3-10" id="h1-3-10" class="d">-
+</a><a href="#h1-3-11" id="h1-3-11" class="d">-	if(!len) {
+</a><a href="#h1-3-12" id="h1-3-12" class="d">-		c-&gt;tags[tsel] = tags[tsel];
+</a><a href="#h1-3-13" id="h1-3-13" class="d">-		return;
+</a><a href="#h1-3-14" id="h1-3-14" class="d">-	}
+</a><a href="#h1-3-15" id="h1-3-15" class="d">-
+</a><a href="#h1-3-16" id="h1-3-16" class="d">-	if(XGetClassHint(dpy, c-&gt;win, &amp;ch)) {
+</a><a href="#h1-3-17" id="h1-3-17" class="d">-		if(ch.res_class &amp;&amp; ch.res_name) {
+</a><a href="#h1-3-18" id="h1-3-18" class="d">-			for(i = 0; i &lt; len; i++)
+</a><a href="#h1-3-19" id="h1-3-19" class="d">-				if(!strncmp(rule[i].class, ch.res_class, sizeof(rule[i].class))
+</a><a href="#h1-3-20" id="h1-3-20" class="d">-					&amp;&amp; !strncmp(rule[i].instance, ch.res_name, sizeof(rule[i].instance)))
+</a><a href="#h1-3-21" id="h1-3-21" class="d">-				{
+</a><a href="#h1-3-22" id="h1-3-22" class="d">-					for(j = 0; j &lt; TLast; j++)
+</a><a href="#h1-3-23" id="h1-3-23" class="d">-						c-&gt;tags[j] = rule[i].tags[j];
+</a><a href="#h1-3-24" id="h1-3-24" class="d">-					c-&gt;floating = rule[i].floating;
+</a><a href="#h1-3-25" id="h1-3-25" class="d">-					matched = True;
+</a><a href="#h1-3-26" id="h1-3-26" class="d">-					break;
+</a><a href="#h1-3-27" id="h1-3-27" class="d">-				}
+</a><a href="#h1-3-28" id="h1-3-28" class="d">-		}
+</a><a href="#h1-3-29" id="h1-3-29" class="d">-		if(ch.res_class)
+</a><a href="#h1-3-30" id="h1-3-30" class="d">-			XFree(ch.res_class);
+</a><a href="#h1-3-31" id="h1-3-31" class="d">-		if(ch.res_name)
+</a><a href="#h1-3-32" id="h1-3-32" class="d">-			XFree(ch.res_name);
+</a><a href="#h1-3-33" id="h1-3-33" class="d">-	}
+</a><a href="#h1-3-34" id="h1-3-34" class="d">-
+</a><a href="#h1-3-35" id="h1-3-35" class="d">-	if(!matched)
+</a><a href="#h1-3-36" id="h1-3-36" class="d">-		c-&gt;tags[tsel] = tags[tsel];
+</a><a href="#h1-3-37" id="h1-3-37" class="d">-}
+</a><a href="#h1-3-38" id="h1-3-38" class="d">-
+</a> void
+ manage(Window w, XWindowAttributes *wa)
+ {
+<a href="#h1-4" id="h1-4" class="h">@@ -196,7 +148,7 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	c-&gt;h = wa-&gt;height;
+ 	c-&gt;th = bh;
+ 	c-&gt;border = 1;
+<a href="#h1-4-3" id="h1-4-3" class="d">-	c-&gt;proto = proto(c-&gt;win);
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+	c-&gt;proto = getproto(c-&gt;win);
+</a> 	setsize(c);
+ 	XSelectInput(dpy, c-&gt;win,
+ 			StructureNotifyMask | PropertyChangeMask | EnterWindowMask);
+<a href="#h1-5" id="h1-5" class="h">@@ -211,7 +163,7 @@ manage(Window w, XWindowAttributes *wa)
+</a> 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;twa);
+ 
+ 	settitle(c);
+<a href="#h1-5-3" id="h1-5-3" class="d">-	init_tags(c);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	settags(c);
+</a> 
+ 	for(l = &amp;clients; *l; l = &amp;(*l)-&gt;next);
+ 	c-&gt;next = *l; /* *l == nil */
+<a href="#h1-6" id="h1-6" class="h">@@ -224,8 +176,8 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	XGrabButton(dpy, Button3, Mod1Mask, c-&gt;win, False, ButtonPressMask,
+ 			GrabModeAsync, GrabModeSync, None, None);
+ 
+<a href="#h1-6-3" id="h1-6-3" class="d">-	if(!c-&gt;floating)
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-		c-&gt;floating = trans
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+	if(!c-&gt;dofloat)
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+		c-&gt;dofloat = trans
+</a> 			|| ((c-&gt;maxw == c-&gt;minw) &amp;&amp; (c-&gt;maxh == c-&gt;minh));
+ 
+ 	arrange(NULL);
+<a href="#h1-7" id="h1-7" class="h">@@ -321,7 +273,7 @@ resize(Client *c, Bool inc)
+</a> 		c-&gt;w = c-&gt;maxw;
+ 	if(c-&gt;maxh &amp;&amp; c-&gt;h &gt; c-&gt;maxh)
+ 		c-&gt;h = c-&gt;maxh;
+<a href="#h1-7-3" id="h1-7-3" class="d">-	resize_title(c);
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	resizetitle(c);
+</a> 	XSetWindowBorderWidth(dpy, c-&gt;win, 1);
+ 	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+ 	e.type = ConfigureNotify;
+<a href="#h1-8" id="h1-8" class="h">@@ -339,7 +291,7 @@ resize(Client *c, Bool inc)
+</a> }
+ 
+ static int
+<a href="#h1-8-3" id="h1-8-3" class="d">-dummy_xerror(Display *dsply, XErrorEvent *err)
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+xerrordummy(Display *dsply, XErrorEvent *ee)
+</a> {
+ 	return 0;
+ }
+<a href="#h1-9" id="h1-9" class="h">@@ -350,7 +302,7 @@ unmanage(Client *c)
+</a> 	Client **l;
+ 
+ 	XGrabServer(dpy);
+<a href="#h1-9-3" id="h1-9-3" class="d">-	XSetErrorHandler(dummy_xerror);
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+	XSetErrorHandler(xerrordummy);
+</a> 
+ 	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+ 	XDestroyWindow(dpy, c-&gt;title);
+<a href="#h1-10" id="h1-10" class="h">@@ -374,7 +326,7 @@ unmanage(Client *c)
+</a> }
+ 
+ Client *
+<a href="#h1-10-3" id="h1-10-3" class="d">-gettitle(Window w)
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+getctitle(Window w)
+</a> {
+ 	Client *c;
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h1-11" id="h1-11" class="h">@@ -392,3 +344,80 @@ getclient(Window w)
+</a> 			return c;
+ 	return NULL;
+ }
+<a href="#h1-11-3" id="h1-11-3" class="i">+
+</a><a href="#h1-11-4" id="h1-11-4" class="i">+void
+</a><a href="#h1-11-5" id="h1-11-5" class="i">+zoom(Arg *arg)
+</a><a href="#h1-11-6" id="h1-11-6" class="i">+{
+</a><a href="#h1-11-7" id="h1-11-7" class="i">+	Client **l, *c;
+</a><a href="#h1-11-8" id="h1-11-8" class="i">+
+</a><a href="#h1-11-9" id="h1-11-9" class="i">+	if(!sel)
+</a><a href="#h1-11-10" id="h1-11-10" class="i">+		return;
+</a><a href="#h1-11-11" id="h1-11-11" class="i">+
+</a><a href="#h1-11-12" id="h1-11-12" class="i">+	if(sel == getnext(clients) &amp;&amp; sel-&gt;next)  {
+</a><a href="#h1-11-13" id="h1-11-13" class="i">+		if((c = getnext(sel-&gt;next)))
+</a><a href="#h1-11-14" id="h1-11-14" class="i">+			sel = c;
+</a><a href="#h1-11-15" id="h1-11-15" class="i">+	}
+</a><a href="#h1-11-16" id="h1-11-16" class="i">+
+</a><a href="#h1-11-17" id="h1-11-17" class="i">+	for(l = &amp;clients; *l &amp;&amp; *l != sel; l = &amp;(*l)-&gt;next);
+</a><a href="#h1-11-18" id="h1-11-18" class="i">+	*l = sel-&gt;next;
+</a><a href="#h1-11-19" id="h1-11-19" class="i">+
+</a><a href="#h1-11-20" id="h1-11-20" class="i">+	sel-&gt;next = clients; /* pop */
+</a><a href="#h1-11-21" id="h1-11-21" class="i">+	clients = sel;
+</a><a href="#h1-11-22" id="h1-11-22" class="i">+	arrange(NULL);
+</a><a href="#h1-11-23" id="h1-11-23" class="i">+	focus(sel);
+</a><a href="#h1-11-24" id="h1-11-24" class="i">+}
+</a><a href="#h1-11-25" id="h1-11-25" class="i">+
+</a><a href="#h1-11-26" id="h1-11-26" class="i">+void
+</a><a href="#h1-11-27" id="h1-11-27" class="i">+maximize(Arg *arg)
+</a><a href="#h1-11-28" id="h1-11-28" class="i">+{
+</a><a href="#h1-11-29" id="h1-11-29" class="i">+	if(!sel)
+</a><a href="#h1-11-30" id="h1-11-30" class="i">+		return;
+</a><a href="#h1-11-31" id="h1-11-31" class="i">+	sel-&gt;x = sx;
+</a><a href="#h1-11-32" id="h1-11-32" class="i">+	sel-&gt;y = sy + bh;
+</a><a href="#h1-11-33" id="h1-11-33" class="i">+	sel-&gt;w = sw - 2 * sel-&gt;border;
+</a><a href="#h1-11-34" id="h1-11-34" class="i">+	sel-&gt;h = sh - 2 * sel-&gt;border - bh;
+</a><a href="#h1-11-35" id="h1-11-35" class="i">+	higher(sel);
+</a><a href="#h1-11-36" id="h1-11-36" class="i">+	resize(sel, False);
+</a><a href="#h1-11-37" id="h1-11-37" class="i">+}
+</a><a href="#h1-11-38" id="h1-11-38" class="i">+
+</a><a href="#h1-11-39" id="h1-11-39" class="i">+void
+</a><a href="#h1-11-40" id="h1-11-40" class="i">+focusprev(Arg *arg)
+</a><a href="#h1-11-41" id="h1-11-41" class="i">+{
+</a><a href="#h1-11-42" id="h1-11-42" class="i">+	Client *c;
+</a><a href="#h1-11-43" id="h1-11-43" class="i">+
+</a><a href="#h1-11-44" id="h1-11-44" class="i">+	if(!sel)
+</a><a href="#h1-11-45" id="h1-11-45" class="i">+		return;
+</a><a href="#h1-11-46" id="h1-11-46" class="i">+
+</a><a href="#h1-11-47" id="h1-11-47" class="i">+	if((c = sel-&gt;revert &amp;&amp; sel-&gt;revert-&gt;tags[tsel] ? sel-&gt;revert : NULL)) {
+</a><a href="#h1-11-48" id="h1-11-48" class="i">+		higher(c);
+</a><a href="#h1-11-49" id="h1-11-49" class="i">+		focus(c);
+</a><a href="#h1-11-50" id="h1-11-50" class="i">+	}
+</a><a href="#h1-11-51" id="h1-11-51" class="i">+}
+</a><a href="#h1-11-52" id="h1-11-52" class="i">+
+</a><a href="#h1-11-53" id="h1-11-53" class="i">+void
+</a><a href="#h1-11-54" id="h1-11-54" class="i">+focusnext(Arg *arg)
+</a><a href="#h1-11-55" id="h1-11-55" class="i">+{
+</a><a href="#h1-11-56" id="h1-11-56" class="i">+	Client *c;
+</a><a href="#h1-11-57" id="h1-11-57" class="i">+   
+</a><a href="#h1-11-58" id="h1-11-58" class="i">+	if(!sel)
+</a><a href="#h1-11-59" id="h1-11-59" class="i">+		return;
+</a><a href="#h1-11-60" id="h1-11-60" class="i">+
+</a><a href="#h1-11-61" id="h1-11-61" class="i">+	if(!(c = getnext(sel-&gt;next)))
+</a><a href="#h1-11-62" id="h1-11-62" class="i">+		c = getnext(clients);
+</a><a href="#h1-11-63" id="h1-11-63" class="i">+	if(c) {
+</a><a href="#h1-11-64" id="h1-11-64" class="i">+		higher(c);
+</a><a href="#h1-11-65" id="h1-11-65" class="i">+		c-&gt;revert = sel;
+</a><a href="#h1-11-66" id="h1-11-66" class="i">+		focus(c);
+</a><a href="#h1-11-67" id="h1-11-67" class="i">+	}
+</a><a href="#h1-11-68" id="h1-11-68" class="i">+}
+</a><a href="#h1-11-69" id="h1-11-69" class="i">+
+</a><a href="#h1-11-70" id="h1-11-70" class="i">+void
+</a><a href="#h1-11-71" id="h1-11-71" class="i">+killclient(Arg *arg)
+</a><a href="#h1-11-72" id="h1-11-72" class="i">+{
+</a><a href="#h1-11-73" id="h1-11-73" class="i">+	if(!sel)
+</a><a href="#h1-11-74" id="h1-11-74" class="i">+		return;
+</a><a href="#h1-11-75" id="h1-11-75" class="i">+	if(sel-&gt;proto &amp; WM_PROTOCOL_DELWIN)
+</a><a href="#h1-11-76" id="h1-11-76" class="i">+		sendevent(sel-&gt;win, wm_atom[WMProtocols], wm_atom[WMDelete]);
+</a><a href="#h1-11-77" id="h1-11-77" class="i">+	else
+</a><a href="#h1-11-78" id="h1-11-78" class="i">+		XKillClient(dpy, sel-&gt;win);
+</a><a href="#h1-11-79" id="h1-11-79" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -11,33 +11,42 @@
+</a> #include &quot;dwm.h&quot;
+ 
+ void
+<a href="#h2-0-3" id="h2-0-3" class="i">+drawall()
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+{
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	Client *c;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	for(c = clients; c; c = getnext(c-&gt;next))
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+		drawtitle(c);
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	drawstatus();
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+}
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+void
+</a> drawstatus()
+ {
+ 	int i;
+<a href="#h2-0-16" id="h2-0-16" class="i">+	Bool istile = arrange == dotile;
+</a> 
+ 	dc.x = dc.y = 0;
+ 	dc.w = bw;
+<a href="#h2-0-20" id="h2-0-20" class="d">-	drawtext(NULL, False, False);
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+	drawtext(NULL, !istile, False);
+</a> 
+<a href="#h2-0-23" id="h2-0-23" class="d">-	if(arrange == floating) {
+</a><a href="#h2-0-24" id="h2-0-24" class="d">-		dc.w = textw(&quot;~&quot;);
+</a><a href="#h2-0-25" id="h2-0-25" class="d">-		drawtext(&quot;~&quot;, False, False);
+</a><a href="#h2-0-26" id="h2-0-26" class="d">-	}
+</a><a href="#h2-0-27" id="h2-0-27" class="d">-	else
+</a><a href="#h2-0-28" id="h2-0-28" class="d">-		dc.w = 0;
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+	dc.w = 0;
+</a> 	for(i = 0; i &lt; TLast; i++) {
+ 		dc.x += dc.w;
+ 		dc.w = textw(tags[i]);
+<a href="#h2-0-33" id="h2-0-33" class="d">-		drawtext(tags[i], i == tsel, True);
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+		if(istile)
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+			drawtext(tags[i], (i == tsel), True);
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+		else
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+			drawtext(tags[i], (i != tsel), True);
+</a> 	}
+ 	if(sel) {
+ 		dc.x += dc.w;
+ 		dc.w = textw(sel-&gt;name);
+<a href="#h2-0-42" id="h2-0-42" class="d">-		drawtext(sel-&gt;name, True, True);
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+		drawtext(sel-&gt;name, istile, True);
+</a> 	}
+ 	dc.w = textw(stext);
+ 	dc.x = bx + bw - dc.w;
+<a href="#h2-0-47" id="h2-0-47" class="d">-	drawtext(stext, False, False);
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+	drawtext(stext, !istile, False);
+</a> 
+ 	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, bw, bh, 0, 0);
+ 	XFlush(dpy);
+<a href="#h2-1" id="h2-1" class="h">@@ -47,6 +56,8 @@ void
+</a> drawtitle(Client *c)
+ {
+ 	int i;
+<a href="#h2-1-3" id="h2-1-3" class="i">+	Bool istile = arrange == dotile;
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+
+</a> 	if(c == sel) {
+ 		drawstatus();
+ 		XUnmapWindow(dpy, c-&gt;title);
+<a href="#h2-2" id="h2-2" class="h">@@ -64,12 +75,12 @@ drawtitle(Client *c)
+</a> 		if(c-&gt;tags[i]) {
+ 			dc.x += dc.w;
+ 			dc.w = textw(c-&gt;tags[i]);
+<a href="#h2-2-3" id="h2-2-3" class="d">-			drawtext(c-&gt;tags[i], False, True);
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+			drawtext(c-&gt;tags[i], !istile, True);
+</a> 		}
+ 	}
+ 	dc.x += dc.w;
+ 	dc.w = textw(c-&gt;name);
+<a href="#h2-2-9" id="h2-2-9" class="d">-	drawtext(c-&gt;name, False, True);
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+	drawtext(c-&gt;name, !istile, True);
+</a> 	XCopyArea(dpy, dc.drawable, c-&gt;title, dc.gc,
+ 			0, 0, c-&gt;tw, c-&gt;th, 0, 0);
+ 	XFlush(dpy);
+<a href="#h2-3" id="h2-3" class="h">@@ -215,7 +226,7 @@ setfont(const char *fontstr)
+</a> 		if (!dc.font.xfont)
+ 			dc.font.xfont = XLoadQueryFont(dpy, &quot;fixed&quot;);
+ 		if (!dc.font.xfont)
+<a href="#h2-3-3" id="h2-3-3" class="d">-			error(&quot;error, cannot init &#39;fixed&#39; font\n&quot;);
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+			eprint(&quot;error, cannot init &#39;fixed&#39; font\n&quot;);
+</a> 		dc.font.ascent = dc.font.xfont-&gt;ascent;
+ 		dc.font.descent = dc.font.xfont-&gt;descent;
+ 	}
+<b>diff --git a/<a id="h3" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -66,7 +66,7 @@ struct Client {
+</a> 	int grav;
+ 	unsigned int border;
+ 	long flags; 
+<a href="#h3-0-3" id="h3-0-3" class="d">-	Bool floating;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	Bool dofloat;
+</a> 	Window win;
+ 	Window title;
+ 	Client *next;
+<a href="#h3-1" id="h3-1" class="h">@@ -77,7 +77,7 @@ struct Rule {
+</a> 	const char *class;
+ 	const char *instance;
+ 	char *tags[TLast];
+<a href="#h3-1-3" id="h3-1-3" class="d">-	Bool floating;
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+	Bool dofloat;
+</a> };
+ 
+ struct Key {
+<a href="#h3-2" id="h3-2" class="h">@@ -103,6 +103,7 @@ extern DC dc;
+</a> extern Client *clients, *sel;
+ 
+ /* client.c */
+<a href="#h3-2-3" id="h3-2-3" class="i">+extern void ban(Client *c);
+</a> extern void manage(Window w, XWindowAttributes *wa);
+ extern void unmanage(Client *c);
+ extern Client *getclient(Window w);
+<a href="#h3-3" id="h3-3" class="h">@@ -110,14 +111,18 @@ extern void focus(Client *c);
+</a> extern void settitle(Client *c);
+ extern void resize(Client *c, Bool inc);
+ extern void setsize(Client *c);
+<a href="#h3-3-3" id="h3-3-3" class="d">-extern Client *gettitle(Window w);
+</a><a href="#h3-3-4" id="h3-3-4" class="i">+extern Client *getctitle(Window w);
+</a> extern void higher(Client *c);
+ extern void lower(Client *c);
+ extern void gravitate(Client *c, Bool invert);
+<a href="#h3-3-8" id="h3-3-8" class="d">-extern void ban(Client *c);
+</a><a href="#h3-3-9" id="h3-3-9" class="d">-extern Client *getnext(Client *c);
+</a><a href="#h3-3-10" id="h3-3-10" class="i">+extern void zoom(Arg *arg);
+</a><a href="#h3-3-11" id="h3-3-11" class="i">+extern void maximize(Arg *arg);
+</a><a href="#h3-3-12" id="h3-3-12" class="i">+extern void focusprev(Arg *arg);
+</a><a href="#h3-3-13" id="h3-3-13" class="i">+extern void focusnext(Arg *arg);
+</a><a href="#h3-3-14" id="h3-3-14" class="i">+extern void killclient(Arg *arg);
+</a> 
+ /* draw.c */
+<a href="#h3-3-17" id="h3-3-17" class="i">+extern void drawall();
+</a> extern void drawstatus();
+ extern void drawtitle(Client *c);
+ extern void drawtext(const char *text, Bool invert, Bool border);
+<a href="#h3-4" id="h3-4" class="h">@@ -127,22 +132,25 @@ extern unsigned int textnw(char *text, unsigned int len);
+</a> extern unsigned int textw(char *text);
+ extern unsigned int texth(void);
+ 
+<a href="#h3-4-3" id="h3-4-3" class="d">-/* key.c */
+</a><a href="#h3-4-4" id="h3-4-4" class="i">+/* event.c */
+</a> extern void grabkeys();
+<a href="#h3-4-6" id="h3-4-6" class="d">-extern void keypress(XEvent *e);
+</a> 
+ /* main.c */
+<a href="#h3-4-9" id="h3-4-9" class="d">-extern int xerror(Display *dsply, XErrorEvent *e);
+</a><a href="#h3-4-10" id="h3-4-10" class="d">-extern void sendevent(Window w, Atom a, long value);
+</a><a href="#h3-4-11" id="h3-4-11" class="d">-extern int proto(Window w);
+</a> extern void quit(Arg *arg);
+<a href="#h3-4-13" id="h3-4-13" class="i">+extern int xerror(Display *dsply, XErrorEvent *ee);
+</a><a href="#h3-4-14" id="h3-4-14" class="i">+extern void sendevent(Window w, Atom a, long value);
+</a><a href="#h3-4-15" id="h3-4-15" class="i">+extern int getproto(Window w);
+</a> 
+<a href="#h3-4-17" id="h3-4-17" class="d">-/* screen.c */
+</a><a href="#h3-4-18" id="h3-4-18" class="d">-extern void floating(Arg *arg);
+</a><a href="#h3-4-19" id="h3-4-19" class="d">-extern void tiling(Arg *arg);
+</a><a href="#h3-4-20" id="h3-4-20" class="i">+/* tag.c */
+</a><a href="#h3-4-21" id="h3-4-21" class="i">+extern Client *getnext(Client *c);
+</a><a href="#h3-4-22" id="h3-4-22" class="i">+extern void settags(Client *c);
+</a><a href="#h3-4-23" id="h3-4-23" class="i">+extern void dofloat(Arg *arg);
+</a><a href="#h3-4-24" id="h3-4-24" class="i">+extern void dotile(Arg *arg);
+</a> extern void view(Arg *arg);
+<a href="#h3-4-26" id="h3-4-26" class="i">+extern void appendtag(Arg *arg);
+</a><a href="#h3-4-27" id="h3-4-27" class="i">+extern void replacetag(Arg *arg);
+</a> 
+ /* util.c */
+<a href="#h3-4-30" id="h3-4-30" class="d">-extern void error(const char *errstr, ...);
+</a><a href="#h3-4-31" id="h3-4-31" class="i">+extern void eprint(const char *errstr, ...);
+</a> extern void *emallocz(unsigned int size);
+ extern void spawn(Arg *arg);
+<b>diff --git a/<a id="h4" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -16,6 +16,44 @@
+</a> #define ButtonMask      (ButtonPressMask | ButtonReleaseMask)
+ #define MouseMask       (ButtonMask | PointerMotionMask)
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+/********** CUSTOMIZE **********/
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+const char *term[] = { 
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+	&quot;urxvtc&quot;, &quot;-tr&quot;, &quot;+sb&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-fn&quot;,
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+	&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;,NULL
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+};
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+const char *browse[] = { &quot;firefox&quot;, NULL };
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+const char *xlock[] = { &quot;xlock&quot;, NULL };
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+Key key[] = {
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+	/* modifier				key			function	arguments */
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	{ Mod1Mask,				XK_Return,	zoom,		{ 0 } },
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+	{ Mod1Mask,				XK_k,		focusprev,		{ 0 } },
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+	{ Mod1Mask,				XK_j,		focusnext,		{ 0 } }, 
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+	{ Mod1Mask,				XK_m,		maximize,		{ 0 } }, 
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	{ Mod1Mask,				XK_0,		view,		{ .i = Tscratch } }, 
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+	{ Mod1Mask,				XK_1,		view,		{ .i = Tdev } }, 
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+	{ Mod1Mask,				XK_2,		view,		{ .i = Twww } }, 
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+	{ Mod1Mask,				XK_3,		view,		{ .i = Twork } }, 
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+	{ Mod1Mask,				XK_space,	dotile,		{ 0 } }, 
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+	{ Mod1Mask|ShiftMask,	XK_space,	dofloat,	{ 0 } }, 
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+	{ Mod1Mask|ShiftMask,	XK_0,		replacetag,		{ .i = Tscratch } }, 
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+	{ Mod1Mask|ShiftMask,	XK_1,		replacetag,		{ .i = Tdev } }, 
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+	{ Mod1Mask|ShiftMask,	XK_2,		replacetag,		{ .i = Twww } }, 
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+	{ Mod1Mask|ShiftMask,	XK_3,		replacetag,		{ .i = Twork } }, 
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+	{ Mod1Mask|ShiftMask,	XK_c,		killclient,		{ 0 } }, 
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+	{ Mod1Mask|ShiftMask,	XK_q,		quit,		{ 0 } },
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+	{ Mod1Mask|ShiftMask,	XK_Return,	spawn,		{ .argv = term } },
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+	{ Mod1Mask|ShiftMask,	XK_w,		spawn,		{ .argv = browse } },
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+	{ Mod1Mask|ShiftMask,	XK_l,		spawn,		{ .argv = xlock } },
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+	{ ControlMask,			XK_0,		appendtag,	{ .i = Tscratch } }, 
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+	{ ControlMask,			XK_1,		appendtag,	{ .i = Tdev } }, 
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+	{ ControlMask,			XK_2,		appendtag,	{ .i = Twww } }, 
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+	{ ControlMask,			XK_3,		appendtag,	{ .i = Twork } }, 
+</a><a href="#h4-0-37" id="h4-0-37" class="i">+};
+</a><a href="#h4-0-38" id="h4-0-38" class="i">+
+</a><a href="#h4-0-39" id="h4-0-39" class="i">+/********** CUSTOMIZE **********/
+</a><a href="#h4-0-40" id="h4-0-40" class="i">+
+</a> /* local functions */
+ static void buttonpress(XEvent *e);
+ static void configurerequest(XEvent *e);
+<a href="#h4-1" id="h4-1" class="h">@@ -23,6 +61,7 @@ static void destroynotify(XEvent *e);
+</a> static void enternotify(XEvent *e);
+ static void leavenotify(XEvent *e);
+ static void expose(XEvent *e);
+<a href="#h4-1-3" id="h4-1-3" class="i">+static void keypress(XEvent *e);
+</a> static void maprequest(XEvent *e);
+ static void propertynotify(XEvent *e);
+ static void unmapnotify(XEvent *e);
+<a href="#h4-2" id="h4-2" class="h">@@ -40,8 +79,40 @@ void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[UnmapNotify] = unmapnotify
+ };
+ 
+<a href="#h4-2-3" id="h4-2-3" class="i">+void
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+grabkeys()
+</a><a href="#h4-2-5" id="h4-2-5" class="i">+{
+</a><a href="#h4-2-6" id="h4-2-6" class="i">+	static unsigned int len = key ? sizeof(key) / sizeof(key[0]) : 0;
+</a><a href="#h4-2-7" id="h4-2-7" class="i">+	unsigned int i;
+</a><a href="#h4-2-8" id="h4-2-8" class="i">+	KeyCode code;
+</a><a href="#h4-2-9" id="h4-2-9" class="i">+
+</a><a href="#h4-2-10" id="h4-2-10" class="i">+	for(i = 0; i &lt; len; i++) {
+</a><a href="#h4-2-11" id="h4-2-11" class="i">+		code = XKeysymToKeycode(dpy, key[i].keysym);
+</a><a href="#h4-2-12" id="h4-2-12" class="i">+		XUngrabKey(dpy, code, key[i].mod, root);
+</a><a href="#h4-2-13" id="h4-2-13" class="i">+		XGrabKey(dpy, code, key[i].mod, root, True,
+</a><a href="#h4-2-14" id="h4-2-14" class="i">+				GrabModeAsync, GrabModeAsync);
+</a><a href="#h4-2-15" id="h4-2-15" class="i">+	}
+</a><a href="#h4-2-16" id="h4-2-16" class="i">+}
+</a><a href="#h4-2-17" id="h4-2-17" class="i">+
+</a><a href="#h4-2-18" id="h4-2-18" class="i">+static void
+</a><a href="#h4-2-19" id="h4-2-19" class="i">+keypress(XEvent *e)
+</a><a href="#h4-2-20" id="h4-2-20" class="i">+{
+</a><a href="#h4-2-21" id="h4-2-21" class="i">+	XKeyEvent *ev = &amp;e-&gt;xkey;
+</a><a href="#h4-2-22" id="h4-2-22" class="i">+	static unsigned int len = key ? sizeof(key) / sizeof(key[0]) : 0;
+</a><a href="#h4-2-23" id="h4-2-23" class="i">+	unsigned int i;
+</a><a href="#h4-2-24" id="h4-2-24" class="i">+	KeySym keysym;
+</a><a href="#h4-2-25" id="h4-2-25" class="i">+
+</a><a href="#h4-2-26" id="h4-2-26" class="i">+	keysym = XKeycodeToKeysym(dpy, (KeyCode)ev-&gt;keycode, 0);
+</a><a href="#h4-2-27" id="h4-2-27" class="i">+	for(i = 0; i &lt; len; i++)
+</a><a href="#h4-2-28" id="h4-2-28" class="i">+		if((keysym == key[i].keysym) &amp;&amp; (key[i].mod == ev-&gt;state)) {
+</a><a href="#h4-2-29" id="h4-2-29" class="i">+			if(key[i].func)
+</a><a href="#h4-2-30" id="h4-2-30" class="i">+				key[i].func(&amp;key[i].arg);
+</a><a href="#h4-2-31" id="h4-2-31" class="i">+			return;
+</a><a href="#h4-2-32" id="h4-2-32" class="i">+		}
+</a><a href="#h4-2-33" id="h4-2-33" class="i">+}
+</a><a href="#h4-2-34" id="h4-2-34" class="i">+
+</a> static void
+<a href="#h4-2-36" id="h4-2-36" class="d">-mresize(Client *c)
+</a><a href="#h4-2-37" id="h4-2-37" class="i">+resizemouse(Client *c)
+</a> {
+ 	XEvent ev;
+ 	int ocx, ocy;
+<a href="#h4-3" id="h4-3" class="h">@@ -75,7 +146,7 @@ mresize(Client *c)
+</a> }
+ 
+ static void
+<a href="#h4-3-3" id="h4-3-3" class="d">-mmove(Client *c)
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+movemouse(Client *c)
+</a> {
+ 	XEvent ev;
+ 	int x1, y1, ocx, ocy, di;
+<a href="#h4-4" id="h4-4" class="h">@@ -117,7 +188,7 @@ buttonpress(XEvent *e)
+</a> 	Client *c;
+ 
+ 	if(barwin == ev-&gt;window) {
+<a href="#h4-4-3" id="h4-4-3" class="d">-		x = (arrange == floating) ? textw(&quot;~&quot;) : 0;
+</a><a href="#h4-4-4" id="h4-4-4" class="i">+		x = (arrange == dofloat) ? textw(&quot;~&quot;) : 0;
+</a> 		for(a.i = 0; a.i &lt; TLast; a.i++) {
+ 			x += textw(tags[a.i]);
+ 			if(ev-&gt;x &lt; x) {
+<a href="#h4-5" id="h4-5" class="h">@@ -127,20 +198,20 @@ buttonpress(XEvent *e)
+</a> 		}
+ 	}
+ 	else if((c = getclient(ev-&gt;window))) {
+<a href="#h4-5-3" id="h4-5-3" class="d">-		if(arrange == tiling &amp;&amp; !c-&gt;floating)
+</a><a href="#h4-5-4" id="h4-5-4" class="i">+		if(arrange == dotile &amp;&amp; !c-&gt;dofloat)
+</a> 			return;
+ 		higher(c);
+ 		switch(ev-&gt;button) {
+ 		default:
+ 			break;
+ 		case Button1:
+<a href="#h4-5-11" id="h4-5-11" class="d">-			mmove(c);
+</a><a href="#h4-5-12" id="h4-5-12" class="i">+			movemouse(c);
+</a> 			break;
+ 		case Button2:
+ 			lower(c);
+ 			break;
+ 		case Button3:
+<a href="#h4-5-18" id="h4-5-18" class="d">-			mresize(c);
+</a><a href="#h4-5-19" id="h4-5-19" class="i">+			resizemouse(c);
+</a> 			break;
+ 		}
+ 	}
+<a href="#h4-6" id="h4-6" class="h">@@ -226,7 +297,7 @@ expose(XEvent *e)
+</a> 	if(ev-&gt;count == 0) {
+ 		if(barwin == ev-&gt;window)
+ 			drawstatus();
+<a href="#h4-6-3" id="h4-6-3" class="d">-		else if((c = gettitle(ev-&gt;window)))
+</a><a href="#h4-6-4" id="h4-6-4" class="i">+		else if((c = getctitle(ev-&gt;window)))
+</a> 			drawtitle(c);
+ 	}
+ }
+<a href="#h4-7" id="h4-7" class="h">@@ -262,14 +333,14 @@ propertynotify(XEvent *e)
+</a> 
+ 	if((c = getclient(ev-&gt;window))) {
+ 		if(ev-&gt;atom == wm_atom[WMProtocols]) {
+<a href="#h4-7-3" id="h4-7-3" class="d">-			c-&gt;proto = proto(c-&gt;win);
+</a><a href="#h4-7-4" id="h4-7-4" class="i">+			c-&gt;proto = getproto(c-&gt;win);
+</a> 			return;
+ 		}
+ 		switch (ev-&gt;atom) {
+ 			default: break;
+ 			case XA_WM_TRANSIENT_FOR:
+ 				XGetTransientForHint(dpy, c-&gt;win, &amp;trans);
+<a href="#h4-7-11" id="h4-7-11" class="d">-				if(!c-&gt;floating &amp;&amp; (c-&gt;floating = (trans != 0)))
+</a><a href="#h4-7-12" id="h4-7-12" class="i">+				if(!c-&gt;dofloat &amp;&amp; (c-&gt;dofloat = (trans != 0)))
+</a> 					arrange(NULL);
+ 				break;
+ 			case XA_WM_NORMAL_HINTS:
+<b>diff --git a/<a id="h5" href="../file/key.c.html">key.c</a> b/<a href="../file/key.c.html">key.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -1,192 +0,0 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="d">-/*
+</a><a href="#h5-0-1" id="h5-0-1" class="d">- * (C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h5-0-2" id="h5-0-2" class="d">- * See LICENSE file for license details.
+</a><a href="#h5-0-3" id="h5-0-3" class="d">- */
+</a><a href="#h5-0-4" id="h5-0-4" class="d">-
+</a><a href="#h5-0-5" id="h5-0-5" class="d">-#include &lt;fcntl.h&gt;
+</a><a href="#h5-0-6" id="h5-0-6" class="d">-#include &lt;stdio.h&gt;
+</a><a href="#h5-0-7" id="h5-0-7" class="d">-#include &lt;stdlib.h&gt;
+</a><a href="#h5-0-8" id="h5-0-8" class="d">-#include &lt;string.h&gt;
+</a><a href="#h5-0-9" id="h5-0-9" class="d">-#include &lt;unistd.h&gt;
+</a><a href="#h5-0-10" id="h5-0-10" class="d">-#include &lt;X11/keysym.h&gt;
+</a><a href="#h5-0-11" id="h5-0-11" class="d">-#include &lt;X11/Xatom.h&gt;
+</a><a href="#h5-0-12" id="h5-0-12" class="d">-
+</a><a href="#h5-0-13" id="h5-0-13" class="d">-#include &quot;dwm.h&quot;
+</a><a href="#h5-0-14" id="h5-0-14" class="d">-
+</a><a href="#h5-0-15" id="h5-0-15" class="d">-static void ckill(Arg *arg);
+</a><a href="#h5-0-16" id="h5-0-16" class="d">-static void nextc(Arg *arg);
+</a><a href="#h5-0-17" id="h5-0-17" class="d">-static void prevc(Arg *arg);
+</a><a href="#h5-0-18" id="h5-0-18" class="d">-static void max(Arg *arg);
+</a><a href="#h5-0-19" id="h5-0-19" class="d">-static void ttrunc(Arg *arg);
+</a><a href="#h5-0-20" id="h5-0-20" class="d">-static void tappend(Arg *arg);
+</a><a href="#h5-0-21" id="h5-0-21" class="d">-static void zoom(Arg *arg);
+</a><a href="#h5-0-22" id="h5-0-22" class="d">-
+</a><a href="#h5-0-23" id="h5-0-23" class="d">-/********** CUSTOMIZE **********/
+</a><a href="#h5-0-24" id="h5-0-24" class="d">-
+</a><a href="#h5-0-25" id="h5-0-25" class="d">-const char *term[] = { 
+</a><a href="#h5-0-26" id="h5-0-26" class="d">-	&quot;urxvtc&quot;, &quot;-tr&quot;, &quot;+sb&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-fn&quot;,
+</a><a href="#h5-0-27" id="h5-0-27" class="d">-	&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;,NULL
+</a><a href="#h5-0-28" id="h5-0-28" class="d">-};
+</a><a href="#h5-0-29" id="h5-0-29" class="d">-const char *browse[] = { &quot;firefox&quot;, NULL };
+</a><a href="#h5-0-30" id="h5-0-30" class="d">-const char *xlock[] = { &quot;xlock&quot;, NULL };
+</a><a href="#h5-0-31" id="h5-0-31" class="d">-
+</a><a href="#h5-0-32" id="h5-0-32" class="d">-Key key[] = {
+</a><a href="#h5-0-33" id="h5-0-33" class="d">-	/* modifier				key			function	arguments */
+</a><a href="#h5-0-34" id="h5-0-34" class="d">-	{ Mod1Mask,				XK_Return,	zoom,		{ 0 } },
+</a><a href="#h5-0-35" id="h5-0-35" class="d">-	{ Mod1Mask,				XK_k,		prevc,		{ 0 } },
+</a><a href="#h5-0-36" id="h5-0-36" class="d">-	{ Mod1Mask,				XK_j,		nextc,		{ 0 } }, 
+</a><a href="#h5-0-37" id="h5-0-37" class="d">-	{ Mod1Mask,				XK_m,		max,		{ 0 } }, 
+</a><a href="#h5-0-38" id="h5-0-38" class="d">-	{ Mod1Mask,				XK_0,		view,		{ .i = Tscratch } }, 
+</a><a href="#h5-0-39" id="h5-0-39" class="d">-	{ Mod1Mask,				XK_1,		view,		{ .i = Tdev } }, 
+</a><a href="#h5-0-40" id="h5-0-40" class="d">-	{ Mod1Mask,				XK_2,		view,		{ .i = Twww } }, 
+</a><a href="#h5-0-41" id="h5-0-41" class="d">-	{ Mod1Mask,				XK_3,		view,		{ .i = Twork } }, 
+</a><a href="#h5-0-42" id="h5-0-42" class="d">-	{ Mod1Mask,				XK_space,	tiling,		{ 0 } }, 
+</a><a href="#h5-0-43" id="h5-0-43" class="d">-	{ Mod1Mask|ShiftMask,	XK_space,	floating,	{ 0 } }, 
+</a><a href="#h5-0-44" id="h5-0-44" class="d">-	{ Mod1Mask|ShiftMask,	XK_0,		ttrunc,		{ .i = Tscratch } }, 
+</a><a href="#h5-0-45" id="h5-0-45" class="d">-	{ Mod1Mask|ShiftMask,	XK_1,		ttrunc,		{ .i = Tdev } }, 
+</a><a href="#h5-0-46" id="h5-0-46" class="d">-	{ Mod1Mask|ShiftMask,	XK_2,		ttrunc,		{ .i = Twww } }, 
+</a><a href="#h5-0-47" id="h5-0-47" class="d">-	{ Mod1Mask|ShiftMask,	XK_3,		ttrunc,		{ .i = Twork } }, 
+</a><a href="#h5-0-48" id="h5-0-48" class="d">-	{ Mod1Mask|ShiftMask,	XK_c,		ckill,		{ 0 } }, 
+</a><a href="#h5-0-49" id="h5-0-49" class="d">-	{ Mod1Mask|ShiftMask,	XK_q,		quit,		{ 0 } },
+</a><a href="#h5-0-50" id="h5-0-50" class="d">-	{ Mod1Mask|ShiftMask,	XK_Return,	spawn,		{ .argv = term } },
+</a><a href="#h5-0-51" id="h5-0-51" class="d">-	{ Mod1Mask|ShiftMask,	XK_w,		spawn,		{ .argv = browse } },
+</a><a href="#h5-0-52" id="h5-0-52" class="d">-	{ Mod1Mask|ShiftMask,	XK_l,		spawn,		{ .argv = xlock } },
+</a><a href="#h5-0-53" id="h5-0-53" class="d">-	{ ControlMask,			XK_0,		tappend,	{ .i = Tscratch } }, 
+</a><a href="#h5-0-54" id="h5-0-54" class="d">-	{ ControlMask,			XK_1,		tappend,	{ .i = Tdev } }, 
+</a><a href="#h5-0-55" id="h5-0-55" class="d">-	{ ControlMask,			XK_2,		tappend,	{ .i = Twww } }, 
+</a><a href="#h5-0-56" id="h5-0-56" class="d">-	{ ControlMask,			XK_3,		tappend,	{ .i = Twork } }, 
+</a><a href="#h5-0-57" id="h5-0-57" class="d">-};
+</a><a href="#h5-0-58" id="h5-0-58" class="d">-
+</a><a href="#h5-0-59" id="h5-0-59" class="d">-/********** CUSTOMIZE **********/
+</a><a href="#h5-0-60" id="h5-0-60" class="d">-
+</a><a href="#h5-0-61" id="h5-0-61" class="d">-void
+</a><a href="#h5-0-62" id="h5-0-62" class="d">-grabkeys()
+</a><a href="#h5-0-63" id="h5-0-63" class="d">-{
+</a><a href="#h5-0-64" id="h5-0-64" class="d">-	static unsigned int len = key ? sizeof(key) / sizeof(key[0]) : 0;
+</a><a href="#h5-0-65" id="h5-0-65" class="d">-	unsigned int i;
+</a><a href="#h5-0-66" id="h5-0-66" class="d">-	KeyCode code;
+</a><a href="#h5-0-67" id="h5-0-67" class="d">-
+</a><a href="#h5-0-68" id="h5-0-68" class="d">-	for(i = 0; i &lt; len; i++) {
+</a><a href="#h5-0-69" id="h5-0-69" class="d">-		code = XKeysymToKeycode(dpy, key[i].keysym);
+</a><a href="#h5-0-70" id="h5-0-70" class="d">-		XUngrabKey(dpy, code, key[i].mod, root);
+</a><a href="#h5-0-71" id="h5-0-71" class="d">-		XGrabKey(dpy, code, key[i].mod, root, True,
+</a><a href="#h5-0-72" id="h5-0-72" class="d">-				GrabModeAsync, GrabModeAsync);
+</a><a href="#h5-0-73" id="h5-0-73" class="d">-	}
+</a><a href="#h5-0-74" id="h5-0-74" class="d">-}
+</a><a href="#h5-0-75" id="h5-0-75" class="d">-
+</a><a href="#h5-0-76" id="h5-0-76" class="d">-void
+</a><a href="#h5-0-77" id="h5-0-77" class="d">-keypress(XEvent *e)
+</a><a href="#h5-0-78" id="h5-0-78" class="d">-{
+</a><a href="#h5-0-79" id="h5-0-79" class="d">-	XKeyEvent *ev = &amp;e-&gt;xkey;
+</a><a href="#h5-0-80" id="h5-0-80" class="d">-	static unsigned int len = key ? sizeof(key) / sizeof(key[0]) : 0;
+</a><a href="#h5-0-81" id="h5-0-81" class="d">-	unsigned int i;
+</a><a href="#h5-0-82" id="h5-0-82" class="d">-	KeySym keysym;
+</a><a href="#h5-0-83" id="h5-0-83" class="d">-
+</a><a href="#h5-0-84" id="h5-0-84" class="d">-	keysym = XKeycodeToKeysym(dpy, (KeyCode)ev-&gt;keycode, 0);
+</a><a href="#h5-0-85" id="h5-0-85" class="d">-	for(i = 0; i &lt; len; i++)
+</a><a href="#h5-0-86" id="h5-0-86" class="d">-		if((keysym == key[i].keysym) &amp;&amp; (key[i].mod == ev-&gt;state)) {
+</a><a href="#h5-0-87" id="h5-0-87" class="d">-			if(key[i].func)
+</a><a href="#h5-0-88" id="h5-0-88" class="d">-				key[i].func(&amp;key[i].arg);
+</a><a href="#h5-0-89" id="h5-0-89" class="d">-			return;
+</a><a href="#h5-0-90" id="h5-0-90" class="d">-		}
+</a><a href="#h5-0-91" id="h5-0-91" class="d">-}
+</a><a href="#h5-0-92" id="h5-0-92" class="d">-
+</a><a href="#h5-0-93" id="h5-0-93" class="d">-static void
+</a><a href="#h5-0-94" id="h5-0-94" class="d">-zoom(Arg *arg)
+</a><a href="#h5-0-95" id="h5-0-95" class="d">-{
+</a><a href="#h5-0-96" id="h5-0-96" class="d">-	Client **l, *c;
+</a><a href="#h5-0-97" id="h5-0-97" class="d">-
+</a><a href="#h5-0-98" id="h5-0-98" class="d">-	if(!sel)
+</a><a href="#h5-0-99" id="h5-0-99" class="d">-		return;
+</a><a href="#h5-0-100" id="h5-0-100" class="d">-
+</a><a href="#h5-0-101" id="h5-0-101" class="d">-	if(sel == getnext(clients) &amp;&amp; sel-&gt;next)  {
+</a><a href="#h5-0-102" id="h5-0-102" class="d">-		if((c = getnext(sel-&gt;next)))
+</a><a href="#h5-0-103" id="h5-0-103" class="d">-			sel = c;
+</a><a href="#h5-0-104" id="h5-0-104" class="d">-	}
+</a><a href="#h5-0-105" id="h5-0-105" class="d">-
+</a><a href="#h5-0-106" id="h5-0-106" class="d">-	for(l = &amp;clients; *l &amp;&amp; *l != sel; l = &amp;(*l)-&gt;next);
+</a><a href="#h5-0-107" id="h5-0-107" class="d">-	*l = sel-&gt;next;
+</a><a href="#h5-0-108" id="h5-0-108" class="d">-
+</a><a href="#h5-0-109" id="h5-0-109" class="d">-	sel-&gt;next = clients; /* pop */
+</a><a href="#h5-0-110" id="h5-0-110" class="d">-	clients = sel;
+</a><a href="#h5-0-111" id="h5-0-111" class="d">-	arrange(NULL);
+</a><a href="#h5-0-112" id="h5-0-112" class="d">-	focus(sel);
+</a><a href="#h5-0-113" id="h5-0-113" class="d">-}
+</a><a href="#h5-0-114" id="h5-0-114" class="d">-
+</a><a href="#h5-0-115" id="h5-0-115" class="d">-static void
+</a><a href="#h5-0-116" id="h5-0-116" class="d">-max(Arg *arg)
+</a><a href="#h5-0-117" id="h5-0-117" class="d">-{
+</a><a href="#h5-0-118" id="h5-0-118" class="d">-	if(!sel)
+</a><a href="#h5-0-119" id="h5-0-119" class="d">-		return;
+</a><a href="#h5-0-120" id="h5-0-120" class="d">-	sel-&gt;x = sx;
+</a><a href="#h5-0-121" id="h5-0-121" class="d">-	sel-&gt;y = sy + bh;
+</a><a href="#h5-0-122" id="h5-0-122" class="d">-	sel-&gt;w = sw - 2 * sel-&gt;border;
+</a><a href="#h5-0-123" id="h5-0-123" class="d">-	sel-&gt;h = sh - 2 * sel-&gt;border - bh;
+</a><a href="#h5-0-124" id="h5-0-124" class="d">-	higher(sel);
+</a><a href="#h5-0-125" id="h5-0-125" class="d">-	resize(sel, False);
+</a><a href="#h5-0-126" id="h5-0-126" class="d">-}
+</a><a href="#h5-0-127" id="h5-0-127" class="d">-
+</a><a href="#h5-0-128" id="h5-0-128" class="d">-static void
+</a><a href="#h5-0-129" id="h5-0-129" class="d">-tappend(Arg *arg)
+</a><a href="#h5-0-130" id="h5-0-130" class="d">-{
+</a><a href="#h5-0-131" id="h5-0-131" class="d">-	if(!sel)
+</a><a href="#h5-0-132" id="h5-0-132" class="d">-		return;
+</a><a href="#h5-0-133" id="h5-0-133" class="d">-
+</a><a href="#h5-0-134" id="h5-0-134" class="d">-	sel-&gt;tags[arg-&gt;i] = tags[arg-&gt;i];
+</a><a href="#h5-0-135" id="h5-0-135" class="d">-	arrange(NULL);
+</a><a href="#h5-0-136" id="h5-0-136" class="d">-}
+</a><a href="#h5-0-137" id="h5-0-137" class="d">-
+</a><a href="#h5-0-138" id="h5-0-138" class="d">-static void
+</a><a href="#h5-0-139" id="h5-0-139" class="d">-ttrunc(Arg *arg)
+</a><a href="#h5-0-140" id="h5-0-140" class="d">-{
+</a><a href="#h5-0-141" id="h5-0-141" class="d">-	int i;
+</a><a href="#h5-0-142" id="h5-0-142" class="d">-	if(!sel)
+</a><a href="#h5-0-143" id="h5-0-143" class="d">-		return;
+</a><a href="#h5-0-144" id="h5-0-144" class="d">-
+</a><a href="#h5-0-145" id="h5-0-145" class="d">-	for(i = 0; i &lt; TLast; i++)
+</a><a href="#h5-0-146" id="h5-0-146" class="d">-		sel-&gt;tags[i] = NULL;
+</a><a href="#h5-0-147" id="h5-0-147" class="d">-	tappend(arg);
+</a><a href="#h5-0-148" id="h5-0-148" class="d">-}
+</a><a href="#h5-0-149" id="h5-0-149" class="d">-
+</a><a href="#h5-0-150" id="h5-0-150" class="d">-static void
+</a><a href="#h5-0-151" id="h5-0-151" class="d">-prevc(Arg *arg)
+</a><a href="#h5-0-152" id="h5-0-152" class="d">-{
+</a><a href="#h5-0-153" id="h5-0-153" class="d">-	Client *c;
+</a><a href="#h5-0-154" id="h5-0-154" class="d">-
+</a><a href="#h5-0-155" id="h5-0-155" class="d">-	if(!sel)
+</a><a href="#h5-0-156" id="h5-0-156" class="d">-		return;
+</a><a href="#h5-0-157" id="h5-0-157" class="d">-
+</a><a href="#h5-0-158" id="h5-0-158" class="d">-	if((c = sel-&gt;revert &amp;&amp; sel-&gt;revert-&gt;tags[tsel] ? sel-&gt;revert : NULL)) {
+</a><a href="#h5-0-159" id="h5-0-159" class="d">-		higher(c);
+</a><a href="#h5-0-160" id="h5-0-160" class="d">-		focus(c);
+</a><a href="#h5-0-161" id="h5-0-161" class="d">-	}
+</a><a href="#h5-0-162" id="h5-0-162" class="d">-}
+</a><a href="#h5-0-163" id="h5-0-163" class="d">-
+</a><a href="#h5-0-164" id="h5-0-164" class="d">-static void
+</a><a href="#h5-0-165" id="h5-0-165" class="d">-nextc(Arg *arg)
+</a><a href="#h5-0-166" id="h5-0-166" class="d">-{
+</a><a href="#h5-0-167" id="h5-0-167" class="d">-	Client *c;
+</a><a href="#h5-0-168" id="h5-0-168" class="d">-   
+</a><a href="#h5-0-169" id="h5-0-169" class="d">-	if(!sel)
+</a><a href="#h5-0-170" id="h5-0-170" class="d">-		return;
+</a><a href="#h5-0-171" id="h5-0-171" class="d">-
+</a><a href="#h5-0-172" id="h5-0-172" class="d">-	if(!(c = getnext(sel-&gt;next)))
+</a><a href="#h5-0-173" id="h5-0-173" class="d">-		c = getnext(clients);
+</a><a href="#h5-0-174" id="h5-0-174" class="d">-	if(c) {
+</a><a href="#h5-0-175" id="h5-0-175" class="d">-		higher(c);
+</a><a href="#h5-0-176" id="h5-0-176" class="d">-		c-&gt;revert = sel;
+</a><a href="#h5-0-177" id="h5-0-177" class="d">-		focus(c);
+</a><a href="#h5-0-178" id="h5-0-178" class="d">-	}
+</a><a href="#h5-0-179" id="h5-0-179" class="d">-}
+</a><a href="#h5-0-180" id="h5-0-180" class="d">-
+</a><a href="#h5-0-181" id="h5-0-181" class="d">-static void
+</a><a href="#h5-0-182" id="h5-0-182" class="d">-ckill(Arg *arg)
+</a><a href="#h5-0-183" id="h5-0-183" class="d">-{
+</a><a href="#h5-0-184" id="h5-0-184" class="d">-	if(!sel)
+</a><a href="#h5-0-185" id="h5-0-185" class="d">-		return;
+</a><a href="#h5-0-186" id="h5-0-186" class="d">-	if(sel-&gt;proto &amp; WM_PROTOCOL_DELWIN)
+</a><a href="#h5-0-187" id="h5-0-187" class="d">-		sendevent(sel-&gt;win, wm_atom[WMProtocols], wm_atom[WMDelete]);
+</a><a href="#h5-0-188" id="h5-0-188" class="d">-	else
+</a><a href="#h5-0-189" id="h5-0-189" class="d">-		XKillClient(dpy, sel-&gt;win);
+</a><a href="#h5-0-190" id="h5-0-190" class="d">-}
+</a><a href="#h5-0-191" id="h5-0-191" class="d">-
+</a><b>diff --git a/<a id="h6" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -43,16 +43,16 @@ DC dc = {0};
+</a> Client *clients = NULL;
+ Client *sel = NULL;
+ 
+<a href="#h6-0-3" id="h6-0-3" class="d">-static Bool other_wm_running;
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+static Bool otherwm;
+</a> static const char version[] =
+ 	&quot;dwm-&quot; VERSION &quot;, (C)opyright MMVI Anselm R. Garbe\n&quot;;
+<a href="#h6-0-7" id="h6-0-7" class="d">-static int (*x_xerror) (Display *, XErrorEvent *);
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+static int (*xerrorxlib)(Display *, XErrorEvent *);
+</a> 
+ static void
+<a href="#h6-0-11" id="h6-0-11" class="d">-usage() {	error(&quot;usage: dwm [-v]\n&quot;); }
+</a><a href="#h6-0-12" id="h6-0-12" class="i">+usage() {	eprint(&quot;usage: dwm [-v]\n&quot;); }
+</a> 
+ static void
+<a href="#h6-0-15" id="h6-0-15" class="d">-scan_wins()
+</a><a href="#h6-0-16" id="h6-0-16" class="i">+scan()
+</a> {
+ 	unsigned int i, num;
+ 	Window *wins;
+<a href="#h6-1" id="h6-1" class="h">@@ -73,6 +73,22 @@ scan_wins()
+</a> 		XFree(wins);
+ }
+ 
+<a href="#h6-1-3" id="h6-1-3" class="i">+static void
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+cleanup()
+</a><a href="#h6-1-5" id="h6-1-5" class="i">+{
+</a><a href="#h6-1-6" id="h6-1-6" class="i">+	while(sel) {
+</a><a href="#h6-1-7" id="h6-1-7" class="i">+		resize(sel, True);
+</a><a href="#h6-1-8" id="h6-1-8" class="i">+		unmanage(sel);
+</a><a href="#h6-1-9" id="h6-1-9" class="i">+	}
+</a><a href="#h6-1-10" id="h6-1-10" class="i">+	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+</a><a href="#h6-1-11" id="h6-1-11" class="i">+}
+</a><a href="#h6-1-12" id="h6-1-12" class="i">+
+</a><a href="#h6-1-13" id="h6-1-13" class="i">+void
+</a><a href="#h6-1-14" id="h6-1-14" class="i">+quit(Arg *arg)
+</a><a href="#h6-1-15" id="h6-1-15" class="i">+{
+</a><a href="#h6-1-16" id="h6-1-16" class="i">+	running = False;
+</a><a href="#h6-1-17" id="h6-1-17" class="i">+}
+</a><a href="#h6-1-18" id="h6-1-18" class="i">+
+</a> static int
+ win_property(Window w, Atom a, Atom t, long l, unsigned char **prop)
+ {
+<a href="#h6-2" id="h6-2" class="h">@@ -94,7 +110,7 @@ win_property(Window w, Atom a, Atom t, long l, unsigned char **prop)
+</a> }
+ 
+ int
+<a href="#h6-2-3" id="h6-2-3" class="d">-proto(Window w)
+</a><a href="#h6-2-4" id="h6-2-4" class="i">+getproto(Window w)
+</a> {
+ 	unsigned char *protocols;
+ 	long res;
+<a href="#h6-3" id="h6-3" class="h">@@ -129,58 +145,42 @@ sendevent(Window w, Atom a, long value)
+</a> }
+ 
+ /*
+<a href="#h6-3-3" id="h6-3-3" class="d">- * There&#39;s no way to check accesses to destroyed windows, thus
+</a><a href="#h6-3-4" id="h6-3-4" class="d">- * those cases are ignored (especially on UnmapNotify&#39;s).
+</a><a href="#h6-3-5" id="h6-3-5" class="d">- * Other types of errors call Xlib&#39;s default error handler, which
+</a><a href="#h6-3-6" id="h6-3-6" class="d">- * calls exit().
+</a><a href="#h6-3-7" id="h6-3-7" class="d">- */
+</a><a href="#h6-3-8" id="h6-3-8" class="d">-int
+</a><a href="#h6-3-9" id="h6-3-9" class="d">-xerror(Display *dpy, XErrorEvent *error)
+</a><a href="#h6-3-10" id="h6-3-10" class="d">-{
+</a><a href="#h6-3-11" id="h6-3-11" class="d">-	if(error-&gt;error_code == BadWindow
+</a><a href="#h6-3-12" id="h6-3-12" class="d">-			|| (error-&gt;request_code == X_SetInputFocus
+</a><a href="#h6-3-13" id="h6-3-13" class="d">-				&amp;&amp; error-&gt;error_code == BadMatch)
+</a><a href="#h6-3-14" id="h6-3-14" class="d">-			|| (error-&gt;request_code == X_PolyText8
+</a><a href="#h6-3-15" id="h6-3-15" class="d">-				&amp;&amp; error-&gt;error_code == BadDrawable)
+</a><a href="#h6-3-16" id="h6-3-16" class="d">-			|| (error-&gt;request_code == X_PolyFillRectangle
+</a><a href="#h6-3-17" id="h6-3-17" class="d">-				&amp;&amp; error-&gt;error_code == BadDrawable)
+</a><a href="#h6-3-18" id="h6-3-18" class="d">-			|| (error-&gt;request_code == X_PolySegment
+</a><a href="#h6-3-19" id="h6-3-19" class="d">-				&amp;&amp; error-&gt;error_code == BadDrawable)
+</a><a href="#h6-3-20" id="h6-3-20" class="d">-			|| (error-&gt;request_code == X_ConfigureWindow
+</a><a href="#h6-3-21" id="h6-3-21" class="d">-				&amp;&amp; error-&gt;error_code == BadMatch)
+</a><a href="#h6-3-22" id="h6-3-22" class="d">-			|| (error-&gt;request_code == X_GrabKey
+</a><a href="#h6-3-23" id="h6-3-23" class="d">-				&amp;&amp; error-&gt;error_code == BadAccess))
+</a><a href="#h6-3-24" id="h6-3-24" class="d">-		return 0;
+</a><a href="#h6-3-25" id="h6-3-25" class="d">-	fprintf(stderr, &quot;dwm: fatal error: request code=%d, error code=%d\n&quot;,
+</a><a href="#h6-3-26" id="h6-3-26" class="d">-			error-&gt;request_code, error-&gt;error_code);
+</a><a href="#h6-3-27" id="h6-3-27" class="d">-	return x_xerror(dpy, error); /* may call exit() */
+</a><a href="#h6-3-28" id="h6-3-28" class="d">-}
+</a><a href="#h6-3-29" id="h6-3-29" class="d">-
+</a><a href="#h6-3-30" id="h6-3-30" class="d">-/*
+</a>  * Startup Error handler to check if another window manager
+  * is already running.
+  */
+ static int
+<a href="#h6-3-35" id="h6-3-35" class="d">-startup_xerror(Display *dpy, XErrorEvent *error)
+</a><a href="#h6-3-36" id="h6-3-36" class="i">+xerrorstart(Display *dsply, XErrorEvent *ee)
+</a> {
+<a href="#h6-3-38" id="h6-3-38" class="d">-	other_wm_running = True;
+</a><a href="#h6-3-39" id="h6-3-39" class="i">+	otherwm = True;
+</a> 	return -1;
+ }
+ 
+<a href="#h6-3-43" id="h6-3-43" class="d">-static void
+</a><a href="#h6-3-44" id="h6-3-44" class="d">-cleanup()
+</a><a href="#h6-3-45" id="h6-3-45" class="d">-{
+</a><a href="#h6-3-46" id="h6-3-46" class="d">-	while(sel) {
+</a><a href="#h6-3-47" id="h6-3-47" class="d">-		resize(sel, True);
+</a><a href="#h6-3-48" id="h6-3-48" class="d">-		unmanage(sel);
+</a><a href="#h6-3-49" id="h6-3-49" class="d">-	}
+</a><a href="#h6-3-50" id="h6-3-50" class="d">-	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+</a><a href="#h6-3-51" id="h6-3-51" class="d">-}
+</a><a href="#h6-3-52" id="h6-3-52" class="d">-
+</a><a href="#h6-3-53" id="h6-3-53" class="d">-void
+</a><a href="#h6-3-54" id="h6-3-54" class="d">-quit(Arg *arg)
+</a><a href="#h6-3-55" id="h6-3-55" class="i">+/*
+</a><a href="#h6-3-56" id="h6-3-56" class="i">+ * There&#39;s no way to check accesses to destroyed windows, thus
+</a><a href="#h6-3-57" id="h6-3-57" class="i">+ * those cases are ignored (especially on UnmapNotify&#39;s).
+</a><a href="#h6-3-58" id="h6-3-58" class="i">+ * Other types of errors call Xlib&#39;s default error handler, which
+</a><a href="#h6-3-59" id="h6-3-59" class="i">+ * calls exit().
+</a><a href="#h6-3-60" id="h6-3-60" class="i">+ */
+</a><a href="#h6-3-61" id="h6-3-61" class="i">+int
+</a><a href="#h6-3-62" id="h6-3-62" class="i">+xerror(Display *dpy, XErrorEvent *ee)
+</a> {
+<a href="#h6-3-64" id="h6-3-64" class="d">-	running = False;
+</a><a href="#h6-3-65" id="h6-3-65" class="i">+	if(ee-&gt;error_code == BadWindow
+</a><a href="#h6-3-66" id="h6-3-66" class="i">+			|| (ee-&gt;request_code == X_SetInputFocus
+</a><a href="#h6-3-67" id="h6-3-67" class="i">+				&amp;&amp; ee-&gt;error_code == BadMatch)
+</a><a href="#h6-3-68" id="h6-3-68" class="i">+			|| (ee-&gt;request_code == X_PolyText8
+</a><a href="#h6-3-69" id="h6-3-69" class="i">+				&amp;&amp; ee-&gt;error_code == BadDrawable)
+</a><a href="#h6-3-70" id="h6-3-70" class="i">+			|| (ee-&gt;request_code == X_PolyFillRectangle
+</a><a href="#h6-3-71" id="h6-3-71" class="i">+				&amp;&amp; ee-&gt;error_code == BadDrawable)
+</a><a href="#h6-3-72" id="h6-3-72" class="i">+			|| (ee-&gt;request_code == X_PolySegment
+</a><a href="#h6-3-73" id="h6-3-73" class="i">+				&amp;&amp; ee-&gt;error_code == BadDrawable)
+</a><a href="#h6-3-74" id="h6-3-74" class="i">+			|| (ee-&gt;request_code == X_ConfigureWindow
+</a><a href="#h6-3-75" id="h6-3-75" class="i">+				&amp;&amp; ee-&gt;error_code == BadMatch)
+</a><a href="#h6-3-76" id="h6-3-76" class="i">+			|| (ee-&gt;request_code == X_GrabKey
+</a><a href="#h6-3-77" id="h6-3-77" class="i">+				&amp;&amp; ee-&gt;error_code == BadAccess))
+</a><a href="#h6-3-78" id="h6-3-78" class="i">+		return 0;
+</a><a href="#h6-3-79" id="h6-3-79" class="i">+	fprintf(stderr, &quot;dwm: fatal error: request code=%d, error code=%d\n&quot;,
+</a><a href="#h6-3-80" id="h6-3-80" class="i">+			ee-&gt;request_code, ee-&gt;error_code);
+</a><a href="#h6-3-81" id="h6-3-81" class="i">+	return xerrorxlib(dpy, ee); /* may call exit() */
+</a> }
+ 
+ int
+<a href="#h6-4" id="h6-4" class="h">@@ -208,23 +208,23 @@ main(int argc, char *argv[])
+</a> 
+ 	dpy = XOpenDisplay(0);
+ 	if(!dpy)
+<a href="#h6-4-3" id="h6-4-3" class="d">-		error(&quot;dwm: cannot connect X server\n&quot;);
+</a><a href="#h6-4-4" id="h6-4-4" class="i">+		eprint(&quot;dwm: cannot connect X server\n&quot;);
+</a> 
+ 	screen = DefaultScreen(dpy);
+ 	root = RootWindow(dpy, screen);
+ 
+ 	/* check if another WM is already running */
+<a href="#h6-4-10" id="h6-4-10" class="d">-	other_wm_running = False;
+</a><a href="#h6-4-11" id="h6-4-11" class="d">-	XSetErrorHandler(startup_xerror);
+</a><a href="#h6-4-12" id="h6-4-12" class="i">+	otherwm = False;
+</a><a href="#h6-4-13" id="h6-4-13" class="i">+	XSetErrorHandler(xerrorstart);
+</a> 	/* this causes an error if some other WM is running */
+ 	XSelectInput(dpy, root, SubstructureRedirectMask);
+ 	XFlush(dpy);
+ 
+<a href="#h6-4-18" id="h6-4-18" class="d">-	if(other_wm_running)
+</a><a href="#h6-4-19" id="h6-4-19" class="d">-		error(&quot;dwm: another window manager is already running\n&quot;);
+</a><a href="#h6-4-20" id="h6-4-20" class="i">+	if(otherwm)
+</a><a href="#h6-4-21" id="h6-4-21" class="i">+		eprint(&quot;dwm: another window manager is already running\n&quot;);
+</a> 
+ 	XSetErrorHandler(0);
+<a href="#h6-4-24" id="h6-4-24" class="d">-	x_xerror = XSetErrorHandler(xerror);
+</a><a href="#h6-4-25" id="h6-4-25" class="i">+	xerrorxlib = XSetErrorHandler(xerror);
+</a> 
+ 	/* init atoms */
+ 	wm_atom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+<a href="#h6-5" id="h6-5" class="h">@@ -278,7 +278,7 @@ main(int argc, char *argv[])
+</a> 	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &amp;wa);
+ 
+ 	strcpy(stext, &quot;dwm-&quot;VERSION);
+<a href="#h6-5-3" id="h6-5-3" class="d">-	scan_wins();
+</a><a href="#h6-5-4" id="h6-5-4" class="i">+	scan();
+</a> 
+ 	/* main event loop, reads status text from stdin as well */
+ Mainloop:
+<a href="#h6-6" id="h6-6" class="h">@@ -292,7 +292,7 @@ Mainloop:
+</a> 		if(i == -1 &amp;&amp; errno == EINTR)
+ 			continue;
+ 		if(i &lt; 0)
+<a href="#h6-6-3" id="h6-6-3" class="d">-			error(&quot;select failed\n&quot;);
+</a><a href="#h6-6-4" id="h6-6-4" class="i">+			eprint(&quot;select failed\n&quot;);
+</a> 		else if(i &gt; 0) {
+ 			if(FD_ISSET(ConnectionNumber(dpy), &amp;rd)) {
+ 				while(XPending(dpy)) {
+<b>diff --git a/<a id="h7" href="../file/screen.c.html">screen.c</a> b/<a href="../file/screen.c.html">screen.c</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -1,100 +0,0 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="d">-/*
+</a><a href="#h7-0-1" id="h7-0-1" class="d">- * (C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h7-0-2" id="h7-0-2" class="d">- * See LICENSE file for license details.
+</a><a href="#h7-0-3" id="h7-0-3" class="d">- */
+</a><a href="#h7-0-4" id="h7-0-4" class="d">-
+</a><a href="#h7-0-5" id="h7-0-5" class="d">-#include &quot;dwm.h&quot;
+</a><a href="#h7-0-6" id="h7-0-6" class="d">-
+</a><a href="#h7-0-7" id="h7-0-7" class="d">-void (*arrange)(Arg *) = tiling;
+</a><a href="#h7-0-8" id="h7-0-8" class="d">-
+</a><a href="#h7-0-9" id="h7-0-9" class="d">-void
+</a><a href="#h7-0-10" id="h7-0-10" class="d">-view(Arg *arg)
+</a><a href="#h7-0-11" id="h7-0-11" class="d">-{
+</a><a href="#h7-0-12" id="h7-0-12" class="d">-	Client *c;
+</a><a href="#h7-0-13" id="h7-0-13" class="d">-
+</a><a href="#h7-0-14" id="h7-0-14" class="d">-	tsel = arg-&gt;i;
+</a><a href="#h7-0-15" id="h7-0-15" class="d">-	arrange(NULL);
+</a><a href="#h7-0-16" id="h7-0-16" class="d">-
+</a><a href="#h7-0-17" id="h7-0-17" class="d">-	for(c = clients; c; c = getnext(c-&gt;next))
+</a><a href="#h7-0-18" id="h7-0-18" class="d">-		drawtitle(c);
+</a><a href="#h7-0-19" id="h7-0-19" class="d">-	drawstatus();
+</a><a href="#h7-0-20" id="h7-0-20" class="d">-}
+</a><a href="#h7-0-21" id="h7-0-21" class="d">-
+</a><a href="#h7-0-22" id="h7-0-22" class="d">-void
+</a><a href="#h7-0-23" id="h7-0-23" class="d">-floating(Arg *arg)
+</a><a href="#h7-0-24" id="h7-0-24" class="d">-{
+</a><a href="#h7-0-25" id="h7-0-25" class="d">-	Client *c;
+</a><a href="#h7-0-26" id="h7-0-26" class="d">-
+</a><a href="#h7-0-27" id="h7-0-27" class="d">-	arrange = floating;
+</a><a href="#h7-0-28" id="h7-0-28" class="d">-	for(c = clients; c; c = c-&gt;next) {
+</a><a href="#h7-0-29" id="h7-0-29" class="d">-		if(c-&gt;tags[tsel])
+</a><a href="#h7-0-30" id="h7-0-30" class="d">-			resize(c, True);
+</a><a href="#h7-0-31" id="h7-0-31" class="d">-		else
+</a><a href="#h7-0-32" id="h7-0-32" class="d">-			ban(c);
+</a><a href="#h7-0-33" id="h7-0-33" class="d">-	}
+</a><a href="#h7-0-34" id="h7-0-34" class="d">-	if(sel &amp;&amp; !sel-&gt;tags[tsel]) {
+</a><a href="#h7-0-35" id="h7-0-35" class="d">-		if((sel = getnext(clients))) {
+</a><a href="#h7-0-36" id="h7-0-36" class="d">-			higher(sel);
+</a><a href="#h7-0-37" id="h7-0-37" class="d">-			focus(sel);
+</a><a href="#h7-0-38" id="h7-0-38" class="d">-		}
+</a><a href="#h7-0-39" id="h7-0-39" class="d">-	}
+</a><a href="#h7-0-40" id="h7-0-40" class="d">-	drawstatus();
+</a><a href="#h7-0-41" id="h7-0-41" class="d">-}
+</a><a href="#h7-0-42" id="h7-0-42" class="d">-
+</a><a href="#h7-0-43" id="h7-0-43" class="d">-void
+</a><a href="#h7-0-44" id="h7-0-44" class="d">-tiling(Arg *arg)
+</a><a href="#h7-0-45" id="h7-0-45" class="d">-{
+</a><a href="#h7-0-46" id="h7-0-46" class="d">-	Client *c;
+</a><a href="#h7-0-47" id="h7-0-47" class="d">-	int n, i, w, h;
+</a><a href="#h7-0-48" id="h7-0-48" class="d">-
+</a><a href="#h7-0-49" id="h7-0-49" class="d">-	w = sw - mw;
+</a><a href="#h7-0-50" id="h7-0-50" class="d">-	arrange = tiling;
+</a><a href="#h7-0-51" id="h7-0-51" class="d">-	for(n = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h7-0-52" id="h7-0-52" class="d">-		if(c-&gt;tags[tsel] &amp;&amp; !c-&gt;floating)
+</a><a href="#h7-0-53" id="h7-0-53" class="d">-			n++;
+</a><a href="#h7-0-54" id="h7-0-54" class="d">-
+</a><a href="#h7-0-55" id="h7-0-55" class="d">-	if(n &gt; 1)
+</a><a href="#h7-0-56" id="h7-0-56" class="d">-		h = (sh - bh) / (n - 1);
+</a><a href="#h7-0-57" id="h7-0-57" class="d">-	else
+</a><a href="#h7-0-58" id="h7-0-58" class="d">-		h = sh - bh;
+</a><a href="#h7-0-59" id="h7-0-59" class="d">-
+</a><a href="#h7-0-60" id="h7-0-60" class="d">-	for(i = 0, c = clients; c; c = c-&gt;next) {
+</a><a href="#h7-0-61" id="h7-0-61" class="d">-		if(c-&gt;tags[tsel]) {
+</a><a href="#h7-0-62" id="h7-0-62" class="d">-			if(c-&gt;floating) {
+</a><a href="#h7-0-63" id="h7-0-63" class="d">-				higher(c);
+</a><a href="#h7-0-64" id="h7-0-64" class="d">-				resize(c, True);
+</a><a href="#h7-0-65" id="h7-0-65" class="d">-				continue;
+</a><a href="#h7-0-66" id="h7-0-66" class="d">-			}
+</a><a href="#h7-0-67" id="h7-0-67" class="d">-			if(n == 1) {
+</a><a href="#h7-0-68" id="h7-0-68" class="d">-				c-&gt;x = sx;
+</a><a href="#h7-0-69" id="h7-0-69" class="d">-				c-&gt;y = sy + bh;
+</a><a href="#h7-0-70" id="h7-0-70" class="d">-				c-&gt;w = sw - 2 * c-&gt;border;
+</a><a href="#h7-0-71" id="h7-0-71" class="d">-				c-&gt;h = sh - 2 * c-&gt;border - bh;
+</a><a href="#h7-0-72" id="h7-0-72" class="d">-			}
+</a><a href="#h7-0-73" id="h7-0-73" class="d">-			else if(i == 0) {
+</a><a href="#h7-0-74" id="h7-0-74" class="d">-				c-&gt;x = sx;
+</a><a href="#h7-0-75" id="h7-0-75" class="d">-				c-&gt;y = sy + bh;
+</a><a href="#h7-0-76" id="h7-0-76" class="d">-				c-&gt;w = mw - 2 * c-&gt;border;
+</a><a href="#h7-0-77" id="h7-0-77" class="d">-				c-&gt;h = sh - 2 * c-&gt;border - bh;
+</a><a href="#h7-0-78" id="h7-0-78" class="d">-			}
+</a><a href="#h7-0-79" id="h7-0-79" class="d">-			else {
+</a><a href="#h7-0-80" id="h7-0-80" class="d">-				c-&gt;x = sx + mw;
+</a><a href="#h7-0-81" id="h7-0-81" class="d">-				c-&gt;y = sy + (i - 1) * h + bh;
+</a><a href="#h7-0-82" id="h7-0-82" class="d">-				c-&gt;w = w - 2 * c-&gt;border;
+</a><a href="#h7-0-83" id="h7-0-83" class="d">-				c-&gt;h = h - 2 * c-&gt;border;
+</a><a href="#h7-0-84" id="h7-0-84" class="d">-			}
+</a><a href="#h7-0-85" id="h7-0-85" class="d">-			resize(c, False);
+</a><a href="#h7-0-86" id="h7-0-86" class="d">-			i++;
+</a><a href="#h7-0-87" id="h7-0-87" class="d">-		}
+</a><a href="#h7-0-88" id="h7-0-88" class="d">-		else
+</a><a href="#h7-0-89" id="h7-0-89" class="d">-			ban(c);
+</a><a href="#h7-0-90" id="h7-0-90" class="d">-	}
+</a><a href="#h7-0-91" id="h7-0-91" class="d">-	if(!sel || (sel &amp;&amp; !sel-&gt;tags[tsel])) {
+</a><a href="#h7-0-92" id="h7-0-92" class="d">-		if((sel = getnext(clients))) {
+</a><a href="#h7-0-93" id="h7-0-93" class="d">-			higher(sel);
+</a><a href="#h7-0-94" id="h7-0-94" class="d">-			focus(sel);
+</a><a href="#h7-0-95" id="h7-0-95" class="d">-		}
+</a><a href="#h7-0-96" id="h7-0-96" class="d">-	}
+</a><a href="#h7-0-97" id="h7-0-97" class="d">-	drawstatus();
+</a><a href="#h7-0-98" id="h7-0-98" class="d">-}
+</a><a href="#h7-0-99" id="h7-0-99" class="d">-
+</a><b>diff --git a/<a id="h8" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -0,0 +1,171 @@
+</a><a href="#h8-0-0" id="h8-0-0" class="i">+/*
+</a><a href="#h8-0-1" id="h8-0-1" class="i">+ * (C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h8-0-2" id="h8-0-2" class="i">+ * See LICENSE file for license details.
+</a><a href="#h8-0-3" id="h8-0-3" class="i">+ */
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+
+</a><a href="#h8-0-5" id="h8-0-5" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h8-0-6" id="h8-0-6" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h8-0-7" id="h8-0-7" class="i">+#include &lt;string.h&gt;
+</a><a href="#h8-0-8" id="h8-0-8" class="i">+#include &lt;X11/Xatom.h&gt;
+</a><a href="#h8-0-9" id="h8-0-9" class="i">+#include &lt;X11/Xutil.h&gt;
+</a><a href="#h8-0-10" id="h8-0-10" class="i">+
+</a><a href="#h8-0-11" id="h8-0-11" class="i">+#include &quot;dwm.h&quot;
+</a><a href="#h8-0-12" id="h8-0-12" class="i">+
+</a><a href="#h8-0-13" id="h8-0-13" class="i">+static Rule rule[] = {
+</a><a href="#h8-0-14" id="h8-0-14" class="i">+	/* class			instance	tags						dofloat */
+</a><a href="#h8-0-15" id="h8-0-15" class="i">+	{ &quot;Firefox-bin&quot;,	&quot;Gecko&quot;,	{ [Twww] = &quot;www&quot; },			False },
+</a><a href="#h8-0-16" id="h8-0-16" class="i">+};
+</a><a href="#h8-0-17" id="h8-0-17" class="i">+
+</a><a href="#h8-0-18" id="h8-0-18" class="i">+void (*arrange)(Arg *) = dotile;
+</a><a href="#h8-0-19" id="h8-0-19" class="i">+
+</a><a href="#h8-0-20" id="h8-0-20" class="i">+Client *
+</a><a href="#h8-0-21" id="h8-0-21" class="i">+getnext(Client *c)
+</a><a href="#h8-0-22" id="h8-0-22" class="i">+{
+</a><a href="#h8-0-23" id="h8-0-23" class="i">+	for(; c &amp;&amp; !c-&gt;tags[tsel]; c = c-&gt;next);
+</a><a href="#h8-0-24" id="h8-0-24" class="i">+	return c;
+</a><a href="#h8-0-25" id="h8-0-25" class="i">+}
+</a><a href="#h8-0-26" id="h8-0-26" class="i">+
+</a><a href="#h8-0-27" id="h8-0-27" class="i">+void
+</a><a href="#h8-0-28" id="h8-0-28" class="i">+settags(Client *c)
+</a><a href="#h8-0-29" id="h8-0-29" class="i">+{
+</a><a href="#h8-0-30" id="h8-0-30" class="i">+	XClassHint ch;
+</a><a href="#h8-0-31" id="h8-0-31" class="i">+	static unsigned int len = rule ? sizeof(rule) / sizeof(rule[0]) : 0;
+</a><a href="#h8-0-32" id="h8-0-32" class="i">+	unsigned int i, j;
+</a><a href="#h8-0-33" id="h8-0-33" class="i">+	Bool matched = False;
+</a><a href="#h8-0-34" id="h8-0-34" class="i">+
+</a><a href="#h8-0-35" id="h8-0-35" class="i">+	if(!len) {
+</a><a href="#h8-0-36" id="h8-0-36" class="i">+		c-&gt;tags[tsel] = tags[tsel];
+</a><a href="#h8-0-37" id="h8-0-37" class="i">+		return;
+</a><a href="#h8-0-38" id="h8-0-38" class="i">+	}
+</a><a href="#h8-0-39" id="h8-0-39" class="i">+
+</a><a href="#h8-0-40" id="h8-0-40" class="i">+	if(XGetClassHint(dpy, c-&gt;win, &amp;ch)) {
+</a><a href="#h8-0-41" id="h8-0-41" class="i">+		if(ch.res_class &amp;&amp; ch.res_name) {
+</a><a href="#h8-0-42" id="h8-0-42" class="i">+			for(i = 0; i &lt; len; i++)
+</a><a href="#h8-0-43" id="h8-0-43" class="i">+				if(!strncmp(rule[i].class, ch.res_class, sizeof(rule[i].class))
+</a><a href="#h8-0-44" id="h8-0-44" class="i">+					&amp;&amp; !strncmp(rule[i].instance, ch.res_name, sizeof(rule[i].instance)))
+</a><a href="#h8-0-45" id="h8-0-45" class="i">+				{
+</a><a href="#h8-0-46" id="h8-0-46" class="i">+					for(j = 0; j &lt; TLast; j++)
+</a><a href="#h8-0-47" id="h8-0-47" class="i">+						c-&gt;tags[j] = rule[i].tags[j];
+</a><a href="#h8-0-48" id="h8-0-48" class="i">+					c-&gt;dofloat = rule[i].dofloat;
+</a><a href="#h8-0-49" id="h8-0-49" class="i">+					matched = True;
+</a><a href="#h8-0-50" id="h8-0-50" class="i">+					break;
+</a><a href="#h8-0-51" id="h8-0-51" class="i">+				}
+</a><a href="#h8-0-52" id="h8-0-52" class="i">+		}
+</a><a href="#h8-0-53" id="h8-0-53" class="i">+		if(ch.res_class)
+</a><a href="#h8-0-54" id="h8-0-54" class="i">+			XFree(ch.res_class);
+</a><a href="#h8-0-55" id="h8-0-55" class="i">+		if(ch.res_name)
+</a><a href="#h8-0-56" id="h8-0-56" class="i">+			XFree(ch.res_name);
+</a><a href="#h8-0-57" id="h8-0-57" class="i">+	}
+</a><a href="#h8-0-58" id="h8-0-58" class="i">+
+</a><a href="#h8-0-59" id="h8-0-59" class="i">+	if(!matched)
+</a><a href="#h8-0-60" id="h8-0-60" class="i">+		c-&gt;tags[tsel] = tags[tsel];
+</a><a href="#h8-0-61" id="h8-0-61" class="i">+}
+</a><a href="#h8-0-62" id="h8-0-62" class="i">+
+</a><a href="#h8-0-63" id="h8-0-63" class="i">+void
+</a><a href="#h8-0-64" id="h8-0-64" class="i">+view(Arg *arg)
+</a><a href="#h8-0-65" id="h8-0-65" class="i">+{
+</a><a href="#h8-0-66" id="h8-0-66" class="i">+	tsel = arg-&gt;i;
+</a><a href="#h8-0-67" id="h8-0-67" class="i">+	arrange(NULL);
+</a><a href="#h8-0-68" id="h8-0-68" class="i">+	drawall();
+</a><a href="#h8-0-69" id="h8-0-69" class="i">+}
+</a><a href="#h8-0-70" id="h8-0-70" class="i">+
+</a><a href="#h8-0-71" id="h8-0-71" class="i">+void
+</a><a href="#h8-0-72" id="h8-0-72" class="i">+dofloat(Arg *arg)
+</a><a href="#h8-0-73" id="h8-0-73" class="i">+{
+</a><a href="#h8-0-74" id="h8-0-74" class="i">+	Client *c;
+</a><a href="#h8-0-75" id="h8-0-75" class="i">+
+</a><a href="#h8-0-76" id="h8-0-76" class="i">+	arrange = dofloat;
+</a><a href="#h8-0-77" id="h8-0-77" class="i">+	for(c = clients; c; c = c-&gt;next) {
+</a><a href="#h8-0-78" id="h8-0-78" class="i">+		if(c-&gt;tags[tsel])
+</a><a href="#h8-0-79" id="h8-0-79" class="i">+			resize(c, True);
+</a><a href="#h8-0-80" id="h8-0-80" class="i">+		else
+</a><a href="#h8-0-81" id="h8-0-81" class="i">+			ban(c);
+</a><a href="#h8-0-82" id="h8-0-82" class="i">+	}
+</a><a href="#h8-0-83" id="h8-0-83" class="i">+	if(sel &amp;&amp; !sel-&gt;tags[tsel]) {
+</a><a href="#h8-0-84" id="h8-0-84" class="i">+		if((sel = getnext(clients))) {
+</a><a href="#h8-0-85" id="h8-0-85" class="i">+			higher(sel);
+</a><a href="#h8-0-86" id="h8-0-86" class="i">+			focus(sel);
+</a><a href="#h8-0-87" id="h8-0-87" class="i">+		}
+</a><a href="#h8-0-88" id="h8-0-88" class="i">+	}
+</a><a href="#h8-0-89" id="h8-0-89" class="i">+	drawall();
+</a><a href="#h8-0-90" id="h8-0-90" class="i">+}
+</a><a href="#h8-0-91" id="h8-0-91" class="i">+
+</a><a href="#h8-0-92" id="h8-0-92" class="i">+void
+</a><a href="#h8-0-93" id="h8-0-93" class="i">+dotile(Arg *arg)
+</a><a href="#h8-0-94" id="h8-0-94" class="i">+{
+</a><a href="#h8-0-95" id="h8-0-95" class="i">+	Client *c;
+</a><a href="#h8-0-96" id="h8-0-96" class="i">+	int n, i, w, h;
+</a><a href="#h8-0-97" id="h8-0-97" class="i">+
+</a><a href="#h8-0-98" id="h8-0-98" class="i">+	w = sw - mw;
+</a><a href="#h8-0-99" id="h8-0-99" class="i">+	arrange = dotile;
+</a><a href="#h8-0-100" id="h8-0-100" class="i">+	for(n = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h8-0-101" id="h8-0-101" class="i">+		if(c-&gt;tags[tsel] &amp;&amp; !c-&gt;dofloat)
+</a><a href="#h8-0-102" id="h8-0-102" class="i">+			n++;
+</a><a href="#h8-0-103" id="h8-0-103" class="i">+
+</a><a href="#h8-0-104" id="h8-0-104" class="i">+	if(n &gt; 1)
+</a><a href="#h8-0-105" id="h8-0-105" class="i">+		h = (sh - bh) / (n - 1);
+</a><a href="#h8-0-106" id="h8-0-106" class="i">+	else
+</a><a href="#h8-0-107" id="h8-0-107" class="i">+		h = sh - bh;
+</a><a href="#h8-0-108" id="h8-0-108" class="i">+
+</a><a href="#h8-0-109" id="h8-0-109" class="i">+	for(i = 0, c = clients; c; c = c-&gt;next) {
+</a><a href="#h8-0-110" id="h8-0-110" class="i">+		if(c-&gt;tags[tsel]) {
+</a><a href="#h8-0-111" id="h8-0-111" class="i">+			if(c-&gt;dofloat) {
+</a><a href="#h8-0-112" id="h8-0-112" class="i">+				higher(c);
+</a><a href="#h8-0-113" id="h8-0-113" class="i">+				resize(c, True);
+</a><a href="#h8-0-114" id="h8-0-114" class="i">+				continue;
+</a><a href="#h8-0-115" id="h8-0-115" class="i">+			}
+</a><a href="#h8-0-116" id="h8-0-116" class="i">+			if(n == 1) {
+</a><a href="#h8-0-117" id="h8-0-117" class="i">+				c-&gt;x = sx;
+</a><a href="#h8-0-118" id="h8-0-118" class="i">+				c-&gt;y = sy + bh;
+</a><a href="#h8-0-119" id="h8-0-119" class="i">+				c-&gt;w = sw - 2 * c-&gt;border;
+</a><a href="#h8-0-120" id="h8-0-120" class="i">+				c-&gt;h = sh - 2 * c-&gt;border - bh;
+</a><a href="#h8-0-121" id="h8-0-121" class="i">+			}
+</a><a href="#h8-0-122" id="h8-0-122" class="i">+			else if(i == 0) {
+</a><a href="#h8-0-123" id="h8-0-123" class="i">+				c-&gt;x = sx;
+</a><a href="#h8-0-124" id="h8-0-124" class="i">+				c-&gt;y = sy + bh;
+</a><a href="#h8-0-125" id="h8-0-125" class="i">+				c-&gt;w = mw - 2 * c-&gt;border;
+</a><a href="#h8-0-126" id="h8-0-126" class="i">+				c-&gt;h = sh - 2 * c-&gt;border - bh;
+</a><a href="#h8-0-127" id="h8-0-127" class="i">+			}
+</a><a href="#h8-0-128" id="h8-0-128" class="i">+			else {
+</a><a href="#h8-0-129" id="h8-0-129" class="i">+				c-&gt;x = sx + mw;
+</a><a href="#h8-0-130" id="h8-0-130" class="i">+				c-&gt;y = sy + (i - 1) * h + bh;
+</a><a href="#h8-0-131" id="h8-0-131" class="i">+				c-&gt;w = w - 2 * c-&gt;border;
+</a><a href="#h8-0-132" id="h8-0-132" class="i">+				c-&gt;h = h - 2 * c-&gt;border;
+</a><a href="#h8-0-133" id="h8-0-133" class="i">+			}
+</a><a href="#h8-0-134" id="h8-0-134" class="i">+			resize(c, False);
+</a><a href="#h8-0-135" id="h8-0-135" class="i">+			i++;
+</a><a href="#h8-0-136" id="h8-0-136" class="i">+		}
+</a><a href="#h8-0-137" id="h8-0-137" class="i">+		else
+</a><a href="#h8-0-138" id="h8-0-138" class="i">+			ban(c);
+</a><a href="#h8-0-139" id="h8-0-139" class="i">+	}
+</a><a href="#h8-0-140" id="h8-0-140" class="i">+	if(!sel || (sel &amp;&amp; !sel-&gt;tags[tsel])) {
+</a><a href="#h8-0-141" id="h8-0-141" class="i">+		if((sel = getnext(clients))) {
+</a><a href="#h8-0-142" id="h8-0-142" class="i">+			higher(sel);
+</a><a href="#h8-0-143" id="h8-0-143" class="i">+			focus(sel);
+</a><a href="#h8-0-144" id="h8-0-144" class="i">+		}
+</a><a href="#h8-0-145" id="h8-0-145" class="i">+	}
+</a><a href="#h8-0-146" id="h8-0-146" class="i">+	drawall();
+</a><a href="#h8-0-147" id="h8-0-147" class="i">+}
+</a><a href="#h8-0-148" id="h8-0-148" class="i">+
+</a><a href="#h8-0-149" id="h8-0-149" class="i">+void
+</a><a href="#h8-0-150" id="h8-0-150" class="i">+appendtag(Arg *arg)
+</a><a href="#h8-0-151" id="h8-0-151" class="i">+{
+</a><a href="#h8-0-152" id="h8-0-152" class="i">+	if(!sel)
+</a><a href="#h8-0-153" id="h8-0-153" class="i">+		return;
+</a><a href="#h8-0-154" id="h8-0-154" class="i">+
+</a><a href="#h8-0-155" id="h8-0-155" class="i">+	sel-&gt;tags[arg-&gt;i] = tags[arg-&gt;i];
+</a><a href="#h8-0-156" id="h8-0-156" class="i">+	arrange(NULL);
+</a><a href="#h8-0-157" id="h8-0-157" class="i">+}
+</a><a href="#h8-0-158" id="h8-0-158" class="i">+
+</a><a href="#h8-0-159" id="h8-0-159" class="i">+void
+</a><a href="#h8-0-160" id="h8-0-160" class="i">+replacetag(Arg *arg)
+</a><a href="#h8-0-161" id="h8-0-161" class="i">+{
+</a><a href="#h8-0-162" id="h8-0-162" class="i">+	int i;
+</a><a href="#h8-0-163" id="h8-0-163" class="i">+	if(!sel)
+</a><a href="#h8-0-164" id="h8-0-164" class="i">+		return;
+</a><a href="#h8-0-165" id="h8-0-165" class="i">+
+</a><a href="#h8-0-166" id="h8-0-166" class="i">+	for(i = 0; i &lt; TLast; i++)
+</a><a href="#h8-0-167" id="h8-0-167" class="i">+		sel-&gt;tags[i] = NULL;
+</a><a href="#h8-0-168" id="h8-0-168" class="i">+	appendtag(arg);
+</a><a href="#h8-0-169" id="h8-0-169" class="i">+}
+</a><a href="#h8-0-170" id="h8-0-170" class="i">+
+</a><b>diff --git a/<a id="h9" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -13,7 +13,7 @@
+</a> #include &quot;dwm.h&quot;
+ 
+ void
+<a href="#h9-0-3" id="h9-0-3" class="d">-error(const char *errstr, ...) {
+</a><a href="#h9-0-4" id="h9-0-4" class="i">+eprint(const char *errstr, ...) {
+</a> 	va_list ap;
+ 	va_start(ap, errstr);
+ 	vfprintf(stderr, errstr, ap);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix SI and SO - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0c8feecbf74674132070169986802c75dd49d688.html">0c8feecbf74674132070169986802c75dd49d688</a>
+<b>parent</b> <a href="../commit/a7eef8f230bcf72a85af68fc9a08ca94e52ca18d.html">a7eef8f230bcf72a85af68fc9a08ca94e52ca18d</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Wed,  8 Oct 2014 10:30:20 +0200
+
+Fix SI and SO
+
+SI (0x0F or ^O) means Shift In, and it selects G1 charset definition,
+and SO (0x0E or ^N) means Shift Out, and it selects G0 charset
+definition, but st was doing just the inverse.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">8</td><td><span class="i">+++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 3 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2431,11 +2431,9 @@ tcontrolcode(uchar ascii) {
+</a> 		term.esc &amp;= ~(ESC_CSI|ESC_ALTCHARSET|ESC_TEST);
+ 		term.esc |= ESC_START;
+ 		return;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	case &#39;\016&#39;: /* SO */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		term.charset = 0;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-		return;
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	case &#39;\017&#39;: /* SI */
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-		term.charset = 1;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	case &#39;\016&#39;: /* SO (LS1 -- Locking shift 1) */
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	case &#39;\017&#39;: /* SI (LS0 -- Locking shift 0) */
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		term.charset = 1 - (ascii - &#39;\016&#39;);
+</a> 		return;
+ 	case &#39;\032&#39;: /* SUB */
+ 		tsetchar(question, &amp;term.c.attr, term.c.x, term.c.y);
+</pre>
+</div>
+</body>
+</html>

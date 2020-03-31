@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Eckehard Berns barwin leak fix and his suggestion to deal with restack() -- the latter aspect needs further investigation. - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/873bcb97a90727be29fe28774fc6b5546660b447.html">873bcb97a90727be29fe28774fc6b5546660b447</a>
+<b>parent</b> <a href="../commit/907db0a85165f720a7b7d5972736393e4d8ac1b9.html">907db0a85165f720a7b7d5972736393e4d8ac1b9</a>
+<b>Author:</b> anselm@garbe.us &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Thu, 12 Jan 2012 07:36:05 +0100
+
+applied Eckehard Berns barwin leak fix and his suggestion to deal with restack() -- the latter aspect needs further investigation.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">LICENSE</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 4 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/LICENSE.html">LICENSE</a> b/<a href="../file/LICENSE.html">LICENSE</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,6 @@
+</a> MIT/X Consortium License
+ 
+<a href="#h0-0-2" id="h0-0-2" class="d">-© 2006-2011 Anselm R Garbe &lt;anselm@garbe.us&gt;
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+© 2006-2012 Anselm R Garbe &lt;anselm@garbe.us&gt;
+</a> © 2007-2011 Peter Hartlich &lt;sgkkr at hartlich dot com&gt;
+ © 2010-2011 Connor Lane Smith &lt;cls@lubutu.com&gt;
+ © 2006-2009 Jukka Salmi &lt;jukka at salmi dot ch&gt;
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1420,8 +1420,6 @@ restack(Monitor *m) {
+</a> 	drawbar(m);
+ 	if(!m-&gt;sel)
+ 		return;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	if(m-&gt;sel-&gt;isfloating || !m-&gt;lt[m-&gt;sellt]-&gt;arrange)
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-		XRaiseWindow(dpy, m-&gt;sel-&gt;win);
+</a> 	if(m-&gt;lt[m-&gt;sellt]-&gt;arrange) {
+ 		wc.stack_mode = Below;
+ 		wc.sibling = m-&gt;barwin;
+<a href="#h1-1" id="h1-1" class="h">@@ -1827,6 +1825,8 @@ updatebars(void) {
+</a> 		.event_mask = ButtonPressMask|ExposureMask
+ 	};
+ 	for(m = mons; m; m = m-&gt;next) {
+<a href="#h1-1-3" id="h1-1-3" class="i">+		if (m-&gt;barwin)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+			continue;
+</a> 		m-&gt;barwin = XCreateWindow(dpy, root, m-&gt;wx, m-&gt;by, m-&gt;ww, bh, 0, DefaultDepth(dpy, screen),
+ 		                          CopyFromParent, DefaultVisual(dpy, screen),
+ 		                          CWOverrideRedirect|CWBackPixmap|CWEventMask, &amp;wa);
+<a href="#h1-2" id="h1-2" class="h">@@ -2129,7 +2129,7 @@ zoom(const Arg *arg) {
+</a> int
+ main(int argc, char *argv[]) {
+ 	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+<a href="#h1-2-3" id="h1-2-3" class="d">-		die(&quot;dwm-&quot;VERSION&quot;, © 2006-2011 dwm engineers, see LICENSE for details\n&quot;);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		die(&quot;dwm-&quot;VERSION&quot;, © 2006-2012 dwm engineers, see LICENSE for details\n&quot;);
+</a> 	else if(argc != 1)
+ 		die(&quot;usage: dwm [-v]\n&quot;);
+ 	if(!setlocale(LC_CTYPE, &quot;&quot;) || !XSupportsLocale())
+</pre>
+</div>
+</body>
+</html>

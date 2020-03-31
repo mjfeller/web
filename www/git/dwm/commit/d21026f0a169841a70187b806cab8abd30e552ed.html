@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>honour fullscreen hint on map - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d21026f0a169841a70187b806cab8abd30e552ed.html">d21026f0a169841a70187b806cab8abd30e552ed</a>
+<b>parent</b> <a href="../commit/e5a1e77351bb4538a1a475739a00dcb41aa35701.html">e5a1e77351bb4538a1a475739a00dcb41aa35701</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Sun,  6 Nov 2011 20:30:06 +0100
+
+honour fullscreen hint on map
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">122</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 66 insertions(+), 56 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -215,6 +215,7 @@ static Bool sendevent(Client *c, Atom proto);
+</a> static void sendmon(Client *c, Monitor *m);
+ static void setclientstate(Client *c, long state);
+ static void setfocus(Client *c);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void setfullscreen(Client *c, Bool fullscreen);
+</a> static void setlayout(const Arg *arg);
+ static void setmfact(const Arg *arg);
+ static void setup(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -531,31 +532,10 @@ clientmessage(XEvent *e) {
+</a> 
+ 	if(!c)
+ 		return;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(cme-&gt;message_type == netatom[NetWMState] &amp;&amp; cme-&gt;data.l[1] == netatom[NetWMFullscreen]) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		if(cme-&gt;data.l[0] &amp;&amp; !c-&gt;isfullscreen) {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-			XChangeProperty(dpy, cme-&gt;window, netatom[NetWMState], XA_ATOM, 32,
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-			                PropModeReplace, (unsigned char*)&amp;netatom[NetWMFullscreen], 1);
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-			c-&gt;isfullscreen = True;
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-			c-&gt;oldstate = c-&gt;isfloating;
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-			c-&gt;oldbw = c-&gt;bw;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-			c-&gt;bw = 0;
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-			c-&gt;isfloating = True;
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-			resizeclient(c, c-&gt;mon-&gt;mx, c-&gt;mon-&gt;my, c-&gt;mon-&gt;mw, c-&gt;mon-&gt;mh);
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-			XRaiseWindow(dpy, c-&gt;win);
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-		}
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-		else {
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-			XChangeProperty(dpy, cme-&gt;window, netatom[NetWMState], XA_ATOM, 32,
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-			                PropModeReplace, (unsigned char*)0, 0);
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-			c-&gt;isfullscreen = False;
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-			c-&gt;isfloating = c-&gt;oldstate;
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-			c-&gt;bw = c-&gt;oldbw;
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-			c-&gt;x = c-&gt;oldx;
+</a><a href="#h0-1-22" id="h0-1-22" class="d">-			c-&gt;y = c-&gt;oldy;
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-			c-&gt;w = c-&gt;oldw;
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-			c-&gt;h = c-&gt;oldh;
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-			resizeclient(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-			arrange(c-&gt;mon);
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-		}
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+	if(cme-&gt;message_type == netatom[NetWMState]) {
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+		if(cme-&gt;data.l[1] == netatom[NetWMFullscreen] || cme-&gt;data.l[2] == netatom[NetWMFullscreen])
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+			setfullscreen(c, (cme-&gt;data.l[0] == 1 /* _NET_WM_STATE_ADD    */
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+			              || (cme-&gt;data.l[0] == 2 /* _NET_WM_STATE_TOGGLE */ &amp;&amp; !c-&gt;isfullscreen)));
+</a> 	}
+ 	else if(cme-&gt;message_type == netatom[NetActiveWindow]) {
+ 		if(!ISVISIBLE(c)) {
+<a href="#h0-2" id="h0-2" class="h">@@ -928,6 +908,21 @@ focusstack(const Arg *arg) {
+</a> 	}
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+Atom
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+getatomprop(Client *c, Atom prop) {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	int di;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	unsigned long dl;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	unsigned char *p = NULL;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	Atom da, atom = None;
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	if(XGetWindowProperty(dpy, c-&gt;win, prop, 0L, sizeof atom, False, XA_ATOM,
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	                      &amp;da, &amp;di, &amp;dl, &amp;dl, &amp;p) == Success &amp;&amp; p) {
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+		atom = *(Atom *)p;
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		XFree(p);
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+	}
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	return atom;
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+}
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+
+</a> unsigned long
+ getcolor(const char *colstr) {
+ 	Colormap cmap = DefaultColormap(dpy, screen);
+<a href="#h0-3" id="h0-3" class="h">@@ -1133,23 +1128,17 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	c-&gt;w = c-&gt;oldw = wa-&gt;width;
+ 	c-&gt;h = c-&gt;oldh = wa-&gt;height;
+ 	c-&gt;oldbw = wa-&gt;border_width;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(c-&gt;w == c-&gt;mon-&gt;mw &amp;&amp; c-&gt;h == c-&gt;mon-&gt;mh) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		c-&gt;isfloating = True; // regression with flash, XXXX
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-		c-&gt;x = c-&gt;mon-&gt;mx;
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-		c-&gt;y = c-&gt;mon-&gt;my;
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-		c-&gt;bw = 0;
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-	}
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-	else {
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-		if(c-&gt;x + WIDTH(c) &gt; c-&gt;mon-&gt;mx + c-&gt;mon-&gt;mw)
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-			c-&gt;x = c-&gt;mon-&gt;mx + c-&gt;mon-&gt;mw - WIDTH(c);
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-		if(c-&gt;y + HEIGHT(c) &gt; c-&gt;mon-&gt;my + c-&gt;mon-&gt;mh)
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-			c-&gt;y = c-&gt;mon-&gt;my + c-&gt;mon-&gt;mh - HEIGHT(c);
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-		c-&gt;x = MAX(c-&gt;x, c-&gt;mon-&gt;mx);
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-		/* only fix client y-offset, if the client center might cover the bar */
+</a><a href="#h0-3-16" id="h0-3-16" class="d">-		c-&gt;y = MAX(c-&gt;y, ((c-&gt;mon-&gt;by == c-&gt;mon-&gt;my) &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &gt;= c-&gt;mon-&gt;wx)
+</a><a href="#h0-3-17" id="h0-3-17" class="d">-		           &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &lt; c-&gt;mon-&gt;wx + c-&gt;mon-&gt;ww)) ? bh : c-&gt;mon-&gt;my);
+</a><a href="#h0-3-18" id="h0-3-18" class="d">-		c-&gt;bw = borderpx;
+</a><a href="#h0-3-19" id="h0-3-19" class="d">-	}
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+	if(c-&gt;x + WIDTH(c) &gt; c-&gt;mon-&gt;mx + c-&gt;mon-&gt;mw)
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+		c-&gt;x = c-&gt;mon-&gt;mx + c-&gt;mon-&gt;mw - WIDTH(c);
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+	if(c-&gt;y + HEIGHT(c) &gt; c-&gt;mon-&gt;my + c-&gt;mon-&gt;mh)
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+		c-&gt;y = c-&gt;mon-&gt;my + c-&gt;mon-&gt;mh - HEIGHT(c);
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+	c-&gt;x = MAX(c-&gt;x, c-&gt;mon-&gt;mx);
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+	/* only fix client y-offset, if the client center might cover the bar */
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+	c-&gt;y = MAX(c-&gt;y, ((c-&gt;mon-&gt;by == c-&gt;mon-&gt;my) &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &gt;= c-&gt;mon-&gt;wx)
+</a><a href="#h0-3-28" id="h0-3-28" class="i">+	           &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &lt; c-&gt;mon-&gt;wx + c-&gt;mon-&gt;ww)) ? bh : c-&gt;mon-&gt;my);
+</a><a href="#h0-3-29" id="h0-3-29" class="i">+	c-&gt;bw = borderpx;
+</a><a href="#h0-3-30" id="h0-3-30" class="i">+
+</a> 	wc.border_width = c-&gt;bw;
+ 	XConfigureWindow(dpy, w, CWBorderWidth, &amp;wc);
+ 	XSetWindowBorder(dpy, w, dc.norm[ColBorder]);
+<a href="#h0-4" id="h0-4" class="h">@@ -1516,6 +1505,34 @@ setfocus(Client *c) {
+</a> }
+ 
+ void
+<a href="#h0-4-3" id="h0-4-3" class="i">+setfullscreen(Client *c, Bool fullscreen) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	if(fullscreen) {
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+		XChangeProperty(dpy, c-&gt;win, netatom[NetWMState], XA_ATOM, 32,
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		                PropModeReplace, (unsigned char*)&amp;netatom[NetWMFullscreen], 1);
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+		c-&gt;isfullscreen = True;
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+		c-&gt;oldstate = c-&gt;isfloating;
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+		c-&gt;oldbw = c-&gt;bw;
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+		c-&gt;bw = 0;
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+		c-&gt;isfloating = True;
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+		resizeclient(c, c-&gt;mon-&gt;mx, c-&gt;mon-&gt;my, c-&gt;mon-&gt;mw, c-&gt;mon-&gt;mh);
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+		XRaiseWindow(dpy, c-&gt;win);
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+	}
+</a><a href="#h0-4-15" id="h0-4-15" class="i">+	else {
+</a><a href="#h0-4-16" id="h0-4-16" class="i">+		XChangeProperty(dpy, c-&gt;win, netatom[NetWMState], XA_ATOM, 32,
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+		                PropModeReplace, (unsigned char*)0, 0);
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+		c-&gt;isfullscreen = False;
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+		c-&gt;isfloating = c-&gt;oldstate;
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+		c-&gt;bw = c-&gt;oldbw;
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+		c-&gt;x = c-&gt;oldx;
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+		c-&gt;y = c-&gt;oldy;
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+		c-&gt;w = c-&gt;oldw;
+</a><a href="#h0-4-24" id="h0-4-24" class="i">+		c-&gt;h = c-&gt;oldh;
+</a><a href="#h0-4-25" id="h0-4-25" class="i">+		resizeclient(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+</a><a href="#h0-4-26" id="h0-4-26" class="i">+		arrange(c-&gt;mon);
+</a><a href="#h0-4-27" id="h0-4-27" class="i">+	}
+</a><a href="#h0-4-28" id="h0-4-28" class="i">+}
+</a><a href="#h0-4-29" id="h0-4-29" class="i">+
+</a><a href="#h0-4-30" id="h0-4-30" class="i">+void
+</a> setlayout(const Arg *arg) {
+ 	if(!arg || !arg-&gt;v || arg-&gt;v != selmon-&gt;lt[selmon-&gt;sellt])
+ 		selmon-&gt;sellt ^= 1;
+<a href="#h0-5" id="h0-5" class="h">@@ -1974,22 +1991,15 @@ updatestatus(void) {
+</a> }
+ 
+ void
+<a href="#h0-5-3" id="h0-5-3" class="d">-updatewindowtype(Client *c)
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-{
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-	Atom wtype, real;
+</a><a href="#h0-5-6" id="h0-5-6" class="d">-	int format;
+</a><a href="#h0-5-7" id="h0-5-7" class="d">-	unsigned long n, extra;
+</a><a href="#h0-5-8" id="h0-5-8" class="d">-	unsigned char *p = NULL;
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+updatewindowtype(Client *c) {
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+	Atom state = getatomprop(c, netatom[NetWMState]);
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+	Atom wtype = getatomprop(c, netatom[NetWMWindowType]);
+</a> 
+<a href="#h0-5-13" id="h0-5-13" class="d">-	if(XGetWindowProperty(dpy, c-&gt;win, netatom[NetWMWindowType], 0L,
+</a><a href="#h0-5-14" id="h0-5-14" class="d">-	                      sizeof(Atom), False, XA_ATOM, &amp;real, &amp;format,
+</a><a href="#h0-5-15" id="h0-5-15" class="d">-	                      &amp;n, &amp;extra, (unsigned char **)&amp;p) == Success &amp;&amp; p) {
+</a><a href="#h0-5-16" id="h0-5-16" class="d">-		wtype = *(Atom *)p;
+</a><a href="#h0-5-17" id="h0-5-17" class="d">-		XFree(p);
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+	if(state == netatom[NetWMFullscreen])
+</a><a href="#h0-5-19" id="h0-5-19" class="i">+		setfullscreen(c, True);
+</a> 
+<a href="#h0-5-21" id="h0-5-21" class="d">-		if(wtype == netatom[NetWMWindowTypeDialog])
+</a><a href="#h0-5-22" id="h0-5-22" class="d">-			c-&gt;isfloating = True;
+</a><a href="#h0-5-23" id="h0-5-23" class="d">-	}
+</a><a href="#h0-5-24" id="h0-5-24" class="i">+	if(wtype == netatom[NetWMWindowTypeDialog])
+</a><a href="#h0-5-25" id="h0-5-25" class="i">+		c-&gt;isfloating = True;
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

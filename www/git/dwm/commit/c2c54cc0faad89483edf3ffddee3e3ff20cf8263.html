@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>got initial Xinerama support working, though there is a lot work todo - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c2c54cc0faad89483edf3ffddee3e3ff20cf8263.html">c2c54cc0faad89483edf3ffddee3e3ff20cf8263</a>
+<b>parent</b> <a href="../commit/a62630ae9200f36f2ef7df805c22213b54c776c7.html">a62630ae9200f36f2ef7df805c22213b54c776c7</a>
+<b>Author:</b> anselm@aab &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Mon, 11 Feb 2008 15:55:42 +0000
+
+got initial Xinerama support working, though there is a lot work todo
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">180</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 90 insertions(+), 94 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -17,8 +17,8 @@ LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lXinerama
+</a> # flags
+ CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+ LDFLAGS = -s ${LIBS}
+<a href="#h0-0-3" id="h0-0-3" class="d">-#CFLAGS = -g -std=c99 -pedantic -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-#LDFLAGS = -g ${LIBS}
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+CFLAGS = -g -std=c99 -pedantic -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+LDFLAGS = -g ${LIBS}
+</a> 
+ # Solaris
+ #CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -166,14 +166,14 @@ unsigned int idxoftag(const char *tag);
+</a> void initfont(Monitor*, const char *fontstr);
+ Bool isoccupied(Monitor *m, unsigned int t);
+ Bool isprotodel(Client *c);
+<a href="#h1-0-3" id="h1-0-3" class="d">-Bool isvisible(Client *c, Monitor *m);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+Bool isvisible(Client *c, int monitor);
+</a> void keypress(XEvent *e);
+ void killclient(const char *arg);
+ void manage(Window w, XWindowAttributes *wa);
+ void mappingnotify(XEvent *e);
+ void maprequest(XEvent *e);
+ void movemouse(Client *c);
+<a href="#h1-0-11" id="h1-0-11" class="d">-Client *nexttiled(Client *c, Monitor *m);
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+Client *nexttiled(Client *c, int monitor);
+</a> void propertynotify(XEvent *e);
+ void quit(const char *arg);
+ void reapply(const char *arg);
+<a href="#h1-1" id="h1-1" class="h">@@ -207,14 +207,13 @@ int xerror(Display *dpy, XErrorEvent *ee);
+</a> int xerrordummy(Display *dsply, XErrorEvent *ee);
+ int xerrorstart(Display *dsply, XErrorEvent *ee);
+ void zoom(const char *arg);
+<a href="#h1-1-3" id="h1-1-3" class="d">-int monitorat(int, int);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+int monitorat(void);
+</a> void movetomonitor(const char *arg);
+ void selectmonitor(const char *arg);
+ 
+ /* variables */
+ char stext[256];
+ int mcount = 1;
+<a href="#h1-1-11" id="h1-1-11" class="d">-//double mwfact;
+</a> int (*xerrorxlib)(Display *, XErrorEvent *);
+ unsigned int bh, bpos;
+ unsigned int blw = 0;
+<a href="#h1-2" id="h1-2" class="h">@@ -234,6 +233,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[UnmapNotify] = unmapnotify
+ };
+ Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h1-2-3" id="h1-2-3" class="i">+Bool isxinerama = False;
+</a> Bool domwfact = True;
+ Bool dozoom = True;
+ Bool otherwm, readin;
+<a href="#h1-3" id="h1-3" class="h">@@ -288,9 +288,9 @@ applyrules(Client *c) {
+</a> 	if(ch.res_name)
+ 		XFree(ch.res_name);
+ 	if(!matched_tag)
+<a href="#h1-3-3" id="h1-3-3" class="d">-		memcpy(c-&gt;tags, monitors[monitorat(-1, -1)].seltags, sizeof initags);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		memcpy(c-&gt;tags, monitors[monitorat()].seltags, sizeof initags);
+</a> 	if (!matched_monitor)
+<a href="#h1-3-6" id="h1-3-6" class="d">-		c-&gt;monitor = monitorat(-1, -1);
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+		c-&gt;monitor = monitorat();
+</a> }
+ 
+ void
+<a href="#h1-4" id="h1-4" class="h">@@ -298,7 +298,7 @@ arrange(void) {
+</a> 	Client *c;
+ 
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h1-4-3" id="h1-4-3" class="d">-		if(isvisible(c, &amp;monitors[c-&gt;monitor]))
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		if(isvisible(c, c-&gt;monitor))
+</a> 			unban(c);
+ 		else
+ 			ban(c);
+<a href="#h1-5" id="h1-5" class="h">@@ -336,7 +336,7 @@ buttonpress(XEvent *e) {
+</a> 	Client *c;
+ 	XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+ 
+<a href="#h1-5-3" id="h1-5-3" class="d">-	Monitor *m = &amp;monitors[monitorat(-1, -1)];
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	Monitor *m = &amp;monitors[monitorat()];
+</a> 
+ 	if(ev-&gt;window == m-&gt;barwin) {
+ 		x = 0;
+<a href="#h1-6" id="h1-6" class="h">@@ -516,7 +516,7 @@ configurerequest(XEvent *e) {
+</a> 			if((ev-&gt;value_mask &amp; (CWX | CWY))
+ 			&amp;&amp; !(ev-&gt;value_mask &amp; (CWWidth | CWHeight)))
+ 				configure(c);
+<a href="#h1-6-3" id="h1-6-3" class="d">-			if(isvisible(c, &amp;monitors[monitorat(-1,-1)]))
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+			if(isvisible(c, monitorat()))
+</a> 				XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+ 		}
+ 		else
+<a href="#h1-7" id="h1-7" class="h">@@ -678,21 +678,17 @@ emallocz(unsigned int size) {
+</a> 
+ void
+ enternotify(XEvent *e) {
+<a href="#h1-7-3" id="h1-7-3" class="d">-	unsigned int i;
+</a> 	Client *c;
+ 	XCrossingEvent *ev = &amp;e-&gt;xcrossing;
+ 
+<a href="#h1-7-7" id="h1-7-7" class="d">-	if(ev-&gt;mode != NotifyNormal || ev-&gt;detail == NotifyInferior)
+</a><a href="#h1-7-8" id="h1-7-8" class="d">-		return;
+</a><a href="#h1-7-9" id="h1-7-9" class="i">+	if(ev-&gt;mode != NotifyNormal || ev-&gt;detail == NotifyInferior);
+</a><a href="#h1-7-10" id="h1-7-10" class="i">+		//return;
+</a> 	if((c = getclient(ev-&gt;window)))
+ 		focus(c);
+ 	else {
+<a href="#h1-7-14" id="h1-7-14" class="d">-		for(i = 0; i &lt; mcount; i++)
+</a><a href="#h1-7-15" id="h1-7-15" class="d">-			if(ev-&gt;window == monitors[i].root) {
+</a><a href="#h1-7-16" id="h1-7-16" class="d">-				selmonitor = i;
+</a><a href="#h1-7-17" id="h1-7-17" class="d">-				focus(NULL);
+</a><a href="#h1-7-18" id="h1-7-18" class="d">-				break;
+</a><a href="#h1-7-19" id="h1-7-19" class="d">-			}
+</a><a href="#h1-7-20" id="h1-7-20" class="i">+		selmonitor = monitorat();
+</a><a href="#h1-7-21" id="h1-7-21" class="i">+		fprintf(stderr, &quot;updating selmonitor %d\n&quot;, selmonitor);
+</a><a href="#h1-7-22" id="h1-7-22" class="i">+		focus(NULL);
+</a> 	}
+ }
+ 
+<a href="#h1-8" id="h1-8" class="h">@@ -722,15 +718,19 @@ floating(void) { /* default floating layout */
+</a> 
+ 	domwfact = dozoom = False;
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h1-8-3" id="h1-8-3" class="d">-		if(isvisible(c, &amp;monitors[selmonitor]))
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+		if(isvisible(c, selmonitor))
+</a> 			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+ }
+ 
+ void
+ focus(Client *c) {
+<a href="#h1-8-10" id="h1-8-10" class="d">-	Monitor *m = &amp;monitors[c ? c-&gt;monitor : selmonitor];
+</a><a href="#h1-8-11" id="h1-8-11" class="d">-	if(!c || (c &amp;&amp; !isvisible(c, m)))
+</a><a href="#h1-8-12" id="h1-8-12" class="d">-		for(c = stack; c &amp;&amp; !isvisible(c, m); c = c-&gt;snext);
+</a><a href="#h1-8-13" id="h1-8-13" class="i">+	Monitor *m;
+</a><a href="#h1-8-14" id="h1-8-14" class="i">+
+</a><a href="#h1-8-15" id="h1-8-15" class="i">+	if(c)
+</a><a href="#h1-8-16" id="h1-8-16" class="i">+		selmonitor = c-&gt;monitor;
+</a><a href="#h1-8-17" id="h1-8-17" class="i">+	m = &amp;monitors[selmonitor];
+</a><a href="#h1-8-18" id="h1-8-18" class="i">+	if(!c || (c &amp;&amp; !isvisible(c, selmonitor)))
+</a><a href="#h1-8-19" id="h1-8-19" class="i">+		for(c = stack; c &amp;&amp; !isvisible(c, c-&gt;monitor); c = c-&gt;snext);
+</a> 	if(sel &amp;&amp; sel != c) {
+ 		grabbuttons(sel, False);
+ 		XSetWindowBorder(dpy, sel-&gt;win, monitors[sel-&gt;monitor].dc.norm[ColBorder]);
+<a href="#h1-9" id="h1-9" class="h">@@ -763,13 +763,12 @@ focusin(XEvent *e) { /* there are some broken focus acquiring clients */
+</a> void
+ focusnext(const char *arg) {
+ 	Client *c;
+<a href="#h1-9-3" id="h1-9-3" class="d">-	Monitor *m = &amp;monitors[selmonitor];
+</a> 
+ 	if(!sel)
+ 		return;
+<a href="#h1-9-7" id="h1-9-7" class="d">-	for(c = sel-&gt;next; c &amp;&amp; !isvisible(c, m); c = c-&gt;next);
+</a><a href="#h1-9-8" id="h1-9-8" class="i">+	for(c = sel-&gt;next; c &amp;&amp; !isvisible(c, selmonitor); c = c-&gt;next);
+</a> 	if(!c)
+<a href="#h1-9-10" id="h1-9-10" class="d">-		for(c = clients; c &amp;&amp; !isvisible(c, m); c = c-&gt;next);
+</a><a href="#h1-9-11" id="h1-9-11" class="i">+		for(c = clients; c &amp;&amp; !isvisible(c, selmonitor); c = c-&gt;next);
+</a> 	if(c) {
+ 		focus(c);
+ 		restack();
+<a href="#h1-10" id="h1-10" class="h">@@ -779,14 +778,13 @@ focusnext(const char *arg) {
+</a> void
+ focusprev(const char *arg) {
+ 	Client *c;
+<a href="#h1-10-3" id="h1-10-3" class="d">-	Monitor *m = &amp;monitors[selmonitor];
+</a> 
+ 	if(!sel)
+ 		return;
+<a href="#h1-10-7" id="h1-10-7" class="d">-	for(c = sel-&gt;prev; c &amp;&amp; !isvisible(c, m); c = c-&gt;prev);
+</a><a href="#h1-10-8" id="h1-10-8" class="i">+	for(c = sel-&gt;prev; c &amp;&amp; !isvisible(c, selmonitor); c = c-&gt;prev);
+</a> 	if(!c) {
+ 		for(c = clients; c &amp;&amp; c-&gt;next; c = c-&gt;next);
+<a href="#h1-10-11" id="h1-10-11" class="d">-		for(; c &amp;&amp; !isvisible(c, m); c = c-&gt;prev);
+</a><a href="#h1-10-12" id="h1-10-12" class="i">+		for(; c &amp;&amp; !isvisible(c, selmonitor); c = c-&gt;prev);
+</a> 	}
+ 	if(c) {
+ 		focus(c);
+<a href="#h1-11" id="h1-11" class="h">@@ -1001,11 +999,11 @@ isprotodel(Client *c) {
+</a> }
+ 
+ Bool
+<a href="#h1-11-3" id="h1-11-3" class="d">-isvisible(Client *c, Monitor *m) {
+</a><a href="#h1-11-4" id="h1-11-4" class="i">+isvisible(Client *c, int monitor) {
+</a> 	unsigned int i;
+ 
+ 	for(i = 0; i &lt; LENGTH(tags); i++)
+<a href="#h1-11-8" id="h1-11-8" class="d">-		if(c-&gt;tags[i] &amp;&amp; monitors[c-&gt;monitor].seltags[i] &amp;&amp; c-&gt;monitor == selmonitor)
+</a><a href="#h1-11-9" id="h1-11-9" class="i">+		if(c-&gt;tags[i] &amp;&amp; monitors[c-&gt;monitor].seltags[i] &amp;&amp; c-&gt;monitor == monitor)
+</a> 			return True;
+ 	return False;
+ }
+<a href="#h1-12" id="h1-12" class="h">@@ -1049,7 +1047,7 @@ killclient(const char *arg) {
+</a> void
+ manage(Window w, XWindowAttributes *wa) {
+ 	Client *c, *t = NULL;
+<a href="#h1-12-3" id="h1-12-3" class="d">-	Monitor *m = &amp;monitors[selmonitor];
+</a><a href="#h1-12-4" id="h1-12-4" class="i">+	Monitor *m;
+</a> 	Status rettrans;
+ 	Window trans;
+ 	XWindowChanges wc;
+<a href="#h1-13" id="h1-13" class="h">@@ -1060,17 +1058,14 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 
+ 	applyrules(c);
+ 
+<a href="#h1-13-3" id="h1-13-3" class="i">+	m = &amp;monitors[c-&gt;monitor];
+</a><a href="#h1-13-4" id="h1-13-4" class="i">+
+</a> 	c-&gt;x = wa-&gt;x + m-&gt;sx;
+ 	c-&gt;y = wa-&gt;y + m-&gt;sy;
+ 	c-&gt;w = wa-&gt;width;
+ 	c-&gt;h = wa-&gt;height;
+ 	c-&gt;oldborder = wa-&gt;border_width;
+ 
+<a href="#h1-13-11" id="h1-13-11" class="d">-	if (monitorat(c-&gt;x, c-&gt;y) != c-&gt;monitor) {
+</a><a href="#h1-13-12" id="h1-13-12" class="d">-		c-&gt;x = m-&gt;sx;
+</a><a href="#h1-13-13" id="h1-13-13" class="d">-		c-&gt;y = m-&gt;sy;
+</a><a href="#h1-13-14" id="h1-13-14" class="d">-	}
+</a><a href="#h1-13-15" id="h1-13-15" class="d">-
+</a> 	if(c-&gt;w == m-&gt;sw &amp;&amp; c-&gt;h == m-&gt;sh) {
+ 		c-&gt;x = m-&gt;sx;
+ 		c-&gt;y = m-&gt;sy;
+<a href="#h1-14" id="h1-14" class="h">@@ -1132,6 +1127,25 @@ maprequest(XEvent *e) {
+</a> 		manage(ev-&gt;window, &amp;wa);
+ }
+ 
+<a href="#h1-14-3" id="h1-14-3" class="i">+int
+</a><a href="#h1-14-4" id="h1-14-4" class="i">+monitorat() {
+</a><a href="#h1-14-5" id="h1-14-5" class="i">+	int i, x, y;
+</a><a href="#h1-14-6" id="h1-14-6" class="i">+	Window win;
+</a><a href="#h1-14-7" id="h1-14-7" class="i">+	unsigned int mask;
+</a><a href="#h1-14-8" id="h1-14-8" class="i">+
+</a><a href="#h1-14-9" id="h1-14-9" class="i">+	XQueryPointer(dpy, monitors[selmonitor].root, &amp;win, &amp;win, &amp;x, &amp;y, &amp;i, &amp;i, &amp;mask);
+</a><a href="#h1-14-10" id="h1-14-10" class="i">+	for(i = 0; i &lt; mcount; i++) {
+</a><a href="#h1-14-11" id="h1-14-11" class="i">+		fprintf(stderr, &quot;checking monitor[%d]: %d %d %d %d\n&quot;, i, monitors[i].sx, monitors[i].sy, monitors[i].sw, monitors[i].sh);
+</a><a href="#h1-14-12" id="h1-14-12" class="i">+		if((x &gt;= monitors[i].sx &amp;&amp; x &lt; monitors[i].sx + monitors[i].sw)
+</a><a href="#h1-14-13" id="h1-14-13" class="i">+		&amp;&amp; (y &gt;= monitors[i].sy &amp;&amp; y &lt; monitors[i].sy + monitors[i].sh)) {
+</a><a href="#h1-14-14" id="h1-14-14" class="i">+			fprintf(stderr, &quot;%d,%d -&gt; %d\n&quot;, x, y, i);
+</a><a href="#h1-14-15" id="h1-14-15" class="i">+			return i;
+</a><a href="#h1-14-16" id="h1-14-16" class="i">+		}
+</a><a href="#h1-14-17" id="h1-14-17" class="i">+	}
+</a><a href="#h1-14-18" id="h1-14-18" class="i">+	fprintf(stderr, &quot;?,? -&gt; 0\n&quot;);
+</a><a href="#h1-14-19" id="h1-14-19" class="i">+	return 0;
+</a><a href="#h1-14-20" id="h1-14-20" class="i">+}
+</a><a href="#h1-14-21" id="h1-14-21" class="i">+
+</a> void
+ movemouse(Client *c) {
+ 	int x1, y1, ocx, ocy, di, nx, ny;
+<a href="#h1-15" id="h1-15" class="h">@@ -1160,7 +1174,7 @@ movemouse(Client *c) {
+</a> 			XSync(dpy, False);
+ 			nx = ocx + (ev.xmotion.x - x1);
+ 			ny = ocy + (ev.xmotion.y - y1);
+<a href="#h1-15-3" id="h1-15-3" class="d">-			Monitor *m = &amp;monitors[monitorat(nx, ny)];
+</a><a href="#h1-15-4" id="h1-15-4" class="i">+			Monitor *m = &amp;monitors[monitorat()];
+</a> 			if(abs(m-&gt;wax - nx) &lt; SNAP)
+ 				nx = m-&gt;wax;
+ 			else if(abs((m-&gt;wax + m-&gt;waw) - (nx + c-&gt;w + 2 * c-&gt;border)) &lt; SNAP)
+<a href="#h1-16" id="h1-16" class="h">@@ -1170,15 +1184,15 @@ movemouse(Client *c) {
+</a> 			else if(abs((m-&gt;way + m-&gt;wah) - (ny + c-&gt;h + 2 * c-&gt;border)) &lt; SNAP)
+ 				ny = m-&gt;way + m-&gt;wah - c-&gt;h - 2 * c-&gt;border;
+ 			resize(c, nx, ny, c-&gt;w, c-&gt;h, False);
+<a href="#h1-16-3" id="h1-16-3" class="d">-			memcpy(c-&gt;tags, monitors[monitorat(nx, ny)].seltags, sizeof initags);
+</a><a href="#h1-16-4" id="h1-16-4" class="i">+			memcpy(c-&gt;tags, monitors[monitorat()].seltags, sizeof initags);
+</a> 			break;
+ 		}
+ 	}
+ }
+ 
+ Client *
+<a href="#h1-16-11" id="h1-16-11" class="d">-nexttiled(Client *c, Monitor *m) {
+</a><a href="#h1-16-12" id="h1-16-12" class="d">-	for(; c &amp;&amp; (c-&gt;isfloating || !isvisible(c, m)); c = c-&gt;next);
+</a><a href="#h1-16-13" id="h1-16-13" class="i">+nexttiled(Client *c, int monitor) {
+</a><a href="#h1-16-14" id="h1-16-14" class="i">+	for(; c &amp;&amp; (c-&gt;isfloating || !isvisible(c, monitor)); c = c-&gt;next);
+</a> 	return c;
+ }
+ 
+<a href="#h1-17" id="h1-17" class="h">@@ -1230,8 +1244,8 @@ reapply(const char *arg) {
+</a> void
+ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+ 	XWindowChanges wc;
+<a href="#h1-17-3" id="h1-17-3" class="d">-	Monitor scr = monitors[monitorat(x, y)];
+</a><a href="#h1-17-4" id="h1-17-4" class="d">-	c-&gt;monitor = monitorat(x, y);
+</a><a href="#h1-17-5" id="h1-17-5" class="i">+	//Monitor scr = monitors[monitorat()];
+</a><a href="#h1-17-6" id="h1-17-6" class="i">+//	c-&gt;monitor = monitorat();
+</a> 
+ 	if(sizehints) {
+ 		/* set minimum possible */
+<a href="#h1-18" id="h1-18" class="h">@@ -1354,7 +1368,7 @@ restack(void) {
+</a> 			wc.sibling = sel-&gt;win;
+ 		}
+ 		for(i = 0; i &lt; mcount; i++) {
+<a href="#h1-18-3" id="h1-18-3" class="d">-			for(c = nexttiled(clients, &amp;monitors[i]); c; c = nexttiled(c-&gt;next, &amp;monitors[i])) {
+</a><a href="#h1-18-4" id="h1-18-4" class="i">+			for(c = nexttiled(clients, i); c; c = nexttiled(c-&gt;next, i)) {
+</a> 				if(c == sel)
+ 					continue;
+ 				XConfigureWindow(dpy, c-&gt;win, CWSibling | CWStackMode, &amp;wc);
+<a href="#h1-19" id="h1-19" class="h">@@ -1467,7 +1481,7 @@ setclientstate(Client *c, long state) {
+</a> void
+ setlayout(const char *arg) {
+ 	unsigned int i;
+<a href="#h1-19-3" id="h1-19-3" class="d">-	Monitor *m = &amp;monitors[monitorat(-1, -1)];
+</a><a href="#h1-19-4" id="h1-19-4" class="i">+	Monitor *m = &amp;monitors[monitorat()];
+</a> 
+ 	if(!arg) {
+ 		m-&gt;layout++;
+<a href="#h1-20" id="h1-20" class="h">@@ -1492,7 +1506,7 @@ void
+</a> setmwfact(const char *arg) {
+ 	double delta;
+ 
+<a href="#h1-20-3" id="h1-20-3" class="d">-	Monitor *m = &amp;monitors[monitorat(-1, -1)];
+</a><a href="#h1-20-4" id="h1-20-4" class="i">+	Monitor *m = &amp;monitors[monitorat()];
+</a> 
+ 	if(!domwfact)
+ 		return;
+<a href="#h1-21" id="h1-21" class="h">@@ -1533,24 +1547,24 @@ setup(void) {
+</a> 	cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
+ 
+ 	// init screens/monitors first
+<a href="#h1-21-3" id="h1-21-3" class="d">-	if (XineramaIsActive(dpy)) {
+</a><a href="#h1-21-4" id="h1-21-4" class="d">-		info = XineramaQueryScreens(dpy, &amp;mcount);
+</a><a href="#h1-21-5" id="h1-21-5" class="d">-	}
+</a> 	mcount = 1;
+<a href="#h1-21-7" id="h1-21-7" class="i">+	if((isxinerama = XineramaIsActive(dpy)))
+</a><a href="#h1-21-8" id="h1-21-8" class="i">+		info = XineramaQueryScreens(dpy, &amp;mcount);
+</a> 	monitors = emallocz(mcount * sizeof(Monitor));
+ 
+ 	for(i = 0; i &lt; mcount; i++) {
+ 		/* init geometry */
+ 		m = &amp;monitors[i];
+ 
+<a href="#h1-21-15" id="h1-21-15" class="d">-		m-&gt;screen = i;
+</a><a href="#h1-21-16" id="h1-21-16" class="d">-		m-&gt;root = RootWindow(dpy, i);
+</a><a href="#h1-21-17" id="h1-21-17" class="i">+		m-&gt;screen = isxinerama ? 0 : i;
+</a><a href="#h1-21-18" id="h1-21-18" class="i">+		m-&gt;root = RootWindow(dpy, m-&gt;screen);
+</a> 
+<a href="#h1-21-20" id="h1-21-20" class="d">-		if (mcount != 1) { // TODO: Xinerama
+</a><a href="#h1-21-21" id="h1-21-21" class="i">+		if (mcount != 1 &amp;&amp; isxinerama) {
+</a> 			m-&gt;sx = info[i].x_org;
+ 			m-&gt;sy = info[i].y_org;
+ 			m-&gt;sw = info[i].width;
+ 			m-&gt;sh = info[i].height;
+<a href="#h1-21-26" id="h1-21-26" class="i">+			fprintf(stderr, &quot;monitor[%d]: %d,%d,%d,%d\n&quot;, i, m-&gt;sx, m-&gt;sy, m-&gt;sw, m-&gt;sh);
+</a> 		}
+ 		else {
+ 			m-&gt;sx = 0;
+<a href="#h1-22" id="h1-22" class="h">@@ -1566,12 +1580,12 @@ setup(void) {
+</a> 		memcpy(m-&gt;prevtags, initags, sizeof initags);
+ 
+ 		/* init appearance */
+<a href="#h1-22-3" id="h1-22-3" class="d">-		m-&gt;dc.norm[ColBorder] = getcolor(NORMBORDERCOLOR, i);
+</a><a href="#h1-22-4" id="h1-22-4" class="d">-		m-&gt;dc.norm[ColBG] = getcolor(NORMBGCOLOR, i);
+</a><a href="#h1-22-5" id="h1-22-5" class="d">-		m-&gt;dc.norm[ColFG] = getcolor(NORMFGCOLOR, i);
+</a><a href="#h1-22-6" id="h1-22-6" class="d">-		m-&gt;dc.sel[ColBorder] = getcolor(SELBORDERCOLOR, i);
+</a><a href="#h1-22-7" id="h1-22-7" class="d">-		m-&gt;dc.sel[ColBG] = getcolor(SELBGCOLOR, i);
+</a><a href="#h1-22-8" id="h1-22-8" class="d">-		m-&gt;dc.sel[ColFG] = getcolor(SELFGCOLOR, i);
+</a><a href="#h1-22-9" id="h1-22-9" class="i">+		m-&gt;dc.norm[ColBorder] = getcolor(NORMBORDERCOLOR, m-&gt;screen);
+</a><a href="#h1-22-10" id="h1-22-10" class="i">+		m-&gt;dc.norm[ColBG] = getcolor(NORMBGCOLOR, m-&gt;screen);
+</a><a href="#h1-22-11" id="h1-22-11" class="i">+		m-&gt;dc.norm[ColFG] = getcolor(NORMFGCOLOR, m-&gt;screen);
+</a><a href="#h1-22-12" id="h1-22-12" class="i">+		m-&gt;dc.sel[ColBorder] = getcolor(SELBORDERCOLOR, m-&gt;screen);
+</a><a href="#h1-22-13" id="h1-22-13" class="i">+		m-&gt;dc.sel[ColBG] = getcolor(SELBGCOLOR, m-&gt;screen);
+</a><a href="#h1-22-14" id="h1-22-14" class="i">+		m-&gt;dc.sel[ColFG] = getcolor(SELFGCOLOR, m-&gt;screen);
+</a> 		initfont(m, FONT);
+ 		m-&gt;dc.h = bh = m-&gt;dc.font.height + 2;
+ 
+<a href="#h1-23" id="h1-23" class="h">@@ -1614,12 +1628,17 @@ setup(void) {
+</a> 		XChangeWindowAttributes(dpy, m-&gt;root, CWEventMask | CWCursor, &amp;wa);
+ 		XSelectInput(dpy, m-&gt;root, wa.event_mask);
+ 	}
+<a href="#h1-23-3" id="h1-23-3" class="i">+	if(info)
+</a><a href="#h1-23-4" id="h1-23-4" class="i">+		XFree(info);
+</a> 
+ 	/* grab keys */
+ 	grabkeys();
+ 
+ 	/* init tags */
+ 	compileregs();
+<a href="#h1-23-11" id="h1-23-11" class="i">+
+</a><a href="#h1-23-12" id="h1-23-12" class="i">+	selmonitor = monitorat();
+</a><a href="#h1-23-13" id="h1-23-13" class="i">+	fprintf(stderr, &quot;selmonitor == %d\n&quot;, selmonitor);
+</a> }
+ 
+ void
+<a href="#h1-24" id="h1-24" class="h">@@ -1681,15 +1700,15 @@ tile(void) {
+</a> 
+ 	domwfact = dozoom = True;
+ 
+<a href="#h1-24-3" id="h1-24-3" class="d">-	nw = 0; /* gcc stupidity requires this */
+</a><a href="#h1-24-4" id="h1-24-4" class="i">+	nx = ny = nw = 0; /* gcc stupidity requires this */
+</a> 
+ 	for (i = 0; i &lt; mcount; i++) {
+ 		Monitor *m = &amp;monitors[i];
+ 
+<a href="#h1-24-9" id="h1-24-9" class="d">-		for(n = 0, c = nexttiled(clients, m); c; c = nexttiled(c-&gt;next, m))
+</a><a href="#h1-24-10" id="h1-24-10" class="i">+		for(n = 0, c = nexttiled(clients, i); c; c = nexttiled(c-&gt;next, i))
+</a> 			n++;
+ 
+<a href="#h1-24-13" id="h1-24-13" class="d">-		for(j = 0, c = mc = nexttiled(clients, m); c; c = nexttiled(c-&gt;next, m)) {
+</a><a href="#h1-24-14" id="h1-24-14" class="i">+		for(j = 0, c = mc = nexttiled(clients, i); c; c = nexttiled(c-&gt;next, i)) {
+</a> 			/* window geoms */
+ 			mw = (n == 1) ? m-&gt;waw : m-&gt;mwfact * m-&gt;waw;
+ 			th = (n &gt; 1) ? m-&gt;wah / (n - 1) : 0;
+<a href="#h1-25" id="h1-25" class="h">@@ -1712,6 +1731,7 @@ tile(void) {
+</a> 				else
+ 					nh = th - 2 * c-&gt;border;
+ 			}
+<a href="#h1-25-3" id="h1-25-3" class="i">+			fprintf(stderr, &quot;tile(%d, %d, %d, %d)\n&quot;, nx, ny, nw, nh);
+</a> 			resize(c, nx, ny, nw, nh, RESIZEHINTS);
+ 			if((RESIZEHINTS) &amp;&amp; ((c-&gt;h &lt; bh) || (c-&gt;h &gt; nh) || (c-&gt;w &lt; bh) || (c-&gt;w &gt; nw)))
+ 				/* client doesn&#39;t accept size constraints */
+<a href="#h1-26" id="h1-26" class="h">@@ -1722,6 +1742,7 @@ tile(void) {
+</a> 			j++;
+ 		}
+ 	}
+<a href="#h1-26-3" id="h1-26-3" class="i">+	fprintf(stderr, &quot;done\n&quot;);
+</a> }
+ void
+ togglebar(const char *arg) {
+<a href="#h1-27" id="h1-27" class="h">@@ -1729,7 +1750,7 @@ togglebar(const char *arg) {
+</a> 		bpos = (BARPOS == BarOff) ? BarTop : BARPOS;
+ 	else
+ 		bpos = BarOff;
+<a href="#h1-27-3" id="h1-27-3" class="d">-	updatebarpos(&amp;monitors[monitorat(-1,-1)]);
+</a><a href="#h1-27-4" id="h1-27-4" class="i">+	updatebarpos(&amp;monitors[monitorat()]);
+</a> 	arrange();
+ }
+ 
+<a href="#h1-28" id="h1-28" class="h">@@ -1761,7 +1782,7 @@ void
+</a> toggleview(const char *arg) {
+ 	unsigned int i, j;
+ 
+<a href="#h1-28-3" id="h1-28-3" class="d">-	Monitor *m = &amp;monitors[monitorat(-1, -1)];
+</a><a href="#h1-28-4" id="h1-28-4" class="i">+	Monitor *m = &amp;monitors[monitorat()];
+</a> 
+ 	i = idxoftag(arg);
+ 	m-&gt;seltags[i] = !m-&gt;seltags[i];
+<a href="#h1-29" id="h1-29" class="h">@@ -1931,7 +1952,7 @@ void
+</a> view(const char *arg) {
+ 	unsigned int i;
+ 
+<a href="#h1-29-3" id="h1-29-3" class="d">-	Monitor *m = &amp;monitors[monitorat(-1, -1)];
+</a><a href="#h1-29-4" id="h1-29-4" class="i">+	Monitor *m = &amp;monitors[monitorat()];
+</a> 
+ 	memcpy(m-&gt;prevtags, m-&gt;seltags, sizeof initags);
+ 	for(i = 0; i &lt; LENGTH(tags); i++)
+<a href="#h1-30" id="h1-30" class="h">@@ -1944,7 +1965,7 @@ void
+</a> viewprevtag(const char *arg) {
+ 	static Bool tmp[LENGTH(tags)];
+ 
+<a href="#h1-30-3" id="h1-30-3" class="d">-	Monitor *m = &amp;monitors[monitorat(-1, -1)];
+</a><a href="#h1-30-4" id="h1-30-4" class="i">+	Monitor *m = &amp;monitors[monitorat()];
+</a> 
+ 	memcpy(tmp, m-&gt;seltags, sizeof initags);
+ 	memcpy(m-&gt;seltags, m-&gt;prevtags, sizeof initags);
+<a href="#h1-31" id="h1-31" class="h">@@ -1958,8 +1979,8 @@ zoom(const char *arg) {
+</a> 
+ 	if(!sel || !dozoom || sel-&gt;isfloating)
+ 		return;
+<a href="#h1-31-3" id="h1-31-3" class="d">-	if((c = sel) == nexttiled(clients, &amp;monitors[c-&gt;monitor]))
+</a><a href="#h1-31-4" id="h1-31-4" class="d">-		if(!(c = nexttiled(c-&gt;next, &amp;monitors[c-&gt;monitor])))
+</a><a href="#h1-31-5" id="h1-31-5" class="i">+	if((c = sel) == nexttiled(clients, c-&gt;monitor))
+</a><a href="#h1-31-6" id="h1-31-6" class="i">+		if(!(c = nexttiled(c-&gt;next, c-&gt;monitor)))
+</a> 			return;
+ 	detach(c);
+ 	attach(c);
+<a href="#h1-32" id="h1-32" class="h">@@ -1967,31 +1988,6 @@ zoom(const char *arg) {
+</a> 	arrange();
+ }
+ 
+<a href="#h1-32-3" id="h1-32-3" class="d">-int
+</a><a href="#h1-32-4" id="h1-32-4" class="d">-monitorat(int x, int y) {
+</a><a href="#h1-32-5" id="h1-32-5" class="d">-	int i;
+</a><a href="#h1-32-6" id="h1-32-6" class="d">-
+</a><a href="#h1-32-7" id="h1-32-7" class="d">-	return 0;
+</a><a href="#h1-32-8" id="h1-32-8" class="d">-	if(!XineramaIsActive(dpy))
+</a><a href="#h1-32-9" id="h1-32-9" class="d">-		return 0;
+</a><a href="#h1-32-10" id="h1-32-10" class="d">-
+</a><a href="#h1-32-11" id="h1-32-11" class="d">-	if (x &lt; 0 || y &lt; 0) {
+</a><a href="#h1-32-12" id="h1-32-12" class="d">-		Window win;
+</a><a href="#h1-32-13" id="h1-32-13" class="d">-		unsigned int mask;
+</a><a href="#h1-32-14" id="h1-32-14" class="d">-		XQueryPointer(dpy, DefaultRootWindow(dpy), &amp;win, &amp;win, &amp;x, &amp;y, &amp;i, &amp;i, &amp;mask);
+</a><a href="#h1-32-15" id="h1-32-15" class="d">-	}
+</a><a href="#h1-32-16" id="h1-32-16" class="d">-
+</a><a href="#h1-32-17" id="h1-32-17" class="d">-	for(i = 0; i &lt; mcount; i++) {
+</a><a href="#h1-32-18" id="h1-32-18" class="d">-		Monitor *m = &amp;monitors[i];
+</a><a href="#h1-32-19" id="h1-32-19" class="d">-		if((x &lt; 0 || (x &gt;= m-&gt;sx &amp;&amp; x &lt; m-&gt;sx + m-&gt;sw))
+</a><a href="#h1-32-20" id="h1-32-20" class="d">-				&amp;&amp; (y &lt; 0 || (y &gt;= m-&gt;sy &amp;&amp; y &lt; m-&gt;sy + m-&gt;sh)))
+</a><a href="#h1-32-21" id="h1-32-21" class="d">-		{
+</a><a href="#h1-32-22" id="h1-32-22" class="d">-			return i;
+</a><a href="#h1-32-23" id="h1-32-23" class="d">-		}
+</a><a href="#h1-32-24" id="h1-32-24" class="d">-	}
+</a><a href="#h1-32-25" id="h1-32-25" class="d">-	return 0;
+</a><a href="#h1-32-26" id="h1-32-26" class="d">-}
+</a><a href="#h1-32-27" id="h1-32-27" class="d">-
+</a> void
+ movetomonitor(const char *arg) {
+ 	if (sel) {
+<a href="#h1-33" id="h1-33" class="h">@@ -2005,7 +2001,7 @@ movetomonitor(const char *arg) {
+</a> 
+ void
+ selectmonitor(const char *arg) {
+<a href="#h1-33-3" id="h1-33-3" class="d">-	Monitor *m = &amp;monitors[arg ? atoi(arg) : (monitorat(-1, -1)+1) % mcount];
+</a><a href="#h1-33-4" id="h1-33-4" class="i">+	Monitor *m = &amp;monitors[arg ? atoi(arg) : (monitorat()+1) % mcount];
+</a> 
+ 	XWarpPointer(dpy, None, m-&gt;root, 0, 0, 0, 0, m-&gt;wax+m-&gt;waw/2, m-&gt;way+m-&gt;wah/2);
+ 	focus(NULL);
+</pre>
+</div>
+</body>
+</html>

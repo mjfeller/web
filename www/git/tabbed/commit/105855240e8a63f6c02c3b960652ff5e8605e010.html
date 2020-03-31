@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Arrange diagnostic messages - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/105855240e8a63f6c02c3b960652ff5e8605e010.html">105855240e8a63f6c02c3b960652ff5e8605e010</a>
+<b>parent</b> <a href="../commit/735bed582460a2150702a74f24b6822397e41fc0.html">735bed582460a2150702a74f24b6822397e41fc0</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sun,  3 Jan 2016 13:01:14 +0100
+
+Arrange diagnostic messages
+
+Fix error messages to use argv0 instead of fixed “tabbed”.
+Break usage message into multiple lines.
+
+Signed-off-by: Christoph Lohmann &lt;20h@r-36.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">32</td><td><span class="i">++++++++++++++++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>1 file changed, 16 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -408,7 +408,7 @@ ecalloc(size_t n, size_t size)
+</a> 	void *p;
+ 
+ 	if (!(p = calloc(n, size)))
+<a href="#h0-0-3" id="h0-0-3" class="d">-		die(&quot;tabbed: cannot calloc\n&quot;);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		die(&quot;%s: cannot calloc\n&quot;, argv0);
+</a> 	return p;
+ }
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -418,7 +418,7 @@ erealloc(void *o, size_t size)
+</a> 	void *p;
+ 
+ 	if (!(p = realloc(o, size)))
+<a href="#h0-1-3" id="h0-1-3" class="d">-		die(&quot;tabbed: cannot realloc\n&quot;);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		die(&quot;%s: cannot realloc\n&quot;, argv0);
+</a> 	return p;
+ }
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -564,7 +564,7 @@ getcolor(const char *colstr)
+</a> 	XColor color;
+ 
+ 	if (!XAllocNamedColor(dpy, cmap, colstr, &amp;color, &amp;color))
+<a href="#h0-2-3" id="h0-2-3" class="d">-		die(&quot;tabbed: cannot allocate color &#39;%s&#39;\n&quot;, colstr);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		die(&quot;%s: cannot allocate color &#39;%s&#39;\n&quot;, argv0, colstr);
+</a> 
+ 	return color.pixel;
+ }
+<a href="#h0-3" id="h0-3" class="h">@@ -629,7 +629,8 @@ initfont(const char *fontstr)
+</a> 	dc.font.set = XCreateFontSet(dpy, fontstr, &amp;missing, &amp;n, &amp;def);
+ 	if (missing) {
+ 		while (n--)
+<a href="#h0-3-3" id="h0-3-3" class="d">-			fprintf(stderr, &quot;tabbed: missing fontset: %s\n&quot;, missing[n]);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			fprintf(stderr, &quot;%s: missing fontset: %s\n&quot;,
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+			        argv0, missing[n]);
+</a> 		XFreeStringList(missing);
+ 	}
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -648,7 +649,7 @@ initfont(const char *fontstr)
+</a> 		dc.font.xfont = NULL;
+ 		if (!(dc.font.xfont = XLoadQueryFont(dpy, fontstr)) &amp;&amp;
+ 		    !(dc.font.xfont = XLoadQueryFont(dpy, &quot;fixed&quot;)))
+<a href="#h0-4-3" id="h0-4-3" class="d">-			die(&quot;tabbed: cannot load font: &#39;%s&#39;\n&quot;, fontstr);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+			die(&quot;%s: cannot load font: &#39;%s&#39;\n&quot;, argv0, fontstr);
+</a> 
+ 		dc.font.ascent = dc.font.xfont-&gt;ascent;
+ 		dc.font.descent = dc.font.xfont-&gt;descent;
+<a href="#h0-5" id="h0-5" class="h">@@ -1097,7 +1098,7 @@ void
+</a> sigchld(int unused)
+ {
+ 	if (signal(SIGCHLD, sigchld) == SIG_ERR)
+<a href="#h0-5-3" id="h0-5-3" class="d">-		die(&quot;tabbed: cannot install SIGCHLD handler&quot;);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		die(&quot;%s: cannot install SIGCHLD handler&quot;, argv0);
+</a> 
+ 	while (0 &lt; waitpid(-1, NULL, WNOHANG));
+ }
+<a href="#h0-6" id="h0-6" class="h">@@ -1112,12 +1113,12 @@ spawn(const Arg *arg)
+</a> 		setsid();
+ 		if (arg &amp;&amp; arg-&gt;v) {
+ 			execvp(((char **)arg-&gt;v)[0], (char **)arg-&gt;v);
+<a href="#h0-6-3" id="h0-6-3" class="d">-			fprintf(stderr, &quot;tabbed: execvp %s&quot;,
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+			fprintf(stderr, &quot;%s: execvp %s&quot;, argv0,
+</a> 			        ((char **)arg-&gt;v)[0]);
+ 		} else {
+ 			cmd[cmd_append_pos] = NULL;
+ 			execvp(cmd[0], cmd);
+<a href="#h0-6-9" id="h0-6-9" class="d">-			fprintf(stderr, &quot;tabbed: execvp %s&quot;, cmd[0]);
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+			fprintf(stderr, &quot;%s: execvp %s&quot;, argv0, cmd[0]);
+</a> 		}
+ 		perror(&quot; failed&quot;);
+ 		exit(0);
+<a href="#h0-7" id="h0-7" class="h">@@ -1267,8 +1268,8 @@ xerror(Display *dpy, XErrorEvent *ee)
+</a> 	        ee-&gt;error_code == BadDrawable))
+ 		return 0;
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-	fprintf(stderr, &quot;tabbed: fatal error: request code=%d, error code=%d\n&quot;,
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-	        ee-&gt;request_code, ee-&gt;error_code);
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+	fprintf(stderr, &quot;%s: fatal error: request code=%d, error code=%d\n&quot;,
+</a><a href="#h0-7-6" id="h0-7-6" class="i">+	        argv0, ee-&gt;request_code, ee-&gt;error_code);
+</a> 	return xerrorxlib(dpy, ee); /* may call exit */
+ }
+ 
+<a href="#h0-8" id="h0-8" class="h">@@ -1288,9 +1289,9 @@ xsettitle(Window w, const char *str)
+</a> void
+ usage(void)
+ {
+<a href="#h0-8-3" id="h0-8-3" class="d">-	die(&quot;usage: %s [-dfhsv] [-g geometry] [-n name] [-p [s+/-]pos] &quot;
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-	    &quot;[-r narg] [-o color] [-O color] [-t color] [-T color] &quot;
+</a><a href="#h0-8-5" id="h0-8-5" class="d">-	    &quot;[-u color] [-U color] command...\n&quot;, argv0);
+</a><a href="#h0-8-6" id="h0-8-6" class="i">+	die(&quot;usage: %s [-dfhsv] [-g geometry] [-n name] [-p [s+/-]pos]\n&quot;
+</a><a href="#h0-8-7" id="h0-8-7" class="i">+	    &quot;       [-r narg] [-o color] [-O color] [-t color] [-T color]\n&quot;
+</a><a href="#h0-8-8" id="h0-8-8" class="i">+	    &quot;       [-u color] [-U color] command...\n&quot;, argv0);
+</a> }
+ 
+ int
+<a href="#h0-9" id="h0-9" class="h">@@ -1351,9 +1352,8 @@ main(int argc, char *argv[])
+</a> 		urgbgcolor = EARGF(usage());
+ 		break;
+ 	case &#39;v&#39;:
+<a href="#h0-9-3" id="h0-9-3" class="d">-		die(&quot;tabbed-&quot;VERSION&quot;, © 2009-2016&quot;
+</a><a href="#h0-9-4" id="h0-9-4" class="d">-			&quot; tabbed engineers, see LICENSE&quot;
+</a><a href="#h0-9-5" id="h0-9-5" class="d">-			&quot; for details.\n&quot;);
+</a><a href="#h0-9-6" id="h0-9-6" class="i">+		die(&quot;tabbed-&quot;VERSION&quot;, © 2009-2016 tabbed engineers, &quot;
+</a><a href="#h0-9-7" id="h0-9-7" class="i">+		    &quot;see LICENSE for details.\n&quot;);
+</a> 		break;
+ 	default: /* FALLTHROUGH */
+ 	case &#39;h&#39;:
+</pre>
+</div>
+</body>
+</html>

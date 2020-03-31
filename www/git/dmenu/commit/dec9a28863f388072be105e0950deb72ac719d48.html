@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>dmenu_run: Split cache logic to dmenu_path again - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/dec9a28863f388072be105e0950deb72ac719d48.html">dec9a28863f388072be105e0950deb72ac719d48</a>
+<b>parent</b> <a href="../commit/1299e41447fe5850d127857a68f37c5badd491ce.html">1299e41447fe5850d127857a68f37c5badd491ce</a>
+<b>Author:</b> Quentin Glidic &lt;<a href="mailto:sardemff7+hg@sardemff7.net">sardemff7+hg@sardemff7.net</a>&gt;
+<b>Date:</b>   Mon, 30 Jul 2012 17:02:12 +0200
+
+dmenu_run: Split cache logic to dmenu_path again
+
+This allows to run dmenu_path to update the cache using
+a packager manager hook system
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">6</td><td><span class="i">++++</span><span class="d">--</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">dmenu_path</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dmenu_run</a></td><td> | </td><td class="num">15</td><td><span class="i">+</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>3 files changed, 18 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -35,7 +35,7 @@ clean:
+</a> dist: clean
+ 	@echo creating dist tarball
+ 	@mkdir -p dmenu-${VERSION}
+<a href="#h0-0-3" id="h0-0-3" class="d">-	@cp LICENSE Makefile README config.mk dmenu.1 draw.h dmenu_run stest.1 ${SRC} dmenu-${VERSION}
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	@cp LICENSE Makefile README config.mk dmenu.1 draw.h dmenu_path dmenu_run stest.1 ${SRC} dmenu-${VERSION}
+</a> 	@tar -cf dmenu-${VERSION}.tar dmenu-${VERSION}
+ 	@gzip dmenu-${VERSION}.tar
+ 	@rm -rf dmenu-${VERSION}
+<a href="#h0-1" id="h0-1" class="h">@@ -43,8 +43,9 @@ dist: clean
+</a> install: all
+ 	@echo installing executables to ${DESTDIR}${PREFIX}/bin
+ 	@mkdir -p ${DESTDIR}${PREFIX}/bin
+<a href="#h0-1-3" id="h0-1-3" class="d">-	@cp -f dmenu dmenu_run stest ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	@cp -f dmenu dmenu_path dmenu_run stest ${DESTDIR}${PREFIX}/bin
+</a> 	@chmod 755 ${DESTDIR}${PREFIX}/bin/dmenu
+<a href="#h0-1-6" id="h0-1-6" class="i">+	@chmod 755 ${DESTDIR}${PREFIX}/bin/dmenu_path
+</a> 	@chmod 755 ${DESTDIR}${PREFIX}/bin/dmenu_run
+ 	@chmod 755 ${DESTDIR}${PREFIX}/bin/stest
+ 	@echo installing manual pages to ${DESTDIR}${MANPREFIX}/man1
+<a href="#h0-2" id="h0-2" class="h">@@ -57,6 +58,7 @@ install: all
+</a> uninstall:
+ 	@echo removing executables from ${DESTDIR}${PREFIX}/bin
+ 	@rm -f ${DESTDIR}${PREFIX}/bin/dmenu
+<a href="#h0-2-3" id="h0-2-3" class="i">+	@rm -f ${DESTDIR}${PREFIX}/bin/dmenu_path
+</a> 	@rm -f ${DESTDIR}${PREFIX}/bin/dmenu_run
+ 	@rm -f ${DESTDIR}${PREFIX}/bin/stest
+ 	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
+<b>diff --git a/<a id="h1" href="../file/dmenu_path.html">dmenu_path</a> b/<a href="../file/dmenu_path.html">dmenu_path</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,13 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+#!/bin/sh
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+cachedir=${XDG_CACHE_HOME:-&quot;$HOME/.cache&quot;}
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+if [ -d &quot;$cachedir&quot; ]; then
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+	cache=$cachedir/dmenu_run
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+else
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	cache=$HOME/.dmenu_cache # if no xdg dir, fall back to dotfile in ~
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+fi
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+IFS=:
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+if stest -dqr -n &quot;$cache&quot; $PATH; then
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	stest -flx $PATH | sort -u | tee &quot;$cache&quot;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+else
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	cat &quot;$cache&quot;
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+fi
+</a><b>diff --git a/<a id="h2" href="../file/dmenu_run.html">dmenu_run</a> b/<a href="../file/dmenu_run.html">dmenu_run</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,15 +1,2 @@
+</a> #!/bin/sh
+<a href="#h2-0-1" id="h2-0-1" class="d">-cachedir=${XDG_CACHE_HOME:-&quot;$HOME/.cache&quot;}
+</a><a href="#h2-0-2" id="h2-0-2" class="d">-if [ -d &quot;$cachedir&quot; ]; then
+</a><a href="#h2-0-3" id="h2-0-3" class="d">-	cache=$cachedir/dmenu_run
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-else
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-	cache=$HOME/.dmenu_cache # if no xdg dir, fall back to dotfile in ~
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-fi
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-(
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-	IFS=:
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-	if stest -dqr -n &quot;$cache&quot; $PATH; then
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-		stest -flx $PATH | sort -u | tee &quot;$cache&quot; | dmenu &quot;$@&quot;
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-	else
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-		dmenu &quot;$@&quot; &lt; &quot;$cache&quot;
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-	fi
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-) | ${SHELL:-&quot;/bin/sh&quot;} &amp;
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+dmenu_path | dmenu &quot;$@&quot; | ${SHELL:-&quot;/bin/sh&quot;} &amp;
+</a></pre>
+</div>
+</body>
+</html>

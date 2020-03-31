@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>tabbed remembers last viewed tab; open new tabs focused/unfocused can be configured now. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c6be3a7d9f36725fa968383e979d1ce00488bd8b.html">c6be3a7d9f36725fa968383e979d1ce00488bd8b</a>
+<b>parent</b> <a href="../commit/22653127836523932e36d19268b134695d13d753.html">22653127836523932e36d19268b134695d13d753</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue, 15 Dec 2009 09:26:01 +0100
+
+tabbed remembers last viewed tab; open new tabs focused/unfocused can be configured now.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.c</a></td><td> | </td><td class="num">28</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>2 files changed, 25 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,6 +6,7 @@ static const char *selfgcolor  = &quot;#ffffff&quot;;
+</a> static const char *before      = &quot;&lt;&quot;;
+ static const char *after       = &quot;&gt;&quot;;
+ static const int tabwidth      = 200;
+<a href="#h0-0-3" id="h0-0-3" class="i">+static const Bool foreground   = False;
+</a> 
+ #define MODKEY ControlMask
+ static Key keys[] = { \
+<a href="#h0-1" id="h0-1" class="h">@@ -13,6 +14,7 @@ static Key keys[] = { \
+</a> 	{ MODKEY|ShiftMask,             XK_Return, spawn,          { .v = (char*[]){ &quot;surf&quot;, &quot;-e&quot;, winid, NULL} } },
+ 	{ MODKEY|ShiftMask,             XK_l,      rotate,         { .i = +1 } },
+ 	{ MODKEY|ShiftMask,             XK_h,      rotate,         { .i = -1 } },
+<a href="#h0-1-3" id="h0-1-3" class="i">+	{ MODKEY,                       XK_Tab,    rotate,         { .i = 0 } },
+</a> 	{ MODKEY,                       XK_1,      move,           { .i = 0 } },
+ 	{ MODKEY,                       XK_2,      move,           { .i = 1 } },
+ 	{ MODKEY,                       XK_3,      move,           { .i = 2 } },
+<b>diff --git a/<a id="h1" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -102,6 +102,7 @@ static void enternotify(const XEvent *e);
+</a> static void expose(const XEvent *e);
+ static void focus(Client *c);
+ static void focusin(const XEvent *e);
+<a href="#h1-0-3" id="h1-0-3" class="i">+static void focusonce(const Arg *arg);
+</a> static Client *getclient(Window w);
+ static unsigned long getcolor(const char *colstr);
+ static Client *getfirsttab();
+<a href="#h1-1" id="h1-1" class="h">@@ -145,12 +146,12 @@ static void (*handler[LASTEvent]) (const XEvent *) = {
+</a> };
+ static int bh, wx, wy, ww, wh;
+ static unsigned int numlockmask = 0;
+<a href="#h1-1-3" id="h1-1-3" class="d">-static Bool running = True;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+static Bool running = True, nextfocus;
+</a> static Display *dpy;
+ static DC dc;
+ static Atom wmatom[WMLast], xembedatom;
+ static Window root, win;
+<a href="#h1-1-9" id="h1-1-9" class="d">-static Client *clients = NULL, *sel = NULL;
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+static Client *clients = NULL, *sel = NULL, *lastsel = NULL;
+</a> static int (*xerrorxlib)(Display *, XErrorEvent *);
+ static char winid[64];
+ /* configuration, allows nested code to access above variables */
+<a href="#h1-2" id="h1-2" class="h">@@ -387,6 +388,8 @@ focus(Client *c) {
+</a> 		return;
+ 	}
+ 	if(!c)
+<a href="#h1-2-3" id="h1-2-3" class="i">+		c = sel ? sel : clients;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	if(!c)
+</a> 		return;
+ 	resize(c, ww, wh - bh);
+ 	XRaiseWindow(dpy, c-&gt;win);
+<a href="#h1-3" id="h1-3" class="h">@@ -394,6 +397,10 @@ focus(Client *c) {
+</a> 	sendxembed(c, XEMBED_FOCUS_IN, XEMBED_FOCUS_CURRENT, 0, 0);
+ 	sendxembed(c, XEMBED_WINDOW_ACTIVATE, 0, 0, 0);
+ 	XStoreName(dpy, win, c-&gt;name);
+<a href="#h1-3-3" id="h1-3-3" class="i">+	if(sel != c) {
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		lastsel = sel;
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+		puts(&quot;set&quot;);
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+	}
+</a> 	sel = c;
+ 	drawbar();
+ }
+<a href="#h1-4" id="h1-4" class="h">@@ -403,6 +410,11 @@ focusin(const XEvent *e) {
+</a> 	focus(sel);
+ }
+ 
+<a href="#h1-4-3" id="h1-4-3" class="i">+void
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+focusonce(const Arg *arg) {
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+	nextfocus = True;
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+}
+</a><a href="#h1-4-7" id="h1-4-7" class="i">+
+</a> Client *
+ getclient(Window w) {
+ 	Client *c;
+<a href="#h1-5" id="h1-5" class="h">@@ -591,7 +603,8 @@ manage(Window w) {
+</a> 		e.xclient.data.l[4] = 0;
+ 		XSendEvent(dpy, root, False, NoEventMask, &amp;e);
+ 		XSync(dpy, False);
+<a href="#h1-5-3" id="h1-5-3" class="d">-		focus(c);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		focus(nextfocus ? c : sel);
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+		nextfocus = foreground;
+</a> 	}
+ }
+ 
+<a href="#h1-6" id="h1-6" class="h">@@ -649,7 +662,9 @@ void
+</a> rotate(const Arg *arg) {
+ 	Client *c;
+ 
+<a href="#h1-6-3" id="h1-6-3" class="d">-	if(arg-&gt;i &gt; 0) {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+	if(arg-&gt;i == 0)
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+		focus(lastsel);
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+	else if(arg-&gt;i &gt; 0) {
+</a> 		if(sel &amp;&amp; sel-&gt;next)
+ 			focus(sel-&gt;next);
+ 		else
+<a href="#h1-7" id="h1-7" class="h">@@ -731,6 +746,7 @@ setup(void) {
+</a> 	XSetClassHint(dpy, win, &amp;class_hint);
+ 	XSetWMProtocols(dpy, win, &amp;wmatom[WMDelete], 1);
+ 	snprintf(winid, LENGTH(winid), &quot;%u&quot;, (int)win);
+<a href="#h1-7-3" id="h1-7-3" class="i">+	nextfocus = foreground;
+</a> 	focus(clients);
+ }
+ 
+<a href="#h1-8" id="h1-8" class="h">@@ -777,7 +793,9 @@ unmanage(Client *c) {
+</a> 		for(pc = clients; pc &amp;&amp; pc-&gt;next &amp;&amp; pc-&gt;next != c; pc = pc-&gt;next);
+ 		pc-&gt;next = c-&gt;next;
+ 	}
+<a href="#h1-8-3" id="h1-8-3" class="d">-	focus(c-&gt;next ? c-&gt;next : pc);
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	if(c == lastsel)
+</a><a href="#h1-8-5" id="h1-8-5" class="i">+		lastsel = pc;
+</a><a href="#h1-8-6" id="h1-8-6" class="i">+	focus(lastsel);
+</a> 	free(c);
+ 	XSync(dpy, False);
+ }
+</pre>
+</div>
+</body>
+</html>

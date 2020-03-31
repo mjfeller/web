@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Replace geopolicyrequested() with permissionrequested() - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/92d7ba7ed8cf4cb7ffa839596fca58032e2c4dd3.html">92d7ba7ed8cf4cb7ffa839596fca58032e2c4dd3</a>
+<b>parent</b> <a href="../commit/42c6c90366b7ce7708b13037a6ba819b08fbb20e.html">42c6c90366b7ce7708b13037a6ba819b08fbb20e</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Wed, 18 Nov 2015 18:09:55 +0100
+
+Replace geopolicyrequested() with permissionrequested()
+
+The permission-request signal can now ask for than a geolocation
+authorisation (though we only handle that for now).
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++++++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>1 file changed, 15 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -130,8 +130,8 @@ static void die(const char *errstr, ...);
+</a> static void eval(Client *c, const Arg *arg);
+ static void find(Client *c, const Arg *arg);
+ static void fullscreen(Client *c, const Arg *arg);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void geopolicyrequested(WebKitWebView *v, WebKitWebFrame *f,
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-                               WebKitGeolocationPolicyDecision *d, Client *c);
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static gboolean permissionrequested(WebKitWebView *v,
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		WebKitPermissionRequest *r, Client *c);
+</a> static const char *getatom(Client *c, int a);
+ static void gettogglestat(Client *c);
+ static void getpagestat(Client *c);
+<a href="#h0-1" id="h0-1" class="h">@@ -527,14 +527,18 @@ fullscreen(Client *c, const Arg *arg)
+</a> 	c-&gt;fullscreen = !c-&gt;fullscreen;
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-void
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-geopolicyrequested(WebKitWebView *v, WebKitWebFrame *f,
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-                   WebKitGeolocationPolicyDecision *d, Client *c)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+gboolean
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+permissionrequested(WebKitWebView *v, WebKitPermissionRequest *r, Client *c)
+</a> {
+<a href="#h0-1-9" id="h0-1-9" class="d">-	if (allowgeolocation)
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-		webkit_geolocation_policy_allow(d);
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-	else
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-		webkit_geolocation_policy_deny(d);
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	if (WEBKIT_IS_GEOLOCATION_PERMISSION_REQUEST(r)) {
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+		if (allowgeolocation)
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+			webkit_permission_request_allow(r);
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+		else
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+			webkit_permission_request_deny(r);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		return TRUE;
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	}
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	return FALSE;
+</a> }
+ 
+ const char *
+<a href="#h0-2" id="h0-2" class="h">@@ -883,8 +887,8 @@ newview(Client *c, WebKitWebView *rv)
+</a> 	                 &quot;mouse-target-changed&quot;,
+ 			 G_CALLBACK(mousetargetchanged), c);
+ 	g_signal_connect(G_OBJECT(v),
+<a href="#h0-2-3" id="h0-2-3" class="d">-	                 &quot;geolocation-policy-decision-requested&quot;,
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-			 G_CALLBACK(geopolicyrequested), c);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	                 &quot;permission-request&quot;,
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			 G_CALLBACK(permissionrequested), c);
+</a> 	g_signal_connect(G_OBJECT(v),
+ 	                 &quot;create-web-view&quot;,
+ 			 G_CALLBACK(createwindow), c);
+</pre>
+</div>
+</body>
+</html>

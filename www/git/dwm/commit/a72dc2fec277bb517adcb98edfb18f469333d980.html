@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Mate&#39;s patch, added Mate to LICENSE - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a72dc2fec277bb517adcb98edfb18f469333d980.html">a72dc2fec277bb517adcb98edfb18f469333d980</a>
+<b>parent</b> <a href="../commit/8b17f5517b12a84a52e9073ace4c8bb9eb6bb941.html">8b17f5517b12a84a52e9073ace4c8bb9eb6bb941</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Mon,  6 Jul 2009 20:12:47 +0100
+
+applied Mate&#39;s patch, added Mate to LICENSE
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">LICENSE</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">40</td><td><span class="i">++++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>2 files changed, 21 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/LICENSE.html">LICENSE</a> b/<a href="../file/LICENSE.html">LICENSE</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,6 +10,7 @@ MIT/X Consortium License
+</a> © 2007-2008 Peter Hartlich &lt;sgkkr at hartlich dot com&gt;
+ © 2008 Martin Hurton &lt;martin dot hurton at gmail dot com&gt;
+ © 2008 Neale Pickett &lt;neale dot woozle dot org&gt;
+<a href="#h0-0-3" id="h0-0-3" class="i">+© 2009 Mate Nagy &lt;mnagy@port70.net&gt;
+</a> 
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files (the &quot;Software&quot;),
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -136,6 +136,7 @@ struct Monitor {
+</a> 	Client *stack;
+ 	Monitor *next;
+ 	Window barwin;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	Layout *lt[2];
+</a> };
+ 
+ typedef struct {
+<a href="#h1-1" id="h1-1" class="h">@@ -261,7 +262,6 @@ static Bool running = True;
+</a> static Cursor cursor[CurLast];
+ static Display *dpy;
+ static DC dc;
+<a href="#h1-1-3" id="h1-1-3" class="d">-static Layout *lt[] = { NULL, NULL };
+</a> static Monitor *mons = NULL, *selmon = NULL;
+ static Window root;
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -376,8 +376,8 @@ arrange(void) {
+</a> 		showhide(m-&gt;stack);
+ 	focus(NULL);
+ 	for(m = mons; m; m = m-&gt;next) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-		if(lt[m-&gt;sellt]-&gt;arrange)
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-			lt[m-&gt;sellt]-&gt;arrange(m);
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		if(m-&gt;lt[m-&gt;sellt]-&gt;arrange)
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+			m-&gt;lt[m-&gt;sellt]-&gt;arrange(m);
+</a> 		restack(m);
+ 	}
+ }
+<a href="#h1-3" id="h1-3" class="h">@@ -456,7 +456,7 @@ cleanup(void) {
+</a> 	Monitor *m;
+ 
+ 	view(&amp;a);
+<a href="#h1-3-3" id="h1-3-3" class="d">-	lt[selmon-&gt;sellt] = &amp;foo;
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	selmon-&gt;lt[selmon-&gt;sellt] = &amp;foo;
+</a> 	for(m = mons; m; m = m-&gt;next)
+ 		while(m-&gt;stack)
+ 			unmanage(m-&gt;stack);
+<a href="#h1-4" id="h1-4" class="h">@@ -547,7 +547,7 @@ configurerequest(XEvent *e) {
+</a> 	if((c = wintoclient(ev-&gt;window))) {
+ 		if(ev-&gt;value_mask &amp; CWBorderWidth)
+ 			c-&gt;bw = ev-&gt;border_width;
+<a href="#h1-4-3" id="h1-4-3" class="d">-		else if(c-&gt;isfloating || !lt[selmon-&gt;sellt]-&gt;arrange) {
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		else if(c-&gt;isfloating || !selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange) {
+</a> 			m = c-&gt;mon;
+ 			if(ev-&gt;value_mask &amp; CWX)
+ 				c-&gt;x = m-&gt;mx + ev-&gt;x;
+<a href="#h1-5" id="h1-5" class="h">@@ -668,7 +668,7 @@ drawbar(Monitor *m) {
+</a> 	}
+ 	if(blw &gt; 0) {
+ 		dc.w = blw;
+<a href="#h1-5-3" id="h1-5-3" class="d">-		drawtext(lt[m-&gt;sellt]-&gt;symbol, dc.norm, False);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		drawtext(m-&gt;lt[m-&gt;sellt]-&gt;symbol, dc.norm, False);
+</a> 		x = dc.x + dc.w;
+ 	}
+ 	else
+<a href="#h1-6" id="h1-6" class="h">@@ -1170,11 +1170,11 @@ movemouse(const Arg *arg) {
+</a> 					ny = selmon-&gt;wy;
+ 				else if(abs((selmon-&gt;wy + selmon-&gt;wh) - (ny + HEIGHT(c))) &lt; snap)
+ 					ny = selmon-&gt;wy + selmon-&gt;wh - HEIGHT(c);
+<a href="#h1-6-3" id="h1-6-3" class="d">-				if(!c-&gt;isfloating &amp;&amp; lt[selmon-&gt;sellt]-&gt;arrange
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+				if(!c-&gt;isfloating &amp;&amp; selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange
+</a> 				                  &amp;&amp; (abs(nx - c-&gt;x) &gt; snap || abs(ny - c-&gt;y) &gt; snap))
+ 					togglefloating(NULL);
+ 			}
+<a href="#h1-6-8" id="h1-6-8" class="d">-			if(!lt[selmon-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+			if(!selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+</a> 				resize(c, nx, ny, c-&gt;w, c-&gt;h, True);
+ 			break;
+ 		}
+<a href="#h1-7" id="h1-7" class="h">@@ -1289,11 +1289,11 @@ resizemouse(const Arg *arg) {
+</a> 			nh = MAX(ev.xmotion.y - ocy - 2 * c-&gt;bw + 1, 1);
+ 			if(snap &amp;&amp; nw &gt;= selmon-&gt;wx &amp;&amp; nw &lt;= selmon-&gt;wx + selmon-&gt;ww
+ 			        &amp;&amp; nh &gt;= selmon-&gt;wy &amp;&amp; nh &lt;= selmon-&gt;wy + selmon-&gt;wh) {
+<a href="#h1-7-3" id="h1-7-3" class="d">-				if(!c-&gt;isfloating &amp;&amp; lt[selmon-&gt;sellt]-&gt;arrange
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+				if(!c-&gt;isfloating &amp;&amp; selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange
+</a> 				   &amp;&amp; (abs(nw - c-&gt;w) &gt; snap || abs(nh - c-&gt;h) &gt; snap))
+ 					togglefloating(NULL);
+ 			}
+<a href="#h1-7-8" id="h1-7-8" class="d">-			if(!lt[selmon-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+</a><a href="#h1-7-9" id="h1-7-9" class="i">+			if(!selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+</a> 				resize(c, c-&gt;x, c-&gt;y, nw, nh, True);
+ 			break;
+ 		}
+<a href="#h1-8" id="h1-8" class="h">@@ -1318,9 +1318,9 @@ restack(Monitor *m) {
+</a> 	drawbars();
+ 	if(!m-&gt;sel)
+ 		return;
+<a href="#h1-8-3" id="h1-8-3" class="d">-	if(m-&gt;sel-&gt;isfloating || !lt[m-&gt;sellt]-&gt;arrange)
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	if(m-&gt;sel-&gt;isfloating || !m-&gt;lt[m-&gt;sellt]-&gt;arrange)
+</a> 		XRaiseWindow(dpy, m-&gt;sel-&gt;win);
+<a href="#h1-8-6" id="h1-8-6" class="d">-	if(lt[m-&gt;sellt]-&gt;arrange) {
+</a><a href="#h1-8-7" id="h1-8-7" class="i">+	if(m-&gt;lt[m-&gt;sellt]-&gt;arrange) {
+</a> 		wc.stack_mode = Below;
+ 		wc.sibling = m-&gt;barwin;
+ 		for(c = m-&gt;stack; c; c = c-&gt;snext)
+<a href="#h1-9" id="h1-9" class="h">@@ -1396,10 +1396,10 @@ setclientstate(Client *c, long state) {
+</a> 
+ void
+ setlayout(const Arg *arg) {
+<a href="#h1-9-3" id="h1-9-3" class="d">-	if(!arg || !arg-&gt;v || arg-&gt;v != lt[selmon-&gt;sellt])
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+	if(!arg || !arg-&gt;v || arg-&gt;v != selmon-&gt;lt[selmon-&gt;sellt])
+</a> 		selmon-&gt;sellt ^= 1;
+ 	if(arg &amp;&amp; arg-&gt;v)
+<a href="#h1-9-7" id="h1-9-7" class="d">-		lt[selmon-&gt;sellt] = (Layout *)arg-&gt;v;
+</a><a href="#h1-9-8" id="h1-9-8" class="i">+		selmon-&gt;lt[selmon-&gt;sellt] = (Layout *)arg-&gt;v;
+</a> 	if(selmon-&gt;sel)
+ 		arrange();
+ 	else
+<a href="#h1-10" id="h1-10" class="h">@@ -1411,7 +1411,7 @@ void
+</a> setmfact(const Arg *arg) {
+ 	float f;
+ 
+<a href="#h1-10-3" id="h1-10-3" class="d">-	if(!arg || !lt[selmon-&gt;sellt]-&gt;arrange)
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+	if(!arg || !selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange)
+</a> 		return;
+ 	f = arg-&gt;f &lt; 1.0 ? arg-&gt;f + selmon-&gt;mfact : arg-&gt;f - 1.0;
+ 	if(f &lt; 0.1 || f &gt; 0.9)
+<a href="#h1-11" id="h1-11" class="h">@@ -1433,8 +1433,6 @@ setup(void) {
+</a> 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+ 	bh = dc.h = dc.font.height + 2;
+<a href="#h1-11-3" id="h1-11-3" class="d">-	lt[0] = &amp;layouts[0];
+</a><a href="#h1-11-4" id="h1-11-4" class="d">-	lt[1] = &amp;layouts[1 % LENGTH(layouts)];
+</a> 	updategeom();
+ 	/* init atoms */
+ 	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+<a href="#h1-12" id="h1-12" class="h">@@ -1484,7 +1482,7 @@ showhide(Client *c) {
+</a> 		return;
+ 	if(ISVISIBLE(c)) { /* show clients top down */
+ 		XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+<a href="#h1-12-3" id="h1-12-3" class="d">-		if(!lt[c-&gt;mon-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+</a><a href="#h1-12-4" id="h1-12-4" class="i">+		if(!c-&gt;mon-&gt;lt[c-&gt;mon-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+</a> 			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, False);
+ 		showhide(c-&gt;snext);
+ 	}
+<a href="#h1-13" id="h1-13" class="h">@@ -1730,6 +1728,8 @@ updategeom(void) {
+</a> 		m-&gt;mfact = mfact;
+ 		m-&gt;showbar = SHOWBAR;
+ 		m-&gt;topbar = TOPBAR;
+<a href="#h1-13-3" id="h1-13-3" class="i">+		m-&gt;lt[0] = &amp;layouts[0];
+</a><a href="#h1-13-4" id="h1-13-4" class="i">+		m-&gt;lt[1] = &amp;layouts[1 % LENGTH(layouts)];
+</a> 		updatebarpos(m);
+ 	}
+ 	/* reassign left over clients of disappeared monitors */
+<a href="#h1-14" id="h1-14" class="h">@@ -1916,8 +1916,8 @@ void
+</a> zoom(const Arg *arg) {
+ 	Client *c = selmon-&gt;sel;
+ 
+<a href="#h1-14-3" id="h1-14-3" class="d">-	if(!lt[selmon-&gt;sellt]-&gt;arrange
+</a><a href="#h1-14-4" id="h1-14-4" class="d">-	|| lt[selmon-&gt;sellt]-&gt;arrange == monocle
+</a><a href="#h1-14-5" id="h1-14-5" class="i">+	if(!selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange
+</a><a href="#h1-14-6" id="h1-14-6" class="i">+	|| selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange == monocle
+</a> 	|| (selmon-&gt;sel &amp;&amp; selmon-&gt;sel-&gt;isfloating))
+ 		return;
+ 	if(c == nexttiled(selmon-&gt;clients))
+</pre>
+</div>
+</body>
+</html>

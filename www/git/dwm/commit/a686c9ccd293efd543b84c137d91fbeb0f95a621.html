@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>we don&#39;t need to set the font all the time - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a686c9ccd293efd543b84c137d91fbeb0f95a621.html">a686c9ccd293efd543b84c137d91fbeb0f95a621</a>
+<b>parent</b> <a href="../commit/9ca5c3b108dbda55c1ac9f068b631911f5685eeb.html">9ca5c3b108dbda55c1ac9f068b631911f5685eeb</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Fri,  2 Mar 2007 15:14:40 +0100
+
+we don&#39;t need to set the font all the time
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">draw.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++</span><span class="d">---------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">main.c</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 5 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -95,7 +95,6 @@ drawtext(const char *text, unsigned long col[ColLast]) {
+</a> 	int x, y, w, h;
+ 	static char buf[256];
+ 	unsigned int len, olen;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	XGCValues gcv;
+</a> 	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+ 
+ 	XSetForeground(dpy, dc.gc, col[ColBG]);
+<a href="#h0-1" id="h0-1" class="h">@@ -124,16 +123,11 @@ drawtext(const char *text, unsigned long col[ColLast]) {
+</a> 	}
+ 	if(w &gt; dc.w)
+ 		return; /* too long */
+<a href="#h0-1-3" id="h0-1-3" class="d">-	gcv.foreground = col[ColFG];
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	if(dc.font.set) {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		XChangeGC(dpy, dc.gc, GCForeground, &amp;gcv);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	XSetForeground(dpy, dc.gc, col[ColFG]);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	if(dc.font.set)
+</a> 		XmbDrawString(dpy, dc.drawable, dc.font.set, dc.gc, x, y, buf, len);
+<a href="#h0-1-9" id="h0-1-9" class="d">-	}
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	else {
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-		gcv.font = dc.font.xfont-&gt;fid;
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-		XChangeGC(dpy, dc.gc, GCForeground | GCFont, &amp;gcv);
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	else
+</a> 		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+<a href="#h0-1-15" id="h0-1-15" class="d">-	}
+</a> }
+ 
+ unsigned int
+<b>diff --git a/<a id="h1" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -205,6 +205,8 @@ setup(void) {
+</a> 	dc.drawable = XCreatePixmap(dpy, root, sw, bh, DefaultDepth(dpy, screen));
+ 	dc.gc = XCreateGC(dpy, root, 0, 0);
+ 	XSetLineAttributes(dpy, dc.gc, 1, LineSolid, CapButt, JoinMiter);
+<a href="#h1-0-3" id="h1-0-3" class="i">+	if(!dc.font.set)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		XSetFont(dpy, dc.gc, dc.font.xfont-&gt;fid);
+</a> 	/* multihead support */
+ 	selscreen = XQueryPointer(dpy, root, &amp;w, &amp;w, &amp;i, &amp;i, &amp;i, &amp;i, &amp;mask);
+ }
+</pre>
+</div>
+</body>
+</html>

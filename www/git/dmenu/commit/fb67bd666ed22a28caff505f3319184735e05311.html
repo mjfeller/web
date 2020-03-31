@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cleanup - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/fb67bd666ed22a28caff505f3319184735e05311.html">fb67bd666ed22a28caff505f3319184735e05311</a>
+<b>parent</b> <a href="../commit/f5bd1eed8d746414f5fbf9645124ccd54a095386.html">f5bd1eed8d746414f5fbf9645124ccd54a095386</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Sun, 15 May 2011 13:58:54 +0100
+
+cleanup
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -38,7 +38,7 @@ static void setup(void);
+</a> 
+ static char text[BUFSIZ] = &quot;&quot;;
+ static int bh, mw, mh;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static int inputw = 0;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static int inputw;
+</a> static int lines = 0;
+ static int monitor = -1;
+ static int promptw;
+<a href="#h0-1" id="h0-1" class="h">@@ -78,7 +78,7 @@ main(int argc, char *argv[]) {
+</a> 			fast = True;
+ 		else if(!strcmp(argv[i], &quot;-i&quot;))
+ 			fstrncmp = strncasecmp;
+<a href="#h0-1-3" id="h0-1-3" class="d">-		else if(i == argc-1)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		else if(i+1 == argc)
+</a> 			goto usage;
+ 		/* double flags */
+ 		else if(!strcmp(argv[i], &quot;-l&quot;))
+<a href="#h0-2" id="h0-2" class="h">@@ -220,9 +220,9 @@ void
+</a> insert(const char *s, ssize_t n) {
+ 	if(strlen(text) + n &gt; sizeof text - 1)
+ 		return;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	memmove(text + cursor + n, text + cursor, sizeof text - cursor - MAX(n, 0));
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	memmove(&amp;text[cursor + n], &amp;text[cursor], sizeof text - cursor - MAX(n, 0));
+</a> 	if(n &gt; 0)
+<a href="#h0-2-6" id="h0-2-6" class="d">-		memcpy(text + cursor, s, n);
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		memcpy(&amp;text[cursor], s, n);
+</a> 	cursor += n;
+ 	match();
+ }
+<a href="#h0-3" id="h0-3" class="h">@@ -458,8 +458,7 @@ readstdin(void) {
+</a> 		if(strlen(items[i].text) &gt; max)
+ 			max = strlen(maxstr = items[i].text);
+ 	}
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(maxstr)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		inputw = textw(dc, maxstr);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	inputw = maxstr ? textw(dc, maxstr) : 0;
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

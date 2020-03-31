@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Make build shut up about system() without return value check. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/742a41d6554ce1848f45ea89cb83d62c7e881352.html">742a41d6554ce1848f45ea89cb83d62c7e881352</a>
+<b>parent</b> <a href="../commit/f36dd277a2e71e99624fe26365757242d56259c0.html">f36dd277a2e71e99624fe26365757242d56259c0</a>
+<b>Author:</b> alp@alexpilon.ca &lt;<a href="mailto:alp@alexpilon.ca">alp@alexpilon.ca</a>&gt;
+<b>Date:</b>   Tue, 21 Apr 2015 16:27:51 +0200
+
+Make build shut up about system() without return value check.
+
+    st.c:1321:2: warning: ignoring return value of function declared with warn_unused_result attribute [-Wunused-result]
+            system(cmd);
+            ^~~~~~ ~~~
+
+Debatable whether an error here should case exit(EXIT_FAILURE). Just
+preserving the existing behaviour for now.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1276,7 +1276,8 @@ stty(void)
+</a> 		siz-= n + 1;
+ 	}
+ 	*q = &#39;\0&#39;;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	system(cmd);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if (system(cmd) != 0)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	    perror(&quot;Couldn&#39;t call stty&quot;);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

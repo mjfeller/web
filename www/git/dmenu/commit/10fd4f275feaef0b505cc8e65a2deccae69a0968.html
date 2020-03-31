@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untypedef struct item - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/10fd4f275feaef0b505cc8e65a2deccae69a0968.html">10fd4f275feaef0b505cc8e65a2deccae69a0968</a>
+<b>parent</b> <a href="../commit/b048eacc9ddc6ca995783411d4df84c23f3a0351.html">b048eacc9ddc6ca995783411d4df84c23f3a0351</a>
+<b>Author:</b> FRIGN &lt;<a href="mailto:dev@frign.de">dev@frign.de</a>&gt;
+<b>Date:</b>   Mon, 28 Sep 2015 00:15:03 +0200
+
+Untypedef struct item
+
+Adds clarity. Typedefs for structs are definitely a discussion matter,
+but there&#39;s no reason to hide a simple data-structure behind a
+meaningless typedef.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++++</span><span class="d">----------</span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -28,14 +28,13 @@
+</a> /* enums */
+ enum { SchemeNorm, SchemeSel, SchemeOut, SchemeLast }; /* color schemes */
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-typedef struct Item Item;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-struct Item {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+struct item {
+</a> 	char *text;
+<a href="#h0-0-7" id="h0-0-7" class="d">-	Item *left, *right;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	struct item *left, *right;
+</a> 	bool out;
+ };
+ 
+<a href="#h0-0-12" id="h0-0-12" class="d">-static void appenditem(Item *, Item **, Item **);
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+static void appenditem(struct item *, struct item **, struct item **);
+</a> static void calcoffsets(void);
+ static char *cistrstr(const char *, const char *);
+ static void cleanup(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -56,9 +55,9 @@ static int bh, mw, mh;
+</a> static int sw, sh; /* X display screen geometry width, height */
+ static int inputw, promptw;
+ static size_t cursor;
+<a href="#h0-1-3" id="h0-1-3" class="d">-static Item *items = NULL;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-static Item *matches, *matchend;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-static Item *prev, *curr, *next, *sel;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+static struct item *items = NULL;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+static struct item *matches, *matchend;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+static struct item *prev, *curr, *next, *sel;
+</a> static int mon = -1, screen;
+ 
+ static Atom clip, utf8;
+<a href="#h0-2" id="h0-2" class="h">@@ -75,7 +74,7 @@ static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
+</a> static char *(*fstrstr)(const char *, const char *) = strstr;
+ 
+ static void
+<a href="#h0-2-3" id="h0-2-3" class="d">-appenditem(Item *item, Item **list, Item **last)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+appenditem(struct item *item, struct item **list, struct item **last)
+</a> {
+ 	if (*last)
+ 		(*last)-&gt;right = item;
+<a href="#h0-3" id="h0-3" class="h">@@ -135,7 +134,7 @@ static void
+</a> drawmenu(void)
+ {
+ 	int curpos;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	Item *item;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	struct item *item;
+</a> 	int x = 0, y = 0, h = bh, w;
+ 
+ 	drw_setscheme(drw, &amp;scheme[SchemeNorm]);
+<a href="#h0-4" id="h0-4" class="h">@@ -408,7 +407,7 @@ match(void)
+</a> 	char buf[sizeof text], *s;
+ 	int i, tokc = 0;
+ 	size_t len;
+<a href="#h0-4-3" id="h0-4-3" class="d">-	Item *item, *lprefix, *lsubstr, *prefixend, *substrend;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	struct item *item, *lprefix, *lsubstr, *prefixend, *substrend;
+</a> 
+ 	strcpy(buf, text);
+ 	/* separate input text into tokens to be matched individually */
+</pre>
+</div>
+</body>
+</html>

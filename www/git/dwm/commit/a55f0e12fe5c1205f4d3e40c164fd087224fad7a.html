@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>new stuff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a55f0e12fe5c1205f4d3e40c164fd087224fad7a.html">a55f0e12fe5c1205f4d3e40c164fd087224fad7a</a>
+<b>parent</b> <a href="../commit/0cf3ba0eab1e3b05515907b29fbb739321a7cbed.html">0cf3ba0eab1e3b05515907b29fbb739321a7cbed</a>
+<b>Author:</b> arg@10ksloc.org &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Wed,  2 Aug 2006 13:05:04 +0200
+
+new stuff
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">36</td><td><span class="i">+++++++++++++++++++++</span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">7</td><td><span class="i">++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>2 files changed, 23 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -219,12 +219,13 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	c-&gt;h = wa-&gt;height;
+ 	c-&gt;th = bh;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if(c-&gt;y &lt; bh)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	c-&gt;border = 1;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	setsize(c);
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	if(c-&gt;h != sh &amp;&amp; c-&gt;y &lt; bh)
+</a> 		c-&gt;y = c-&gt;ty = bh;
+ 
+<a href="#h0-0-10" id="h0-0-10" class="d">-	c-&gt;border = 1;
+</a> 	c-&gt;proto = getproto(c-&gt;win);
+<a href="#h0-0-12" id="h0-0-12" class="d">-	setsize(c);
+</a> 	XSelectInput(dpy, c-&gt;win,
+ 		StructureNotifyMask | PropertyChangeMask | EnterWindowMask);
+ 	XGetTransientForHint(dpy, c-&gt;win, &amp;trans);
+<a href="#h0-1" id="h0-1" class="h">@@ -237,8 +238,6 @@ manage(Window w, XWindowAttributes *wa)
+</a> 			DefaultVisual(dpy, screen),
+ 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;twa);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	settags(c);
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-
+</a> 	if(clients)
+ 		clients-&gt;prev = c;
+ 	c-&gt;next = clients;
+<a href="#h0-2" id="h0-2" class="h">@@ -251,11 +250,12 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	XGrabButton(dpy, Button3, MODKEY, c-&gt;win, False, BUTTONMASK,
+ 			GrabModeAsync, GrabModeSync, None, None);
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+	settags(c);
+</a> 	if(!c-&gt;isfloat)
+<a href="#h0-2-5" id="h0-2-5" class="d">-		c-&gt;isfloat = trans || (c-&gt;maxw &amp;&amp; c-&gt;minw &amp;&amp;
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-				(c-&gt;maxw == c-&gt;minw) &amp;&amp; (c-&gt;maxh == c-&gt;minh));
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+		c-&gt;isfloat = trans
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+			|| (c-&gt;maxw &amp;&amp; c-&gt;minw &amp;&amp;
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+				c-&gt;maxw == c-&gt;minw &amp;&amp; c-&gt;maxh == c-&gt;minh)
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+			|| (c-&gt;w == sw &amp;&amp; c-&gt;h == sh);
+</a> 	settitle(c);
+ 	arrange(NULL);
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -272,6 +272,7 @@ resize(Client *c, Bool sizehints, Corner sticky)
+</a> 	int bottom = c-&gt;y + c-&gt;h;
+ 	int right = c-&gt;x + c-&gt;w;
+ 	XConfigureEvent e;
+<a href="#h0-3-3" id="h0-3-3" class="i">+	XWindowChanges wc;
+</a> 
+ 	if(sizehints) {
+ 		if(c-&gt;incw)
+<a href="#h0-4" id="h0-4" class="h">@@ -287,18 +288,23 @@ resize(Client *c, Bool sizehints, Corner sticky)
+</a> 		if(c-&gt;maxh &amp;&amp; c-&gt;h &gt; c-&gt;maxh)
+ 			c-&gt;h = c-&gt;maxh;
+ 	}
+<a href="#h0-4-3" id="h0-4-3" class="d">-	if(c-&gt;x &gt; sw) /* might happen on restart */
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		c-&gt;x = sw - c-&gt;w;
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-	if(c-&gt;y &gt; sh)
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-		c-&gt;y = sh - c-&gt;h;
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+	if(c-&gt;x &gt; right) /* might happen on restart */
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+		c-&gt;x = right - c-&gt;w;
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+	if(c-&gt;y &gt; bottom)
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+		c-&gt;y = bottom - c-&gt;h;
+</a> 	if(sticky == TopRight || sticky == BotRight)
+ 		c-&gt;x = right - c-&gt;w;
+ 	if(sticky == BotLeft || sticky == BotRight)
+ 		c-&gt;y = bottom - c-&gt;h;
+ 
+ 	resizetitle(c);
+<a href="#h0-4-17" id="h0-4-17" class="d">-	XSetWindowBorderWidth(dpy, c-&gt;win, 1);
+</a><a href="#h0-4-18" id="h0-4-18" class="d">-	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+	wc.x = c-&gt;x;
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+	wc.y = c-&gt;y;
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+	wc.width = c-&gt;w;
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+	wc.height = c-&gt;h;
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+	wc.border_width = 1;
+</a><a href="#h0-4-24" id="h0-4-24" class="i">+	XConfigureWindow(dpy, c-&gt;win,
+</a><a href="#h0-4-25" id="h0-4-25" class="i">+			CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &amp;wc);
+</a> 
+ 	e.type = ConfigureNotify;
+ 	e.event = c-&gt;win;
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -175,11 +175,8 @@ configurerequest(XEvent *e)
+</a> 	wc.width = ev-&gt;width;
+ 	wc.height = ev-&gt;height;
+ 	wc.border_width = 1;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	wc.sibling = None;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	wc.stack_mode = Above;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	ev-&gt;value_mask &amp;= ~CWStackMode;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-	ev-&gt;value_mask |= CWBorderWidth;
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-	XConfigureWindow(dpy, ev-&gt;window, ev-&gt;value_mask, &amp;wc);
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	XConfigureWindow(dpy, ev-&gt;window,
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+			CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &amp;wc);
+</a> 	XSync(dpy, False);
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

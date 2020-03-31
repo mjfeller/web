@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>now dwm enforces max screen size also in tiled mode on non-floating clients which are maximized - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/70a3e62257d05946176aad3dbe19047d3bb705c1.html">70a3e62257d05946176aad3dbe19047d3bb705c1</a>
+<b>parent</b> <a href="../commit/6828fba7a002062dd383f83bb8d584a82fc7677a.html">6828fba7a002062dd383f83bb8d584a82fc7677a</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Tue, 29 Aug 2006 18:05:02 +0200
+
+now dwm enforces max screen size also in tiled mode on non-floating clients which are maximized
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">event.c</a></td><td> | </td><td class="num">27</td><td><span class="i">++++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>1 file changed, 14 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -150,7 +150,6 @@ buttonpress(XEvent *e)
+</a> static void
+ configurerequest(XEvent *e)
+ {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	int ox, oy, ow, oh;
+</a> 	unsigned long newmask;
+ 	Client *c;
+ 	XConfigureRequestEvent *ev = &amp;e-&gt;xconfigurerequest;
+<a href="#h0-1" id="h0-1" class="h">@@ -158,10 +157,20 @@ configurerequest(XEvent *e)
+</a> 	XWindowChanges wc;
+ 
+ 	if((c = getclient(ev-&gt;window))) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-		ox = c-&gt;x;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		oy = c-&gt;y;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		ow = c-&gt;w;
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-		oh = c-&gt;h;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		if(!c-&gt;isfloat &amp;&amp; (arrange != dofloat) &amp;&amp; c-&gt;ismax) {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+			synev.type = ConfigureNotify;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+			synev.xconfigure.display = dpy;
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			synev.xconfigure.event = c-&gt;win;
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+			synev.xconfigure.window = c-&gt;win;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+			synev.xconfigure.x = sx;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+			synev.xconfigure.y = sy + bh;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+			synev.xconfigure.width = sw - 2;
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+			synev.xconfigure.height = sw - 2 - bh;
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+			synev.xconfigure.border_width = ev-&gt;border_width;
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+			synev.xconfigure.above = None;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+			XSendEvent(dpy, c-&gt;win, True, NoEventMask, &amp;synev);
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+			return;
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+		}
+</a> 		gravitate(c, True);
+ 		if(ev-&gt;value_mask &amp; CWX)
+ 			c-&gt;x = ev-&gt;x;
+<a href="#h0-2" id="h0-2" class="h">@@ -192,19 +201,11 @@ configurerequest(XEvent *e)
+</a> 			synev.xconfigure.height = c-&gt;h;
+ 			synev.xconfigure.border_width = c-&gt;border;
+ 			synev.xconfigure.above = None;
+<a href="#h0-2-3" id="h0-2-3" class="d">-			/* Send synthetic ConfigureNotify */
+</a> 			XSendEvent(dpy, c-&gt;win, True, NoEventMask, &amp;synev);
+ 		}
+ 		XSync(dpy, False);
+ 		if(c-&gt;isfloat)
+ 			resize(c, False, TopLeft);
+<a href="#h0-2-9" id="h0-2-9" class="d">-		else if(c-&gt;ismax) {
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-			resize(c, False, TopLeft);
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-			c-&gt;x = ox;
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-			c-&gt;y = oy;
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-			c-&gt;w = ow;
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-			c-&gt;h = oh;
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-		}
+</a> 		else
+ 			arrange(NULL);
+ 	}
+</pre>
+</div>
+</body>
+</html>

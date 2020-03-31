@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added TOPBAR option for making the bar appear what the user likes - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d2dd58eabde15ebf0a2c4c61239d65543931ae04.html">d2dd58eabde15ebf0a2c4c61239d65543931ae04</a>
+<b>parent</b> <a href="../commit/c6fc6b173d8252d06c97af0feec200f1b7ca07d6.html">c6fc6b173d8252d06c97af0feec200f1b7ca07d6</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Thu,  8 Feb 2007 11:48:01 +0100
+
+added TOPBAR option for making the bar appear what the user likes
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">main.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>3 files changed, 5 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -22,6 +22,7 @@ const char *tags[] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot;, NULL };
+</a> #define MODKEY			Mod1Mask
+ #define NMASTER			1		/* clients in master area */
+ #define SNAP			40		/* pixel */
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define TOPBAR			True		/* False */
+</a> 
+ #define KEYS \
+ static Key key[] = { \
+<b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -22,6 +22,7 @@ const char *tags[] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot;, NULL };
+</a> #define MODKEY			Mod1Mask
+ #define NMASTER			1		/* clients in master area */
+ #define SNAP			20		/* pixel */
+<a href="#h1-0-3" id="h1-0-3" class="i">+#define TOPBAR			True		/* False */
+</a> 
+ #define KEYS \
+ static Key key[] = { \
+<b>diff --git a/<a id="h2" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -141,15 +141,15 @@ setup(void) {
+</a> 	wa.override_redirect = 1;
+ 	wa.background_pixmap = ParentRelative;
+ 	wa.event_mask = ButtonPressMask | ExposureMask;
+<a href="#h2-0-3" id="h2-0-3" class="d">-	barwin = XCreateWindow(dpy, root, sx, sy + sh - bh, sw, bh, 0, DefaultDepth(dpy, screen),
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-			CopyFromParent, DefaultVisual(dpy, screen),
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	barwin = XCreateWindow(dpy, root, sx, sy + (TOPBAR ? 0 : sh - bh), sw, bh, 0,
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+			DefaultDepth(dpy, screen), CopyFromParent, DefaultVisual(dpy, screen),
+</a> 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+ 	XDefineCursor(dpy, barwin, cursor[CurNormal]);
+ 	XMapRaised(dpy, barwin);
+ 	strcpy(stext, &quot;dwm-&quot;VERSION);
+ 	/* windowarea */
+ 	wax = sx;
+<a href="#h2-0-13" id="h2-0-13" class="d">-	way = sy;
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	way = sy + (TOPBAR ? bh : 0);
+</a> 	wah = sh - bh;
+ 	waw = sw;
+ 	/* pixmap for everything */
+</pre>
+</div>
+</body>
+</html>

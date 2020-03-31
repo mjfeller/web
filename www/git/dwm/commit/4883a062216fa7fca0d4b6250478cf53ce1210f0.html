@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed NOBORDER(broken and badly used), introduce WIDTH/HEIGHT macros for computing client size with border added, fixes bug announced by sergey_m - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4883a062216fa7fca0d4b6250478cf53ce1210f0.html">4883a062216fa7fca0d4b6250478cf53ce1210f0</a>
+<b>parent</b> <a href="../commit/4dea5324c032bb7be334e65d64b1bcba1a00fb27.html">4dea5324c032bb7be334e65d64b1bcba1a00fb27</a>
+<b>Author:</b> Premysl Hruby &lt;<a href="mailto:dfenze@gmail.com">dfenze@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 15 Oct 2008 18:08:24 +0200
+
+removed NOBORDER(broken and badly used), introduce WIDTH/HEIGHT macros for computing client size with border added, fixes bug announced by sergey_m
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">37</td><td><span class="i">+++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>1 file changed, 19 insertions(+), 18 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -53,7 +53,8 @@
+</a> #define MIN(a, b)               ((a) &lt; (b) ? (a) : (b))
+ #define MAXTAGLEN               16
+ #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define NOBORDER(x)             ((x) - 2 * c-&gt;bw)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define WIDTH(x)                ((x)-&gt;w + 2*(x)-&gt;bw)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#define HEIGHT(x)               ((x)-&gt;h + 2*(x)-&gt;bw)
+</a> #define TAGMASK                 ((int)((1LL &lt;&lt; LENGTH(tags)) - 1))
+ #define TEXTW(x)                (textnw(x, strlen(x)) + dc.font.height)
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -868,10 +869,10 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 		c-&gt;bw = 0;
+ 	}
+ 	else {
+<a href="#h0-1-3" id="h0-1-3" class="d">-		if(c-&gt;x + c-&gt;w + 2 * c-&gt;bw &gt; sx + sw)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			c-&gt;x = sx + sw - NOBORDER(c-&gt;w);
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		if(c-&gt;y + c-&gt;h + 2 * c-&gt;bw &gt; sy + sh)
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-			c-&gt;y = sy + sh - NOBORDER(c-&gt;h);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		if(c-&gt;x + WIDTH(c) &gt; sx + sw)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+			c-&gt;x = sx + sw - WIDTH(c);
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		if(c-&gt;y + HEIGHT(c) &gt; sy + sh)
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			c-&gt;y = sy + sh - HEIGHT(c);
+</a> 		c-&gt;x = MAX(c-&gt;x, sx);
+ 		/* only fix client y-offset, if the client center might cover the bar */
+ 		c-&gt;y = MAX(c-&gt;y, ((by == 0) &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &gt;= wx) &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &lt; wx + ww)) ? bh : sy);
+<a href="#h0-2" id="h0-2" class="h">@@ -931,7 +932,7 @@ monocle(void) {
+</a> 	Client *c;
+ 
+ 	for(c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+<a href="#h0-2-3" id="h0-2-3" class="d">-		resize(c, wx, wy, NOBORDER(ww), NOBORDER(wh), resizehints);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		resize(c, wx, wy, ww - 2*c-&gt;bw, wh - 2*c-&gt;bw, resizehints);
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -967,12 +968,12 @@ movemouse(const Arg *arg) {
+</a> 			        &amp;&amp; ny &gt;= wy &amp;&amp; ny &lt;= wy + wh) {
+ 				if(abs(wx - nx) &lt; snap)
+ 					nx = wx;
+<a href="#h0-3-3" id="h0-3-3" class="d">-				else if(abs((wx + ww) - (nx + c-&gt;w + 2 * c-&gt;bw)) &lt; snap)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-					nx = wx + ww - NOBORDER(c-&gt;w);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+				else if(abs((wx + ww) - (nx + WIDTH(c))) &lt; snap)
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+					nx = wx + ww - WIDTH(c);
+</a> 				if(abs(wy - ny) &lt; snap)
+ 					ny = wy;
+<a href="#h0-3-9" id="h0-3-9" class="d">-				else if(abs((wy + wh) - (ny + c-&gt;h + 2 * c-&gt;bw)) &lt; snap)
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-					ny = wy + wh - NOBORDER(c-&gt;h);
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+				else if(abs((wy + wh) - (ny + HEIGHT(c))) &lt; snap)
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+					ny = wy + wh - HEIGHT(c);
+</a> 				if(!c-&gt;isfloating &amp;&amp; lt[sellt]-&gt;arrange &amp;&amp; (abs(nx - c-&gt;x) &gt; snap || abs(ny - c-&gt;y) &gt; snap))
+ 					togglefloating(NULL);
+ 			}
+<a href="#h0-4" id="h0-4" class="h">@@ -1080,9 +1081,9 @@ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> 	if(w &lt;= 0 || h &lt;= 0)
+ 		return;
+ 	if(x &gt; sx + sw)
+<a href="#h0-4-3" id="h0-4-3" class="d">-		x = sw - NOBORDER(w);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		x = sw - WIDTH(c);
+</a> 	if(y &gt; sy + sh)
+<a href="#h0-4-6" id="h0-4-6" class="d">-		y = sh - NOBORDER(h);
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+		y = sh - HEIGHT(c);
+</a> 	if(x + w + 2 * c-&gt;bw &lt; sx)
+ 		x = sx;
+ 	if(y + h + 2 * c-&gt;bw &lt; sy)
+<a href="#h0-5" id="h0-5" class="h">@@ -1130,8 +1131,8 @@ resizemouse(const Arg *arg) {
+</a> 			break;
+ 		case MotionNotify:
+ 			XSync(dpy, False);
+<a href="#h0-5-3" id="h0-5-3" class="d">-			nw = MAX(ev.xmotion.x - NOBORDER(ocx) + 1, 1);
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-			nh = MAX(ev.xmotion.y - NOBORDER(ocy) + 1, 1);
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+			nw = MAX(ev.xmotion.x - ocx - 2*c-&gt;bw + 1, 1);
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+			nh = MAX(ev.xmotion.y - ocy - 2*c-&gt;bw + 1, 1);
+</a> 
+ 			if(snap &amp;&amp; nw &gt;= wx &amp;&amp; nw &lt;= wx + ww
+ 			        &amp;&amp; nh &gt;= wy &amp;&amp; nh &lt;= wy + wh) {
+<a href="#h0-6" id="h0-6" class="h">@@ -1434,7 +1435,7 @@ tile(void) {
+</a> 	/* master */
+ 	c = nexttiled(clients);
+ 	mw = mfact * ww;
+<a href="#h0-6-3" id="h0-6-3" class="d">-	resize(c, wx, wy, NOBORDER(n == 1 ? ww : mw), NOBORDER(wh), resizehints);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	resize(c, wx, wy, (n == 1 ? ww : mw) - 2*c-&gt;bw, wh - 2*c-&gt;bw, resizehints);
+</a> 
+ 	if(--n == 0)
+ 		return;
+<a href="#h0-7" id="h0-7" class="h">@@ -1448,10 +1449,10 @@ tile(void) {
+</a> 		h = wh;
+ 
+ 	for(i = 0, c = nexttiled(c-&gt;next); c; c = nexttiled(c-&gt;next), i++) {
+<a href="#h0-7-3" id="h0-7-3" class="d">-		resize(c, x, y, NOBORDER(w), /* remainder */ ((i + 1 == n)
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-		       ? NOBORDER(wy + wh) - y : h), resizehints);
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+		resize(c, x, y, w - 2*c-&gt;bw, /* remainder */ ((i + 1 == n)
+</a><a href="#h0-7-6" id="h0-7-6" class="i">+		       ? wy + wh - y : h) - 2*c-&gt;bw, resizehints);
+</a> 		if(h != wh)
+<a href="#h0-7-8" id="h0-7-8" class="d">-			y = c-&gt;y + c-&gt;h + 2 * c-&gt;bw;
+</a><a href="#h0-7-9" id="h0-7-9" class="i">+			y = c-&gt;y + HEIGHT(c);
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

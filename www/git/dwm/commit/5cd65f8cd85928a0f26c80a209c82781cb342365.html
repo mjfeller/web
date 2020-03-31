@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>integrated yiyus mouse.diff (though the bar click handling is slightly broken, I&#39;m to tired to debug it now, yiyus could you please?) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5cd65f8cd85928a0f26c80a209c82781cb342365.html">5cd65f8cd85928a0f26c80a209c82781cb342365</a>
+<b>parent</b> <a href="../commit/e3838e85855d051190bde6c77265bc72b53a9d04.html">e3838e85855d051190bde6c77265bc72b53a9d04</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 11 Jun 2008 20:41:28 +0100
+
+integrated yiyus mouse.diff (though the bar click handling is slightly broken, I&#39;m to tired to debug it now, yiyus could you please?)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">84</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">101</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 111 insertions(+), 74 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -39,10 +39,10 @@ static Layout layouts[] = {
+</a> /* key definitions */
+ #define MODKEY Mod1Mask
+ #define TAGKEYS(KEY,TAG) \
+<a href="#h0-0-3" id="h0-0-3" class="d">-        { MODKEY,                       KEY,      view,           TAG }, \
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-        { MODKEY|ControlMask,           KEY,      toggleview,     TAG }, \
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-        { MODKEY|ShiftMask,             KEY,      tag,            TAG }, \
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-        { MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      TAG },
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	{ MODKEY,                       KEY,      view,           {.ui = 1 &lt;&lt; TAG} }, \
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	{ MODKEY|ControlMask,           KEY,      toggleview,     {.ui = 1 &lt;&lt; TAG} }, \
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	{ MODKEY|ShiftMask,             KEY,      tag,            {.ui = 1 &lt;&lt; TAG} }, \
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	{ MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 &lt;&lt; TAG} },
+</a> 
+ /* helper for spawning shell commands */
+ #define SHCMD(cmd) { .v = (char*[]){ &quot;/bin/sh&quot;, &quot;-c&quot;, cmd, NULL } }
+<a href="#h0-1" id="h0-1" class="h">@@ -51,27 +51,61 @@ static Key keys[] = {
+</a> 	/* modifier                     key        function        argument */
+ 	{ MODKEY,                       XK_p,      spawn,          {.v = (char *[]){&quot;dmenu_run&quot;, &quot;-fn&quot;, FONT, &quot;-nb&quot;, NORMBGCOLOR, &quot;-nf&quot;, NORMFGCOLOR, &quot;-sb&quot;, SELBGCOLOR, &quot;-sf&quot;, SELFGCOLOR, NULL}} },
+ 	{ MODKEY|ShiftMask,             XK_Return, spawn,          {.v = (char *[]){&quot;uxterm&quot;, NULL}} },
+<a href="#h0-1-3" id="h0-1-3" class="d">-	{ MODKEY,                       XK_b,      togglebar,      {0}},
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	{ MODKEY,                       XK_j,      focusstack,     {.i = +1  }},
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	{ MODKEY,                       XK_k,      focusstack,     {.i = -1  }},
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	{ MODKEY,                       XK_h,      setmfact,       {.f = -0.05}},
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	{ MODKEY,                       XK_l,      setmfact,       {.f = +0.05}},
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	{ MODKEY,                       XK_m,      togglemax,      {0}},
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	{ MODKEY,                       XK_Return, zoom,           {0}},
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	{ MODKEY,                       XK_Tab,    view,           {0}},
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-	{ MODKEY|ShiftMask,             XK_c,      killclient,     {0}},
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-	{ MODKEY,                       XK_space,  togglelayout,   {0}},
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0}},
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	{ MODKEY,                       XK_b,      togglebar,      {0} },
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	{ MODKEY,                       XK_h,      setmfact,       {.f = -0.05} },
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	{ MODKEY,                       XK_l,      setmfact,       {.f = +0.05} },
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	{ MODKEY,                       XK_m,      togglemax,      {0} },
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	{ MODKEY,                       XK_Return, zoom,           {0} },
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	{ MODKEY,                       XK_Tab,    view,           {0} },
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	{ MODKEY|ShiftMask,             XK_c,      killclient,     {0} },
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	{ MODKEY,                       XK_space,  togglelayout,   {0} },
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
+</a> 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
+ 	{ MODKEY|ShiftMask,             XK_0,      tag,            {.ui = ~0 } },
+<a href="#h0-1-27" id="h0-1-27" class="d">-	TAGKEYS(                        XK_1,                      {.ui = 1 &lt;&lt; 0} )
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-	TAGKEYS(                        XK_2,                      {.ui = 1 &lt;&lt; 1} )
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-	TAGKEYS(                        XK_3,                      {.ui = 1 &lt;&lt; 2} )
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-	TAGKEYS(                        XK_4,                      {.ui = 1 &lt;&lt; 3} )
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-	TAGKEYS(                        XK_5,                      {.ui = 1 &lt;&lt; 4} )
+</a><a href="#h0-1-32" id="h0-1-32" class="d">-	TAGKEYS(                        XK_6,                      {.ui = 1 &lt;&lt; 5} )
+</a><a href="#h0-1-33" id="h0-1-33" class="d">-	TAGKEYS(                        XK_7,                      {.ui = 1 &lt;&lt; 6} )
+</a><a href="#h0-1-34" id="h0-1-34" class="d">-	TAGKEYS(                        XK_8,                      {.ui = 1 &lt;&lt; 7} )
+</a><a href="#h0-1-35" id="h0-1-35" class="d">-	TAGKEYS(                        XK_9,                      {.ui = 1 &lt;&lt; 8} )
+</a><a href="#h0-1-36" id="h0-1-36" class="d">-	{ MODKEY|ShiftMask,             XK_q,      quit,           {0}},
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+	TAGKEYS(                        XK_1,                      0)
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+	TAGKEYS(                        XK_2,                      1)
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+	TAGKEYS(                        XK_3,                      2)
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+	TAGKEYS(                        XK_4,                      3)
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+	TAGKEYS(                        XK_5,                      4)
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+	TAGKEYS(                        XK_6,                      5)
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+	TAGKEYS(                        XK_7,                      6)
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+	TAGKEYS(                        XK_8,                      7)
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+	TAGKEYS(                        XK_9,                      8)
+</a><a href="#h0-1-46" id="h0-1-46" class="i">+	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
+</a> };
+<a href="#h0-1-48" id="h0-1-48" class="i">+
+</a><a href="#h0-1-49" id="h0-1-49" class="i">+/* button definitions */
+</a><a href="#h0-1-50" id="h0-1-50" class="i">+#define TAGBUTTONS(TAG) \
+</a><a href="#h0-1-51" id="h0-1-51" class="i">+	{ TAG,                  0,              Button1,        view,           {.ui = 1 &lt;&lt; TAG} }, \
+</a><a href="#h0-1-52" id="h0-1-52" class="i">+	{ TAG,                  0,              Button3,        toggleview,     {.ui = 1 &lt;&lt; TAG} }, \
+</a><a href="#h0-1-53" id="h0-1-53" class="i">+	{ TAG,                  MODKEY,         Button1,        tag,            {.ui = 1 &lt;&lt; TAG} }, \
+</a><a href="#h0-1-54" id="h0-1-54" class="i">+	{ TAG,                  MODKEY,         Button3,        toggletag,      {.ui = 1 &lt;&lt; TAG} },
+</a><a href="#h0-1-55" id="h0-1-55" class="i">+
+</a><a href="#h0-1-56" id="h0-1-56" class="i">+/* click can be a tag number (starting at 0),
+</a><a href="#h0-1-57" id="h0-1-57" class="i">+ * ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
+</a><a href="#h0-1-58" id="h0-1-58" class="i">+static Button buttons[] = {
+</a><a href="#h0-1-59" id="h0-1-59" class="i">+	/* click                event mask      button          function        argument */
+</a><a href="#h0-1-60" id="h0-1-60" class="i">+	{ ClkLtSymbol,          0,              Button1,        togglelayout,   {0} },
+</a><a href="#h0-1-61" id="h0-1-61" class="i">+	{ ClkLtSymbol,          0,              Button3,        togglemax,      {0} },
+</a><a href="#h0-1-62" id="h0-1-62" class="i">+	{ ClkWinTitle,          0,              Button1,        movemouse,      {0} },
+</a><a href="#h0-1-63" id="h0-1-63" class="i">+	{ ClkWinTitle,          0,              Button2,        zoom,           {0} },
+</a><a href="#h0-1-64" id="h0-1-64" class="i">+	{ ClkWinTitle,          0,              Button3,        resizemouse,    {0} },
+</a><a href="#h0-1-65" id="h0-1-65" class="i">+	{ ClkWinTitle,          0,              Button4,        focusstack,     {.i = +1 } },
+</a><a href="#h0-1-66" id="h0-1-66" class="i">+	{ ClkWinTitle,          0,              Button5,        focusstack,     {.i = -1 } },
+</a><a href="#h0-1-67" id="h0-1-67" class="i">+	{ ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} },
+</a><a href="#h0-1-68" id="h0-1-68" class="i">+	{ ClkClientWin,         MODKEY,         Button2,        togglefloating, {0} },
+</a><a href="#h0-1-69" id="h0-1-69" class="i">+	{ ClkClientWin,         MODKEY,         Button3,        resizemouse,    {0} },
+</a><a href="#h0-1-70" id="h0-1-70" class="i">+	{ ClkRootWin,           Button1Mask,    Button3,        spawn,          {.v = (char *[]){&quot;uxterm&quot;, NULL}} },
+</a><a href="#h0-1-71" id="h0-1-71" class="i">+	TAGBUTTONS(0)
+</a><a href="#h0-1-72" id="h0-1-72" class="i">+	TAGBUTTONS(1)
+</a><a href="#h0-1-73" id="h0-1-73" class="i">+	TAGBUTTONS(2)
+</a><a href="#h0-1-74" id="h0-1-74" class="i">+	TAGBUTTONS(3)
+</a><a href="#h0-1-75" id="h0-1-75" class="i">+	TAGBUTTONS(4)
+</a><a href="#h0-1-76" id="h0-1-76" class="i">+	TAGBUTTONS(5)
+</a><a href="#h0-1-77" id="h0-1-77" class="i">+	TAGBUTTONS(6)
+</a><a href="#h0-1-78" id="h0-1-78" class="i">+	TAGBUTTONS(7)
+</a><a href="#h0-1-79" id="h0-1-79" class="i">+	TAGBUTTONS(8)
+</a><a href="#h0-1-80" id="h0-1-80" class="i">+};
+</a><a href="#h0-1-81" id="h0-1-81" class="i">+
+</a><b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -59,10 +59,28 @@ enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+</a> enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
+ enum { NetSupported, NetWMName, NetLast };              /* EWMH atoms */
+ enum { WMProtocols, WMDelete, WMName, WMState, WMLast };/* default atoms */
+<a href="#h1-0-3" id="h1-0-3" class="i">+enum { ClkLtSymbol = -1, ClkStatusText = -2, ClkWinTitle = -3,
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+       ClkClientWin = -4, ClkRootWin = -5, ClkLast = -6};/* clicks */
+</a> 
+ /* typedefs */
+ typedef unsigned int uint;
+ typedef unsigned long ulong;
+<a href="#h1-0-9" id="h1-0-9" class="i">+
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+typedef union {
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	int i;
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	uint ui;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	float f;
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	void *v;
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+} Arg;
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+typedef struct {
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	uint click;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	uint mask;
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+	uint button;
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	void (*func)(const Arg *arg);
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+	const Arg arg;
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+} Button;
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+
+</a> typedef struct Client Client;
+ struct Client {
+ 	char name[256];
+<a href="#h1-1" id="h1-1" class="h">@@ -92,13 +110,6 @@ typedef struct {
+</a> 	} font;
+ } DC; /* draw context */
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-typedef union {
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	int i;
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	uint ui;
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	float f;
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-	void *v;
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-} Arg;
+</a><a href="#h1-1-9" id="h1-1-9" class="d">-
+</a> typedef struct {
+ 	uint mod;
+ 	KeySym keysym;
+<a href="#h1-2" id="h1-2" class="h">@@ -157,12 +168,12 @@ static void killclient(const Arg *arg);
+</a> static void manage(Window w, XWindowAttributes *wa);
+ static void mappingnotify(XEvent *e);
+ static void maprequest(XEvent *e);
+<a href="#h1-2-3" id="h1-2-3" class="d">-static void movemouse(Client *c);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+static void movemouse(const Arg *arg);
+</a> static Client *nexttiled(Client *c);
+ static void propertynotify(XEvent *e);
+ static void quit(const Arg *arg);
+ static void resize(Client *c, int x, int y, int w, int h, Bool sizehints);
+<a href="#h1-2-9" id="h1-2-9" class="d">-static void resizemouse(Client *c);
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+static void resizemouse(const Arg *arg);
+</a> static void restack(void);
+ static void run(void);
+ static void scan(void);
+<a href="#h1-3" id="h1-3" class="h">@@ -297,50 +308,31 @@ attachstack(Client *c) {
+</a> 
+ void
+ buttonpress(XEvent *e) {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	uint i, mask;
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-	int x;
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+	uint i, x, click;
+</a> 	Client *c;
+ 	XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+ 
+<a href="#h1-3-9" id="h1-3-9" class="i">+	click = ClkRootWin;
+</a> 	if(ev-&gt;window == barwin) {
+ 		x = 0;
+<a href="#h1-3-12" id="h1-3-12" class="d">-		for(i = 0; i &lt; LENGTH(tags); i++) {
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+		for(i = 0; i &lt; LENGTH(tags) &amp;&amp; ev-&gt;x &gt;= x; i++) {
+</a> 			x += TEXTW(tags[i]);
+<a href="#h1-3-15" id="h1-3-15" class="d">-			if(ev-&gt;x &lt; x) {
+</a><a href="#h1-3-16" id="h1-3-16" class="d">-				mask = 1 &lt;&lt; i;
+</a><a href="#h1-3-17" id="h1-3-17" class="d">-				if(ev-&gt;button == Button1) {
+</a><a href="#h1-3-18" id="h1-3-18" class="d">-					if(ev-&gt;state &amp; MODKEY)
+</a><a href="#h1-3-19" id="h1-3-19" class="d">-						tag((Arg*)&amp;mask);
+</a><a href="#h1-3-20" id="h1-3-20" class="d">-					else
+</a><a href="#h1-3-21" id="h1-3-21" class="d">-						view((Arg*)&amp;mask);
+</a><a href="#h1-3-22" id="h1-3-22" class="d">-				}
+</a><a href="#h1-3-23" id="h1-3-23" class="d">-				else if(ev-&gt;button == Button3) {
+</a><a href="#h1-3-24" id="h1-3-24" class="d">-					if(ev-&gt;state &amp; MODKEY)
+</a><a href="#h1-3-25" id="h1-3-25" class="d">-						toggletag((Arg*)&amp;mask);
+</a><a href="#h1-3-26" id="h1-3-26" class="d">-					else
+</a><a href="#h1-3-27" id="h1-3-27" class="d">-						toggleview((Arg*)&amp;mask);
+</a><a href="#h1-3-28" id="h1-3-28" class="d">-				}
+</a><a href="#h1-3-29" id="h1-3-29" class="d">-				return;
+</a><a href="#h1-3-30" id="h1-3-30" class="d">-			}
+</a><a href="#h1-3-31" id="h1-3-31" class="d">-		}
+</a><a href="#h1-3-32" id="h1-3-32" class="d">-		if(ev-&gt;x &lt; x + blw) {
+</a><a href="#h1-3-33" id="h1-3-33" class="d">-			if(ev-&gt;button == Button1)
+</a><a href="#h1-3-34" id="h1-3-34" class="d">-				togglelayout(NULL);
+</a><a href="#h1-3-35" id="h1-3-35" class="d">-			else if(ev-&gt;button == Button3)
+</a><a href="#h1-3-36" id="h1-3-36" class="d">-				togglemax(NULL);
+</a><a href="#h1-3-37" id="h1-3-37" class="i">+			if(i &lt; LENGTH(tags) || ev-&gt;x &lt;= x)
+</a><a href="#h1-3-38" id="h1-3-38" class="i">+				click = i - 1;
+</a><a href="#h1-3-39" id="h1-3-39" class="i">+			else if(ev-&gt;x &lt; x + blw)
+</a><a href="#h1-3-40" id="h1-3-40" class="i">+				click = ClkLtSymbol;
+</a><a href="#h1-3-41" id="h1-3-41" class="i">+			else if(ev-&gt;x &gt; wx + ww - TEXTW(stext))
+</a><a href="#h1-3-42" id="h1-3-42" class="i">+				click = ClkStatusText;
+</a><a href="#h1-3-43" id="h1-3-43" class="i">+			else
+</a><a href="#h1-3-44" id="h1-3-44" class="i">+				click = ClkWinTitle;
+</a> 		}
+ 	}
+<a href="#h1-3-47" id="h1-3-47" class="d">-	else if((c = getclient(ev-&gt;window))) {
+</a><a href="#h1-3-48" id="h1-3-48" class="d">-		focus(c);
+</a><a href="#h1-3-49" id="h1-3-49" class="d">-		if(CLEANMASK(ev-&gt;state) != MODKEY || (ismax &amp;&amp; !c-&gt;isfixed))
+</a><a href="#h1-3-50" id="h1-3-50" class="d">-			return;
+</a><a href="#h1-3-51" id="h1-3-51" class="d">-		if(ev-&gt;button == Button1)
+</a><a href="#h1-3-52" id="h1-3-52" class="d">-			movemouse(c);
+</a><a href="#h1-3-53" id="h1-3-53" class="d">-		else if(ev-&gt;button == Button2)
+</a><a href="#h1-3-54" id="h1-3-54" class="d">-			togglefloating(NULL);
+</a><a href="#h1-3-55" id="h1-3-55" class="d">-		else if(ev-&gt;button == Button3 &amp;&amp; !c-&gt;isfixed)
+</a><a href="#h1-3-56" id="h1-3-56" class="d">-			resizemouse(c);
+</a><a href="#h1-3-57" id="h1-3-57" class="d">-	}
+</a><a href="#h1-3-58" id="h1-3-58" class="i">+	else if((c = getclient(ev-&gt;window)))
+</a><a href="#h1-3-59" id="h1-3-59" class="i">+		click = ClkClientWin;
+</a><a href="#h1-3-60" id="h1-3-60" class="i">+
+</a><a href="#h1-3-61" id="h1-3-61" class="i">+	for(i = 0; i &lt; LENGTH(buttons); i++)
+</a><a href="#h1-3-62" id="h1-3-62" class="i">+		if(click == buttons[i].click &amp;&amp; buttons[i].func &amp;&amp; buttons[i].button == ev-&gt;button &amp;&amp; CLEANMASK(buttons[i].mask) == CLEANMASK(ev-&gt;state))
+</a><a href="#h1-3-63" id="h1-3-63" class="i">+			buttons[i].func(&amp;buttons[i].arg);
+</a> }
+ 
+ void
+<a href="#h1-4" id="h1-4" class="h">@@ -971,12 +963,15 @@ maprequest(XEvent *e) {
+</a> }
+ 
+ void
+<a href="#h1-4-3" id="h1-4-3" class="d">-movemouse(Client *c) {
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+movemouse(const Arg *arg) {
+</a> 	int x1, y1, ocx, ocy, di, nx, ny;
+ 	uint dui;
+<a href="#h1-4-7" id="h1-4-7" class="i">+	Client *c;
+</a> 	Window dummy;
+ 	XEvent ev;
+ 
+<a href="#h1-4-11" id="h1-4-11" class="i">+	if(!(c = sel))
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+		return;
+</a> 	restack();
+ 	ocx = nx = c-&gt;x;
+ 	ocy = ny = c-&gt;y;
+<a href="#h1-5" id="h1-5" class="h">@@ -984,6 +979,11 @@ movemouse(Client *c) {
+</a> 	None, cursor[CurMove], CurrentTime) != GrabSuccess)
+ 		return;
+ 	XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x1, &amp;y1, &amp;di, &amp;di, &amp;dui);
+<a href="#h1-5-3" id="h1-5-3" class="i">+	if(x1 &lt; c-&gt;x || x1 &gt; c-&gt;x + c-&gt;w || y1 &lt; c-&gt;y || y1 &gt; c-&gt;y + c-&gt;h) {
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, 0, 0);
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+		x1 = c-&gt;x + 1;
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+		y1 = c-&gt;y + 1;
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+	}
+</a> 	for(;;) {
+ 		XMaskEvent(dpy, MOUSEMASK|ExposureMask|SubstructureRedirectMask, &amp;ev);
+ 		switch (ev.type) {
+<a href="#h1-6" id="h1-6" class="h">@@ -1131,11 +1131,14 @@ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> }
+ 
+ void
+<a href="#h1-6-3" id="h1-6-3" class="d">-resizemouse(Client *c) {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+resizemouse(const Arg *arg) {
+</a> 	int ocx, ocy;
+ 	int nw, nh;
+<a href="#h1-6-7" id="h1-6-7" class="i">+	Client *c;
+</a> 	XEvent ev;
+ 
+<a href="#h1-6-10" id="h1-6-10" class="i">+	if(!(c = sel))
+</a><a href="#h1-6-11" id="h1-6-11" class="i">+		return;
+</a> 	restack();
+ 	ocx = c-&gt;x;
+ 	ocy = c-&gt;y;
+<a href="#h1-7" id="h1-7" class="h">@@ -1377,7 +1380,7 @@ setup(void) {
+</a> 			PropModeReplace, (unsigned char *) netatom, NetLast);
+ 
+ 	/* select for events */
+<a href="#h1-7-3" id="h1-7-3" class="d">-	wa.event_mask = SubstructureRedirectMask|SubstructureNotifyMask
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	wa.event_mask = SubstructureRedirectMask|SubstructureNotifyMask|ButtonPressMask
+</a> 			|EnterWindowMask|LeaveWindowMask|StructureNotifyMask;
+ 	XChangeWindowAttributes(dpy, root, CWEventMask|CWCursor, &amp;wa);
+ 	XSelectInput(dpy, root, wa.event_mask);
+<a href="#h1-8" id="h1-8" class="h">@@ -1643,7 +1646,7 @@ updatewmhints(Client *c) {
+</a> void
+ view(const Arg *arg) {
+ 	seltags ^= 1; /* toggle sel tagset */
+<a href="#h1-8-3" id="h1-8-3" class="d">-	if(arg &amp;&amp; (arg-&gt;ui &amp; TAGMASK))
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	if(arg &amp;&amp; (arg-&gt;ui &amp; TAGMASK) &amp;&amp; (arg-&gt;ui &amp; TAGMASK) != tagset[seltags ^ 1])
+</a> 		tagset[seltags] = arg-&gt;i &amp; TAGMASK;
+ 	arrange();
+ }
+</pre>
+</div>
+</body>
+</html>

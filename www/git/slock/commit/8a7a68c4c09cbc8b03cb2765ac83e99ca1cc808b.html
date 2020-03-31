@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied somwhat similiar patch like Alex Elide proposed - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8a7a68c4c09cbc8b03cb2765ac83e99ca1cc808b.html">8a7a68c4c09cbc8b03cb2765ac83e99ca1cc808b</a>
+<b>parent</b> <a href="../commit/6e53ce4582cc1cc338028c099108f6f225a7286d.html">6e53ce4582cc1cc338028c099108f6f225a7286d</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Wed, 18 Oct 2006 18:44:19 +0200
+
+applied somwhat similiar patch like Alex Elide proposed
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">9</td><td><span class="i">++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 6 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -77,9 +77,12 @@ main(int argc, char **argv) {
+</a> 	XDefineCursor(dpy, w, invisible);
+ 	running = XGrabPointer(dpy, RootWindow(dpy, screen), False,
+ 			ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+<a href="#h0-0-3" id="h0-0-3" class="d">-			GrabModeAsync, GrabModeSync, None, invisible, CurrentTime) == GrabSuccess
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		&amp;&amp; XGrabKeyboard(dpy, RootWindow(dpy, screen), True, GrabModeAsync,
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-			 GrabModeAsync, CurrentTime) == GrabSuccess;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			GrabModeAsync, GrabModeSync, None, invisible, CurrentTime) == GrabSuccess;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	len = 10;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	for(len = 10; len &amp;&amp; (XGrabKeyboard(dpy, RootWindow(dpy, screen), True, GrabModeAsync,
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+		GrabModeAsync, CurrentTime) != GrabSuccess); len--)
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		usleep(1000);
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	running = running &amp;&amp; (len &gt; 0);
+</a> 	XMapRaised(dpy, w);
+ 	XSync(dpy, False);
+ 
+</pre>
+</div>
+</body>
+</html>

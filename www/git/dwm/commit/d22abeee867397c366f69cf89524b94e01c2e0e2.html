@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>this patch keeps track of global z-layer order of clients which are floating or if floating mode is enabled - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d22abeee867397c366f69cf89524b94e01c2e0e2.html">d22abeee867397c366f69cf89524b94e01c2e0e2</a>
+<b>parent</b> <a href="../commit/a33150eb4b041b243d0493cd4b53bfbcace3299e.html">a33150eb4b041b243d0493cd4b53bfbcace3299e</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Wed,  6 Sep 2006 17:31:52 +0200
+
+this patch keeps track of global z-layer order of clients which are floating or if floating mode is enabled
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">view.c</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>1 file changed, 7 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -12,6 +12,8 @@ minclient()
+</a> {
+ 	Client *c, *min;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+	if((clients &amp;&amp; clients-&gt;isfloat) || arrange == dofloat)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		return clients; /* don&#39;t touch floating order */
+</a> 	for(min = c = clients; c; c = c-&gt;next)
+ 		if(c-&gt;weight &lt; min-&gt;weight)
+ 			min = c;
+<a href="#h0-1" id="h0-1" class="h">@@ -19,16 +21,6 @@ minclient()
+</a> }
+ 
+ static void
+<a href="#h0-1-3" id="h0-1-3" class="d">-pop(Client *c)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-{
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	detach(c);
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	if(clients)
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		clients-&gt;prev = c;
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	c-&gt;next = clients;
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	clients = c;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-}
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-static void
+</a> reorder()
+ {
+ 	Client *c, *newclients, *tail;
+<a href="#h0-2" id="h0-2" class="h">@@ -232,7 +224,6 @@ restack()
+</a> 		return;
+ 	}
+ 	if(sel-&gt;isfloat || arrange == dofloat) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-		pop(sel);
+</a> 		XRaiseWindow(dpy, sel-&gt;win);
+ 		XRaiseWindow(dpy, sel-&gt;twin);
+ 	}
+<a href="#h0-3" id="h0-3" class="h">@@ -307,7 +298,11 @@ zoom(Arg *arg)
+</a> 	if((c = sel) == nexttiled(clients))
+ 		if(!(c = nexttiled(c-&gt;next)))
+ 			return;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	pop(c);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	detach(c);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if(clients)
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		clients-&gt;prev = c;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	c-&gt;next = clients;
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	clients = c;
+</a> 	focus(c);
+ 	arrange(NULL);
+ }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implemented aspect ratio support of windows - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2ddc78720aceda76e22fd3584740fc86a2e7c677.html">2ddc78720aceda76e22fd3584740fc86a2e7c677</a>
+<b>parent</b> <a href="../commit/7ece30ebc04640258b5e20dcc71f51e1b01c9222.html">7ece30ebc04640258b5e20dcc71f51e1b01c9222</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Tue,  6 Feb 2007 15:22:13 +0100
+
+implemented aspect ratio support of windows
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">44</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 41 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,6 +10,13 @@
+</a> /* static */
+ 
+ static void
+<a href="#h0-0-3" id="h0-0-3" class="i">+closestpt(float *rx, float *ry, float x, float y, float grad) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	float u = (x * grad + y) / (grad * grad + 1);
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	*rx = u * grad;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	*ry = u;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+}
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+static void
+</a> detachstack(Client *c) {
+ 	Client **tc;
+ 	for(tc=&amp;stack; *tc &amp;&amp; *tc != c; tc=&amp;(*tc)-&gt;snext);
+<a href="#h0-1" id="h0-1" class="h">@@ -184,15 +191,12 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 
+ void
+ resize(Client *c, Bool sizehints) {
+<a href="#h0-1-3" id="h0-1-3" class="i">+	float dx, dy, min, max, actual;
+</a> 	XWindowChanges wc;
+ 
+ 	if(c-&gt;w &lt;= 0 || c-&gt;h &lt;= 0)
+ 		return;
+ 	if(sizehints) {
+<a href="#h0-1-9" id="h0-1-9" class="d">-		if(c-&gt;incw)
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-			c-&gt;w -= (c-&gt;w - c-&gt;basew) % c-&gt;incw;
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-		if(c-&gt;inch)
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-			c-&gt;h -= (c-&gt;h - c-&gt;baseh) % c-&gt;inch;
+</a> 		if(c-&gt;minw &amp;&amp; c-&gt;w &lt; c-&gt;minw)
+ 			c-&gt;w = c-&gt;minw;
+ 		if(c-&gt;minh &amp;&amp; c-&gt;h &lt; c-&gt;minh)
+<a href="#h0-2" id="h0-2" class="h">@@ -201,6 +205,30 @@ resize(Client *c, Bool sizehints) {
+</a> 			c-&gt;w = c-&gt;maxw;
+ 		if(c-&gt;maxh &amp;&amp; c-&gt;h &gt; c-&gt;maxh)
+ 			c-&gt;h = c-&gt;maxh;
+<a href="#h0-2-3" id="h0-2-3" class="i">+		/* inspired by algorithm from fluxbox */
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		if(c-&gt;minay &gt; 0 &amp;&amp; c-&gt;maxay &amp;&amp; (c-&gt;h - c-&gt;baseh) &gt; 0) {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+			dx = (float)(c-&gt;w - c-&gt;basew);
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			dy = (float)(c-&gt;h - c-&gt;baseh);
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+			min = (float)(c-&gt;minax) / (float)(c-&gt;minay);
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+			max = (float)(c-&gt;maxax) / (float)(c-&gt;maxay);
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+			actual = dx / dy;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+			if(max &gt; 0 &amp;&amp; min &gt; 0 &amp;&amp; actual &gt; 0) {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+				if(actual &lt; min) {
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+					closestpt(&amp;dx, &amp;dy, dx, dy, min);
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+					c-&gt;w = (int)dx + c-&gt;basew;
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+					c-&gt;h = (int)dy + c-&gt;baseh;
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+				}
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+				else if(actual &gt; max) {
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+					closestpt(&amp;dx, &amp;dy, dx, dy, max);
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+					c-&gt;w = (int)dx + c-&gt;basew;
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+					c-&gt;h = (int)dy + c-&gt;baseh;
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+				}
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+			}
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+		}
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+		if(c-&gt;incw)
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+			c-&gt;w -= (c-&gt;w - c-&gt;basew) % c-&gt;incw;
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+		if(c-&gt;inch)
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+			c-&gt;h -= (c-&gt;h - c-&gt;baseh) % c-&gt;inch;
+</a> 	}
+ 	if(c-&gt;w == sw &amp;&amp; c-&gt;h == sh)
+ 		c-&gt;border = 0;
+<a href="#h0-3" id="h0-3" class="h">@@ -257,6 +285,14 @@ updatesizehints(Client *c) {
+</a> 	}
+ 	else
+ 		c-&gt;minw = c-&gt;minh = 0;
+<a href="#h0-3-3" id="h0-3-3" class="i">+	if(c-&gt;flags &amp; PAspect) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		c-&gt;minax = size.min_aspect.x;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+		c-&gt;minay = size.min_aspect.y;
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		c-&gt;maxax = size.max_aspect.x;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+		c-&gt;maxay = size.max_aspect.y;
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	}
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+	else
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+		c-&gt;minax = c-&gt;minay = c-&gt;maxax = c-&gt;maxay = 0;
+</a> 	c-&gt;isfixed = (c-&gt;maxw &amp;&amp; c-&gt;minw &amp;&amp; c-&gt;maxh &amp;&amp; c-&gt;minh &amp;&amp;
+ 				c-&gt;maxw == c-&gt;minw &amp;&amp; c-&gt;maxh == c-&gt;minh);
+ }
+<b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -73,6 +73,7 @@ struct Client {
+</a> 	int x, y, w, h;
+ 	int rx, ry, rw, rh; /* revert geometry */
+ 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	int minax, minay, maxax, maxay;
+</a> 	long flags; 
+ 	unsigned int border;
+ 	Bool isfloat, isfixed, ismax;
+</pre>
+</div>
+</body>
+</html>

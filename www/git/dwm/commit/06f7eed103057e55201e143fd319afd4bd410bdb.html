@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fix of XGetTransientForHint in manage() - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/06f7eed103057e55201e143fd319afd4bd410bdb.html">06f7eed103057e55201e143fd319afd4bd410bdb</a>
+<b>parent</b> <a href="../commit/0ffa6d13939443a84a732f111d483c233b529bbf.html">0ffa6d13939443a84a732f111d483c233b529bbf</a>
+<b>Author:</b> Premysl Hruby &lt;<a href="mailto:dfenze@gmail.com">dfenze@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 14 Aug 2008 22:35:52 +0200
+
+fix of XGetTransientForHint in manage()
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">5</td><td><span class="i">++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -865,7 +865,6 @@ killclient(const Arg *arg) {
+</a> void
+ manage(Window w, XWindowAttributes *wa) {
+ 	Client *c, *t = NULL;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	Status rettrans;
+</a> 	Window trans;
+ 	XWindowChanges wc;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -903,14 +902,14 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+ 	grabbuttons(c, False);
+ 	updatetitle(c);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if((rettrans = XGetTransientForHint(dpy, w, &amp;trans)) == Success)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if(XGetTransientForHint(dpy, w, &amp;trans))
+</a> 		t = getclient(trans);
+ 	if(t)
+ 		c-&gt;tags = t-&gt;tags;
+ 	else
+ 		applyrules(c);
+ 	if(!c-&gt;isfloating)
+<a href="#h0-1-11" id="h0-1-11" class="d">-		c-&gt;isfloating = (rettrans == Success) || c-&gt;isfixed;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		c-&gt;isfloating = trans || c-&gt;isfixed;
+</a> 	if(c-&gt;isfloating)
+ 		XRaiseWindow(dpy, c-&gt;win);
+ 	attach(c);
+</pre>
+</div>
+</body>
+</html>

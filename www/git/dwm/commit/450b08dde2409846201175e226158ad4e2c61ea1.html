@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>final style fixes - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/450b08dde2409846201175e226158ad4e2c61ea1.html">450b08dde2409846201175e226158ad4e2c61ea1</a>
+<b>parent</b> <a href="../commit/da80487c070b4004bf7451b069472b66320030f8.html">da80487c070b4004bf7451b069472b66320030f8</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 14 Jul 2009 16:26:04 +0100
+
+final style fixes
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">28</td><td><span class="i">+++++++++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>1 file changed, 13 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -380,7 +380,6 @@ void
+</a> arrange(void) {
+ 	Monitor *m;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	/* optimise two loops into one, check focus(NULL) */
+</a> 	for(m = mons; m; m = m-&gt;next)
+ 		showhide(m-&gt;stack);
+ 	focus(NULL);
+<a href="#h0-1" id="h0-1" class="h">@@ -440,7 +439,7 @@ buttonpress(XEvent *e) {
+</a> 	}
+ 	for(i = 0; i &lt; LENGTH(buttons); i++)
+ 		if(click == buttons[i].click &amp;&amp; buttons[i].func &amp;&amp; buttons[i].button == ev-&gt;button
+<a href="#h0-1-3" id="h0-1-3" class="d">-		   &amp;&amp; CLEANMASK(buttons[i].mask) == CLEANMASK(ev-&gt;state))
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		&amp;&amp; CLEANMASK(buttons[i].mask) == CLEANMASK(ev-&gt;state))
+</a> 			buttons[i].func(click == ClkTagBar &amp;&amp; buttons[i].arg.i == 0 ? &amp;arg : &amp;buttons[i].arg);
+ }
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -885,7 +884,7 @@ getstate(Window w) {
+</a> 	Atom real;
+ 
+ 	status = XGetWindowProperty(dpy, w, wmatom[WMState], 0L, 2L, False, wmatom[WMState],
+<a href="#h0-2-3" id="h0-2-3" class="d">-			&amp;real, &amp;format, &amp;n, &amp;extra, (unsigned char **)&amp;p);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	                            &amp;real, &amp;format, &amp;n, &amp;extra, (unsigned char **)&amp;p);
+</a> 	if(status != Success)
+ 		return -1;
+ 	if(n != 0)
+<a href="#h0-3" id="h0-3" class="h">@@ -909,9 +908,7 @@ gettextprop(Window w, Atom atom, char *text, unsigned int size) {
+</a> 	if(name.encoding == XA_STRING)
+ 		strncpy(text, (char *)name.value, size - 1);
+ 	else {
+<a href="#h0-3-3" id="h0-3-3" class="d">-		if(XmbTextPropertyToTextList(dpy, &amp;name, &amp;list, &amp;n) &gt;= Success
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		&amp;&amp; n &gt; 0 &amp;&amp; *list)
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-		{
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		if(XmbTextPropertyToTextList(dpy, &amp;name, &amp;list, &amp;n) &gt;= Success &amp;&amp; n &gt; 0 &amp;&amp; *list) {
+</a> 			strncpy(text, *list, size - 1);
+ 			XFreeStringList(list);
+ 		}
+<a href="#h0-4" id="h0-4" class="h">@@ -1022,8 +1019,8 @@ keypress(XEvent *e) {
+</a> 	keysym = XKeycodeToKeysym(dpy, (KeyCode)ev-&gt;keycode, 0);
+ 	for(i = 0; i &lt; LENGTH(keys); i++)
+ 		if(keysym == keys[i].keysym
+<a href="#h0-4-3" id="h0-4-3" class="d">-		   &amp;&amp; CLEANMASK(keys[i].mod) == CLEANMASK(ev-&gt;state)
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		   &amp;&amp; keys[i].func)
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+		&amp;&amp; CLEANMASK(keys[i].mod) == CLEANMASK(ev-&gt;state)
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		&amp;&amp; keys[i].func)
+</a> 			keys[i].func(&amp;(keys[i].arg));
+ }
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -1168,7 +1165,7 @@ movemouse(const Arg *arg) {
+</a> 			nx = ocx + (ev.xmotion.x - x);
+ 			ny = ocy + (ev.xmotion.y - y);
+ 			if(snap &amp;&amp; nx &gt;= selmon-&gt;wx &amp;&amp; nx &lt;= selmon-&gt;wx + selmon-&gt;ww
+<a href="#h0-5-3" id="h0-5-3" class="d">-			        &amp;&amp; ny &gt;= selmon-&gt;wy &amp;&amp; ny &lt;= selmon-&gt;wy + selmon-&gt;wh) {
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+			&amp;&amp; ny &gt;= selmon-&gt;wy &amp;&amp; ny &lt;= selmon-&gt;wy + selmon-&gt;wh) {
+</a> 				if(abs(selmon-&gt;wx - nx) &lt; snap)
+ 					nx = selmon-&gt;wx;
+ 				else if(abs((selmon-&gt;wx + selmon-&gt;ww) - (nx + WIDTH(c))) &lt; snap)
+<a href="#h0-6" id="h0-6" class="h">@@ -1178,7 +1175,7 @@ movemouse(const Arg *arg) {
+</a> 				else if(abs((selmon-&gt;wy + selmon-&gt;wh) - (ny + HEIGHT(c))) &lt; snap)
+ 					ny = selmon-&gt;wy + selmon-&gt;wh - HEIGHT(c);
+ 				if(!c-&gt;isfloating &amp;&amp; selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange
+<a href="#h0-6-3" id="h0-6-3" class="d">-				                  &amp;&amp; (abs(nx - c-&gt;x) &gt; snap || abs(ny - c-&gt;y) &gt; snap))
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+				&amp;&amp; (abs(nx - c-&gt;x) &gt; snap || abs(ny - c-&gt;y) &gt; snap))
+</a> 					togglefloating(NULL);
+ 			}
+ 			if(!selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+<a href="#h0-7" id="h0-7" class="h">@@ -1279,7 +1276,7 @@ resizemouse(const Arg *arg) {
+</a> 	ocx = c-&gt;x;
+ 	ocy = c-&gt;y;
+ 	if(XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+<a href="#h0-7-3" id="h0-7-3" class="d">-	None, cursor[CurResize], CurrentTime) != GrabSuccess)
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	                None, cursor[CurResize], CurrentTime) != GrabSuccess)
+</a> 		return;
+ 	XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w + c-&gt;bw - 1, c-&gt;h + c-&gt;bw - 1);
+ 	do {
+<a href="#h0-8" id="h0-8" class="h">@@ -1294,9 +1291,10 @@ resizemouse(const Arg *arg) {
+</a> 			nw = MAX(ev.xmotion.x - ocx - 2 * c-&gt;bw + 1, 1);
+ 			nh = MAX(ev.xmotion.y - ocy - 2 * c-&gt;bw + 1, 1);
+ 			if(snap &amp;&amp; nw &gt;= selmon-&gt;wx &amp;&amp; nw &lt;= selmon-&gt;wx + selmon-&gt;ww
+<a href="#h0-8-3" id="h0-8-3" class="d">-			        &amp;&amp; nh &gt;= selmon-&gt;wy &amp;&amp; nh &lt;= selmon-&gt;wy + selmon-&gt;wh) {
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+			&amp;&amp; nh &gt;= selmon-&gt;wy &amp;&amp; nh &lt;= selmon-&gt;wy + selmon-&gt;wh)
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+			{
+</a> 				if(!c-&gt;isfloating &amp;&amp; selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange
+<a href="#h0-8-7" id="h0-8-7" class="d">-				   &amp;&amp; (abs(nw - c-&gt;w) &gt; snap || abs(nh - c-&gt;h) &gt; snap))
+</a><a href="#h0-8-8" id="h0-8-8" class="i">+				&amp;&amp; (abs(nw - c-&gt;w) &gt; snap || abs(nh - c-&gt;h) &gt; snap))
+</a> 					togglefloating(NULL);
+ 			}
+ 			if(!selmon-&gt;lt[selmon-&gt;sellt]-&gt;arrange || c-&gt;isfloating)
+<a href="#h0-9" id="h0-9" class="h">@@ -1473,8 +1471,8 @@ setup(void) {
+</a> 	/* select for events */
+ 	wa.cursor = cursor[CurNormal];
+ 	wa.event_mask = SubstructureRedirectMask|SubstructureNotifyMask|ButtonPressMask
+<a href="#h0-9-3" id="h0-9-3" class="d">-			|EnterWindowMask|LeaveWindowMask|StructureNotifyMask
+</a><a href="#h0-9-4" id="h0-9-4" class="d">-			|PropertyChangeMask;
+</a><a href="#h0-9-5" id="h0-9-5" class="i">+	                |EnterWindowMask|LeaveWindowMask|StructureNotifyMask
+</a><a href="#h0-9-6" id="h0-9-6" class="i">+	                |PropertyChangeMask;
+</a> 	XChangeWindowAttributes(dpy, root, CWEventMask|CWCursor, &amp;wa);
+ 	XSelectInput(dpy, root, wa.event_mask);
+ 	grabkeys();
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>some polishing in tileh/tilev - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/831428b00cf0bb6c7830c2178c8d13213f29b2db.html">831428b00cf0bb6c7830c2178c8d13213f29b2db</a>
+<b>parent</b> <a href="../commit/69439715c09ac36fe94f3cb7b1ed87149fc5ecff.html">69439715c09ac36fe94f3cb7b1ed87149fc5ecff</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 13 Mar 2008 13:59:40 +0000
+
+some polishing in tileh/tilev
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">102</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 50 insertions(+), 52 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -117,6 +117,7 @@ void cleanup(void);
+</a> void configure(Client *c);
+ void configurenotify(XEvent *e);
+ void configurerequest(XEvent *e);
+<a href="#h0-0-3" id="h0-0-3" class="i">+unsigned int counttiled(void);
+</a> void destroynotify(XEvent *e);
+ void detach(Client *c);
+ void detachstack(Client *c);
+<a href="#h0-1" id="h0-1" class="h">@@ -170,7 +171,8 @@ unsigned int textnw(const char *text, unsigned int len);
+</a> unsigned int textw(const char *text);
+ void tileh(void);
+ void tilehstack(unsigned int n);
+<a href="#h0-1-3" id="h0-1-3" class="d">-unsigned int tilemaster(void);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+Client *tilemaster(unsigned int n);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+void tileresize(Client *c, int x, int y, int w, int h);
+</a> void tilev(void);
+ void tilevstack(unsigned int n);
+ void togglefloating(const char *arg);
+<a href="#h0-2" id="h0-2" class="h">@@ -458,6 +460,15 @@ configurerequest(XEvent *e) {
+</a> 	XSync(dpy, False);
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+unsigned int
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+counttiled(void) {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	unsigned int n;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	Client *c;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next), n++);
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	return n;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+}
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+
+</a> void
+ destroynotify(XEvent *e) {
+ 	Client *c;
+<a href="#h0-3" id="h0-3" class="h">@@ -1579,89 +1590,76 @@ textw(const char *text) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="d">-tileresize(Client *c, int x, int y, int w, int h) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	resize(c, x, y, w, h, RESIZEHINTS);
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	if((RESIZEHINTS) &amp;&amp; ((c-&gt;h &lt; bh) || (c-&gt;h &gt; h) || (c-&gt;w &lt; bh) || (c-&gt;w &gt; w)))
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-		/* client doesn&#39;t accept size constraints */
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-		resize(c, x, y, w, h, False);
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-}
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-void
+</a> tileh(void) {
+<a href="#h0-3-12" id="h0-3-12" class="d">-	tilehstack(tilemaster());
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-}
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-void
+</a><a href="#h0-3-16" id="h0-3-16" class="d">-tilehstack(unsigned int n) {
+</a><a href="#h0-3-17" id="h0-3-17" class="d">-	int i, x, w;
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+	int x, w;
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+	unsigned int i, n = counttiled();
+</a> 	Client *c;
+ 
+ 	if(n == 0)
+ 		return;
+<a href="#h0-3-24" id="h0-3-24" class="i">+	c = tilemaster(n);
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+	if(--n == 0)
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+		return;
+</a> 
+ 	x = tx;
+ 	w = tw / n;
+ 	if(w &lt; bh)
+ 		w = tw;
+ 
+<a href="#h0-3-33" id="h0-3-33" class="d">-	for(i = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next), i++)
+</a><a href="#h0-3-34" id="h0-3-34" class="d">-		if(i &gt; 0) {
+</a><a href="#h0-3-35" id="h0-3-35" class="d">-			if(i &gt; 1 &amp;&amp; i == n) /* remainder */
+</a><a href="#h0-3-36" id="h0-3-36" class="d">-				tileresize(c, x, ty, (tx + tw) - x - 2 * c-&gt;border,
+</a><a href="#h0-3-37" id="h0-3-37" class="d">-				              th - 2 * c-&gt;border);
+</a><a href="#h0-3-38" id="h0-3-38" class="d">-			else
+</a><a href="#h0-3-39" id="h0-3-39" class="d">-				tileresize(c, x, ty, w - 2 * c-&gt;border,
+</a><a href="#h0-3-40" id="h0-3-40" class="d">-				              th - 2 * c-&gt;border);
+</a><a href="#h0-3-41" id="h0-3-41" class="d">-			if(w != tw)
+</a><a href="#h0-3-42" id="h0-3-42" class="d">-				x = c-&gt;x + c-&gt;w + 2 * c-&gt;border;
+</a><a href="#h0-3-43" id="h0-3-43" class="d">-		}
+</a><a href="#h0-3-44" id="h0-3-44" class="i">+	for(i = 0, c = nexttiled(c-&gt;next); c; c = nexttiled(c-&gt;next), i++) {
+</a><a href="#h0-3-45" id="h0-3-45" class="i">+		if(i + 1 == n) /* remainder */
+</a><a href="#h0-3-46" id="h0-3-46" class="i">+			tileresize(c, x, ty, (tx + tw) - x - 2 * c-&gt;border, th - 2 * c-&gt;border);
+</a><a href="#h0-3-47" id="h0-3-47" class="i">+		else
+</a><a href="#h0-3-48" id="h0-3-48" class="i">+			tileresize(c, x, ty, w - 2 * c-&gt;border, th - 2 * c-&gt;border);
+</a><a href="#h0-3-49" id="h0-3-49" class="i">+		if(w != tw)
+</a><a href="#h0-3-50" id="h0-3-50" class="i">+			x = c-&gt;x + c-&gt;w + 2 * c-&gt;border;
+</a><a href="#h0-3-51" id="h0-3-51" class="i">+	}
+</a> }
+ 
+<a href="#h0-3-54" id="h0-3-54" class="d">-unsigned int
+</a><a href="#h0-3-55" id="h0-3-55" class="d">-tilemaster(void) {
+</a><a href="#h0-3-56" id="h0-3-56" class="d">-	unsigned int n;
+</a><a href="#h0-3-57" id="h0-3-57" class="d">-	Client *c, *mc;
+</a><a href="#h0-3-58" id="h0-3-58" class="i">+Client *
+</a><a href="#h0-3-59" id="h0-3-59" class="i">+tilemaster(unsigned int n) {
+</a><a href="#h0-3-60" id="h0-3-60" class="i">+	Client *c = nexttiled(clients);
+</a> 
+<a href="#h0-3-62" id="h0-3-62" class="d">-	for(n = 0, mc = c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+</a><a href="#h0-3-63" id="h0-3-63" class="d">-		n++;
+</a><a href="#h0-3-64" id="h0-3-64" class="d">-	if(n == 0)
+</a><a href="#h0-3-65" id="h0-3-65" class="d">-		return 0;
+</a> 	if(n == 1)
+<a href="#h0-3-67" id="h0-3-67" class="d">-		tileresize(mc, mox, moy, mow - 2 * mc-&gt;border, moh - 2 * mc-&gt;border);
+</a><a href="#h0-3-68" id="h0-3-68" class="i">+		tileresize(c, mox, moy, mow - 2 * c-&gt;border, moh - 2 * c-&gt;border);
+</a> 	else
+<a href="#h0-3-70" id="h0-3-70" class="d">-		tileresize(mc, mx, my, mw - 2 * mc-&gt;border, mh - 2 * mc-&gt;border);
+</a><a href="#h0-3-71" id="h0-3-71" class="d">-	return n - 1;
+</a><a href="#h0-3-72" id="h0-3-72" class="i">+		tileresize(c, mx, my, mw - 2 * c-&gt;border, mh - 2 * c-&gt;border);
+</a><a href="#h0-3-73" id="h0-3-73" class="i">+	return c;
+</a> }
+ 
+ void
+<a href="#h0-3-77" id="h0-3-77" class="d">-tilev(void) {
+</a><a href="#h0-3-78" id="h0-3-78" class="d">-	tilevstack(tilemaster());
+</a><a href="#h0-3-79" id="h0-3-79" class="i">+tileresize(Client *c, int x, int y, int w, int h) {
+</a><a href="#h0-3-80" id="h0-3-80" class="i">+	resize(c, x, y, w, h, RESIZEHINTS);
+</a><a href="#h0-3-81" id="h0-3-81" class="i">+	if((RESIZEHINTS) &amp;&amp; ((c-&gt;h &lt; bh) || (c-&gt;h &gt; h) || (c-&gt;w &lt; bh) || (c-&gt;w &gt; w)))
+</a><a href="#h0-3-82" id="h0-3-82" class="i">+		/* client doesn&#39;t accept size constraints */
+</a><a href="#h0-3-83" id="h0-3-83" class="i">+		resize(c, x, y, w, h, False);
+</a> }
+ 
+ void
+<a href="#h0-3-87" id="h0-3-87" class="d">-tilevstack(unsigned int n) {
+</a><a href="#h0-3-88" id="h0-3-88" class="d">-	int i, y, h;
+</a><a href="#h0-3-89" id="h0-3-89" class="i">+tilev(void) {
+</a><a href="#h0-3-90" id="h0-3-90" class="i">+	int y, h;
+</a><a href="#h0-3-91" id="h0-3-91" class="i">+	unsigned int i, n = counttiled();
+</a> 	Client *c;
+ 
+ 	if(n == 0)
+ 		return;
+<a href="#h0-3-96" id="h0-3-96" class="i">+	c = tilemaster(n);
+</a><a href="#h0-3-97" id="h0-3-97" class="i">+	if(--n == 0)
+</a><a href="#h0-3-98" id="h0-3-98" class="i">+		return;
+</a> 
+ 	y = ty;
+ 	h = th / n;
+ 	if(h &lt; bh)
+ 		h = th;
+ 
+<a href="#h0-3-105" id="h0-3-105" class="d">-	for(i = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next), i++)
+</a><a href="#h0-3-106" id="h0-3-106" class="d">-		if(i &gt; 0) {
+</a><a href="#h0-3-107" id="h0-3-107" class="d">-			if(i &gt; 1 &amp;&amp; i == n) /* remainder */
+</a><a href="#h0-3-108" id="h0-3-108" class="d">-				tileresize(c, tx, y, tw - 2 * c-&gt;border,
+</a><a href="#h0-3-109" id="h0-3-109" class="d">-				              (ty + th) - y - 2 * c-&gt;border);
+</a><a href="#h0-3-110" id="h0-3-110" class="d">-			else
+</a><a href="#h0-3-111" id="h0-3-111" class="d">-				tileresize(c, tx, y, tw - 2 * c-&gt;border,
+</a><a href="#h0-3-112" id="h0-3-112" class="d">-				              h - 2 * c-&gt;border);
+</a><a href="#h0-3-113" id="h0-3-113" class="d">-			if(h != th)
+</a><a href="#h0-3-114" id="h0-3-114" class="d">-				y = c-&gt;y + c-&gt;h + 2 * c-&gt;border;
+</a><a href="#h0-3-115" id="h0-3-115" class="d">-		}
+</a><a href="#h0-3-116" id="h0-3-116" class="i">+	for(i = 0, c = nexttiled(c-&gt;next); c; c = nexttiled(c-&gt;next), i++) {
+</a><a href="#h0-3-117" id="h0-3-117" class="i">+		if(i + 1 == n) /* remainder */
+</a><a href="#h0-3-118" id="h0-3-118" class="i">+			tileresize(c, tx, y, tw - 2 * c-&gt;border, (ty + th) - y - 2 * c-&gt;border);
+</a><a href="#h0-3-119" id="h0-3-119" class="i">+		else
+</a><a href="#h0-3-120" id="h0-3-120" class="i">+			tileresize(c, tx, y, tw - 2 * c-&gt;border, h - 2 * c-&gt;border);
+</a><a href="#h0-3-121" id="h0-3-121" class="i">+		if(h != th)
+</a><a href="#h0-3-122" id="h0-3-122" class="i">+			y = c-&gt;y + c-&gt;h + 2 * c-&gt;border;
+</a><a href="#h0-3-123" id="h0-3-123" class="i">+	}
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

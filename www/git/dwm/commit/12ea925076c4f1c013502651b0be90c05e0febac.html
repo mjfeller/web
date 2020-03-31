@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>untested monocle - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/12ea925076c4f1c013502651b0be90c05e0febac.html">12ea925076c4f1c013502651b0be90c05e0febac</a>
+<b>parent</b> <a href="../commit/79ecbeca7e4ca6d614bf233e7bc95d273df6e3b4.html">79ecbeca7e4ca6d614bf233e7bc95d273df6e3b4</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 19 Jun 2008 11:38:53 +0100
+
+untested monocle
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.1</a></td><td> | </td><td class="num">11</td><td><span class="i">++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dwm.c</a></td><td> | </td><td class="num">72</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+</table></pre><pre>4 files changed, 55 insertions(+), 45 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -32,8 +32,9 @@ static Bool resizehints = True; /* False means respect size hints in tiled resiz
+</a> 
+ static Layout layouts[] = {
+ 	/* symbol     arrange function */
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ &quot;[]=&quot;,      tile }, /* first entry is default */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ &quot;&gt;&lt;&gt;&quot;,      NULL }, /* no layout function means floating behavior */
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	{ &quot;[]=&quot;,      tile },    /* first entry is default */
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	{ &quot;&gt;&lt;&gt;&quot;,      NULL },    /* no layout function means floating behavior */
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	{ &quot;[M]&quot;,      monocle }, /* first entry is default */
+</a> };
+ 
+ /* key definitions */
+<a href="#h0-1" id="h0-1" class="h">@@ -60,11 +61,13 @@ static Key keys[] = {
+</a> 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
+ 	{ MODKEY,                       XK_h,      setmfact,       {.f = -0.05} },
+ 	{ MODKEY,                       XK_l,      setmfact,       {.f = +0.05} },
+<a href="#h0-1-3" id="h0-1-3" class="d">-	{ MODKEY,                       XK_m,      togglemax,      {0} },
+</a> 	{ MODKEY,                       XK_Return, zoom,           {0} },
+ 	{ MODKEY,                       XK_Tab,    view,           {0} },
+ 	{ MODKEY|ShiftMask,             XK_c,      killclient,     {0} },
+<a href="#h0-1-7" id="h0-1-7" class="d">-	{ MODKEY,                       XK_space,  togglelayout,   {0} },
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	{ MODKEY,                       XK_t,      setlayout,      {.v = &amp;layouts[0]} },
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	{ MODKEY,                       XK_f,      setlayout,      {.v = &amp;layouts[1]} },
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	{ MODKEY,                       XK_m,      setlayout,      {.v = &amp;layouts[2]} },
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	{ MODKEY,                       XK_space,  setlayout,      {0} },
+</a> 	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
+ 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
+ 	{ MODKEY|ShiftMask,             XK_0,      tag,            {.ui = ~0 } },
+<a href="#h0-2" id="h0-2" class="h">@@ -91,8 +94,8 @@ static Key keys[] = {
+</a>  * ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */
+ static Button buttons[] = {
+ 	/* click                event mask      button          function        argument */
+<a href="#h0-2-3" id="h0-2-3" class="d">-	{ ClkLtSymbol,          0,              Button1,        togglelayout,   {0} },
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	{ ClkLtSymbol,          0,              Button3,        togglemax,      {0} },
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	{ ClkLtSymbol,          0,              Button1,        setlayout,      {0} },
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	{ ClkLtSymbol,          0,              Button3,        setlayout,      {.v = &amp;layouts[2]} },
+</a> 	{ ClkWinTitle,          0,              Button2,        zoom,           {0} },
+ 	{ ClkStatusText,        0,              Button2,        spawn,          {.v = termcmd } },
+ 	{ ClkClientWin,         MODKEY,         Button1,        movemouse,      {0} },
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,5 +1,5 @@
+</a> # dwm version
+<a href="#h1-0-1" id="h1-0-1" class="d">-VERSION = 5.0.1
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+VERSION = 5.1
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h2" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -60,8 +60,17 @@ Start
+</a> .B Mod1\-b
+ Toggles bar on and off.
+ .TP
+<a href="#h2-0-3" id="h2-0-3" class="i">+.B Mod1\-t
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+Sets tiled layout.
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+.TP
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+.B Mod1\-f
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+Sets floating layout.
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+.TP
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+.B Mod1\-f
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+Sets monocle layout.
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+.TP
+</a> .B Mod1\-space
+<a href="#h2-0-13" id="h2-0-13" class="d">-Toggles between layouts.
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+Toggles between current and previous layout.
+</a> .TP
+ .B Mod1\-j
+ Focus next window.
+<b>diff --git a/<a id="h3" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -89,7 +89,7 @@ struct Client {
+</a> 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int bw, oldbw;
+ 	uint tags;
+<a href="#h3-0-3" id="h3-0-3" class="d">-	Bool isbanned, isfixed, isfloating, ismoved, isurgent;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	Bool isbanned, isfixed, isfloating, isurgent;
+</a> 	Client *next;
+ 	Client *snext;
+ 	Window win;
+<a href="#h3-1" id="h3-1" class="h">@@ -168,6 +168,7 @@ static void killclient(const Arg *arg);
+</a> static void manage(Window w, XWindowAttributes *wa);
+ static void mappingnotify(XEvent *e);
+ static void maprequest(XEvent *e);
+<a href="#h3-1-3" id="h3-1-3" class="i">+static void monocle(void);
+</a> static void movemouse(const Arg *arg);
+ static Client *nexttiled(Client *c);
+ static void propertynotify(XEvent *e);
+<a href="#h3-2" id="h3-2" class="h">@@ -178,6 +179,7 @@ static void restack(void);
+</a> static void run(void);
+ static void scan(void);
+ static void setclientstate(Client *c, long state);
+<a href="#h3-2-3" id="h3-2-3" class="i">+static void setlayout(const Arg *arg);
+</a> static void setmfact(const Arg *arg);
+ static void setup(void);
+ static void spawn(const Arg *arg);
+<a href="#h3-3" id="h3-3" class="h">@@ -186,8 +188,6 @@ static int textnw(const char *text, uint len);
+</a> static void tile(void);
+ static void togglebar(const Arg *arg);
+ static void togglefloating(const Arg *arg);
+<a href="#h3-3-3" id="h3-3-3" class="d">-static void togglelayout(const Arg *arg);
+</a><a href="#h3-3-4" id="h3-3-4" class="d">-static void togglemax(const Arg *arg);
+</a> static void toggletag(const Arg *arg);
+ static void toggleview(const Arg *arg);
+ static void unmanage(Client *c);
+<a href="#h3-4" id="h3-4" class="h">@@ -225,7 +225,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[UnmapNotify] = unmapnotify
+ };
+ static Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h3-4-3" id="h3-4-3" class="d">-static Bool ismax = False;
+</a> static Bool otherwm, readin;
+ static Bool running = True;
+ static uint tagset[] = {1, 1}; /* after start, first tag is selected */
+<a href="#h3-5" id="h3-5" class="h">@@ -275,21 +274,17 @@ arrange(void) {
+</a> 
+ 	for(c = clients; c; c = c-&gt;next)
+ 		if(c-&gt;tags &amp; tagset[seltags]) { /* is visible */
+<a href="#h3-5-3" id="h3-5-3" class="d">-			if(ismax &amp;&amp; !c-&gt;isfixed) {
+</a><a href="#h3-5-4" id="h3-5-4" class="d">-				XMoveResizeWindow(dpy, c-&gt;win, wx, wy, ww - 2 * c-&gt;bw, wh - 2 * c-&gt;bw);
+</a><a href="#h3-5-5" id="h3-5-5" class="d">-				c-&gt;ismoved = True;
+</a><a href="#h3-5-6" id="h3-5-6" class="d">-			}
+</a><a href="#h3-5-7" id="h3-5-7" class="d">-			else if(!lt-&gt;arrange || c-&gt;isfloating)
+</a><a href="#h3-5-8" id="h3-5-8" class="i">+			if(!lt-&gt;arrange || c-&gt;isfloating)
+</a> 				resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+ 			c-&gt;isbanned = False;
+ 		}
+ 		else if(!c-&gt;isbanned) {
+ 			XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+<a href="#h3-5-14" id="h3-5-14" class="d">-			c-&gt;isbanned = c-&gt;ismoved = True;
+</a><a href="#h3-5-15" id="h3-5-15" class="i">+			c-&gt;isbanned = True;
+</a> 		}
+ 
+ 	focus(NULL);
+<a href="#h3-5-19" id="h3-5-19" class="d">-	if(lt-&gt;arrange &amp;&amp; !ismax)
+</a><a href="#h3-5-20" id="h3-5-20" class="i">+	if(lt-&gt;arrange)
+</a> 		lt-&gt;arrange();
+ 	restack();
+ }
+<a href="#h3-6" id="h3-6" class="h">@@ -418,8 +413,6 @@ configurerequest(XEvent *e) {
+</a> 	if((c = getclient(ev-&gt;window))) {
+ 		if(ev-&gt;value_mask &amp; CWBorderWidth)
+ 			c-&gt;bw = ev-&gt;border_width;
+<a href="#h3-6-3" id="h3-6-3" class="d">-		if(ismax &amp;&amp; !c-&gt;isbanned &amp;&amp; !c-&gt;isfixed)
+</a><a href="#h3-6-4" id="h3-6-4" class="d">-			XMoveResizeWindow(dpy, c-&gt;win, wx, wy, ww - 2 * c-&gt;bw, wh + 2 * c-&gt;bw);
+</a> 		else if(c-&gt;isfloating || !lt-&gt;arrange) {
+ 			if(ev-&gt;value_mask &amp; CWX)
+ 				c-&gt;x = sx + ev-&gt;x;
+<a href="#h3-7" id="h3-7" class="h">@@ -507,7 +500,7 @@ drawbar(void) {
+</a> 	}
+ 	if(blw &gt; 0) {
+ 		dc.w = blw;
+<a href="#h3-7-3" id="h3-7-3" class="d">-		drawtext(lt-&gt;symbol, dc.norm, ismax);
+</a><a href="#h3-7-4" id="h3-7-4" class="i">+		drawtext(lt-&gt;symbol, dc.norm, False);
+</a> 		x = dc.x + dc.w;
+ 	}
+ 	else
+<a href="#h3-8" id="h3-8" class="h">@@ -967,6 +960,14 @@ maprequest(XEvent *e) {
+</a> }
+ 
+ void
+<a href="#h3-8-3" id="h3-8-3" class="i">+monocle(void) {
+</a><a href="#h3-8-4" id="h3-8-4" class="i">+	Client *c;
+</a><a href="#h3-8-5" id="h3-8-5" class="i">+
+</a><a href="#h3-8-6" id="h3-8-6" class="i">+	for(c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+</a><a href="#h3-8-7" id="h3-8-7" class="i">+		resize(c, wx, wy, ww, wh, resizehints);
+</a><a href="#h3-8-8" id="h3-8-8" class="i">+}
+</a><a href="#h3-8-9" id="h3-8-9" class="i">+
+</a><a href="#h3-8-10" id="h3-8-10" class="i">+void
+</a> movemouse(const Arg *arg) {
+ 	int x1, y1, ocx, ocy, di, nx, ny;
+ 	uint dui;
+<a href="#h3-9" id="h3-9" class="h">@@ -1115,8 +1116,7 @@ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> 		h = bh;
+ 	if(w &lt; bh)
+ 		w = bh;
+<a href="#h3-9-3" id="h3-9-3" class="d">-	if(c-&gt;x != x || c-&gt;y != y || c-&gt;w != w || c-&gt;h != h || c-&gt;ismoved) {
+</a><a href="#h3-9-4" id="h3-9-4" class="d">-		c-&gt;ismoved = False;
+</a><a href="#h3-9-5" id="h3-9-5" class="i">+	if(c-&gt;x != x || c-&gt;y != y || c-&gt;w != w || c-&gt;h != h) {
+</a> 		c-&gt;x = wc.x = x;
+ 		c-&gt;y = wc.y = y;
+ 		c-&gt;w = wc.width = w;
+<a href="#h3-10" id="h3-10" class="h">@@ -1186,9 +1186,9 @@ restack(void) {
+</a> 	drawbar();
+ 	if(!sel)
+ 		return;
+<a href="#h3-10-3" id="h3-10-3" class="d">-	if(ismax || sel-&gt;isfloating || !lt-&gt;arrange)
+</a><a href="#h3-10-4" id="h3-10-4" class="i">+	if(sel-&gt;isfloating || !lt-&gt;arrange)
+</a> 		XRaiseWindow(dpy, sel-&gt;win);
+<a href="#h3-10-6" id="h3-10-6" class="d">-	if(!ismax &amp;&amp; lt-&gt;arrange) {
+</a><a href="#h3-10-7" id="h3-10-7" class="i">+	if(lt-&gt;arrange) {
+</a> 		wc.stack_mode = Below;
+ 		wc.sibling = barwin;
+ 		for(c = stack; c; c = c-&gt;snext)
+<a href="#h3-11" id="h3-11" class="h">@@ -1296,6 +1296,22 @@ setclientstate(Client *c, long state) {
+</a> 			PropModeReplace, (unsigned char *)data, 2);
+ }
+ 
+<a href="#h3-11-3" id="h3-11-3" class="i">+void
+</a><a href="#h3-11-4" id="h3-11-4" class="i">+setlayout(const Arg *arg) {
+</a><a href="#h3-11-5" id="h3-11-5" class="i">+	static Layout *prevlt = &amp;layouts[1 % LENGTH(layouts)];
+</a><a href="#h3-11-6" id="h3-11-6" class="i">+
+</a><a href="#h3-11-7" id="h3-11-7" class="i">+	if(!arg || !arg-&gt;v || arg-&gt;v == lt)
+</a><a href="#h3-11-8" id="h3-11-8" class="i">+		lt = prevlt;
+</a><a href="#h3-11-9" id="h3-11-9" class="i">+	else {
+</a><a href="#h3-11-10" id="h3-11-10" class="i">+		prevlt = lt;
+</a><a href="#h3-11-11" id="h3-11-11" class="i">+		lt = (Layout *)arg-&gt;v;
+</a><a href="#h3-11-12" id="h3-11-12" class="i">+	}
+</a><a href="#h3-11-13" id="h3-11-13" class="i">+	if(sel)
+</a><a href="#h3-11-14" id="h3-11-14" class="i">+		arrange();
+</a><a href="#h3-11-15" id="h3-11-15" class="i">+	else
+</a><a href="#h3-11-16" id="h3-11-16" class="i">+		drawbar();
+</a><a href="#h3-11-17" id="h3-11-17" class="i">+}
+</a><a href="#h3-11-18" id="h3-11-18" class="i">+
+</a> /* arg &gt; 1.0 will set mfact absolutly */
+ void
+ setmfact(const Arg *arg) {
+<a href="#h3-12" id="h3-12" class="h">@@ -1477,24 +1493,6 @@ togglefloating(const Arg *arg) {
+</a> }
+ 
+ void
+<a href="#h3-12-3" id="h3-12-3" class="d">-togglelayout(const Arg *arg) {
+</a><a href="#h3-12-4" id="h3-12-4" class="d">-	if(arg &amp;&amp; arg-&gt;v)
+</a><a href="#h3-12-5" id="h3-12-5" class="d">-		lt = (Layout *)arg-&gt;v;
+</a><a href="#h3-12-6" id="h3-12-6" class="d">-	else if(++lt == &amp;layouts[LENGTH(layouts)])
+</a><a href="#h3-12-7" id="h3-12-7" class="d">-		lt = &amp;layouts[0];
+</a><a href="#h3-12-8" id="h3-12-8" class="d">-	if(sel)
+</a><a href="#h3-12-9" id="h3-12-9" class="d">-		arrange();
+</a><a href="#h3-12-10" id="h3-12-10" class="d">-	else
+</a><a href="#h3-12-11" id="h3-12-11" class="d">-		drawbar();
+</a><a href="#h3-12-12" id="h3-12-12" class="d">-}
+</a><a href="#h3-12-13" id="h3-12-13" class="d">-
+</a><a href="#h3-12-14" id="h3-12-14" class="d">-void
+</a><a href="#h3-12-15" id="h3-12-15" class="d">-togglemax(const Arg *arg) {
+</a><a href="#h3-12-16" id="h3-12-16" class="d">-	ismax = !ismax;
+</a><a href="#h3-12-17" id="h3-12-17" class="d">-	arrange();
+</a><a href="#h3-12-18" id="h3-12-18" class="d">-}
+</a><a href="#h3-12-19" id="h3-12-19" class="d">-
+</a><a href="#h3-12-20" id="h3-12-20" class="d">-void
+</a> toggletag(const Arg *arg) {
+ 	uint mask = sel-&gt;tags ^ (arg-&gt;ui &amp; TAGMASK);
+ 
+<a href="#h3-13" id="h3-13" class="h">@@ -1693,7 +1691,7 @@ void
+</a> zoom(const Arg *arg) {
+ 	Client *c = sel;
+ 
+<a href="#h3-13-3" id="h3-13-3" class="d">-	if(ismax || !lt-&gt;arrange || (sel &amp;&amp; sel-&gt;isfloating))
+</a><a href="#h3-13-4" id="h3-13-4" class="i">+	if(!lt-&gt;arrange || lt-&gt;arrange == monocle || (sel &amp;&amp; sel-&gt;isfloating))
+</a> 		return;
+ 	if(c == nexttiled(clients))
+ 		if(!c || !(c = nexttiled(c-&gt;next)))
+</pre>
+</div>
+</body>
+</html>

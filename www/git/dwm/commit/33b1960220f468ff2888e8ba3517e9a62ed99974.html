@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>some experimental state DO NOT USE THIS, I plan to have a nicer interface to change geometries - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/33b1960220f468ff2888e8ba3517e9a62ed99974.html">33b1960220f468ff2888e8ba3517e9a62ed99974</a>
+<b>parent</b> <a href="../commit/e237b2a76fb3dac1f43b91e5c7b6adb9ef04c9ed.html">e237b2a76fb3dac1f43b91e5c7b6adb9ef04c9ed</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 14 Mar 2008 17:17:08 +0000
+
+some experimental state DO NOT USE THIS, I plan to have a nicer interface to change geometries
+<b>Diffstat:</b>
+<table><tr><td class="D">D</td><td><a href="#h0">config.anselm.h</a></td><td> | </td><td class="num">154</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.def.h</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">134</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>3 files changed, 98 insertions(+), 196 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.anselm.h.html">config.anselm.h</a> b/<a href="../file/config.anselm.h.html">config.anselm.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,154 +0,0 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="d">-/* See LICENSE file for copyright and license details. */
+</a><a href="#h0-0-1" id="h0-0-1" class="d">-
+</a><a href="#h0-0-2" id="h0-0-2" class="d">-/* appearance */
+</a><a href="#h0-0-3" id="h0-0-3" class="d">-#define BORDERPX		1
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-#define FONT			&quot;-*-terminus-medium-r-normal-*-14-*-*-*-*-*-*-*&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-#define NORMBORDERCOLOR		&quot;#cccccc&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-#define NORMBGCOLOR		&quot;#cccccc&quot;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-#define NORMFGCOLOR		&quot;#000000&quot;
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-#define SELBORDERCOLOR		&quot;#0066ff&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-#define SELBGCOLOR		&quot;#0066ff&quot;
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-#define SELFGCOLOR		&quot;#ffffff&quot;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-/* tagging */
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-const char tags[][MAXTAGLEN] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot; };
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-Rule rules[] = {
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	/* class	instance	title		tags ref	isfloating */
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	{ NULL,		NULL,		&quot;Firefox&quot;,	tags[8],	False },
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-	{ NULL,		NULL,		&quot;Gimp&quot;,		NULL,		True },
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-	{ NULL,		NULL,		&quot;MPlayer&quot;,	NULL,		True },
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-	{ NULL,		NULL,		&quot;Acroread&quot;,	NULL,		True },
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-};
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-/* geometry function */
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-void (*setgeoms)(void) = setdefgeoms;
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-void
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-setanselmgeoms(void) {
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-	/* screen dimensions */
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-	sx = 0;
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-	sy = 0;
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-	sw = DisplayWidth(dpy, screen);
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-	sh = DisplayHeight(dpy, screen);
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-	/* bar position */
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-	bx = sx;
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-	by = sy;
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-	bw = 1280;
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-	bh = dc.font.height + 2;
+</a><a href="#h0-0-40" id="h0-0-40" class="d">-
+</a><a href="#h0-0-41" id="h0-0-41" class="d">-	/* window area */
+</a><a href="#h0-0-42" id="h0-0-42" class="d">-	wx = sx;
+</a><a href="#h0-0-43" id="h0-0-43" class="d">-	wy = sy + bh;
+</a><a href="#h0-0-44" id="h0-0-44" class="d">-	ww = sw;
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-	wh = sh - bh;
+</a><a href="#h0-0-46" id="h0-0-46" class="d">-
+</a><a href="#h0-0-47" id="h0-0-47" class="d">-	/* master area */
+</a><a href="#h0-0-48" id="h0-0-48" class="d">-	mx = wx;
+</a><a href="#h0-0-49" id="h0-0-49" class="d">-	my = wy;
+</a><a href="#h0-0-50" id="h0-0-50" class="d">-	mw = 1280;
+</a><a href="#h0-0-51" id="h0-0-51" class="d">-	mh = 800 - bh;
+</a><a href="#h0-0-52" id="h0-0-52" class="d">-
+</a><a href="#h0-0-53" id="h0-0-53" class="d">-	/* tile area */
+</a><a href="#h0-0-54" id="h0-0-54" class="d">-	tx = 1280;
+</a><a href="#h0-0-55" id="h0-0-55" class="d">-	ty = 0;
+</a><a href="#h0-0-56" id="h0-0-56" class="d">-	tw = sw - 1280;
+</a><a href="#h0-0-57" id="h0-0-57" class="d">-	th = sh;
+</a><a href="#h0-0-58" id="h0-0-58" class="d">-
+</a><a href="#h0-0-59" id="h0-0-59" class="d">-	/* monocle area */
+</a><a href="#h0-0-60" id="h0-0-60" class="d">-	mox = mx;
+</a><a href="#h0-0-61" id="h0-0-61" class="d">-	moy = my;
+</a><a href="#h0-0-62" id="h0-0-62" class="d">-	mow = mw;
+</a><a href="#h0-0-63" id="h0-0-63" class="d">-	moh = mh;
+</a><a href="#h0-0-64" id="h0-0-64" class="d">-}
+</a><a href="#h0-0-65" id="h0-0-65" class="d">-
+</a><a href="#h0-0-66" id="h0-0-66" class="d">-void
+</a><a href="#h0-0-67" id="h0-0-67" class="d">-anselmgeoms(const char *arg) {
+</a><a href="#h0-0-68" id="h0-0-68" class="d">-	setgeoms = setanselmgeoms;
+</a><a href="#h0-0-69" id="h0-0-69" class="d">-	setgeoms();
+</a><a href="#h0-0-70" id="h0-0-70" class="d">-	updatebarpos();
+</a><a href="#h0-0-71" id="h0-0-71" class="d">-	setlayout(&quot;[]|&quot;);
+</a><a href="#h0-0-72" id="h0-0-72" class="d">-}
+</a><a href="#h0-0-73" id="h0-0-73" class="d">-
+</a><a href="#h0-0-74" id="h0-0-74" class="d">-void
+</a><a href="#h0-0-75" id="h0-0-75" class="d">-defgeoms(const char *arg) {
+</a><a href="#h0-0-76" id="h0-0-76" class="d">-	setgeoms = setdefgeoms;
+</a><a href="#h0-0-77" id="h0-0-77" class="d">-	setgeoms();
+</a><a href="#h0-0-78" id="h0-0-78" class="d">-	updatebarpos();
+</a><a href="#h0-0-79" id="h0-0-79" class="d">-	setlayout(&quot;[]=&quot;);
+</a><a href="#h0-0-80" id="h0-0-80" class="d">-}
+</a><a href="#h0-0-81" id="h0-0-81" class="d">-
+</a><a href="#h0-0-82" id="h0-0-82" class="d">-/* layout(s) */
+</a><a href="#h0-0-83" id="h0-0-83" class="d">-#define RESIZEHINTS		True	/* False - respect size hints in tiled resizals */
+</a><a href="#h0-0-84" id="h0-0-84" class="d">-#define SNAP			32	/* snap pixel */
+</a><a href="#h0-0-85" id="h0-0-85" class="d">-
+</a><a href="#h0-0-86" id="h0-0-86" class="d">-Layout layouts[] = {
+</a><a href="#h0-0-87" id="h0-0-87" class="d">-	/* symbol		function	isfloating */
+</a><a href="#h0-0-88" id="h0-0-88" class="d">-	{ &quot;[]|&quot;,		tileh,		False }, /* first entry is default */
+</a><a href="#h0-0-89" id="h0-0-89" class="d">-	{ &quot;[]=&quot;,		tilev,		False },
+</a><a href="#h0-0-90" id="h0-0-90" class="d">-	{ &quot;&gt;&lt;&gt;&quot;,		floating,	True },
+</a><a href="#h0-0-91" id="h0-0-91" class="d">-	{ &quot;[M]&quot;,		monocle,	True },
+</a><a href="#h0-0-92" id="h0-0-92" class="d">-};
+</a><a href="#h0-0-93" id="h0-0-93" class="d">-
+</a><a href="#h0-0-94" id="h0-0-94" class="d">-/* key definitions */
+</a><a href="#h0-0-95" id="h0-0-95" class="d">-#define MODKEY			Mod1Mask
+</a><a href="#h0-0-96" id="h0-0-96" class="d">-Key keys[] = {
+</a><a href="#h0-0-97" id="h0-0-97" class="d">-	/* modifier			key		function	argument */
+</a><a href="#h0-0-98" id="h0-0-98" class="d">-	{ MODKEY,			XK_p,		spawn,
+</a><a href="#h0-0-99" id="h0-0-99" class="d">-		&quot;exec dmenu_run -fn &#39;&quot;FONT&quot;&#39; -nb &#39;&quot;NORMBGCOLOR&quot;&#39; -nf &#39;&quot;NORMFGCOLOR&quot;&#39; -sb &#39;&quot;SELBGCOLOR&quot;&#39; -sf &#39;&quot;SELFGCOLOR&quot;&#39; -x 0 -y 0 -w 1280&quot; },
+</a><a href="#h0-0-100" id="h0-0-100" class="d">-	{ MODKEY|ShiftMask,		XK_Return,	spawn, &quot;exec uxterm&quot; },
+</a><a href="#h0-0-101" id="h0-0-101" class="d">-	{ MODKEY,			XK_a,		anselmgeoms,	NULL },
+</a><a href="#h0-0-102" id="h0-0-102" class="d">-	{ MODKEY,			XK_d,		defgeoms,	NULL },
+</a><a href="#h0-0-103" id="h0-0-103" class="d">-	{ MODKEY,			XK_j,		focusnext,	NULL },
+</a><a href="#h0-0-104" id="h0-0-104" class="d">-	{ MODKEY,			XK_k,		focusprev,	NULL },
+</a><a href="#h0-0-105" id="h0-0-105" class="d">-	{ MODKEY,			XK_r,		reapply,	NULL },
+</a><a href="#h0-0-106" id="h0-0-106" class="d">-	{ MODKEY,			XK_Return,	zoom,		NULL },
+</a><a href="#h0-0-107" id="h0-0-107" class="d">-	{ MODKEY,			XK_Tab,		viewprevtag,	NULL },
+</a><a href="#h0-0-108" id="h0-0-108" class="d">-	{ MODKEY,			XK_m,		setlayout,	&quot;[M]&quot; },
+</a><a href="#h0-0-109" id="h0-0-109" class="d">-	{ MODKEY,			XK_f,		setlayout,	&quot;&gt;&lt;&gt;&quot; },
+</a><a href="#h0-0-110" id="h0-0-110" class="d">-	{ MODKEY,			XK_v,		setlayout,	&quot;[]=&quot; },
+</a><a href="#h0-0-111" id="h0-0-111" class="d">-	{ MODKEY,			XK_h,		setlayout,	&quot;[]|&quot; },
+</a><a href="#h0-0-112" id="h0-0-112" class="d">-	{ MODKEY|ShiftMask,		XK_space,	togglefloating,	NULL },
+</a><a href="#h0-0-113" id="h0-0-113" class="d">-	{ MODKEY|ShiftMask,		XK_c,		killclient,	NULL },
+</a><a href="#h0-0-114" id="h0-0-114" class="d">-	{ MODKEY,			XK_0,		view,		NULL },
+</a><a href="#h0-0-115" id="h0-0-115" class="d">-	{ MODKEY,			XK_1,		view,		tags[0] },
+</a><a href="#h0-0-116" id="h0-0-116" class="d">-	{ MODKEY,			XK_2,		view,		tags[1] },
+</a><a href="#h0-0-117" id="h0-0-117" class="d">-	{ MODKEY,			XK_3,		view,		tags[2] },
+</a><a href="#h0-0-118" id="h0-0-118" class="d">-	{ MODKEY,			XK_4,		view,		tags[3] },
+</a><a href="#h0-0-119" id="h0-0-119" class="d">-	{ MODKEY,			XK_5,		view,		tags[4] },
+</a><a href="#h0-0-120" id="h0-0-120" class="d">-	{ MODKEY,			XK_6,		view,		tags[5] },
+</a><a href="#h0-0-121" id="h0-0-121" class="d">-	{ MODKEY,			XK_7,		view,		tags[6] },
+</a><a href="#h0-0-122" id="h0-0-122" class="d">-	{ MODKEY,			XK_8,		view,		tags[7] },
+</a><a href="#h0-0-123" id="h0-0-123" class="d">-	{ MODKEY,			XK_9,		view,		tags[8] },
+</a><a href="#h0-0-124" id="h0-0-124" class="d">-	{ MODKEY|ControlMask,		XK_1,		toggleview,	tags[0] },
+</a><a href="#h0-0-125" id="h0-0-125" class="d">-	{ MODKEY|ControlMask,		XK_2,		toggleview,	tags[1] },
+</a><a href="#h0-0-126" id="h0-0-126" class="d">-	{ MODKEY|ControlMask,		XK_3,		toggleview,	tags[2] },
+</a><a href="#h0-0-127" id="h0-0-127" class="d">-	{ MODKEY|ControlMask,		XK_4,		toggleview,	tags[3] },
+</a><a href="#h0-0-128" id="h0-0-128" class="d">-	{ MODKEY|ControlMask,		XK_5,		toggleview,	tags[4] },
+</a><a href="#h0-0-129" id="h0-0-129" class="d">-	{ MODKEY|ControlMask,		XK_6,		toggleview,	tags[5] },
+</a><a href="#h0-0-130" id="h0-0-130" class="d">-	{ MODKEY|ControlMask,		XK_7,		toggleview,	tags[6] },
+</a><a href="#h0-0-131" id="h0-0-131" class="d">-	{ MODKEY|ControlMask,		XK_8,		toggleview,	tags[7] },
+</a><a href="#h0-0-132" id="h0-0-132" class="d">-	{ MODKEY|ControlMask,		XK_9,		toggleview,	tags[8] },
+</a><a href="#h0-0-133" id="h0-0-133" class="d">-	{ MODKEY|ShiftMask,		XK_0,		tag,		NULL },
+</a><a href="#h0-0-134" id="h0-0-134" class="d">-	{ MODKEY|ShiftMask,		XK_1,		tag,		tags[0] },
+</a><a href="#h0-0-135" id="h0-0-135" class="d">-	{ MODKEY|ShiftMask,		XK_2,		tag,		tags[1] },
+</a><a href="#h0-0-136" id="h0-0-136" class="d">-	{ MODKEY|ShiftMask,		XK_3,		tag,		tags[2] },
+</a><a href="#h0-0-137" id="h0-0-137" class="d">-	{ MODKEY|ShiftMask,		XK_4,		tag,		tags[3] },
+</a><a href="#h0-0-138" id="h0-0-138" class="d">-	{ MODKEY|ShiftMask,		XK_5,		tag,		tags[4] },
+</a><a href="#h0-0-139" id="h0-0-139" class="d">-	{ MODKEY|ShiftMask,		XK_6,		tag,		tags[5] },
+</a><a href="#h0-0-140" id="h0-0-140" class="d">-	{ MODKEY|ShiftMask,		XK_7,		tag,		tags[6] },
+</a><a href="#h0-0-141" id="h0-0-141" class="d">-	{ MODKEY|ShiftMask,		XK_8,		tag,		tags[7] },
+</a><a href="#h0-0-142" id="h0-0-142" class="d">-	{ MODKEY|ShiftMask,		XK_9,		tag,		tags[8] },
+</a><a href="#h0-0-143" id="h0-0-143" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_1,		toggletag,	tags[0] },
+</a><a href="#h0-0-144" id="h0-0-144" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_2,		toggletag,	tags[1] },
+</a><a href="#h0-0-145" id="h0-0-145" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_3,		toggletag,	tags[2] },
+</a><a href="#h0-0-146" id="h0-0-146" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_4,		toggletag,	tags[3] },
+</a><a href="#h0-0-147" id="h0-0-147" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_5,		toggletag,	tags[4] },
+</a><a href="#h0-0-148" id="h0-0-148" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_6,		toggletag,	tags[5] },
+</a><a href="#h0-0-149" id="h0-0-149" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_7,		toggletag,	tags[6] },
+</a><a href="#h0-0-150" id="h0-0-150" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_8,		toggletag,	tags[7] },
+</a><a href="#h0-0-151" id="h0-0-151" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_9,		toggletag,	tags[8] },
+</a><a href="#h0-0-152" id="h0-0-152" class="d">-	{ MODKEY|ShiftMask,		XK_q,		quit,		NULL },
+</a><a href="#h0-0-153" id="h0-0-153" class="d">-};
+</a><b>diff --git a/<a id="h1" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -9,6 +9,7 @@
+</a> #define SELBORDERCOLOR		&quot;#0066ff&quot;
+ #define SELBGCOLOR		&quot;#0066ff&quot;
+ #define SELFGCOLOR		&quot;#ffffff&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+#define GEOMETRY		&quot;0 0 W B 0 B W H-B 0 B W*0.55 H-B W*0.45 B H-B 0 B W H-B&quot;
+</a> 
+ /* tagging */
+ const char tags[][MAXTAGLEN] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot; };
+<a href="#h1-1" id="h1-1" class="h">@@ -21,9 +22,6 @@ Rule rules[] = {
+</a> 	{ NULL,		NULL,		&quot;Acroread&quot;,	NULL,		True },
+ };
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-/* geometry function */
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-void (*setgeoms)(void) = setdefgeoms;
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-
+</a> /* layout(s) */
+ #define RESIZEHINTS		True	/* False - respect size hints in tiled resizals */
+ #define SNAP			32	/* snap pixel */
+<a href="#h1-2" id="h1-2" class="h">@@ -40,6 +38,8 @@ Layout layouts[] = {
+</a> #define MODKEY			Mod1Mask
+ Key keys[] = {
+ 	/* modifier			key		function	argument */
+<a href="#h1-2-3" id="h1-2-3" class="i">+	{ MODKEY,			XK_a,		setgeom,	&quot;0 0 W B 0 B W H-B 0 B 1280 800-B 1280 0 W-1280 H 0 B 1280 800-B&quot; },
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	{ MODKEY,			XK_d,		setgeom,	GEOMETRY },
+</a> 	{ MODKEY,			XK_p,		spawn,
+ 		&quot;exec dmenu_run -fn &#39;&quot;FONT&quot;&#39; -nb &#39;&quot;NORMBGCOLOR&quot;&#39; -nf &#39;&quot;NORMFGCOLOR&quot;&#39; -sb &#39;&quot;SELBGCOLOR&quot;&#39; -sf &#39;&quot;SELFGCOLOR&quot;&#39;&quot; },
+ 	{ MODKEY|ShiftMask,		XK_Return,	spawn, &quot;exec uxterm&quot; },
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -136,6 +136,7 @@ void focusnext(const char *arg);
+</a> void focusprev(const char *arg);
+ Client *getclient(Window w);
+ unsigned long getcolor(const char *colstr);
+<a href="#h2-0-3" id="h2-0-3" class="i">+double getdouble(const char *s);
+</a> long getstate(Window w);
+ Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+ void grabbuttons(Client *c, Bool focused);
+<a href="#h2-1" id="h2-1" class="h">@@ -163,7 +164,7 @@ void restack(void);
+</a> void run(void);
+ void scan(void);
+ void setclientstate(Client *c, long state);
+<a href="#h2-1-3" id="h2-1-3" class="d">-void setdefgeoms(void);
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+void setgeom(const char *arg);
+</a> void setlayout(const char *arg);
+ void setup(void);
+ void spawn(const char *arg);
+<a href="#h2-2" id="h2-2" class="h">@@ -410,7 +411,7 @@ configurenotify(XEvent *e) {
+</a> 	XConfigureEvent *ev = &amp;e-&gt;xconfigure;
+ 
+ 	if(ev-&gt;window == root &amp;&amp; (ev-&gt;width != sw || ev-&gt;height != sh)) {
+<a href="#h2-2-3" id="h2-2-3" class="d">-		setgeoms();
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+		setgeom(NULL);
+</a> 		updatebarpos();
+ 		arrange();
+ 	}
+<a href="#h2-3" id="h2-3" class="h">@@ -1390,44 +1391,95 @@ setclientstate(Client *c, long state) {
+</a> 			PropModeReplace, (unsigned char *)data, 2);
+ }
+ 
+<a href="#h2-3-3" id="h2-3-3" class="d">-void
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-setdefgeoms(void) {
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-
+</a><a href="#h2-3-6" id="h2-3-6" class="d">-	/* screen dimensions */
+</a><a href="#h2-3-7" id="h2-3-7" class="d">-	sx = 0;
+</a><a href="#h2-3-8" id="h2-3-8" class="d">-	sy = 0;
+</a><a href="#h2-3-9" id="h2-3-9" class="d">-	sw = DisplayWidth(dpy, screen);
+</a><a href="#h2-3-10" id="h2-3-10" class="d">-	sh = DisplayHeight(dpy, screen);
+</a><a href="#h2-3-11" id="h2-3-11" class="d">-
+</a><a href="#h2-3-12" id="h2-3-12" class="d">-	/* bar position */
+</a><a href="#h2-3-13" id="h2-3-13" class="d">-	bx = sx;
+</a><a href="#h2-3-14" id="h2-3-14" class="d">-	by = sy;
+</a><a href="#h2-3-15" id="h2-3-15" class="d">-	bw = sw;
+</a><a href="#h2-3-16" id="h2-3-16" class="d">-	bh = dc.font.height + 2;
+</a><a href="#h2-3-17" id="h2-3-17" class="d">-
+</a><a href="#h2-3-18" id="h2-3-18" class="d">-	/* window area */
+</a><a href="#h2-3-19" id="h2-3-19" class="d">-	wx = sx;
+</a><a href="#h2-3-20" id="h2-3-20" class="d">-	wy = sy + bh;
+</a><a href="#h2-3-21" id="h2-3-21" class="d">-	ww = sw;
+</a><a href="#h2-3-22" id="h2-3-22" class="d">-	wh = sh - bh;
+</a><a href="#h2-3-23" id="h2-3-23" class="i">+/**
+</a><a href="#h2-3-24" id="h2-3-24" class="i">+ * Idea:
+</a><a href="#h2-3-25" id="h2-3-25" class="i">+ *
+</a><a href="#h2-3-26" id="h2-3-26" class="i">+ * having a geom syntax as follows, which is interpreted as integer.
+</a><a href="#h2-3-27" id="h2-3-27" class="i">+ *
+</a><a href="#h2-3-28" id="h2-3-28" class="i">+ * [-,+][&lt;0..n&gt;|&lt;W,H,B&gt;]
+</a><a href="#h2-3-29" id="h2-3-29" class="i">+ *
+</a><a href="#h2-3-30" id="h2-3-30" class="i">+ *
+</a><a href="#h2-3-31" id="h2-3-31" class="i">+ * B = bar height, W = DisplayWidth(), H = DisplayHeight()
+</a><a href="#h2-3-32" id="h2-3-32" class="i">+ *
+</a><a href="#h2-3-33" id="h2-3-33" class="i">+ * -/+/* /: is relative to current
+</a><a href="#h2-3-34" id="h2-3-34" class="i">+ *
+</a><a href="#h2-3-35" id="h2-3-35" class="i">+ * Then we would come down with &lt;bx&gt;,&lt;by&gt;,&lt;bw&gt;,&lt;bh&gt;,...
+</a><a href="#h2-3-36" id="h2-3-36" class="i">+ *
+</a><a href="#h2-3-37" id="h2-3-37" class="i">+ * &quot;0 0 W B 0 0 W W N E B,W,B,
+</a><a href="#h2-3-38" id="h2-3-38" class="i">+ *
+</a><a href="#h2-3-39" id="h2-3-39" class="i">+ *
+</a><a href="#h2-3-40" id="h2-3-40" class="i">+ */
+</a> 
+<a href="#h2-3-42" id="h2-3-42" class="d">-	/* master area */
+</a><a href="#h2-3-43" id="h2-3-43" class="d">-	mx = wx;
+</a><a href="#h2-3-44" id="h2-3-44" class="d">-	my = wy;
+</a><a href="#h2-3-45" id="h2-3-45" class="d">-	mw = ((float)sw) * 0.55;
+</a><a href="#h2-3-46" id="h2-3-46" class="d">-	mh = wh;
+</a><a href="#h2-3-47" id="h2-3-47" class="i">+double
+</a><a href="#h2-3-48" id="h2-3-48" class="i">+getdouble(const char *s) {
+</a><a href="#h2-3-49" id="h2-3-49" class="i">+	char *endp;
+</a><a href="#h2-3-50" id="h2-3-50" class="i">+	double result = 0;
+</a><a href="#h2-3-51" id="h2-3-51" class="i">+
+</a><a href="#h2-3-52" id="h2-3-52" class="i">+	fprintf(stderr, &quot;getdouble &#39;%s&#39;\n&quot;, s);
+</a><a href="#h2-3-53" id="h2-3-53" class="i">+	switch(*s) {
+</a><a href="#h2-3-54" id="h2-3-54" class="i">+	default: 
+</a><a href="#h2-3-55" id="h2-3-55" class="i">+		result = strtod(s, &amp;endp);
+</a><a href="#h2-3-56" id="h2-3-56" class="i">+		if(s == endp || *endp != 0)
+</a><a href="#h2-3-57" id="h2-3-57" class="i">+			result = strtol(s, &amp;endp, 0);
+</a><a href="#h2-3-58" id="h2-3-58" class="i">+		break;
+</a><a href="#h2-3-59" id="h2-3-59" class="i">+	case &#39;B&#39;: result = dc.font.height + 2; break;
+</a><a href="#h2-3-60" id="h2-3-60" class="i">+	case &#39;W&#39;: result = sw; break;
+</a><a href="#h2-3-61" id="h2-3-61" class="i">+	case &#39;H&#39;: result = sh; break;
+</a><a href="#h2-3-62" id="h2-3-62" class="i">+	}
+</a><a href="#h2-3-63" id="h2-3-63" class="i">+	fprintf(stderr, &quot;getdouble returns &#39;%f&#39;\n&quot;, result);
+</a><a href="#h2-3-64" id="h2-3-64" class="i">+	return result;
+</a><a href="#h2-3-65" id="h2-3-65" class="i">+}
+</a> 
+<a href="#h2-3-67" id="h2-3-67" class="d">-	/* tile area */
+</a><a href="#h2-3-68" id="h2-3-68" class="d">-	tx = mx + mw;
+</a><a href="#h2-3-69" id="h2-3-69" class="d">-	ty = wy;
+</a><a href="#h2-3-70" id="h2-3-70" class="d">-	tw = ww - mw;
+</a><a href="#h2-3-71" id="h2-3-71" class="d">-	th = wh;
+</a><a href="#h2-3-72" id="h2-3-72" class="i">+void
+</a><a href="#h2-3-73" id="h2-3-73" class="i">+setgeom(const char *arg) {
+</a><a href="#h2-3-74" id="h2-3-74" class="i">+	static const char *lastArg = NULL;
+</a><a href="#h2-3-75" id="h2-3-75" class="i">+	char op, *s, *e, *p;
+</a><a href="#h2-3-76" id="h2-3-76" class="i">+	double val;
+</a><a href="#h2-3-77" id="h2-3-77" class="i">+	int i, *map[] = { &amp;bx,  &amp;by,  &amp;bw,  &amp;bh,
+</a><a href="#h2-3-78" id="h2-3-78" class="i">+	                  &amp;wx,  &amp;wy,  &amp;ww,  &amp;wh,
+</a><a href="#h2-3-79" id="h2-3-79" class="i">+	                  &amp;mx,  &amp;my,  &amp;mw,  &amp;mh,
+</a><a href="#h2-3-80" id="h2-3-80" class="i">+	                  &amp;tx,  &amp;ty,  &amp;tw,  &amp;th,
+</a><a href="#h2-3-81" id="h2-3-81" class="i">+	                  &amp;mox, &amp;moy, &amp;mow, &amp;moh };
+</a> 
+<a href="#h2-3-83" id="h2-3-83" class="d">-	/* monocle area */
+</a><a href="#h2-3-84" id="h2-3-84" class="d">-	mox = wx;
+</a><a href="#h2-3-85" id="h2-3-85" class="d">-	moy = wy;
+</a><a href="#h2-3-86" id="h2-3-86" class="d">-	mow = ww;
+</a><a href="#h2-3-87" id="h2-3-87" class="d">-	moh = wh;
+</a><a href="#h2-3-88" id="h2-3-88" class="i">+	if(!arg)
+</a><a href="#h2-3-89" id="h2-3-89" class="i">+		arg = lastArg;
+</a><a href="#h2-3-90" id="h2-3-90" class="i">+	else
+</a><a href="#h2-3-91" id="h2-3-91" class="i">+		lastArg = arg;
+</a><a href="#h2-3-92" id="h2-3-92" class="i">+	if(!lastArg)
+</a><a href="#h2-3-93" id="h2-3-93" class="i">+		return;
+</a><a href="#h2-3-94" id="h2-3-94" class="i">+	strncpy(buf, arg, sizeof buf);
+</a><a href="#h2-3-95" id="h2-3-95" class="i">+	for(i = 0, e = s = buf; e &amp;&amp; *e; e++)
+</a><a href="#h2-3-96" id="h2-3-96" class="i">+		if(*e == &#39; &#39;) {
+</a><a href="#h2-3-97" id="h2-3-97" class="i">+			*e = 0;
+</a><a href="#h2-3-98" id="h2-3-98" class="i">+			fprintf(stderr, &quot;next geom arg=&#39;%s&#39;\n&quot;, s);
+</a><a href="#h2-3-99" id="h2-3-99" class="i">+			op = 0;
+</a><a href="#h2-3-100" id="h2-3-100" class="i">+			/* check if there is an operator */
+</a><a href="#h2-3-101" id="h2-3-101" class="i">+			for(p = s; *p &amp;&amp; *p != &#39;-&#39; &amp;&amp; *p != &#39;+&#39; &amp;&amp; *p != &#39;*&#39; &amp;&amp; *p != &#39;:&#39;; p++);
+</a><a href="#h2-3-102" id="h2-3-102" class="i">+			if(*p) {
+</a><a href="#h2-3-103" id="h2-3-103" class="i">+				op = *p;
+</a><a href="#h2-3-104" id="h2-3-104" class="i">+				*p = 0;
+</a><a href="#h2-3-105" id="h2-3-105" class="i">+			}
+</a><a href="#h2-3-106" id="h2-3-106" class="i">+			val = getdouble(s);
+</a><a href="#h2-3-107" id="h2-3-107" class="i">+			fprintf(stderr, &quot;val1: %d\n&quot;, val);
+</a><a href="#h2-3-108" id="h2-3-108" class="i">+			if(p &gt; s) { /* intermediate operand, e.g. H-B */
+</a><a href="#h2-3-109" id="h2-3-109" class="i">+				*(map[i]) = val;
+</a><a href="#h2-3-110" id="h2-3-110" class="i">+				s = ++p;
+</a><a href="#h2-3-111" id="h2-3-111" class="i">+				val = getdouble(s);
+</a><a href="#h2-3-112" id="h2-3-112" class="i">+				fprintf(stderr, &quot;val2: %d\n&quot;, val);
+</a><a href="#h2-3-113" id="h2-3-113" class="i">+			}
+</a><a href="#h2-3-114" id="h2-3-114" class="i">+			switch(op) {
+</a><a href="#h2-3-115" id="h2-3-115" class="i">+			default: *(map[i])   = val; break;
+</a><a href="#h2-3-116" id="h2-3-116" class="i">+			case &#39;-&#39;: *(map[i]) -= val; break;
+</a><a href="#h2-3-117" id="h2-3-117" class="i">+			case &#39;+&#39;: *(map[i]) += val; break;
+</a><a href="#h2-3-118" id="h2-3-118" class="i">+			case &#39;*&#39;: *(map[i]) *= val; break;
+</a><a href="#h2-3-119" id="h2-3-119" class="i">+			case &#39;:&#39;: if(val != 0) *(map[i]) /= val; break;
+</a><a href="#h2-3-120" id="h2-3-120" class="i">+			}
+</a><a href="#h2-3-121" id="h2-3-121" class="i">+			fprintf(stderr, &quot;map[i]=&#39;%d&#39;\n&quot;, val);
+</a><a href="#h2-3-122" id="h2-3-122" class="i">+			s = ++e;
+</a><a href="#h2-3-123" id="h2-3-123" class="i">+			i++;
+</a><a href="#h2-3-124" id="h2-3-124" class="i">+		}
+</a><a href="#h2-3-125" id="h2-3-125" class="i">+	updatebarpos();
+</a><a href="#h2-3-126" id="h2-3-126" class="i">+	arrange();
+</a> }
+ 
+ void
+<a href="#h2-4" id="h2-4" class="h">@@ -1464,8 +1516,12 @@ setup(void) {
+</a> 	root = RootWindow(dpy, screen);
+ 	initfont(FONT);
+ 
+<a href="#h2-4-3" id="h2-4-3" class="d">-	/* apply default geometries */
+</a><a href="#h2-4-4" id="h2-4-4" class="d">-	setgeoms();
+</a><a href="#h2-4-5" id="h2-4-5" class="i">+	/* apply default dimensions */
+</a><a href="#h2-4-6" id="h2-4-6" class="i">+	sx = 0;
+</a><a href="#h2-4-7" id="h2-4-7" class="i">+	sy = 0;
+</a><a href="#h2-4-8" id="h2-4-8" class="i">+	sw = DisplayWidth(dpy, screen);
+</a><a href="#h2-4-9" id="h2-4-9" class="i">+	sh = DisplayHeight(dpy, screen);
+</a><a href="#h2-4-10" id="h2-4-10" class="i">+	setgeom(GEOMETRY);
+</a> 
+ 	/* init atoms */
+ 	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Drawing a more visible rectangle as cursor on unfocus. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1e7816c2023f48728e15cc4128ad8be163986902.html">1e7816c2023f48728e15cc4128ad8be163986902</a>
+<b>parent</b> <a href="../commit/5dc48af29e9972527767977be3bbc9c072cf1c13.html">5dc48af29e9972527767977be3bbc9c072cf1c13</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sat, 13 Apr 2013 09:44:00 +0200
+
+Drawing a more visible rectangle as cursor on unfocus.
+
+To have a more visible cursor on unfocused windows this patch makes st draw a
+rectangle around the terminal cell.
+
+Thanks Mark Hills &lt;mark@xwax.org&gt; for the suggestion!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">4</td><td><span class="i">+</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">33</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>2 files changed, 27 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -52,18 +52,16 @@ static const char *colorname[] = {
+</a> 
+ 	/* more colors can be added after 255 to use with DefaultXX */
+ 	&quot;#cccccc&quot;,
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;#333333&quot;,
+</a> };
+ 
+ 
+ /*
+  * Default colors (colorname index)
+<a href="#h0-0-9" id="h0-0-9" class="d">- * foreground, background, cursor, unfocused cursor
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+ * foreground, background, cursor
+</a>  */
+ static unsigned int defaultfg = 7;
+ static unsigned int defaultbg = 0;
+ static unsigned int defaultcs = 256;
+<a href="#h0-0-15" id="h0-0-15" class="d">-static unsigned int defaultucs = 257;
+</a> 
+ /*
+  * Colors used, when the specific fg == defaultfg. So in reverse mode this
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2968,14 +2968,33 @@ xdrawcursor(void) {
+</a> 
+ 	/* draw the new one */
+ 	if(!(IS_SET(MODE_HIDE))) {
+<a href="#h1-0-3" id="h1-0-3" class="d">-		if(!(xw.state &amp; WIN_FOCUSED))
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-			g.bg = defaultucs;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-		if(IS_SET(MODE_REVERSE))
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-			g.mode |= ATTR_REVERSE, g.fg = defaultcs, g.bg = defaultfg;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		if(xw.state &amp; WIN_FOCUSED) {
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+			if(IS_SET(MODE_REVERSE)) {
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+				g.mode |= ATTR_REVERSE;
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+				g.fg = defaultcs;
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+				g.bg = defaultfg;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+			}
+</a> 
+<a href="#h1-0-15" id="h1-0-15" class="d">-		sl = utf8size(g.c);
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-		xdraws(g.c, g, term.c.x, term.c.y, 1, sl);
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+			sl = utf8size(g.c);
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+			xdraws(g.c, g, term.c.x, term.c.y, 1, sl);
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+		} else {
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+			XftDrawRect(xw.draw, &amp;dc.col[defaultcs],
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+					borderpx + term.c.x * xw.cw,
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+					borderpx + term.c.y * xw.ch,
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+					xw.cw - 1, 1);
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+			XftDrawRect(xw.draw, &amp;dc.col[defaultcs],
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+					borderpx + term.c.x * xw.cw,
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+					borderpx + term.c.y * xw.ch,
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+					1, xw.ch - 1);
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+			XftDrawRect(xw.draw, &amp;dc.col[defaultcs],
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+					borderpx + (term.c.x + 1) * xw.cw - 1,
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+					borderpx + term.c.y * xw.ch,
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+					1, xw.ch - 1);
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+			XftDrawRect(xw.draw, &amp;dc.col[defaultcs],
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+					borderpx + term.c.x * xw.cw,
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+					borderpx + (term.c.y + 1) * xw.ch - 1,
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+					xw.cw, 1);
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+		}
+</a> 		oldx = term.c.x, oldy = term.c.y;
+ 	}
+ }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>simplified main.c, switching back to single urxvt usage - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4970ef938eca10d9af3ef058d15d2ffeb6dfbe18.html">4970ef938eca10d9af3ef058d15d2ffeb6dfbe18</a>
+<b>parent</b> <a href="../commit/f85b163899a743d29ebdf1d4969e729b3f2cb79c.html">f85b163899a743d29ebdf1d4969e729b3f2cb79c</a>
+<b>Author:</b> arg@10ksloc.org &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Fri, 21 Jul 2006 14:11:38 +0200
+
+simplified main.c, switching back to single urxvt usage
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">event.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">main.c</a></td><td> | </td><td class="num">40</td><td><span class="i">+++++++++++++</span><span class="d">---------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 14 insertions(+), 28 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -23,7 +23,7 @@ typedef struct {
+</a> const char *browse[] = { &quot;firefox&quot;, NULL };
+ const char *gimp[] = { &quot;gimp&quot;, NULL };
+ const char *term[] = { 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;urxvtc&quot;, &quot;-tr&quot;, &quot;+sb&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-cr&quot;, &quot;white&quot;,
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;urxvt&quot;, &quot;-tr&quot;, &quot;+sb&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-cr&quot;, &quot;white&quot;,
+</a> 	&quot;-fn&quot;, &quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;, NULL
+ };
+ const char *xlock[] = { &quot;xlock&quot;, NULL };
+<b>diff --git a/<a id="h1" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -166,22 +166,17 @@ main(int argc, char *argv[])
+</a> 	int i, n;
+ 	unsigned int mask;
+ 	fd_set rd;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	Bool readstdin = True;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	Bool readin = True;
+</a> 	Window w;
+ 	XEvent ev;
+ 	XSetWindowAttributes wa;
+ 
+<a href="#h1-0-9" id="h1-0-9" class="d">-	for(i = 1; (i &lt; argc) &amp;&amp; (argv[i][0] == &#39;-&#39;); i++) {
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-		switch (argv[i][1]) {
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-		default:
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-			eprint(&quot;usage: dwm [-v]\n&quot;);
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-			break;
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-		case &#39;v&#39;:
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-			fputs(&quot;dwm-&quot;VERSION&quot;, (C)opyright MMVI Anselm R. Garbe\n&quot;, stdout);
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-			exit(EXIT_SUCCESS);
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-			break;
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-		}
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	if(argc == 2 &amp;&amp; !strncmp(&quot;-v&quot;, argv[1], 3)) {
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+		fputs(&quot;dwm-&quot;VERSION&quot;, (C)opyright MMVI Anselm R. Garbe\n&quot;, stdout);
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+		exit(EXIT_SUCCESS);
+</a> 	}
+<a href="#h1-0-23" id="h1-0-23" class="i">+	else if(argc != 1)
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+		eprint(&quot;usage: dwm [-v]\n&quot;);
+</a> 
+ 	dpy = XOpenDisplay(0);
+ 	if(!dpy)
+<a href="#h1-1" id="h1-1" class="h">@@ -256,10 +251,9 @@ main(int argc, char *argv[])
+</a> 	scan();
+ 
+ 	/* main event loop, reads status text from stdin as well */
+<a href="#h1-1-3" id="h1-1-3" class="d">-Mainloop:
+</a> 	while(running) {
+ 		FD_ZERO(&amp;rd);
+<a href="#h1-1-6" id="h1-1-6" class="d">-		if(readstdin)
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+		if(readin)
+</a> 			FD_SET(STDIN_FILENO, &amp;rd);
+ 		FD_SET(ConnectionNumber(dpy), &amp;rd);
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -276,20 +270,12 @@ Mainloop:
+</a> 						(handler[ev.type])(&amp;ev); /* call handler */
+ 				}
+ 			}
+<a href="#h1-2-3" id="h1-2-3" class="d">-			if(readstdin &amp;&amp; FD_ISSET(STDIN_FILENO, &amp;rd)) {
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-				i = n = 0;
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-				for(;;) {
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-					if((i = getchar()) == EOF) {
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-						/* broken pipe/end of producer */
+</a><a href="#h1-2-8" id="h1-2-8" class="d">-						readstdin = False;
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-						strcpy(stext, &quot;broken pipe&quot;);
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-						goto Mainloop;
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-					}
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-					if(i == &#39;\n&#39; || n &gt;= sizeof(stext) - 1)
+</a><a href="#h1-2-13" id="h1-2-13" class="d">-						break;
+</a><a href="#h1-2-14" id="h1-2-14" class="d">-					stext[n++] = i;
+</a><a href="#h1-2-15" id="h1-2-15" class="d">-				}
+</a><a href="#h1-2-16" id="h1-2-16" class="d">-				stext[n] = 0;
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+			if(readin &amp;&amp; FD_ISSET(STDIN_FILENO, &amp;rd)) {
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+				readin = NULL != fgets(stext, sizeof(stext), stdin);
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+				if(readin)
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+					stext[strlen(stext) - 1] = 0;
+</a><a href="#h1-2-21" id="h1-2-21" class="i">+				else 
+</a><a href="#h1-2-22" id="h1-2-22" class="i">+					strcpy(stext, &quot;broken pipe&quot;);
+</a> 				drawstatus();
+ 			}
+ 		}
+</pre>
+</div>
+</body>
+</html>

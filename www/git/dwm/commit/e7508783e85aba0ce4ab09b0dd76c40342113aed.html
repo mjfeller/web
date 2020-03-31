@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added draw.c again (except getcolor and setfont which are helpers in main.c) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e7508783e85aba0ce4ab09b0dd76c40342113aed.html">e7508783e85aba0ce4ab09b0dd76c40342113aed</a>
+<b>parent</b> <a href="../commit/f4d15b1fec52bdd6d512577fd96490efaddb55eb.html">f4d15b1fec52bdd6d512577fd96490efaddb55eb</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Tue, 20 Feb 2007 13:46:21 +0100
+
+added draw.c again (except getcolor and setfont which are helpers in main.c)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">draw.c</a></td><td> | </td><td class="num">137</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">main.c</a></td><td> | </td><td class="num">128</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+</table></pre><pre>4 files changed, 144 insertions(+), 133 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = client.c event.c layout.c main.c tag.c util.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+SRC = client.c draw.c event.c layout.c main.c tag.c util.c
+</a> OBJ = ${SRC:.c=.o}
+ 
+ all: options dwm
+<b>diff --git a/<a id="h1" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,137 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+/* (C)opyright MMVI-MMVII Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+ * See LICENSE file for license details.
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+ */
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+#include &quot;dwm.h&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#include &lt;string.h&gt;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+/* static */
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+static unsigned int
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+textnw(const char *text, unsigned int len) {
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	XRectangle r;
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	if(dc.font.set) {
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+		XmbTextExtents(dc.font.set, text, len, NULL, &amp;r);
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		return r.width;
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	}
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	return XTextWidth(dc.font.xfont, text, len);
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+}
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+static void
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+drawsquare(Bool filled, Bool empty, unsigned long col[ColLast]) {
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	int x;
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+	XGCValues gcv;
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+	gcv.foreground = col[ColFG];
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+	XChangeGC(dpy, dc.gc, GCForeground, &amp;gcv);
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+	x = (dc.font.ascent + dc.font.descent + 2) / 4;
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+	r.x = dc.x + 1;
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+	r.y = dc.y + 1;
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+	if(filled) {
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+		r.width = r.height = x + 1;
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+		XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	}
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+	else if(empty) {
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+		r.width = r.height = x;
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+		XDrawRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	}
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+}
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+static Bool
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+isoccupied(unsigned int t) {
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+	Client *c;
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+		if(c-&gt;tags[t])
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+			return True;
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+	return False;
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+}
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+/* extern */
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+void
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+drawstatus(void) {
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+	int i, x;
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+	dc.x = dc.y = 0;
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+	for(i = 0; i &lt; ntags; i++) {
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+		dc.w = textw(tags[i]);
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+		if(seltag[i]) {
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+			drawtext(tags[i], dc.sel);
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+			drawsquare(sel &amp;&amp; sel-&gt;tags[i], isoccupied(i), dc.sel);
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+		}
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+		else {
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+			drawtext(tags[i], dc.norm);
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+			drawsquare(sel &amp;&amp; sel-&gt;tags[i], isoccupied(i), dc.norm);
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+		}
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+		dc.x += dc.w;
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+	}
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+	dc.w = blw;
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+	drawtext(lt-&gt;symbol, dc.norm);
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+	x = dc.x + dc.w;
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+	dc.w = textw(stext);
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+	dc.x = sw - dc.w;
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+	if(dc.x &lt; x) {
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+		dc.x = x;
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+		dc.w = sw - x;
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+	}
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+	drawtext(stext, dc.norm);
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+	if((dc.w = dc.x - x) &gt; bh) {
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+		dc.x = x;
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+		drawtext(sel ? sel-&gt;name : NULL, sel ? dc.sel : dc.norm);
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+	}
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, sw, bh, 0, 0);
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+	XSync(dpy, False);
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+}
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+void
+</a><a href="#h1-0-88" id="h1-0-88" class="i">+drawtext(const char *text, unsigned long col[ColLast]) {
+</a><a href="#h1-0-89" id="h1-0-89" class="i">+	int x, y, w, h;
+</a><a href="#h1-0-90" id="h1-0-90" class="i">+	static char buf[256];
+</a><a href="#h1-0-91" id="h1-0-91" class="i">+	unsigned int len, olen;
+</a><a href="#h1-0-92" id="h1-0-92" class="i">+	XGCValues gcv;
+</a><a href="#h1-0-93" id="h1-0-93" class="i">+	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+</a><a href="#h1-0-94" id="h1-0-94" class="i">+
+</a><a href="#h1-0-95" id="h1-0-95" class="i">+	XSetForeground(dpy, dc.gc, col[ColBG]);
+</a><a href="#h1-0-96" id="h1-0-96" class="i">+	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h1-0-97" id="h1-0-97" class="i">+	if(!text)
+</a><a href="#h1-0-98" id="h1-0-98" class="i">+		return;
+</a><a href="#h1-0-99" id="h1-0-99" class="i">+	w = 0;
+</a><a href="#h1-0-100" id="h1-0-100" class="i">+	olen = len = strlen(text);
+</a><a href="#h1-0-101" id="h1-0-101" class="i">+	if(len &gt;= sizeof buf)
+</a><a href="#h1-0-102" id="h1-0-102" class="i">+		len = sizeof buf - 1;
+</a><a href="#h1-0-103" id="h1-0-103" class="i">+	memcpy(buf, text, len);
+</a><a href="#h1-0-104" id="h1-0-104" class="i">+	buf[len] = 0;
+</a><a href="#h1-0-105" id="h1-0-105" class="i">+	h = dc.font.ascent + dc.font.descent;
+</a><a href="#h1-0-106" id="h1-0-106" class="i">+	y = dc.y + (dc.h / 2) - (h / 2) + dc.font.ascent;
+</a><a href="#h1-0-107" id="h1-0-107" class="i">+	x = dc.x + (h / 2);
+</a><a href="#h1-0-108" id="h1-0-108" class="i">+	/* shorten text if necessary */
+</a><a href="#h1-0-109" id="h1-0-109" class="i">+	while(len &amp;&amp; (w = textnw(buf, len)) &gt; dc.w - h)
+</a><a href="#h1-0-110" id="h1-0-110" class="i">+		buf[--len] = 0;
+</a><a href="#h1-0-111" id="h1-0-111" class="i">+	if(len &lt; olen) {
+</a><a href="#h1-0-112" id="h1-0-112" class="i">+		if(len &gt; 1)
+</a><a href="#h1-0-113" id="h1-0-113" class="i">+			buf[len - 1] = &#39;.&#39;;
+</a><a href="#h1-0-114" id="h1-0-114" class="i">+		if(len &gt; 2)
+</a><a href="#h1-0-115" id="h1-0-115" class="i">+			buf[len - 2] = &#39;.&#39;;
+</a><a href="#h1-0-116" id="h1-0-116" class="i">+		if(len &gt; 3)
+</a><a href="#h1-0-117" id="h1-0-117" class="i">+			buf[len - 3] = &#39;.&#39;;
+</a><a href="#h1-0-118" id="h1-0-118" class="i">+	}
+</a><a href="#h1-0-119" id="h1-0-119" class="i">+	if(w &gt; dc.w)
+</a><a href="#h1-0-120" id="h1-0-120" class="i">+		return; /* too long */
+</a><a href="#h1-0-121" id="h1-0-121" class="i">+	gcv.foreground = col[ColFG];
+</a><a href="#h1-0-122" id="h1-0-122" class="i">+	if(dc.font.set) {
+</a><a href="#h1-0-123" id="h1-0-123" class="i">+		XChangeGC(dpy, dc.gc, GCForeground, &amp;gcv);
+</a><a href="#h1-0-124" id="h1-0-124" class="i">+		XmbDrawString(dpy, dc.drawable, dc.font.set, dc.gc, x, y, buf, len);
+</a><a href="#h1-0-125" id="h1-0-125" class="i">+	}
+</a><a href="#h1-0-126" id="h1-0-126" class="i">+	else {
+</a><a href="#h1-0-127" id="h1-0-127" class="i">+		gcv.font = dc.font.xfont-&gt;fid;
+</a><a href="#h1-0-128" id="h1-0-128" class="i">+		XChangeGC(dpy, dc.gc, GCForeground | GCFont, &amp;gcv);
+</a><a href="#h1-0-129" id="h1-0-129" class="i">+		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+</a><a href="#h1-0-130" id="h1-0-130" class="i">+	}
+</a><a href="#h1-0-131" id="h1-0-131" class="i">+}
+</a><a href="#h1-0-132" id="h1-0-132" class="i">+
+</a><a href="#h1-0-133" id="h1-0-133" class="i">+unsigned int
+</a><a href="#h1-0-134" id="h1-0-134" class="i">+textw(const char *text) {
+</a><a href="#h1-0-135" id="h1-0-135" class="i">+	return textnw(text, strlen(text)) + dc.font.height;
+</a><a href="#h1-0-136" id="h1-0-136" class="i">+}
+</a><b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -117,6 +117,12 @@ extern void updatetitle(Client *c);		/* update the name of c */
+</a> extern void unmanage(Client *c);		/* destroy c */
+ extern void zoom(Arg *arg);			/* zooms the focused client to master area, arg is ignored */
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+/* draw.c */
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+extern void drawstatus(void);			/* draw the bar */
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+extern void drawtext(const char *text,
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		unsigned long col[ColLast]);	/* draw text */
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+extern unsigned int textw(const char *text);	/* return the width of text in px*/
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+
+</a> /* event.c */
+ extern void grabkeys(void);			/* grab all keys defined in config.h */
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -130,10 +136,6 @@ extern void toggleversatile(Arg *arg);		/* toggles focusesd client between versa
+</a> extern void versatile(void);			/* arranges all windows versatile */
+ 
+ /* main.c */
+<a href="#h2-1-3" id="h2-1-3" class="d">-extern void drawstatus(void);			/* draw the bar */
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-extern void drawtext(const char *text,
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-		unsigned long col[ColLast]);	/* draw text */
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-extern unsigned int textw(const char *text);	/* return the width of text in px*/
+</a> extern void quit(Arg *arg);			/* quit dwm nicely */
+ extern void sendevent(Window w, Atom a, long value);	/* send synthetic event to w */
+ extern int xerror(Display *dsply, XErrorEvent *ee);	/* dwm&#39;s X error handler */
+<b>diff --git a/<a id="h3" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -61,38 +61,6 @@ cleanup(void) {
+</a> 	free(seltag);
+ }
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-static unsigned int
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-textnw(const char *text, unsigned int len) {
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-	XRectangle r;
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-
+</a><a href="#h3-0-7" id="h3-0-7" class="d">-	if(dc.font.set) {
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-		XmbTextExtents(dc.font.set, text, len, NULL, &amp;r);
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-		return r.width;
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-	}
+</a><a href="#h3-0-11" id="h3-0-11" class="d">-	return XTextWidth(dc.font.xfont, text, len);
+</a><a href="#h3-0-12" id="h3-0-12" class="d">-}
+</a><a href="#h3-0-13" id="h3-0-13" class="d">-
+</a><a href="#h3-0-14" id="h3-0-14" class="d">-static void
+</a><a href="#h3-0-15" id="h3-0-15" class="d">-drawsquare(Bool filled, Bool empty, unsigned long col[ColLast]) {
+</a><a href="#h3-0-16" id="h3-0-16" class="d">-	int x;
+</a><a href="#h3-0-17" id="h3-0-17" class="d">-	XGCValues gcv;
+</a><a href="#h3-0-18" id="h3-0-18" class="d">-	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+</a><a href="#h3-0-19" id="h3-0-19" class="d">-
+</a><a href="#h3-0-20" id="h3-0-20" class="d">-	gcv.foreground = col[ColFG];
+</a><a href="#h3-0-21" id="h3-0-21" class="d">-	XChangeGC(dpy, dc.gc, GCForeground, &amp;gcv);
+</a><a href="#h3-0-22" id="h3-0-22" class="d">-	x = (dc.font.ascent + dc.font.descent + 2) / 4;
+</a><a href="#h3-0-23" id="h3-0-23" class="d">-	r.x = dc.x + 1;
+</a><a href="#h3-0-24" id="h3-0-24" class="d">-	r.y = dc.y + 1;
+</a><a href="#h3-0-25" id="h3-0-25" class="d">-	if(filled) {
+</a><a href="#h3-0-26" id="h3-0-26" class="d">-		r.width = r.height = x + 1;
+</a><a href="#h3-0-27" id="h3-0-27" class="d">-		XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h3-0-28" id="h3-0-28" class="d">-	}
+</a><a href="#h3-0-29" id="h3-0-29" class="d">-	else if(empty) {
+</a><a href="#h3-0-30" id="h3-0-30" class="d">-		r.width = r.height = x;
+</a><a href="#h3-0-31" id="h3-0-31" class="d">-		XDrawRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h3-0-32" id="h3-0-32" class="d">-	}
+</a><a href="#h3-0-33" id="h3-0-33" class="d">-}
+</a><a href="#h3-0-34" id="h3-0-34" class="d">-
+</a> static unsigned long
+ getcolor(const char *colstr) {
+ 	Colormap cmap = DefaultColormap(dpy, screen);
+<a href="#h3-1" id="h3-1" class="h">@@ -103,16 +71,6 @@ getcolor(const char *colstr) {
+</a> 	return color.pixel;
+ }
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-static Bool
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-isoccupied(unsigned int t) {
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-	Client *c;
+</a><a href="#h3-1-6" id="h3-1-6" class="d">-
+</a><a href="#h3-1-7" id="h3-1-7" class="d">-	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h3-1-8" id="h3-1-8" class="d">-		if(c-&gt;tags[t])
+</a><a href="#h3-1-9" id="h3-1-9" class="d">-			return True;
+</a><a href="#h3-1-10" id="h3-1-10" class="d">-	return False;
+</a><a href="#h3-1-11" id="h3-1-11" class="d">-}
+</a><a href="#h3-1-12" id="h3-1-12" class="d">-
+</a> static void
+ scan(void) {
+ 	unsigned int i, num;
+<a href="#h3-2" id="h3-2" class="h">@@ -264,87 +222,6 @@ xerrorstart(Display *dsply, XErrorEvent *ee) {
+</a> /* extern */
+ 
+ void
+<a href="#h3-2-3" id="h3-2-3" class="d">-drawstatus(void) {
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-	int i, x;
+</a><a href="#h3-2-5" id="h3-2-5" class="d">-
+</a><a href="#h3-2-6" id="h3-2-6" class="d">-	dc.x = dc.y = 0;
+</a><a href="#h3-2-7" id="h3-2-7" class="d">-	for(i = 0; i &lt; ntags; i++) {
+</a><a href="#h3-2-8" id="h3-2-8" class="d">-		dc.w = textw(tags[i]);
+</a><a href="#h3-2-9" id="h3-2-9" class="d">-		if(seltag[i]) {
+</a><a href="#h3-2-10" id="h3-2-10" class="d">-			drawtext(tags[i], dc.sel);
+</a><a href="#h3-2-11" id="h3-2-11" class="d">-			drawsquare(sel &amp;&amp; sel-&gt;tags[i], isoccupied(i), dc.sel);
+</a><a href="#h3-2-12" id="h3-2-12" class="d">-		}
+</a><a href="#h3-2-13" id="h3-2-13" class="d">-		else {
+</a><a href="#h3-2-14" id="h3-2-14" class="d">-			drawtext(tags[i], dc.norm);
+</a><a href="#h3-2-15" id="h3-2-15" class="d">-			drawsquare(sel &amp;&amp; sel-&gt;tags[i], isoccupied(i), dc.norm);
+</a><a href="#h3-2-16" id="h3-2-16" class="d">-		}
+</a><a href="#h3-2-17" id="h3-2-17" class="d">-		dc.x += dc.w;
+</a><a href="#h3-2-18" id="h3-2-18" class="d">-	}
+</a><a href="#h3-2-19" id="h3-2-19" class="d">-	dc.w = blw;
+</a><a href="#h3-2-20" id="h3-2-20" class="d">-	drawtext(lt-&gt;symbol, dc.norm);
+</a><a href="#h3-2-21" id="h3-2-21" class="d">-	x = dc.x + dc.w;
+</a><a href="#h3-2-22" id="h3-2-22" class="d">-	dc.w = textw(stext);
+</a><a href="#h3-2-23" id="h3-2-23" class="d">-	dc.x = sw - dc.w;
+</a><a href="#h3-2-24" id="h3-2-24" class="d">-	if(dc.x &lt; x) {
+</a><a href="#h3-2-25" id="h3-2-25" class="d">-		dc.x = x;
+</a><a href="#h3-2-26" id="h3-2-26" class="d">-		dc.w = sw - x;
+</a><a href="#h3-2-27" id="h3-2-27" class="d">-	}
+</a><a href="#h3-2-28" id="h3-2-28" class="d">-	drawtext(stext, dc.norm);
+</a><a href="#h3-2-29" id="h3-2-29" class="d">-	if((dc.w = dc.x - x) &gt; bh) {
+</a><a href="#h3-2-30" id="h3-2-30" class="d">-		dc.x = x;
+</a><a href="#h3-2-31" id="h3-2-31" class="d">-		drawtext(sel ? sel-&gt;name : NULL, sel ? dc.sel : dc.norm);
+</a><a href="#h3-2-32" id="h3-2-32" class="d">-	}
+</a><a href="#h3-2-33" id="h3-2-33" class="d">-	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, sw, bh, 0, 0);
+</a><a href="#h3-2-34" id="h3-2-34" class="d">-	XSync(dpy, False);
+</a><a href="#h3-2-35" id="h3-2-35" class="d">-}
+</a><a href="#h3-2-36" id="h3-2-36" class="d">-
+</a><a href="#h3-2-37" id="h3-2-37" class="d">-void
+</a><a href="#h3-2-38" id="h3-2-38" class="d">-drawtext(const char *text, unsigned long col[ColLast]) {
+</a><a href="#h3-2-39" id="h3-2-39" class="d">-	int x, y, w, h;
+</a><a href="#h3-2-40" id="h3-2-40" class="d">-	static char buf[256];
+</a><a href="#h3-2-41" id="h3-2-41" class="d">-	unsigned int len, olen;
+</a><a href="#h3-2-42" id="h3-2-42" class="d">-	XGCValues gcv;
+</a><a href="#h3-2-43" id="h3-2-43" class="d">-	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+</a><a href="#h3-2-44" id="h3-2-44" class="d">-
+</a><a href="#h3-2-45" id="h3-2-45" class="d">-	XSetForeground(dpy, dc.gc, col[ColBG]);
+</a><a href="#h3-2-46" id="h3-2-46" class="d">-	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h3-2-47" id="h3-2-47" class="d">-	if(!text)
+</a><a href="#h3-2-48" id="h3-2-48" class="d">-		return;
+</a><a href="#h3-2-49" id="h3-2-49" class="d">-	w = 0;
+</a><a href="#h3-2-50" id="h3-2-50" class="d">-	olen = len = strlen(text);
+</a><a href="#h3-2-51" id="h3-2-51" class="d">-	if(len &gt;= sizeof buf)
+</a><a href="#h3-2-52" id="h3-2-52" class="d">-		len = sizeof buf - 1;
+</a><a href="#h3-2-53" id="h3-2-53" class="d">-	memcpy(buf, text, len);
+</a><a href="#h3-2-54" id="h3-2-54" class="d">-	buf[len] = 0;
+</a><a href="#h3-2-55" id="h3-2-55" class="d">-	h = dc.font.ascent + dc.font.descent;
+</a><a href="#h3-2-56" id="h3-2-56" class="d">-	y = dc.y + (dc.h / 2) - (h / 2) + dc.font.ascent;
+</a><a href="#h3-2-57" id="h3-2-57" class="d">-	x = dc.x + (h / 2);
+</a><a href="#h3-2-58" id="h3-2-58" class="d">-	/* shorten text if necessary */
+</a><a href="#h3-2-59" id="h3-2-59" class="d">-	while(len &amp;&amp; (w = textnw(buf, len)) &gt; dc.w - h)
+</a><a href="#h3-2-60" id="h3-2-60" class="d">-		buf[--len] = 0;
+</a><a href="#h3-2-61" id="h3-2-61" class="d">-	if(len &lt; olen) {
+</a><a href="#h3-2-62" id="h3-2-62" class="d">-		if(len &gt; 1)
+</a><a href="#h3-2-63" id="h3-2-63" class="d">-			buf[len - 1] = &#39;.&#39;;
+</a><a href="#h3-2-64" id="h3-2-64" class="d">-		if(len &gt; 2)
+</a><a href="#h3-2-65" id="h3-2-65" class="d">-			buf[len - 2] = &#39;.&#39;;
+</a><a href="#h3-2-66" id="h3-2-66" class="d">-		if(len &gt; 3)
+</a><a href="#h3-2-67" id="h3-2-67" class="d">-			buf[len - 3] = &#39;.&#39;;
+</a><a href="#h3-2-68" id="h3-2-68" class="d">-	}
+</a><a href="#h3-2-69" id="h3-2-69" class="d">-	if(w &gt; dc.w)
+</a><a href="#h3-2-70" id="h3-2-70" class="d">-		return; /* too long */
+</a><a href="#h3-2-71" id="h3-2-71" class="d">-	gcv.foreground = col[ColFG];
+</a><a href="#h3-2-72" id="h3-2-72" class="d">-	if(dc.font.set) {
+</a><a href="#h3-2-73" id="h3-2-73" class="d">-		XChangeGC(dpy, dc.gc, GCForeground, &amp;gcv);
+</a><a href="#h3-2-74" id="h3-2-74" class="d">-		XmbDrawString(dpy, dc.drawable, dc.font.set, dc.gc, x, y, buf, len);
+</a><a href="#h3-2-75" id="h3-2-75" class="d">-	}
+</a><a href="#h3-2-76" id="h3-2-76" class="d">-	else {
+</a><a href="#h3-2-77" id="h3-2-77" class="d">-		gcv.font = dc.font.xfont-&gt;fid;
+</a><a href="#h3-2-78" id="h3-2-78" class="d">-		XChangeGC(dpy, dc.gc, GCForeground | GCFont, &amp;gcv);
+</a><a href="#h3-2-79" id="h3-2-79" class="d">-		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+</a><a href="#h3-2-80" id="h3-2-80" class="d">-	}
+</a><a href="#h3-2-81" id="h3-2-81" class="d">-}
+</a><a href="#h3-2-82" id="h3-2-82" class="d">-
+</a><a href="#h3-2-83" id="h3-2-83" class="d">-void
+</a> sendevent(Window w, Atom a, long value) {
+ 	XEvent e;
+ 
+<a href="#h3-3" id="h3-3" class="h">@@ -358,11 +235,6 @@ sendevent(Window w, Atom a, long value) {
+</a> 	XSync(dpy, False);
+ }
+ 
+<a href="#h3-3-3" id="h3-3-3" class="d">-unsigned int
+</a><a href="#h3-3-4" id="h3-3-4" class="d">-textw(const char *text) {
+</a><a href="#h3-3-5" id="h3-3-5" class="d">-	return textnw(text, strlen(text)) + dc.font.height;
+</a><a href="#h3-3-6" id="h3-3-6" class="d">-}
+</a><a href="#h3-3-7" id="h3-3-7" class="d">-
+</a> void
+ quit(Arg *arg) {
+ 	readin = running = False;
+</pre>
+</div>
+</body>
+</html>

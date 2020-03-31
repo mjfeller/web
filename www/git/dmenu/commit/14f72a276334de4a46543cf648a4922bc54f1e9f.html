@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>adopted Alex Sedov&#39;s config.h revival patch to tip - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/14f72a276334de4a46543cf648a4922bc54f1e9f.html">14f72a276334de4a46543cf648a4922bc54f1e9f</a>
+<b>parent</b> <a href="../commit/ec64f273fb7660d3746eb765dc02e40726a54294.html">ec64f273fb7660d3746eb765dc02e40726a54294</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Wed, 17 Apr 2013 21:04:05 +0200
+
+adopted Alex Sedov&#39;s config.h revival patch to tip
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">6</td><td><span class="i">+++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++</span><span class="d">----------</span></td></tr>
+</table></pre><pre>2 files changed, 7 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -18,7 +18,11 @@ options:
+</a> 	@echo CC -c $&lt;
+ 	@${CC} -c $&lt; ${CFLAGS}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-${OBJ}: config.mk draw.h
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+config.h:
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	@echo creating $@ from config.def.h
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	@cp config.def.h $@
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+${OBJ}: config.h config.mk draw.h
+</a> 
+ dmenu: dmenu.o draw.o
+ 	@echo CC -o $@
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -44,20 +44,10 @@ static char text[BUFSIZ] = &quot;&quot;;
+</a> static int bh, mw, mh;
+ static int inputw, promptw;
+ static size_t cursor = 0;
+<a href="#h1-0-3" id="h1-0-3" class="d">-static const char *font = NULL;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-static const char *prompt = NULL;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-static const char *normbgcolor = &quot;#222222&quot;;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-static const char *normfgcolor = &quot;#bbbbbb&quot;;
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-static const char *selbgcolor  = &quot;#005577&quot;;
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-static const char *selfgcolor  = &quot;#eeeeee&quot;;
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-static const char *outbgcolor  = &quot;#00ffff&quot;;
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-static const char *outfgcolor  = &quot;#000000&quot;;
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-static unsigned int lines = 0;
+</a> static unsigned long normcol[ColLast];
+ static unsigned long selcol[ColLast];
+ static unsigned long outcol[ColLast];
+ static Atom clip, utf8;
+<a href="#h1-0-16" id="h1-0-16" class="d">-static Bool topbar = True;
+</a> static DC *dc;
+ static Item *items = NULL;
+ static Item *matches, *matchend;
+<a href="#h1-1" id="h1-1" class="h">@@ -65,6 +55,8 @@ static Item *prev, *curr, *next, *sel;
+</a> static Window win;
+ static XIC xic;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+#include &quot;config.h&quot;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+
+</a> static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
+ static char *(*fstrstr)(const char *, const char *) = strstr;
+ 
+</pre>
+</div>
+</body>
+</html>

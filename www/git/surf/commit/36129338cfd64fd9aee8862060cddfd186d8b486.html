@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>changing xprops - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/36129338cfd64fd9aee8862060cddfd186d8b486.html">36129338cfd64fd9aee8862060cddfd186d8b486</a>
+<b>parent</b> <a href="../commit/0a6eafe0778f96d98502bf5ebc71179ac5f2d241.html">0a6eafe0778f96d98502bf5ebc71179ac5f2d241</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Mon, 17 May 2010 11:45:28 +0200
+
+changing xprops
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">55</td><td><span class="i">+++++++++++++++++++++++++++++</span><span class="d">--------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 35 insertions(+), 32 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,10 +8,10 @@ static char *cookiefile     = &quot;.surf/cookies.txt&quot;;
+</a> static time_t sessiontime   = 0;
+ #define NOBACKGROUND 0
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define SETPROP(p)       { .v = (char *[]){ &quot;/bin/sh&quot;, &quot;-c&quot;, \
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	&quot;prop=\&quot;`xprop -id $1 $0 | cut -d &#39;\&quot;&#39; -f 2 | dmenu`\&quot; &amp;&amp;&quot; \
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	&quot;xprop -id $1 -f $0 8s -set $0 \&quot;$prop\&quot;&quot;, \
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	p, winid, NULL } }
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+#define SETPROP(p, q)     { .v = (char *[]){ &quot;/bin/sh&quot;, &quot;-c&quot;, \
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	&quot;prop=\&quot;`xprop -id $2 $0 | cut -d &#39;\&quot;&#39; -f 2 | dmenu`\&quot; &amp;&amp;&quot; \
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	&quot;xprop -id $2 -f $1 8s -set $1 \&quot;$prop\&quot;&quot;, \
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	p, q, winid, NULL } }
+</a> #define MODKEY GDK_CONTROL_MASK
+ static Key keys[] = {
+     /* modifier	            keyval      function    arg             Focus */
+<a href="#h0-1" id="h0-1" class="h">@@ -29,8 +29,8 @@ static Key keys[] = {
+</a>     { MODKEY,               GDK_k,      scroll,     { .i = -1 } },
+     { 0,                    GDK_Escape, stop,       { 0 } },
+     { MODKEY,               GDK_o,      source,     { 0 } },
+<a href="#h0-1-3" id="h0-1-3" class="d">-    { MODKEY,               GDK_g,      spawn,      SETPROP(&quot;_SURF_URI&quot;) },
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-    { MODKEY,               GDK_slash,  spawn,      SETPROP(&quot;_SURF_FIND&quot;) },
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+    { MODKEY,               GDK_g,      spawn,      SETPROP(&quot;_SURF_URI&quot;, &quot;_SURF_GO&quot;) },
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+    { MODKEY,               GDK_slash,  spawn,      SETPROP(&quot;_SURF_FIND&quot;, &quot;_SURF_FIND&quot;) },
+</a>     { MODKEY,               GDK_n,      find,       { .b = TRUE } },
+     { MODKEY|GDK_SHIFT_MASK,GDK_n,      find,       { .b = FALSE } },
+ };
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -23,6 +23,8 @@
+</a> #define LENGTH(x)               (sizeof x / sizeof x[0])
+ #define CLEANMASK(mask)         (mask &amp; ~(GDK_MOD2_MASK))
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+enum { AtomFind, AtomGo, AtomUri, AtomHiLight, AtomLast };
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+
+</a> typedef union Arg Arg;
+ union Arg {
+ 	gboolean b;
+<a href="#h1-1" id="h1-1" class="h">@@ -54,11 +56,10 @@ typedef struct {
+</a> } Key;
+ 
+ static Display *dpy;
+<a href="#h1-1-3" id="h1-1-3" class="d">-static Atom uriprop, findprop;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+static Atom atoms[AtomLast];
+</a> static Client *clients = NULL;
+ static GdkNativeWindow embed = 0;
+ static gboolean showxid = FALSE;
+<a href="#h1-1-8" id="h1-1-8" class="d">-static int ignorexprop = 0;
+</a> static char winid[64];
+ static char *progname;
+ static gboolean loadimage = 1, plugin = 1, script = 1;
+<a href="#h1-2" id="h1-2" class="h">@@ -76,7 +77,7 @@ static void die(char *str);
+</a> static void drawindicator(Client *c);
+ static gboolean exposeindicator(GtkWidget *w, GdkEventExpose *e, Client *c);
+ static void find(Client *c, const Arg *arg);
+<a href="#h1-2-3" id="h1-2-3" class="d">-static const char *getatom(Client *c, Atom a);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+static const char *getatom(Client *c, int a);
+</a> static const char *getcookies(SoupURI *uri);
+ static char *geturi(Client *c);
+ void gotheaders(SoupMessage *msg, gpointer user_data);
+<a href="#h1-3" id="h1-3" class="h">@@ -95,7 +96,7 @@ static void progresschange(WebKitWebView *view, GParamSpec *pspec, Client *c);
+</a> static void reload(Client *c, const Arg *arg);
+ static void resize(GtkWidget *w, GtkAllocation *a, Client *c);
+ static void scroll(Client *c, const Arg *arg);
+<a href="#h1-3-3" id="h1-3-3" class="d">-static void setatom(Client *c, Atom a, const char *v);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+static void setatom(Client *c, int a, const char *v);
+</a> static void setcookie(SoupCookie *c);
+ static void setup(void);
+ static void sigchld(int unused);
+<a href="#h1-4" id="h1-4" class="h">@@ -247,7 +248,7 @@ drawindicator(Client *c) {
+</a> 	GdkGC *gc;
+ 	GdkColor fg;
+ 
+<a href="#h1-4-3" id="h1-4-3" class="d">-	uri = getatom(c, uriprop);
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+	uri = geturi(c);
+</a> 	w = c-&gt;indicator;
+ 	width = c-&gt;progress * w-&gt;allocation.width / 100;
+ 	gc = gdk_gc_new(w-&gt;window);
+<a href="#h1-5" id="h1-5" class="h">@@ -272,7 +273,7 @@ void
+</a> find(Client *c, const Arg *arg) {
+ 	const char *s;
+ 
+<a href="#h1-5-3" id="h1-5-3" class="d">-	s = getatom(c, findprop);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	s = getatom(c, AtomFind);
+</a> 	gboolean forward = *(gboolean *)arg;
+ 	webkit_web_view_search_text(c-&gt;view, s, FALSE, forward, TRUE);
+ }
+<a href="#h1-6" id="h1-6" class="h">@@ -287,7 +288,7 @@ getcookies(SoupURI *uri) {
+</a> }
+ 
+ const char *
+<a href="#h1-6-3" id="h1-6-3" class="d">-getatom(Client *c, Atom a) {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+getatom(Client *c, int a) {
+</a> 	static char buf[BUFSIZ];
+ 	Atom adummy;
+ 	int idummy;
+<a href="#h1-7" id="h1-7" class="h">@@ -295,7 +296,7 @@ getatom(Client *c, Atom a) {
+</a> 	unsigned char *p = NULL;
+ 
+ 	XGetWindowProperty(dpy, GDK_WINDOW_XID(GTK_WIDGET(c-&gt;win)-&gt;window),
+<a href="#h1-7-3" id="h1-7-3" class="d">-			a, 0L, BUFSIZ, False, XA_STRING,
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+			atoms[a], 0L, BUFSIZ, False, XA_STRING,
+</a> 			&amp;adummy, &amp;idummy, &amp;ldummy, &amp;ldummy, &amp;p);
+ 	if(p)
+ 		strncpy(buf, (char *)p, LENGTH(buf)-1);
+<a href="#h1-8" id="h1-8" class="h">@@ -360,7 +361,7 @@ void
+</a> loadstatuschange(WebKitWebView *view, GParamSpec *pspec, Client *c) {
+ 	switch(webkit_web_view_get_load_status (c-&gt;view)) {
+ 	case WEBKIT_LOAD_COMMITTED:
+<a href="#h1-8-3" id="h1-8-3" class="d">-		setatom(c, uriprop, geturi(c));
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+		setatom(c, AtomUri, geturi(c));
+</a> 		break;
+ 	case WEBKIT_LOAD_FINISHED:
+ 		c-&gt;progress = 0;
+<a href="#h1-9" id="h1-9" class="h">@@ -491,8 +492,9 @@ newclient(void) {
+</a> 	g_object_set(G_OBJECT(settings), &quot;enable-plugins&quot;, plugin, NULL);
+ 	g_object_set(G_OBJECT(settings), &quot;enable-scripts&quot;, script, NULL);
+ 	g_free(uri);
+<a href="#h1-9-3" id="h1-9-3" class="d">-	setatom(c, findprop, &quot;&quot;);
+</a><a href="#h1-9-4" id="h1-9-4" class="d">-	setatom(c, uriprop, &quot;&quot;);
+</a><a href="#h1-9-5" id="h1-9-5" class="i">+
+</a><a href="#h1-9-6" id="h1-9-6" class="i">+	setatom(c, AtomFind, &quot;&quot;);
+</a><a href="#h1-9-7" id="h1-9-7" class="i">+	setatom(c, AtomUri, &quot;about:blank&quot;);
+</a> 	if(NOBACKGROUND)
+ 		webkit_web_view_set_transparent(c-&gt;view, TRUE);
+ 
+<a href="#h1-10" id="h1-10" class="h">@@ -569,18 +571,17 @@ processx(GdkXEvent *e, GdkEvent *event, gpointer d) {
+</a> 
+ 	if(((XEvent *)e)-&gt;type == PropertyNotify) {
+ 		ev = &amp;((XEvent *)e)-&gt;xproperty;
+<a href="#h1-10-3" id="h1-10-3" class="d">-		if(ignorexprop)
+</a><a href="#h1-10-4" id="h1-10-4" class="d">-			ignorexprop--;
+</a><a href="#h1-10-5" id="h1-10-5" class="d">-		else if(ev-&gt;state == PropertyNewValue) {
+</a><a href="#h1-10-6" id="h1-10-6" class="d">-			if(ev-&gt;atom == uriprop) {
+</a><a href="#h1-10-7" id="h1-10-7" class="d">-				arg.v = getatom(c, uriprop);
+</a><a href="#h1-10-8" id="h1-10-8" class="d">-				loaduri(c, &amp;arg);
+</a><a href="#h1-10-9" id="h1-10-9" class="d">-			}
+</a><a href="#h1-10-10" id="h1-10-10" class="d">-			else if(ev-&gt;atom == findprop) {
+</a><a href="#h1-10-11" id="h1-10-11" class="i">+		if(ev-&gt;state == PropertyNewValue) {
+</a><a href="#h1-10-12" id="h1-10-12" class="i">+			if(ev-&gt;atom == atoms[AtomFind]) {
+</a> 				arg.b = TRUE;
+ 				find(c, &amp;arg);
+<a href="#h1-10-15" id="h1-10-15" class="i">+				return GDK_FILTER_REMOVE;
+</a><a href="#h1-10-16" id="h1-10-16" class="i">+			}
+</a><a href="#h1-10-17" id="h1-10-17" class="i">+			else if(ev-&gt;atom == atoms[AtomGo]) {
+</a><a href="#h1-10-18" id="h1-10-18" class="i">+				arg.v = getatom(c, AtomGo);
+</a><a href="#h1-10-19" id="h1-10-19" class="i">+				loaduri(c, &amp;arg);
+</a><a href="#h1-10-20" id="h1-10-20" class="i">+				return GDK_FILTER_REMOVE;
+</a> 			}
+<a href="#h1-10-22" id="h1-10-22" class="d">-			return GDK_FILTER_REMOVE;
+</a> 		}
+ 	}
+ 	return GDK_FILTER_CONTINUE;
+<a href="#h1-11" id="h1-11" class="h">@@ -647,10 +648,9 @@ setcookie(SoupCookie *c) {
+</a> }
+ 
+ void
+<a href="#h1-11-3" id="h1-11-3" class="d">-setatom(Client *c, Atom a, const char *v) {
+</a><a href="#h1-11-4" id="h1-11-4" class="i">+setatom(Client *c, int a, const char *v) {
+</a> 	XSync(dpy, False);
+<a href="#h1-11-6" id="h1-11-6" class="d">-	ignorexprop++;
+</a><a href="#h1-11-7" id="h1-11-7" class="d">-	XChangeProperty(dpy, GDK_WINDOW_XID(GTK_WIDGET(c-&gt;win)-&gt;window), a,
+</a><a href="#h1-11-8" id="h1-11-8" class="i">+	XChangeProperty(dpy, GDK_WINDOW_XID(GTK_WIDGET(c-&gt;win)-&gt;window), atoms[a],
+</a> 			XA_STRING, 8, PropModeReplace, (unsigned char *)v,
+ 			strlen(v) + 1);
+ }
+<a href="#h1-12" id="h1-12" class="h">@@ -670,8 +670,12 @@ setup(void) {
+</a> 
+ 	dpy = GDK_DISPLAY();
+ 	s = webkit_get_default_session();
+<a href="#h1-12-3" id="h1-12-3" class="d">-	uriprop = XInternAtom(dpy, &quot;_SURF_URI&quot;, False);
+</a><a href="#h1-12-4" id="h1-12-4" class="d">-	findprop = XInternAtom(dpy, &quot;_SURF_FIND&quot;, False);
+</a><a href="#h1-12-5" id="h1-12-5" class="i">+
+</a><a href="#h1-12-6" id="h1-12-6" class="i">+	/* atoms */
+</a><a href="#h1-12-7" id="h1-12-7" class="i">+	atoms[AtomFind] = XInternAtom(dpy, &quot;_SURF_FIND&quot;, False);
+</a><a href="#h1-12-8" id="h1-12-8" class="i">+	atoms[AtomGo] = XInternAtom(dpy, &quot;_SURF_GO&quot;, False);
+</a><a href="#h1-12-9" id="h1-12-9" class="i">+	atoms[AtomUri] = XInternAtom(dpy, &quot;_SURF_URI&quot;, False);
+</a><a href="#h1-12-10" id="h1-12-10" class="i">+	atoms[AtomHiLight] = XInternAtom(dpy, &quot;_SURF_HILIGHT&quot;, False);
+</a> 
+ 	/* dirs and files */
+ 	cookiefile = buildpath(cookiefile);
+<a href="#h1-13" id="h1-13" class="h">@@ -688,7 +692,6 @@ setup(void) {
+</a> 	if((proxy = getenv(&quot;http_proxy&quot;)) &amp;&amp; strcmp(proxy, &quot;&quot;)) {
+ 		new_proxy = g_strrstr(proxy, &quot;http://&quot;) ? g_strdup(proxy) :
+ 			g_strdup_printf(&quot;http://%s&quot;, proxy);
+<a href="#h1-13-3" id="h1-13-3" class="d">-
+</a> 		puri = soup_uri_new(new_proxy);
+ 		g_object_set(G_OBJECT(s), &quot;proxy-uri&quot;, puri, NULL);
+ 		soup_uri_free(puri);
+</pre>
+</div>
+</body>
+</html>

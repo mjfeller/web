@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>grab on the root window, it is correct, all lockers do that - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/48a7ab2225d1e53a8e0fd73bca975bb7695d1b06.html">48a7ab2225d1e53a8e0fd73bca975bb7695d1b06</a>
+<b>parent</b> <a href="../commit/d8ea9368993538b132ac019859b37f4bbbf85962.html">d8ea9368993538b132ac019859b37f4bbbf85962</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Wed,  7 Mar 2007 10:57:23 +0100
+
+grab on the root window, it is correct, all lockers do that
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">slock.c</a></td><td> | </td><td class="num">5</td><td><span class="i">++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 3 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,5 +1,5 @@
+</a> # slock version
+<a href="#h0-0-1" id="h0-0-1" class="d">-VERSION = 0.5
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+VERSION = 0.6
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h1" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -81,21 +81,20 @@ main(int argc, char **argv) {
+</a> 	w = XCreateWindow(dpy, root, 0, 0, DisplayWidth(dpy, screen), DisplayHeight(dpy, screen),
+ 			0, DefaultDepth(dpy, screen), CopyFromParent,
+ 			DefaultVisual(dpy, screen), CWOverrideRedirect | CWBackPixel, &amp;wa);
+<a href="#h1-0-3" id="h1-0-3" class="d">-
+</a> 	XAllocNamedColor(dpy, DefaultColormap(dpy, screen), &quot;black&quot;, &amp;black, &amp;dummy);
+ 	pmap = XCreateBitmapFromData(dpy, w, curs, 8, 8);
+ 	invisible = XCreatePixmapCursor(dpy, pmap, pmap, &amp;black, &amp;black, 0, 0);
+ 	XDefineCursor(dpy, w, invisible);
+ 	XMapRaised(dpy, w);
+ 	for(len = 1000; len; len--) {
+<a href="#h1-0-10" id="h1-0-10" class="d">-		if(XGrabPointer(dpy, w, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+		if(XGrabPointer(dpy, root, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+</a> 			GrabModeAsync, GrabModeSync, None, invisible, CurrentTime) == GrabSuccess)
+ 			break;
+ 		usleep(1000);
+ 	}
+ 	if((running = running &amp;&amp; (len &gt; 0))) {
+ 		for(len = 1000; len; len--) {
+<a href="#h1-0-18" id="h1-0-18" class="d">-			if(XGrabKeyboard(dpy, w, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+			if(XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+</a> 				== GrabSuccess)
+ 				break;
+ 			usleep(1000);
+</pre>
+</div>
+</body>
+</html>

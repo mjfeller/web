@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added an creatnotify event handler - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/83aa110c6fabbf5f5a14b698a6ca22072cb80629.html">83aa110c6fabbf5f5a14b698a6ca22072cb80629</a>
+<b>parent</b> <a href="../commit/5a1a2edf0e584e660e16d2e01094851e0f9161e2.html">5a1a2edf0e584e660e16d2e01094851e0f9161e2</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Mon,  4 Jun 2007 11:50:48 +0200
+
+added an creatnotify event handler
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">62</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">event.c</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">layout.c</a></td><td> | </td><td class="num">16</td><td><span class="i"></span><span class="d">----------------</span></td></tr>
+</table></pre><pre>4 files changed, 56 insertions(+), 40 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -97,6 +97,14 @@ attach(Client *c) {
+</a> }
+ 
+ void
+<a href="#h0-0-3" id="h0-0-3" class="i">+ban(Client *c) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if (c-&gt;isbanned)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		return;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	c-&gt;isbanned = True;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+void
+</a> configure(Client *c) {
+ 	XConfigureEvent ce;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -299,6 +307,37 @@ togglefloating(const char *arg) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="i">+unban(Client *c) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if (!c-&gt;isbanned)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		return;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	c-&gt;isbanned = False;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+}
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+void
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+unmanage(Client *c) {
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	XWindowChanges wc;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	wc.border_width = c-&gt;oldborder;
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	/* The server grab construct avoids race conditions. */
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	XGrabServer(dpy);
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	XSetErrorHandler(xerrordummy);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	XConfigureWindow(dpy, c-&gt;win, CWBorderWidth, &amp;wc); /* restore border */
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	detach(c);
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	detachstack(c);
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	if(sel == c)
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+		focus(NULL);
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+	setclientstate(c, WithdrawnState);
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	free(c-&gt;tags);
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+	free(c);
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+	XSync(dpy, False);
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+	XSetErrorHandler(xerror);
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+	XUngrabServer(dpy);
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+	lt-&gt;arrange();
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+}
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+void
+</a> updatesizehints(Client *c) {
+ 	long msize;
+ 	XSizeHints size;
+<a href="#h0-2" id="h0-2" class="h">@@ -376,26 +415,3 @@ updatetitle(Client *c) {
+</a> 	c-&gt;name[sizeof c-&gt;name - 1] = &#39;\0&#39;;
+ 	XFree(name.value);
+ }
+<a href="#h0-2-3" id="h0-2-3" class="d">-
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-void
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-unmanage(Client *c) {
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-	XWindowChanges wc;
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-	wc.border_width = c-&gt;oldborder;
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-	/* The server grab construct avoids race conditions. */
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-	XGrabServer(dpy);
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-	XSetErrorHandler(xerrordummy);
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-	XConfigureWindow(dpy, c-&gt;win, CWBorderWidth, &amp;wc); /* restore border */
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-	detach(c);
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-	detachstack(c);
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-	if(sel == c)
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-		focus(NULL);
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+</a><a href="#h0-2-18" id="h0-2-18" class="d">-	setclientstate(c, WithdrawnState);
+</a><a href="#h0-2-19" id="h0-2-19" class="d">-	free(c-&gt;tags);
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-	free(c);
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-	XSync(dpy, False);
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-	XSetErrorHandler(xerror);
+</a><a href="#h0-2-23" id="h0-2-23" class="d">-	XUngrabServer(dpy);
+</a><a href="#h0-2-24" id="h0-2-24" class="d">-	lt-&gt;arrange();
+</a><a href="#h0-2-25" id="h0-2-25" class="d">-}
+</a><b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -96,6 +96,7 @@ extern Window root, barwin;
+</a> 
+ /* client.c */
+ void attach(Client *c);			/* attaches c to global client list */
+<a href="#h1-0-3" id="h1-0-3" class="i">+void ban(Client *c);			/* bans c */
+</a> void configure(Client *c);		/* send synthetic configure event */
+ void detach(Client *c);			/* detaches c from global client list */
+ void focus(Client *c);			/* focus c if visible &amp;&amp; !NULL, or focus top visible */
+<a href="#h1-1" id="h1-1" class="h">@@ -104,9 +105,10 @@ void manage(Window w, XWindowAttributes *wa);	/* manage new client */
+</a> void resize(Client *c, int x, int y,
+ 		int w, int h, Bool sizehints);	/* resize with given coordinates c*/
+ void togglefloating(const char *arg);	/* toggles sel between floating/tiled state */
+<a href="#h1-1-3" id="h1-1-3" class="i">+void unban(Client *c);			/* unbans c */
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+void unmanage(Client *c);		/* destroy c */
+</a> void updatesizehints(Client *c);	/* update the size hint variables of c */
+ void updatetitle(Client *c);		/* update the name of c */
+<a href="#h1-1-7" id="h1-1-7" class="d">-void unmanage(Client *c);		/* destroy c */
+</a> 
+ /* draw.c */
+ void drawstatus(void);			/* draw the bar */
+<b>diff --git a/<a id="h2" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -225,6 +225,19 @@ configurenotify(XEvent *e) {
+</a> }
+ 
+ static void
+<a href="#h2-0-3" id="h2-0-3" class="i">+createnotify(XEvent *e) {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	static XWindowAttributes wa;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	XCreateWindowEvent *ev = &amp;e-&gt;xcreatewindow;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	if(!XGetWindowAttributes(dpy, ev-&gt;window, &amp;wa))
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+		return;
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	if(wa.override_redirect)
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+		return;
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	if(!getclient(ev-&gt;window) &amp;&amp; (wa.map_state == IsViewable))
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+		manage(ev-&gt;window, &amp;wa);
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+}
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+static void
+</a> destroynotify(XEvent *e) {
+ 	Client *c;
+ 	XDestroyWindowEvent *ev = &amp;e-&gt;xdestroywindow;
+<a href="#h2-1" id="h2-1" class="h">@@ -350,6 +363,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[ButtonPress] = buttonpress,
+ 	[ConfigureRequest] = configurerequest,
+ 	[ConfigureNotify] = configurenotify,
+<a href="#h2-1-3" id="h2-1-3" class="i">+	[CreateNotify] = createnotify,
+</a> 	[DestroyNotify] = destroynotify,
+ 	[EnterNotify] = enternotify,
+ 	[LeaveNotify] = leavenotify,
+<b>diff --git a/<a id="h3" href="../file/layout.c.html">layout.c</a> b/<a href="../file/layout.c.html">layout.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -12,22 +12,6 @@ static unsigned int masterw = MASTERWIDTH;
+</a> static unsigned int nmaster = NMASTER;
+ 
+ static void
+<a href="#h3-0-3" id="h3-0-3" class="d">-ban(Client *c) {
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-	if (c-&gt;isbanned)
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-		return;
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-	XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a><a href="#h3-0-7" id="h3-0-7" class="d">-	c-&gt;isbanned = True;
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-}
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-static void
+</a><a href="#h3-0-11" id="h3-0-11" class="d">-unban(Client *c) {
+</a><a href="#h3-0-12" id="h3-0-12" class="d">-	if (!c-&gt;isbanned)
+</a><a href="#h3-0-13" id="h3-0-13" class="d">-		return;
+</a><a href="#h3-0-14" id="h3-0-14" class="d">-	XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y);
+</a><a href="#h3-0-15" id="h3-0-15" class="d">-	c-&gt;isbanned = False;
+</a><a href="#h3-0-16" id="h3-0-16" class="d">-}
+</a><a href="#h3-0-17" id="h3-0-17" class="d">-
+</a><a href="#h3-0-18" id="h3-0-18" class="d">-static void
+</a> tile(void) {
+ 	unsigned int i, n, nx, ny, nw, nh, mw, mh, tw, th;
+ 	Client *c;
+</pre>
+</div>
+</body>
+</html>

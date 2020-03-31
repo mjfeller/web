@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cleaner drawing - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2255bf46a0af475e70fb4cc90d912b435f21eb5e.html">2255bf46a0af475e70fb4cc90d912b435f21eb5e</a>
+<b>parent</b> <a href="../commit/04797343db457578906355cf1118548be90a183e.html">04797343db457578906355cf1118548be90a183e</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Sat,  4 Jun 2011 10:17:25 +0100
+
+cleaner drawing
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">22</td><td><span class="i">++++++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>1 file changed, 6 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -780,32 +780,22 @@ drawbars(void) {
+</a> void
+ drawsquare(Bool filled, Bool empty, Bool invert, unsigned long col[ColLast]) {
+ 	int x;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	XGCValues gcv;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+</a> 
+<a href="#h0-0-6" id="h0-0-6" class="d">-	gcv.foreground = col[invert ? ColBG : ColFG];
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	XChangeGC(dpy, dc.gc, GCForeground, &amp;gcv);
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	XSetForeground(dpy, dc.gc, col[invert ? ColFG : ColBG]);
+</a> 	x = (dc.font.ascent + dc.font.descent + 2) / 4;
+<a href="#h0-0-10" id="h0-0-10" class="d">-	r.x = dc.x + 1;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	r.y = dc.y + 1;
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	if(filled) {
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-		r.width = r.height = x + 1;
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-		XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-	}
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	else if(empty) {
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-		r.width = r.height = x;
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-		XDrawRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-	}
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	if(filled)
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+		XFillRectangle(dpy, dc.drawable, dc.gc, dc.x+1, dc.y+1, x+1, x+1);
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	else if(empty)
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		XDrawRectangle(dpy, dc.drawable, dc.gc, dc.x+1, dc.y+1, x, x);
+</a> }
+ 
+ void
+ drawtext(const char *text, unsigned long col[ColLast], Bool invert) {
+ 	char buf[256];
+ 	int i, x, y, h, len, olen;
+<a href="#h0-0-30" id="h0-0-30" class="d">-	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+</a> 
+ 	XSetForeground(dpy, dc.gc, col[invert ? ColFG : ColBG]);
+<a href="#h0-0-33" id="h0-0-33" class="d">-	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+	XFillRectangle(dpy, dc.drawable, dc.gc, dc.x, dc.y, dc.w, dc.h);
+</a> 	if(!text)
+ 		return;
+ 	olen = strlen(text);
+</pre>
+</div>
+</body>
+</html>

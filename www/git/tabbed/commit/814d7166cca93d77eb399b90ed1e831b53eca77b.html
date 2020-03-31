@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>changing tabbed to embedding like xterm it does. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/814d7166cca93d77eb399b90ed1e831b53eca77b.html">814d7166cca93d77eb399b90ed1e831b53eca77b</a>
+<b>parent</b> <a href="../commit/e104fc4a76fa7afbdef65b5d78618e5ccdc472da.html">e104fc4a76fa7afbdef65b5d78618e5ccdc472da</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Fri, 11 Sep 2009 13:08:27 +0200
+
+changing tabbed to embedding like xterm it does.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">124</td><td><span class="i">+++++++++++++++++++++</span><span class="d">----------------------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 33 insertions(+), 91 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -67,11 +67,6 @@ typedef struct Client {
+</a> 	int tabx;
+ } Client;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-typedef struct Listener {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	int fd;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	struct Listener *next;
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-} Listener;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-
+</a> /* function declarations */
+ static void buttonpress(XEvent *e);
+ static void cleanup(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -91,8 +86,9 @@ static void initfont(const char *fontstr);
+</a> static void keypress(XEvent *e);
+ static void killclient(const Arg *arg);
+ static void move(const Arg *arg);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void spawntab(const Arg *arg);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static void spawn(const Arg *arg);
+</a> static void manage(Window win);
+<a href="#h0-1-6" id="h0-1-6" class="i">+static void maprequest(XEvent *e);
+</a> static void propertynotify(XEvent *e);
+ static void resize(Client *c, int w, int h);
+ static void rotate(const Arg *arg);
+<a href="#h0-2" id="h0-2" class="h">@@ -112,6 +108,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[DestroyNotify] = destroynotify,
+ 	[PropertyNotify] = propertynotify,
+ 	[UnmapNotify] = unmapnotify,
+<a href="#h0-2-3" id="h0-2-3" class="i">+	[MapRequest] = maprequest,
+</a> 	[ButtonPress] = buttonpress,
+ 	[KeyPress] = keypress,
+ 	[Expose] = expose,
+<a href="#h0-3" id="h0-3" class="h">@@ -124,8 +121,8 @@ static Bool running = True;
+</a> static unsigned int numlockmask = 0;
+ static unsigned bh, wx, wy, ww, wh;
+ static Client *clients = NULL, *sel = NULL;
+<a href="#h0-3-3" id="h0-3-3" class="d">-static Listener *listeners;
+</a> static Bool badwindow = False;
+<a href="#h0-3-5" id="h0-3-5" class="i">+static int (*xerrorxlib)(Display *, XErrorEvent *);
+</a> /* configuration, allows nested code to access above variables */
+ #include &quot;config.h&quot;
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -202,7 +199,9 @@ drawbar() {
+</a> 	if(!clients) {
+ 		dc.x = 0;
+ 		dc.w = ww;
+<a href="#h0-4-3" id="h0-4-3" class="d">-		drawtext(&quot;Tabbed&quot;, dc.norm);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		drawtext(&quot;tabbed-&quot;VERSION, dc.norm);
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+		XCopyArea(dpy, dc.drawable, win, dc.gc, 0, 0, ww, bh, 0, 0);
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		XSync(dpy, False);
+</a> 		return;
+ 	}
+ 	width = ww;
+<a href="#h0-5" id="h0-5" class="h">@@ -275,7 +274,7 @@ emallocz(size_t size) {
+</a> 	void *p;
+ 
+ 	if(!(p = calloc(1, size)))
+<a href="#h0-5-3" id="h0-5-3" class="d">-		die(0, &quot;Cannot Malloc&quot;);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		die(0, &quot;tabbed: cannot malloc&quot;);
+</a> 	return p;
+ }
+ 
+<a href="#h0-6" id="h0-6" class="h">@@ -470,32 +469,18 @@ sigchld(int signal) {
+</a> 	while(0 &lt; waitpid(-1, NULL, WNOHANG));
+ }
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-void
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-spawntab(const Arg *arg) {
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-	int fd[2];
+</a><a href="#h0-6-6" id="h0-6-6" class="d">-	Listener *l;
+</a> 
+<a href="#h0-6-8" id="h0-6-8" class="d">-	if(pipe(fd)) {
+</a><a href="#h0-6-9" id="h0-6-9" class="d">-		perror(&quot;tabbed: pipe failed&quot;);
+</a><a href="#h0-6-10" id="h0-6-10" class="d">-		return;
+</a><a href="#h0-6-11" id="h0-6-11" class="d">-	}
+</a><a href="#h0-6-12" id="h0-6-12" class="d">-	l = emallocz(sizeof(Listener));
+</a><a href="#h0-6-13" id="h0-6-13" class="d">-	l-&gt;fd = fd[0];
+</a><a href="#h0-6-14" id="h0-6-14" class="d">-	l-&gt;next = listeners;
+</a><a href="#h0-6-15" id="h0-6-15" class="d">-	listeners = l;
+</a><a href="#h0-6-16" id="h0-6-16" class="d">-	signal(SIGCHLD, sigchld);
+</a><a href="#h0-6-17" id="h0-6-17" class="i">+void
+</a><a href="#h0-6-18" id="h0-6-18" class="i">+spawn(const Arg *arg) {
+</a> 	if(fork() == 0) {
+ 		if(dpy)
+ 			close(ConnectionNumber(dpy));
+ 		setsid();
+<a href="#h0-6-23" id="h0-6-23" class="d">-		dup2(fd[1], STDOUT_FILENO);
+</a><a href="#h0-6-24" id="h0-6-24" class="d">-		close(fd[0]);
+</a> 		execvp(((char **)arg-&gt;v)[0], (char **)arg-&gt;v);
+<a href="#h0-6-26" id="h0-6-26" class="d">-		fprintf(stderr, &quot;tabbed: execvp %s&quot;, ((char **)arg-&gt;v)[0]);
+</a><a href="#h0-6-27" id="h0-6-27" class="i">+		fprintf(stderr, &quot;dwm: execvp %s&quot;, ((char **)arg-&gt;v)[0]);
+</a> 		perror(&quot; failed&quot;);
+ 		exit(0);
+ 	}
+<a href="#h0-6-31" id="h0-6-31" class="d">-	close(fd[1]);
+</a> }
+ 
+ void
+<a href="#h0-7" id="h0-7" class="h">@@ -530,6 +515,18 @@ manage(Window w) {
+</a> 	}
+ }
+ 
+<a href="#h0-7-3" id="h0-7-3" class="i">+void maprequest(XEvent *e) {
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	static XWindowAttributes wa;
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+	XMapRequestEvent *ev = &amp;e-&gt;xmaprequest;
+</a><a href="#h0-7-6" id="h0-7-6" class="i">+
+</a><a href="#h0-7-7" id="h0-7-7" class="i">+	if(!XGetWindowAttributes(dpy, ev-&gt;window, &amp;wa))
+</a><a href="#h0-7-8" id="h0-7-8" class="i">+		return;
+</a><a href="#h0-7-9" id="h0-7-9" class="i">+	if(wa.override_redirect)
+</a><a href="#h0-7-10" id="h0-7-10" class="i">+		return;
+</a><a href="#h0-7-11" id="h0-7-11" class="i">+	if(!getclient(ev-&gt;window))
+</a><a href="#h0-7-12" id="h0-7-12" class="i">+		manage(ev-&gt;window);
+</a><a href="#h0-7-13" id="h0-7-13" class="i">+}
+</a><a href="#h0-7-14" id="h0-7-14" class="i">+
+</a> void
+ propertynotify(XEvent *e) {
+ 	Client *c;
+<a href="#h0-8" id="h0-8" class="h">@@ -581,68 +578,15 @@ rotate(const Arg *arg) {
+</a> 
+ void
+ run(void) {
+<a href="#h0-8-3" id="h0-8-3" class="d">-	char buf[32], *p;
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-	fd_set rd;
+</a><a href="#h0-8-5" id="h0-8-5" class="d">-	int r, xfd, maxfd, wid;
+</a><a href="#h0-8-6" id="h0-8-6" class="d">-	unsigned int offset = 0;
+</a> 	XEvent ev;
+<a href="#h0-8-8" id="h0-8-8" class="d">-	Listener *l, *pl;
+</a> 
+ 	/* main event loop, also reads xids from stdin */
+ 	XSync(dpy, False);
+<a href="#h0-8-12" id="h0-8-12" class="d">-	xfd = ConnectionNumber(dpy);
+</a><a href="#h0-8-13" id="h0-8-13" class="d">-	buf[LENGTH(buf) - 1] = &#39;\0&#39;; /* 0-terminator is never touched */
+</a> 	drawbar();
+ 	while(running) {
+<a href="#h0-8-16" id="h0-8-16" class="d">-		FD_ZERO(&amp;rd);
+</a><a href="#h0-8-17" id="h0-8-17" class="d">-		maxfd = xfd;
+</a><a href="#h0-8-18" id="h0-8-18" class="d">-		FD_SET(xfd, &amp;rd);
+</a><a href="#h0-8-19" id="h0-8-19" class="d">-		for(l = listeners; l; l = l-&gt;next) {
+</a><a href="#h0-8-20" id="h0-8-20" class="d">-			maxfd = MAX(maxfd, l-&gt;fd);
+</a><a href="#h0-8-21" id="h0-8-21" class="d">-			FD_SET(l-&gt;fd, &amp;rd);
+</a><a href="#h0-8-22" id="h0-8-22" class="d">-		}
+</a><a href="#h0-8-23" id="h0-8-23" class="d">-		if(select(maxfd + 1, &amp;rd, NULL, NULL, NULL) == -1) {
+</a><a href="#h0-8-24" id="h0-8-24" class="d">-			if(errno == EINTR)
+</a><a href="#h0-8-25" id="h0-8-25" class="d">-				continue;
+</a><a href="#h0-8-26" id="h0-8-26" class="d">-			die(&quot;select failed\n&quot;);
+</a><a href="#h0-8-27" id="h0-8-27" class="d">-		}
+</a><a href="#h0-8-28" id="h0-8-28" class="d">-		for(l = listeners; l; l = l-&gt;next) {
+</a><a href="#h0-8-29" id="h0-8-29" class="d">-			if(!FD_ISSET(l-&gt;fd, &amp;rd))
+</a><a href="#h0-8-30" id="h0-8-30" class="d">-				continue;
+</a><a href="#h0-8-31" id="h0-8-31" class="d">-			switch((r = read(l-&gt;fd, buf + offset, LENGTH(buf) - 1 - offset))) {
+</a><a href="#h0-8-32" id="h0-8-32" class="d">-			case -1:
+</a><a href="#h0-8-33" id="h0-8-33" class="d">-				perror(&quot;tabbed: fd error&quot;);
+</a><a href="#h0-8-34" id="h0-8-34" class="d">-			case 0:
+</a><a href="#h0-8-35" id="h0-8-35" class="d">-				close(l-&gt;fd);
+</a><a href="#h0-8-36" id="h0-8-36" class="d">-				if(listeners == l)
+</a><a href="#h0-8-37" id="h0-8-37" class="d">-					listeners = l-&gt;next;
+</a><a href="#h0-8-38" id="h0-8-38" class="d">-				else {
+</a><a href="#h0-8-39" id="h0-8-39" class="d">-					for(pl = listeners; pl-&gt;next != l ; pl = pl-&gt;next);
+</a><a href="#h0-8-40" id="h0-8-40" class="d">-					pl-&gt;next = l-&gt;next;
+</a><a href="#h0-8-41" id="h0-8-41" class="d">-				}
+</a><a href="#h0-8-42" id="h0-8-42" class="d">-				free(l);
+</a><a href="#h0-8-43" id="h0-8-43" class="d">-				break;
+</a><a href="#h0-8-44" id="h0-8-44" class="d">-			default:
+</a><a href="#h0-8-45" id="h0-8-45" class="d">-				for(p = buf + offset; r &gt; 0; p++, r--, offset++)
+</a><a href="#h0-8-46" id="h0-8-46" class="d">-					if(*p == &#39;\n&#39; || *p == &#39;\0&#39;) {
+</a><a href="#h0-8-47" id="h0-8-47" class="d">-						*p = &#39;\0&#39;;
+</a><a href="#h0-8-48" id="h0-8-48" class="d">-						if((wid = atoi(buf)))
+</a><a href="#h0-8-49" id="h0-8-49" class="d">-							manage((Window)wid);
+</a><a href="#h0-8-50" id="h0-8-50" class="d">-						p += r - 1; /* p is buf + offset + r - 1 */
+</a><a href="#h0-8-51" id="h0-8-51" class="d">-						for(r = 0; *(p - r) &amp;&amp; *(p - r) != &#39;\n&#39;; r++);
+</a><a href="#h0-8-52" id="h0-8-52" class="d">-						offset = r;
+</a><a href="#h0-8-53" id="h0-8-53" class="d">-						if(r)
+</a><a href="#h0-8-54" id="h0-8-54" class="d">-							memmove(buf, p - r + 1, r);
+</a><a href="#h0-8-55" id="h0-8-55" class="d">-						break;
+</a><a href="#h0-8-56" id="h0-8-56" class="d">-					}
+</a><a href="#h0-8-57" id="h0-8-57" class="d">-				break;
+</a><a href="#h0-8-58" id="h0-8-58" class="d">-			}
+</a><a href="#h0-8-59" id="h0-8-59" class="d">-		}
+</a><a href="#h0-8-60" id="h0-8-60" class="d">-		while(XPending(dpy)) {
+</a><a href="#h0-8-61" id="h0-8-61" class="d">-			XNextEvent(dpy, &amp;ev);
+</a><a href="#h0-8-62" id="h0-8-62" class="d">-			if(handler[ev.type])
+</a><a href="#h0-8-63" id="h0-8-63" class="d">-				(handler[ev.type])(&amp;ev); /* call handler */
+</a><a href="#h0-8-64" id="h0-8-64" class="d">-		}
+</a><a href="#h0-8-65" id="h0-8-65" class="i">+		XNextEvent(dpy, &amp;ev);
+</a><a href="#h0-8-66" id="h0-8-66" class="i">+		if(handler[ev.type])
+</a><a href="#h0-8-67" id="h0-8-67" class="i">+			(handler[ev.type])(&amp;ev); /* call handler */
+</a> 	}
+ }
+ 
+<a href="#h0-9" id="h0-9" class="h">@@ -678,14 +622,12 @@ setup(void) {
+</a> 			ButtonPressMask|ExposureMask|KeyPressMask|
+ 			LeaveWindowMask);
+ 	XMapRaised(dpy, win);
+<a href="#h0-9-3" id="h0-9-3" class="d">-	XSetErrorHandler(xerror);
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+	xerrorxlib = XSetErrorHandler(xerror);
+</a> 	XClassHint class_hint;
+ 	XStoreName(dpy, win, &quot;Tabbed&quot;);
+ 	class_hint.res_name = &quot;tabbed&quot;;
+ 	class_hint.res_class = &quot;Tabbed&quot;;
+ 	XSetClassHint(dpy, win, &amp;class_hint);
+<a href="#h0-9-10" id="h0-9-10" class="d">-	listeners = emallocz(sizeof(Listener));
+</a><a href="#h0-9-11" id="h0-9-11" class="d">-	listeners-&gt;fd = STDIN_FILENO;
+</a> }
+ 
+ int
+<a href="#h0-10" id="h0-10" class="h">@@ -760,9 +702,10 @@ xerror(Display *dpy, XErrorEvent *ee) {
+</a> 		puts(&quot;badwindow&quot;);
+ 		return 0;
+ 	}
+<a href="#h0-10-3" id="h0-10-3" class="d">-	die(&quot;tabbed: fatal error: request code=%d, error code=%d\n&quot;,
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+	fprintf(stderr, &quot;tabbed: fatal error: request code=%d, error code=%d\n&quot;,
+</a> 			ee-&gt;request_code, ee-&gt;error_code);
+<a href="#h0-10-6" id="h0-10-6" class="d">-	return 1;
+</a><a href="#h0-10-7" id="h0-10-7" class="i">+	return xerrorxlib(dpy, ee); /* may call exit */
+</a><a href="#h0-10-8" id="h0-10-8" class="i">+
+</a> }
+ 
+ int
+<a href="#h0-11" id="h0-11" class="h">@@ -770,17 +713,16 @@ main(int argc, char *argv[]) {
+</a> 	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+ 		die(&quot;tabbed-&quot;VERSION&quot;, © 2006-2008 surf engineers, see LICENSE for details\n&quot;);
+ 	else if(argc != 1)
+<a href="#h0-11-3" id="h0-11-3" class="d">-		die(&quot;usage: tabbed [surf-options]\n&quot;);
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+		die(&quot;usage: tabbed [-v]\n&quot;);
+</a> 	if(!setlocale(LC_CTYPE, &quot;&quot;) || !XSupportsLocale())
+ 		fprintf(stderr, &quot;warning: no locale support\n&quot;);
+ 	if(!(dpy = XOpenDisplay(0)))
+ 		die(&quot;tabbed: cannot open display\n&quot;);
+ 	setup();
+<a href="#h0-11-10" id="h0-11-10" class="i">+	printf(&quot;%i\n&quot;, (int)win);
+</a><a href="#h0-11-11" id="h0-11-11" class="i">+	fflush(NULL);
+</a> 	run();
+<a href="#h0-11-13" id="h0-11-13" class="d">-	/*dummys*/
+</a> 	cleanup();
+ 	XCloseDisplay(dpy);
+ 	return 0;
+<a href="#h0-11-17" id="h0-11-17" class="d">-	textnw(&quot; &quot;, 1);
+</a><a href="#h0-11-18" id="h0-11-18" class="d">-	updatenumlockmask();
+</a> }
+</pre>
+</div>
+</body>
+</html>

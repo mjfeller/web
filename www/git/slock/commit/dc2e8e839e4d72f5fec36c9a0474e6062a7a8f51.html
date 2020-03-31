@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Stop using $USER for shadow entries - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/dc2e8e839e4d72f5fec36c9a0474e6062a7a8f51.html">dc2e8e839e4d72f5fec36c9a0474e6062a7a8f51</a>
+<b>parent</b> <a href="../commit/9a617db716641da8489e2062e04098220954bffe.html">9a617db716641da8489e2062e04098220954bffe</a>
+<b>Author:</b> FRIGN &lt;<a href="mailto:dev@frign.de">dev@frign.de</a>&gt;
+<b>Date:</b>   Sun, 11 Sep 2016 23:17:53 +0200
+
+Stop using $USER for shadow entries
+
+This was extremely bad practice, effectively making the program behave
+different depending on which architecture you are running it on.
+
+OpenBSD offers getpwuid_shadow, but there is no getspuid for getspnam,
+so we resort to using the pw_name entry in the struct passwd we filled
+earlier.
+
+This prevents slock from crashing when $USER is empty (easy to do). If
+you want to run slock as a different user, don&#39;t use
+
+	$ USER=&quot;tom&quot; slock
+
+but doas or sudo which were designed for this purpose.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -103,14 +103,14 @@ gethash(void)
+</a> #if HAVE_SHADOW_H
+ 	if (hash[0] == &#39;x&#39; &amp;&amp; hash[1] == &#39;\0&#39;) {
+ 		struct spwd *sp;
+<a href="#h0-0-3" id="h0-0-3" class="d">-		if (!(sp = getspnam(getenv(&quot;USER&quot;))))
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		if (!(sp = getspnam(pw-&gt;pw_name)))
+</a> 			die(&quot;slock: getspnam: cannot retrieve shadow entry (make sure to suid or sgid slock)\n&quot;);
+ 		hash = sp-&gt;sp_pwdp;
+ 	}
+ #else
+ 	if (hash[0] == &#39;*&#39; &amp;&amp; hash[1] == &#39;\0&#39;) {
+ #ifdef __OpenBSD__
+<a href="#h0-0-11" id="h0-0-11" class="d">-		if (!(pw = getpwnam_shadow(getenv(&quot;USER&quot;))))
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		if (!(pw = getpwuid_shadow(getuid())))
+</a> 			die(&quot;slock: getpwnam_shadow: cannot retrieve shadow entry (make sure to suid or sgid slock)\n&quot;);
+ 		hash = pw-&gt;pw_passwd;
+ #else
+</pre>
+</div>
+</body>
+</html>

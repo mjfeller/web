@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied anydot&#39;s dmenu_path caching patch, thank you! - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4042a11e5174633e9beeeec120937856e1d0f74f.html">4042a11e5174633e9beeeec120937856e1d0f74f</a>
+<b>parent</b> <a href="../commit/aa2f73fc88ef3e6946e75bab54a3c0f83f887b3b.html">aa2f73fc88ef3e6946e75bab54a3c0f83f887b3b</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Mon, 14 May 2007 11:56:41 +0200
+
+applied anydot&#39;s dmenu_path caching patch, thank you!
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu_path</a></td><td> | </td><td class="num">31</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 26 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu_path.html">dmenu_path</a> b/<a href="../file/dmenu_path.html">dmenu_path</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,9 +1,30 @@
+</a> #!/bin/sh
+<a href="#h0-0-1" id="h0-0-1" class="i">+CACHE=$HOME/.dmenu_cache
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+UPTODATE=1
+</a> IFS=:
+<a href="#h0-0-4" id="h0-0-4" class="d">-for dir in $PATH
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-do
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	for file in &quot;$dir&quot;/*
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+if test ! -f $CACHE 
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+then
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	unset UPTODATE
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+fi
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+if test $UPTODATE
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+then
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	for dir in $PATH
+</a> 	do
+<a href="#h0-0-17" id="h0-0-17" class="d">-		test -x &quot;$file&quot; &amp;&amp; echo &quot;${file##*/}&quot;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		test $dir -nt $CACHE &amp;&amp; unset UPTODATE
+</a> 	done
+<a href="#h0-0-20" id="h0-0-20" class="d">-done | sort | uniq
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+fi
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+if test ! $UPTODATE
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+then
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	for dir in $PATH
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	do
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+		for file in &quot;$dir&quot;/*
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		do
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+			test -x &quot;$file&quot; &amp;&amp; echo &quot;${file##*/}&quot;
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+		done
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	done | sort | uniq &gt; $CACHE
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+fi
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+cat $CACHE
+</a></pre>
+</div>
+</body>
+</html>

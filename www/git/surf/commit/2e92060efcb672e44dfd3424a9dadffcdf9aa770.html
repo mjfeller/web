@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding middle-click behaviour to open a tab when embedded or a window when not. Thanks to Carlos Pita &lt;carlosjosepita@gmail.com&gt;! - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2e92060efcb672e44dfd3424a9dadffcdf9aa770.html">2e92060efcb672e44dfd3424a9dadffcdf9aa770</a>
+<b>parent</b> <a href="../commit/23def74c9814c1db25081965febd8424c3207e2c.html">23def74c9814c1db25081965febd8424c3207e2c</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sat, 13 Oct 2012 07:16:08 +0200
+
+Adding middle-click behaviour to open a tab when embedded or a window when
+not. Thanks to Carlos Pita &lt;carlosjosepita@gmail.com&gt;!
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">29</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 24 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -66,6 +66,7 @@ static char *progname;
+</a> static gboolean loadimage = 1, plugin = 1, script = 1;
+ 
+ static char *buildpath(const char *path);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static gboolean buttonrelease(WebKitWebView *web, GdkEventButton *e, GList *gl);
+</a> static void cleanup(void);
+ static void clipboard(Client *c, const Arg *arg);
+ static char *copystr(char **str, const char *src);
+<a href="#h0-1" id="h0-1" class="h">@@ -89,7 +90,7 @@ static void loadstatuschange(WebKitWebView *view, GParamSpec *pspec, Client *c);
+</a> static void loaduri(Client *c, const Arg *arg);
+ static void navigate(Client *c, const Arg *arg);
+ static Client *newclient(void);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void newwindow(Client *c, const Arg *arg);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static void newwindow(Client *c, const Arg *arg, gboolean noembed);
+</a> static void newrequest(SoupSession *s, SoupMessage *msg, gpointer v);
+ static void pasteuri(GtkClipboard *clipboard, const char *text, gpointer d);
+ static void print(Client *c, const Arg *arg);
+<a href="#h0-2" id="h0-2" class="h">@@ -141,6 +142,23 @@ buildpath(const char *path) {
+</a> 	return apath;
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+static gboolean
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+buttonrelease(WebKitWebView *web, GdkEventButton *e, GList *gl) {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	WebKitHitTestResultContext context;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	WebKitHitTestResult *result = webkit_web_view_get_hit_test_result(web, e);
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	Arg arg;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	g_object_get(result, &quot;context&quot;, &amp;context, NULL);
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	if(context &amp; WEBKIT_HIT_TEST_RESULT_CONTEXT_LINK) {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+		if(e-&gt;button == 2) {
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+			g_object_get(result, &quot;link-uri&quot;, &amp;arg.v, NULL);
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+			newwindow(NULL, &amp;arg, e-&gt;state &amp; GDK_CONTROL_MASK);
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+			return true;
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+		}
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+	}
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+	return false;
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+}
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+
+</a> void
+ cleanup(void) {
+ 	while(clients)
+<a href="#h0-3" id="h0-3" class="h">@@ -216,7 +234,7 @@ decidewindow(WebKitWebView *view, WebKitWebFrame *f, WebKitNetworkRequest *r, We
+</a> 	if(webkit_web_navigation_action_get_reason(n) == WEBKIT_WEB_NAVIGATION_REASON_LINK_CLICKED) {
+ 		webkit_web_policy_decision_ignore(p);
+ 		arg.v = (void *)webkit_network_request_get_uri(r);
+<a href="#h0-3-3" id="h0-3-3" class="d">-		newwindow(NULL, &amp;arg);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		newwindow(NULL, &amp;arg, 0);
+</a> 		return TRUE;
+ 	}
+ 	return FALSE;
+<a href="#h0-4" id="h0-4" class="h">@@ -404,7 +422,7 @@ loadstatuschange(WebKitWebView *view, GParamSpec *pspec, Client *c) {
+</a> 		setatom(c, AtomUri, uri);
+ 		break;
+ 	case WEBKIT_LOAD_FINISHED:
+<a href="#h0-4-3" id="h0-4-3" class="d">-		c-&gt;progress = 0;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		c-&gt;progress = 100;
+</a> 		update(c);
+ 		break;
+ 	default:
+<a href="#h0-5" id="h0-5" class="h">@@ -494,6 +512,7 @@ newclient(void) {
+</a> 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;notify::load-status&quot;, G_CALLBACK(loadstatuschange), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;notify::progress&quot;, G_CALLBACK(progresschange), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;download-requested&quot;, G_CALLBACK(initdownload), c);
+<a href="#h0-5-3" id="h0-5-3" class="i">+	g_signal_connect(G_OBJECT(c-&gt;view), &quot;button-release-event&quot;, G_CALLBACK(buttonrelease), c);
+</a> 
+ 	/* Indicator */
+ 	c-&gt;indicator = gtk_drawing_area_new();
+<a href="#h0-6" id="h0-6" class="h">@@ -568,14 +587,14 @@ newrequest(SoupSession *s, SoupMessage *msg, gpointer v) {
+</a> }
+ 
+ void
+<a href="#h0-6-3" id="h0-6-3" class="d">-newwindow(Client *c, const Arg *arg) {
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+newwindow(Client *c, const Arg *arg, gboolean noembed) {
+</a> 	guint i = 0;
+ 	const char *cmd[10], *uri;
+ 	const Arg a = { .v = (void *)cmd };
+ 	char tmp[64];
+ 
+ 	cmd[i++] = progname;
+<a href="#h0-6-11" id="h0-6-11" class="d">-	if(embed) {
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+	if(embed &amp;&amp; !noembed) {
+</a> 		cmd[i++] = &quot;-e&quot;;
+ 		snprintf(tmp, LENGTH(tmp), &quot;%u\n&quot;, (int)embed);
+ 		cmd[i++] = tmp;
+</pre>
+</div>
+</body>
+</html>

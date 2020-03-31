@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed insert segfault, added nextrune - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/849f1dd7a3ac1fc6d6a88a9e2b7d7dedbcd0befc.html">849f1dd7a3ac1fc6d6a88a9e2b7d7dedbcd0befc</a>
+<b>parent</b> <a href="../commit/402dc2bc951a27924c963e7227932194616559f4.html">402dc2bc951a27924c963e7227932194616559f4</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Thu, 12 Aug 2010 15:35:51 +0100
+
+fixed insert segfault, added nextrune
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">72</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 35 insertions(+), 37 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,7 +15,6 @@
+</a> #define INRECT(x,y,rx,ry,rw,rh) ((x) &gt;= (rx) &amp;&amp; (x) &lt; (rx)+(rw) &amp;&amp; (y) &gt;= (ry) &amp;&amp; (y) &lt; (ry)+(rh))
+ #define MIN(a,b)                ((a) &lt; (b) ? (a) : (b))
+ #define MAX(a,b)                ((a) &gt; (b) ? (a) : (b))
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define UTF8_CODEPOINT(c)       (((c) &amp; 0xc0) != 0x80)
+</a> 
+ typedef struct Item Item;
+ struct Item {
+<a href="#h0-1" id="h0-1" class="h">@@ -32,7 +31,8 @@ static void grabkeyboard(void);
+</a> static void insert(const char *s, ssize_t n);
+ static void keypress(XKeyEvent *ev);
+ static void match(void);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void paste(Atom atom);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static size_t nextrune(int incr);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+static void paste(void);
+</a> static void readstdin(void);
+ static void run(void);
+ static void setup(void);
+<a href="#h0-2" id="h0-2" class="h">@@ -52,7 +52,7 @@ static unsigned int lines = 0;
+</a> static unsigned int promptw;
+ static unsigned long normcol[ColLast];
+ static unsigned long selcol[ColLast];
+<a href="#h0-2-3" id="h0-2-3" class="d">-static Atom clip, utf8;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+static Atom utf8;
+</a> static Bool topbar = True;
+ static DC *dc;
+ static Item *items = NULL;
+<a href="#h0-3" id="h0-3" class="h">@@ -159,7 +159,9 @@ grabkeyboard(void) {
+</a> 
+ void
+ insert(const char *s, ssize_t n) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-	memmove(text + cursor + n, text + cursor, sizeof text - cursor - n);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	if(strlen(text) + n &gt; sizeof text - 1)
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+		return;
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	memmove(text + cursor + n, text + cursor, sizeof text - cursor - MAX(n, 0));
+</a> 	if(n &gt; 0)
+ 		memcpy(text + cursor, s, n);
+ 	cursor += n;
+<a href="#h0-4" id="h0-4" class="h">@@ -169,7 +171,6 @@ insert(const char *s, ssize_t n) {
+</a> void
+ keypress(XKeyEvent *ev) {
+ 	char buf[32];
+<a href="#h0-4-3" id="h0-4-3" class="d">-	int n;
+</a> 	size_t len;
+ 	KeySym ksym;
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -217,38 +218,31 @@ keypress(XKeyEvent *ev) {
+</a> 			ksym = XK_Up;
+ 			break;
+ 		case XK_u:  /* delete left */
+<a href="#h0-5-3" id="h0-5-3" class="d">-			insert(NULL, -cursor);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+			insert(NULL, 0 - cursor);
+</a> 			break;
+ 		case XK_w:  /* delete word */
+<a href="#h0-5-7" id="h0-5-7" class="d">-			if(cursor == 0)
+</a><a href="#h0-5-8" id="h0-5-8" class="d">-				return;
+</a><a href="#h0-5-9" id="h0-5-9" class="d">-			n = 0;
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-			while(cursor - n++ &gt; 0 &amp;&amp; text[cursor - n] == &#39; &#39;);
+</a><a href="#h0-5-11" id="h0-5-11" class="d">-			while(cursor - n++ &gt; 0 &amp;&amp; text[cursor - n] != &#39; &#39;);
+</a><a href="#h0-5-12" id="h0-5-12" class="d">-			insert(NULL, 1-n);
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+			while(cursor &gt; 0 &amp;&amp; text[nextrune(-1)] == &#39; &#39;)
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+				insert(NULL, nextrune(-1) - cursor);
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+			while(cursor &gt; 0 &amp;&amp; text[nextrune(-1)] != &#39; &#39;)
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+				insert(NULL, nextrune(-1) - cursor);
+</a> 			break;
+ 		case XK_y:  /* paste selection */
+<a href="#h0-5-19" id="h0-5-19" class="d">-			XConvertSelection(dc-&gt;dpy, XA_PRIMARY, utf8, clip, win, CurrentTime);
+</a><a href="#h0-5-20" id="h0-5-20" class="i">+			XConvertSelection(dc-&gt;dpy, XA_PRIMARY, utf8, utf8, win, CurrentTime);
+</a> 			return;
+ 		}
+ 	}
+ 	switch(ksym) {
+ 	default:
+ 		if(isprint(*buf))
+<a href="#h0-5-27" id="h0-5-27" class="d">-			insert(buf, MIN(strlen(buf), sizeof text - cursor));
+</a><a href="#h0-5-28" id="h0-5-28" class="d">-		break;
+</a><a href="#h0-5-29" id="h0-5-29" class="d">-	case XK_BackSpace:
+</a><a href="#h0-5-30" id="h0-5-30" class="d">-		if(cursor == 0)
+</a><a href="#h0-5-31" id="h0-5-31" class="d">-			return;
+</a><a href="#h0-5-32" id="h0-5-32" class="d">-		for(n = 1; cursor - n &gt; 0 &amp;&amp; !UTF8_CODEPOINT(text[cursor - n]); n++);
+</a><a href="#h0-5-33" id="h0-5-33" class="d">-		insert(NULL, -n);
+</a><a href="#h0-5-34" id="h0-5-34" class="i">+			insert(buf, strlen(buf));
+</a> 		break;
+ 	case XK_Delete:
+ 		if(cursor == len)
+ 			return;
+<a href="#h0-5-39" id="h0-5-39" class="d">-		for(n = 1; cursor + n &lt; len &amp;&amp; !UTF8_CODEPOINT(text[cursor + n]); n++);
+</a><a href="#h0-5-40" id="h0-5-40" class="d">-		cursor += n;
+</a><a href="#h0-5-41" id="h0-5-41" class="d">-		insert(NULL, -n);
+</a><a href="#h0-5-42" id="h0-5-42" class="i">+		cursor = nextrune(+1);
+</a><a href="#h0-5-43" id="h0-5-43" class="i">+	case XK_BackSpace:
+</a><a href="#h0-5-44" id="h0-5-44" class="i">+		if(cursor &gt; 0)
+</a><a href="#h0-5-45" id="h0-5-45" class="i">+			insert(NULL, nextrune(-1) - cursor);
+</a> 		break;
+ 	case XK_End:
+ 		if(cursor &lt; len) {
+<a href="#h0-6" id="h0-6" class="h">@@ -274,15 +268,13 @@ keypress(XKeyEvent *ev) {
+</a> 		break;
+ 	case XK_Left:
+ 		if(cursor &gt; 0 &amp;&amp; (!sel || !sel-&gt;left || lines &gt; 0)) {
+<a href="#h0-6-3" id="h0-6-3" class="d">-			while(cursor-- &gt; 0 &amp;&amp; !UTF8_CODEPOINT(text[cursor]));
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+			cursor = nextrune(-1);
+</a> 			break;
+ 		}
+ 		else if(lines &gt; 0)
+ 			return;
+ 	case XK_Up:
+<a href="#h0-6-10" id="h0-6-10" class="d">-		if(!sel || !sel-&gt;left)
+</a><a href="#h0-6-11" id="h0-6-11" class="d">-			return;
+</a><a href="#h0-6-12" id="h0-6-12" class="d">-		if((sel = sel-&gt;left)-&gt;right == curr) {
+</a><a href="#h0-6-13" id="h0-6-13" class="i">+		if(sel &amp;&amp; sel-&gt;left &amp;&amp; (sel = sel-&gt;left)-&gt;right == curr) {
+</a> 			curr = prev;
+ 			calcoffsets();
+ 		}
+<a href="#h0-7" id="h0-7" class="h">@@ -306,15 +298,13 @@ keypress(XKeyEvent *ev) {
+</a> 		exit(EXIT_SUCCESS);
+ 	case XK_Right:
+ 		if(cursor &lt; len) {
+<a href="#h0-7-3" id="h0-7-3" class="d">-			while(cursor++ &lt; len &amp;&amp; !UTF8_CODEPOINT(text[cursor]));
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+			cursor = nextrune(+1);
+</a> 			break;
+ 		}
+ 		else if(lines &gt; 0)
+ 			return;
+ 	case XK_Down:
+<a href="#h0-7-10" id="h0-7-10" class="d">-		if(!sel || !sel-&gt;right)
+</a><a href="#h0-7-11" id="h0-7-11" class="d">-			return;
+</a><a href="#h0-7-12" id="h0-7-12" class="d">-		if((sel = sel-&gt;right) == next) {
+</a><a href="#h0-7-13" id="h0-7-13" class="i">+		if(sel &amp;&amp; sel-&gt;right &amp;&amp; (sel = sel-&gt;right) == next) {
+</a> 			curr = next;
+ 			calcoffsets();
+ 		}
+<a href="#h0-8" id="h0-8" class="h">@@ -370,14 +360,23 @@ match(void) {
+</a> 	calcoffsets();
+ }
+ 
+<a href="#h0-8-3" id="h0-8-3" class="i">+size_t
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+nextrune(int incr) {
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+	size_t n, len;
+</a><a href="#h0-8-6" id="h0-8-6" class="i">+
+</a><a href="#h0-8-7" id="h0-8-7" class="i">+	len = strlen(text);
+</a><a href="#h0-8-8" id="h0-8-8" class="i">+	for(n = cursor + incr; n &gt;= 0 &amp;&amp; n &lt; len &amp;&amp; (text[n] &amp; 0xc0) == 0x80; n += incr);
+</a><a href="#h0-8-9" id="h0-8-9" class="i">+	return n;
+</a><a href="#h0-8-10" id="h0-8-10" class="i">+}
+</a><a href="#h0-8-11" id="h0-8-11" class="i">+
+</a> void
+<a href="#h0-8-13" id="h0-8-13" class="d">-paste(Atom atom) {
+</a><a href="#h0-8-14" id="h0-8-14" class="i">+paste(void) {
+</a> 	char *p, *q;
+ 	int di;
+ 	unsigned long dl;
+ 	Atom da;
+ 
+<a href="#h0-8-20" id="h0-8-20" class="d">-	XGetWindowProperty(dc-&gt;dpy, win, atom, 0, sizeof text - cursor, False,
+</a><a href="#h0-8-21" id="h0-8-21" class="i">+	XGetWindowProperty(dc-&gt;dpy, win, utf8, 0, (sizeof text / 4) + 1, False,
+</a> 	                   utf8, &amp;da, &amp;di, &amp;dl, &amp;dl, (unsigned char **)&amp;p);
+ 	insert(p, (q = strchr(p, &#39;\n&#39;)) ? q-p : strlen(p));
+ 	XFree(p);
+<a href="#h0-9" id="h0-9" class="h">@@ -396,8 +395,8 @@ readstdin(void) {
+</a> 			eprintf(&quot;cannot malloc %u bytes\n&quot;, sizeof *item);
+ 		if(!(item-&gt;text = strdup(buf)))
+ 			eprintf(&quot;cannot strdup %u bytes\n&quot;, strlen(buf)+1);
+<a href="#h0-9-3" id="h0-9-3" class="d">-		inputw = MAX(inputw, textw(dc, item-&gt;text));
+</a> 		item-&gt;next = item-&gt;left = item-&gt;right = NULL;
+<a href="#h0-9-5" id="h0-9-5" class="i">+		inputw = MAX(inputw, textw(dc, item-&gt;text));
+</a> 	}
+ }
+ 
+<a href="#h0-10" id="h0-10" class="h">@@ -415,8 +414,8 @@ run(void) {
+</a> 			keypress(&amp;ev.xkey);
+ 			break;
+ 		case SelectionNotify:
+<a href="#h0-10-3" id="h0-10-3" class="d">-			if(ev.xselection.property != None)
+</a><a href="#h0-10-4" id="h0-10-4" class="d">-				paste(ev.xselection.property);
+</a><a href="#h0-10-5" id="h0-10-5" class="i">+			if(ev.xselection.property == utf8)
+</a><a href="#h0-10-6" id="h0-10-6" class="i">+				paste();
+</a> 			break;
+ 		case VisibilityNotify:
+ 			if(ev.xvisibility.state != VisibilityUnobscured)
+<a href="#h0-11" id="h0-11" class="h">@@ -437,7 +436,6 @@ setup(void) {
+</a> 	screen = DefaultScreen(dc-&gt;dpy);
+ 	root = RootWindow(dc-&gt;dpy, screen);
+ 	utf8 = XInternAtom(dc-&gt;dpy, &quot;UTF8_STRING&quot;, False);
+<a href="#h0-11-3" id="h0-11-3" class="d">-	clip = XInternAtom(dc-&gt;dpy, &quot;_DMENU_STRING&quot;, False);
+</a> 
+ 	normcol[ColBG] = getcolor(dc, normbgcolor);
+ 	normcol[ColFG] = getcolor(dc, normfgcolor);
+</pre>
+</div>
+</body>
+</html>

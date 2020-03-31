@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>merge lsx -&gt; default - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5e0156c0727fa8f225c3309f265da241a98edc08.html">5e0156c0727fa8f225c3309f265da241a98edc08</a>
+<b>parent</b> <a href="../commit/ca7ef6d2c901b2f302e735da369b730edb3575cf.html">ca7ef6d2c901b2f302e735da369b730edb3575cf</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Mon, 17 Oct 2011 10:08:04 +0100
+
+merge lsx -&gt; default
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">lsx.c</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 13 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/lsx.c.html">lsx.c</a> b/<a href="../file/lsx.c.html">lsx.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,5 +1,6 @@
+</a> /* See LICENSE file for copyright and license details. */
+ #include &lt;dirent.h&gt;
+<a href="#h0-0-2" id="h0-0-2" class="i">+#include &lt;errno.h&gt;
+</a> #include &lt;limits.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+<a href="#h0-1" id="h0-1" class="h">@@ -8,6 +9,8 @@
+</a> 
+ static void lsx(const char *dir);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+static int status = EXIT_SUCCESS;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+
+</a> int
+ main(int argc, char *argv[]) {
+ 	int i;
+<a href="#h0-2" id="h0-2" class="h">@@ -16,7 +19,7 @@ main(int argc, char *argv[]) {
+</a> 		lsx(&quot;.&quot;);
+ 	else for(i = 1; i &lt; argc; i++)
+ 		lsx(argv[i]);
+<a href="#h0-2-3" id="h0-2-3" class="d">-	return EXIT_SUCCESS;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	return status;
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -26,13 +29,15 @@ lsx(const char *dir) {
+</a> 	struct stat st;
+ 	DIR *dp;
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(!(dp = opendir(dir))) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		perror(dir);
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-		return;
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-	}
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-	while((d = readdir(dp)))
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	for(dp = opendir(dir); dp &amp;&amp; (d = readdir(dp)); errno = 0)
+</a> 		if(snprintf(buf, sizeof buf, &quot;%s/%s&quot;, dir, d-&gt;d_name) &lt; (int)sizeof buf
+<a href="#h0-3-10" id="h0-3-10" class="d">-		&amp;&amp; !stat(buf, &amp;st) &amp;&amp; S_ISREG(st.st_mode) &amp;&amp; access(buf, X_OK) == 0)
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+		&amp;&amp; access(buf, X_OK) == 0 &amp;&amp; stat(buf, &amp;st) == 0 &amp;&amp; S_ISREG(st.st_mode))
+</a> 			puts(d-&gt;d_name);
+<a href="#h0-3-13" id="h0-3-13" class="d">-	closedir(dp);
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+	if(errno != 0) {
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+		status = EXIT_FAILURE;
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+		perror(dir);
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+	}
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+	if(dp)
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+		closedir(dp);
+</a> }
+</pre>
+</div>
+</body>
+</html>

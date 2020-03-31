@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied multisel patch to mainline - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0d12a47415edba5db73f56dba76f123394581387.html">0d12a47415edba5db73f56dba76f123394581387</a>
+<b>parent</b> <a href="../commit/dec9a28863f388072be105e0950deb72ac719d48.html">dec9a28863f388072be105e0950deb72ac719d48</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Wed, 17 Apr 2013 20:56:54 +0200
+
+applied multisel patch to mainline
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.1</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">21</td><td><span class="i">++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 21 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.1.html">dmenu.1</a> b/<a href="../file/dmenu.1.html">dmenu.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -83,6 +83,9 @@ Copy the selected item to the input field.
+</a> Confirm selection.  Prints the selected item to stdout and exits, returning
+ success.
+ .TP
+<a href="#h0-0-3" id="h0-0-3" class="i">+.B Ctrl-Return
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+Confirm selection.  Prints the selected item to stdout and continues.
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+.TP
+</a> .B Shift\-Return
+ Confirm input.  Prints the input text to stdout and exits, returning success.
+ .TP
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -22,6 +22,7 @@ typedef struct Item Item;
+</a> struct Item {
+ 	char *text;
+ 	Item *left, *right;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	Bool out;
+</a> };
+ 
+ static void appenditem(Item *item, Item **list, Item **last);
+<a href="#h1-1" id="h1-1" class="h">@@ -49,9 +50,12 @@ static const char *normbgcolor = &quot;#222222&quot;;
+</a> static const char *normfgcolor = &quot;#bbbbbb&quot;;
+ static const char *selbgcolor  = &quot;#005577&quot;;
+ static const char *selfgcolor  = &quot;#eeeeee&quot;;
+<a href="#h1-1-3" id="h1-1-3" class="i">+static const char *outbgcolor  = &quot;#00ffff&quot;;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+static const char *outfgcolor  = &quot;#000000&quot;;
+</a> static unsigned int lines = 0;
+ static unsigned long normcol[ColLast];
+ static unsigned long selcol[ColLast];
+<a href="#h1-1-8" id="h1-1-8" class="i">+static unsigned long outcol[ColLast];
+</a> static Atom clip, utf8;
+ static Bool topbar = True;
+ static DC *dc;
+<a href="#h1-2" id="h1-2" class="h">@@ -185,7 +189,8 @@ drawmenu(void) {
+</a> 		dc-&gt;w = mw - dc-&gt;x;
+ 		for(item = curr; item != next; item = item-&gt;right) {
+ 			dc-&gt;y += dc-&gt;h;
+<a href="#h1-2-3" id="h1-2-3" class="d">-			drawtext(dc, item-&gt;text, (item == sel) ? selcol : normcol);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+			drawtext(dc, item-&gt;text, (item == sel) ? selcol :
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+			                         (item-&gt;out)   ? outcol : normcol);
+</a> 		}
+ 	}
+ 	else if(matches) {
+<a href="#h1-3" id="h1-3" class="h">@@ -197,7 +202,8 @@ drawmenu(void) {
+</a> 		for(item = curr; item != next; item = item-&gt;right) {
+ 			dc-&gt;x += dc-&gt;w;
+ 			dc-&gt;w = MIN(textw(dc, item-&gt;text), mw - dc-&gt;x - textw(dc, &quot;&gt;&quot;));
+<a href="#h1-3-3" id="h1-3-3" class="d">-			drawtext(dc, item-&gt;text, (item == sel) ? selcol : normcol);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+			drawtext(dc, item-&gt;text, (item == sel) ? selcol :
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+			                         (item-&gt;out)   ? outcol : normcol);
+</a> 		}
+ 		dc-&gt;w = textw(dc, &quot;&gt;&quot;);
+ 		dc-&gt;x = mw - dc-&gt;w;
+<a href="#h1-4" id="h1-4" class="h">@@ -278,6 +284,9 @@ keypress(XKeyEvent *ev) {
+</a> 			XConvertSelection(dc-&gt;dpy, (ev-&gt;state &amp; ShiftMask) ? clip : XA_PRIMARY,
+ 			                  utf8, utf8, win, CurrentTime);
+ 			return;
+<a href="#h1-4-3" id="h1-4-3" class="i">+		case XK_Return:
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		case XK_KP_Enter:
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+			break;
+</a> 		default:
+ 			return;
+ 		}
+<a href="#h1-5" id="h1-5" class="h">@@ -362,7 +371,10 @@ keypress(XKeyEvent *ev) {
+</a> 	case XK_Return:
+ 	case XK_KP_Enter:
+ 		puts((sel &amp;&amp; !(ev-&gt;state &amp; ShiftMask)) ? sel-&gt;text : text);
+<a href="#h1-5-3" id="h1-5-3" class="d">-		exit(EXIT_SUCCESS);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		if(!(ev-&gt;state &amp; ControlMask))
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+			exit(EXIT_SUCCESS);
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+		sel-&gt;out = True;
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+		break;
+</a> 	case XK_Right:
+ 		if(text[cursor] != &#39;\0&#39;) {
+ 			cursor = nextrune(+1);
+<a href="#h1-6" id="h1-6" class="h">@@ -480,6 +492,7 @@ readstdin(void) {
+</a> 			*p = &#39;\0&#39;;
+ 		if(!(items[i].text = strdup(buf)))
+ 			eprintf(&quot;cannot strdup %u bytes:&quot;, strlen(buf)+1);
+<a href="#h1-6-3" id="h1-6-3" class="i">+		items[i].out = False;
+</a> 		if(strlen(items[i].text) &gt; max)
+ 			max = strlen(maxstr = items[i].text);
+ 	}
+<a href="#h1-7" id="h1-7" class="h">@@ -531,6 +544,8 @@ setup(void) {
+</a> 	normcol[ColFG] = getcolor(dc, normfgcolor);
+ 	selcol[ColBG]  = getcolor(dc, selbgcolor);
+ 	selcol[ColFG]  = getcolor(dc, selfgcolor);
+<a href="#h1-7-3" id="h1-7-3" class="i">+	outcol[ColBG]  = getcolor(dc, outbgcolor);
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	outcol[ColFG]  = getcolor(dc, outfgcolor);
+</a> 
+ 	clip = XInternAtom(dc-&gt;dpy, &quot;CLIPBOARD&quot;,   False);
+ 	utf8 = XInternAtom(dc-&gt;dpy, &quot;UTF8_STRING&quot;, False);
+</pre>
+</div>
+</body>
+</html>

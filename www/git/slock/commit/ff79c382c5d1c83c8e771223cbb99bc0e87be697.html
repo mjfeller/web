@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>small fix of Vincent&#39;s patch - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ff79c382c5d1c83c8e771223cbb99bc0e87be697.html">ff79c382c5d1c83c8e771223cbb99bc0e87be697</a>
+<b>parent</b> <a href="../commit/27d8d248275ca3eb63882202dcc21ecf2f81e72a.html">27d8d248275ca3eb63882202dcc21ecf2f81e72a</a>
+<b>Author:</b> arg@mig29 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Tue, 31 Oct 2006 08:43:25 +0100
+
+small fix of Vincent&#39;s patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">slock.c</a></td><td> | </td><td class="num">13</td><td><span class="i">++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>2 files changed, 7 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,5 +1,5 @@
+</a> # slock version
+<a href="#h0-0-1" id="h0-0-1" class="d">-VERSION = 0.2
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+VERSION = 0.3
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h1" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2,6 +2,9 @@
+</a>  * See LICENSE file for license details.
+  */
+ #define _XOPEN_SOURCE 500
+<a href="#h1-0-3" id="h1-0-3" class="i">+#if HAVE_SHADOW_H
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#include &lt;shadow.h&gt;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+#endif
+</a> 
+ #include &lt;ctype.h&gt;
+ #include &lt;pwd.h&gt;
+<a href="#h1-1" id="h1-1" class="h">@@ -9,9 +12,6 @@
+</a> #include &lt;stdio.h&gt;
+ #include &lt;string.h&gt;
+ #include &lt;unistd.h&gt;
+<a href="#h1-1-3" id="h1-1-3" class="d">-#if HAVE_SHADOW_H
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-#include &lt;shadow.h&gt;
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-#endif
+</a> #include &lt;sys/types.h&gt;
+ #include &lt;X11/keysym.h&gt;
+ #include &lt;X11/Xlib.h&gt;
+<a href="#h1-2" id="h1-2" class="h">@@ -75,8 +75,6 @@ main(int argc, char **argv) {
+</a> 	screen = DefaultScreen(dpy);
+ 
+ 	/* init */
+<a href="#h1-2-3" id="h1-2-3" class="d">-	len = 0;
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-
+</a> 	wa.override_redirect = 1;
+ 	wa.background_pixel = BlackPixel(dpy, screen);
+ 	w = XCreateWindow(dpy, RootWindow(dpy, screen), 0, 0,
+<a href="#h1-3" id="h1-3" class="h">@@ -96,6 +94,7 @@ main(int argc, char **argv) {
+</a> 		GrabModeAsync, CurrentTime) != GrabSuccess); len--)
+ 		usleep(1000);
+ 	running = running &amp;&amp; (len &gt; 0);
+<a href="#h1-3-3" id="h1-3-3" class="i">+	len = 0;
+</a> 	XMapRaised(dpy, w);
+ 	XSync(dpy, False);
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -120,11 +119,11 @@ main(int argc, char **argv) {
+</a> 				break;
+ 			case XK_BackSpace:
+ 				if(len)
+<a href="#h1-4-3" id="h1-4-3" class="d">-				  --len;
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+					--len;
+</a> 				break;
+ 			default:
+ 				if(num &amp;&amp; !iscntrl((int) buf[0])) {
+<a href="#h1-4-8" id="h1-4-8" class="d">-					memcpy(passwd + len,buf,num);
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+					memcpy(passwd + len, buf, num);
+</a> 					len += num;
+ 				}
+ 				break;
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>install dot files too - rice - config file
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="rice Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>rice</h1><span class="desc">config file
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e8386eee494b4e3ae43305cf300dc90d66dc955f.html">e8386eee494b4e3ae43305cf300dc90d66dc955f</a>
+<b>parent</b> <a href="../commit/72a6d6b05c1a16af2c709e524b9515faa0816312.html">72a6d6b05c1a16af2c709e524b9515faa0816312</a>
+<b>Author:</b> Mark Feller &lt;<a href="mailto:mfeller@recurly.com">mfeller@recurly.com</a>&gt;
+<b>Date:</b>   Thu, 19 Dec 2019 15:12:26 -0700
+
+install dot files too
+
+Signed-off-by: Mark Feller &lt;mfeller@recurly.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkgs/fedora/install</a></td><td> | </td><td class="num">24</td><td><span class="i">+++++++++++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkgs/fedora/packages</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 23 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkgs/fedora/install.html">pkgs/fedora/install</a> b/<a href="../file/pkgs/fedora/install.html">pkgs/fedora/install</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,13 +8,23 @@ log() {
+</a>            &quot;${3:--&gt;}&quot; &quot;${2:+[1;36m}$1${2:+[m}&quot; &quot;$2&quot;
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-# Copy a real file to our temp progsfile or attempt to curl the progsfile
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-([ -f &quot;$pkgfile&quot; ] &amp;&amp; cp &quot;$pkgfile&quot; /tmp/pkgs) || curl -Ls &quot;$pkgfile&quot; &gt; /tmp/pkgs
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+install_packages() {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+    # Copy a real file to our temp progsfile or attempt to curl the progsfile
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+    ([ -f &quot;$pkgfile&quot; ] &amp;&amp; cp &quot;$pkgfile&quot; /tmp/pkgs) || curl -Ls &quot;$pkgfile&quot; &gt; /tmp/pkgs
+</a> 
+<a href="#h0-0-9" id="h0-0-9" class="d">-packages=$(sed &#39;/^$/d&#39; /tmp/pkgs | sed &#39;/^#/d&#39;)
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-while IFS=&#39; &#39; read -r program comment; do
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-    log &quot;Installing $program $comment&quot;
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-    dnf install -y $program
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-done &lt;&lt;EOF
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+    packages=$(sed &#39;/^$/d&#39; /tmp/pkgs | sed &#39;/^#/d&#39;)
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+    while IFS=&#39; &#39; read -r program comment; do
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+        log &quot;Installing $program $comment&quot;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+        dnf install -y $program
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+    done &lt;&lt;EOF
+</a> $packages
+ EOF
+<a href="#h0-0-21" id="h0-0-21" class="i">+}
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+install_dots() {
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+    git clone https://gitlab.com/mark.feller/rice.git ~/.config/rice
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+    (cd ~/.config/rice &amp;&amp; ./install)
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+}
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+install_pacakges
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+install_dots
+</a><b>diff --git a/<a id="h1" href="../file/pkgs/fedora/packages.html">pkgs/fedora/packages</a> b/<a href="../file/pkgs/fedora/packages.html">pkgs/fedora/packages</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,10 +1,14 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+# Tooling
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+git				is a version control system
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+stow			is a tool for managing symlinks for dot files
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+
+</a> # Editor
+ emacs          is the best editor
+ vim            is another editor
+ 
+ # Desktop Environment and System Utilities
+<a href="#h1-0-9" id="h1-0-9" class="d">-xorg-minimal   is a grapgical server
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-xorg-fonts     is a font package
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+#xorg-minimal   is a grapgical server
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+#xorg-fonts     is a font package
+</a> compton        is an xorg composition manager
+ i3-gaps        is the i3 tilling window manager but with gaps.
+ xclip          allows for copying and pasting from the command line.
+</pre>
+</div>
+</body>
+</html>

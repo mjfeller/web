@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cleaned up - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e0add428d2ebf6998af80a5deeadb3d972be5a82.html">e0add428d2ebf6998af80a5deeadb3d972be5a82</a>
+<b>parent</b> <a href="../commit/bf7b8e37ee2a53f0f1bed75dd84e5214269cfac8.html">bf7b8e37ee2a53f0f1bed75dd84e5214269cfac8</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Fri,  8 Oct 2010 23:36:45 +0100
+
+cleaned up
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu_path.c</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>1 file changed, 15 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu_path.c.html">dmenu_path.c</a> b/<a href="../file/dmenu_path.c.html">dmenu_path.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,22 +8,21 @@
+</a> 
+ #define CACHE &quot;.dmenu_cache&quot;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static int qstrcmp(const void *a, const void *b);
+</a> static void die(const char *s);
+<a href="#h0-0-5" id="h0-0-5" class="i">+static int qstrcmp(const void *a, const void *b);
+</a> static void scan(void);
+ static int uptodate(void);
+ 
+ static char **items = NULL;
+<a href="#h0-0-10" id="h0-0-10" class="d">-static const char *Home, *Path;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-static size_t count = 0;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+static const char *home, *path;
+</a> 
+ int
+ main(void) {
+<a href="#h0-0-16" id="h0-0-16" class="d">-	if(!(Home = getenv(&quot;HOME&quot;)))
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	if(!(home = getenv(&quot;HOME&quot;)))
+</a> 		die(&quot;no $HOME&quot;);
+<a href="#h0-0-19" id="h0-0-19" class="d">-	if(!(Path = getenv(&quot;PATH&quot;)))
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	if(!(path = getenv(&quot;PATH&quot;)))
+</a> 		die(&quot;no $PATH&quot;);
+<a href="#h0-0-22" id="h0-0-22" class="d">-	if(chdir(Home) &lt; 0)
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	if(chdir(home) &lt; 0)
+</a> 		die(&quot;chdir failed&quot;);
+ 	if(uptodate()) {
+ 		execlp(&quot;cat&quot;, &quot;cat&quot;, CACHE, NULL);
+<a href="#h0-1" id="h0-1" class="h">@@ -47,15 +46,16 @@ qstrcmp(const void *a, const void *b) {
+</a> void
+ scan(void) {
+ 	char buf[PATH_MAX];
+<a href="#h0-1-3" id="h0-1-3" class="d">-	char *dir, *path;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	size_t i;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	char *dir, *p;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	size_t i, count;
+</a> 	struct dirent *ent;
+ 	DIR *dp;
+ 	FILE *cache;
+ 
+<a href="#h0-1-11" id="h0-1-11" class="d">-	if(!(path = strdup(Path)))
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	count = 0;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	if(!(p = strdup(path)))
+</a> 		die(&quot;strdup failed&quot;);
+<a href="#h0-1-15" id="h0-1-15" class="d">-	for(dir = strtok(path, &quot;:&quot;); dir; dir = strtok(NULL, &quot;:&quot;)) {
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	for(dir = strtok(p, &quot;:&quot;); dir; dir = strtok(NULL, &quot;:&quot;)) {
+</a> 		if(!(dp = opendir(dir)))
+ 			continue;
+ 		while((ent = readdir(dp))) {
+<a href="#h0-2" id="h0-2" class="h">@@ -79,23 +79,23 @@ scan(void) {
+</a> 		fprintf(stdout, &quot;%s\n&quot;, items[i]);
+ 	}
+ 	fclose(cache);
+<a href="#h0-2-3" id="h0-2-3" class="d">-	free(path);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	free(p);
+</a> }
+ 
+ int
+ uptodate(void) {
+<a href="#h0-2-9" id="h0-2-9" class="d">-	char *dir, *path;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	char *dir, *p;
+</a> 	time_t mtime;
+ 	struct stat st;
+ 
+ 	if(stat(CACHE, &amp;st) &lt; 0)
+ 		return 0;
+ 	mtime = st.st_mtime;
+<a href="#h0-2-17" id="h0-2-17" class="d">-	if(!(path = strdup(Path)))
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+	if(!(p = strdup(path)))
+</a> 		die(&quot;strdup failed&quot;);
+<a href="#h0-2-20" id="h0-2-20" class="d">-	for(dir = strtok(path, &quot;:&quot;); dir; dir = strtok(NULL, &quot;:&quot;))
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+	for(dir = strtok(p, &quot;:&quot;); dir; dir = strtok(NULL, &quot;:&quot;))
+</a> 		if(!stat(dir, &amp;st) &amp;&amp; st.st_mtime &gt; mtime)
+ 			return 0;
+<a href="#h0-2-24" id="h0-2-24" class="d">-	free(path);
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+	free(p);
+</a> 	return 1;
+ }
+</pre>
+</div>
+</body>
+</html>

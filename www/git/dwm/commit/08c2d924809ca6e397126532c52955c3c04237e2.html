@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Peter Hartlich&#39;s togglemax patch to allow toggling tiled clients to maximum - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/08c2d924809ca6e397126532c52955c3c04237e2.html">08c2d924809ca6e397126532c52955c3c04237e2</a>
+<b>parent</b> <a href="../commit/fe2775a15ba2d4900788c57194da2bad3d19cfaf.html">fe2775a15ba2d4900788c57194da2bad3d19cfaf</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 18 Sep 2007 19:04:50 +0200
+
+applied Peter Hartlich&#39;s togglemax patch to allow toggling tiled clients to maximum
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.1</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">15</td><td><span class="i">++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 13 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -75,7 +75,7 @@ Focus previous window.
+</a> Increases the master area width about 5% (tiled layout only).
+ .TP
+ .B Mod1\-m
+<a href="#h0-0-3" id="h0-0-3" class="d">-Toggles maximization of current window (floating layout only).
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+Toggles maximization of current window.
+</a> .TP
+ .B Mod1\-Shift\-[1..n]
+ Apply
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -64,7 +64,7 @@ struct Client {
+</a> 	int minax, maxax, minay, maxay;
+ 	long flags; 
+ 	unsigned int border, oldborder;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	Bool isbanned, isfixed, ismax, isfloating;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	Bool isbanned, isfixed, ismax, isfloating, wasfloating;
+</a> 	Bool *tags;
+ 	Client *next;
+ 	Client *prev;
+<a href="#h1-1" id="h1-1" class="h">@@ -1627,17 +1627,26 @@ void
+</a> togglemax(const char *arg) {
+ 	XEvent ev;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if(!sel || (!isarrange(floating) &amp;&amp; !sel-&gt;isfloating) || sel-&gt;isfixed)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	if(!sel || sel-&gt;isfixed)
+</a> 		return;
+ 	if((sel-&gt;ismax = !sel-&gt;ismax)) {
+<a href="#h1-1-7" id="h1-1-7" class="i">+		if(isarrange(floating) || sel-&gt;isfloating)
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+			sel-&gt;wasfloating = True;
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+		else {
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+			togglefloating(NULL);
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+			sel-&gt;wasfloating = False;
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		}
+</a> 		sel-&gt;rx = sel-&gt;x;
+ 		sel-&gt;ry = sel-&gt;y;
+ 		sel-&gt;rw = sel-&gt;w;
+ 		sel-&gt;rh = sel-&gt;h;
+ 		resize(sel, wax, way, waw - 2 * sel-&gt;border, wah - 2 * sel-&gt;border, True);
+ 	}
+<a href="#h1-1-19" id="h1-1-19" class="d">-	else
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	else {
+</a> 		resize(sel, sel-&gt;rx, sel-&gt;ry, sel-&gt;rw, sel-&gt;rh, True);
+<a href="#h1-1-22" id="h1-1-22" class="i">+		if (!sel-&gt;wasfloating)
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+			togglefloating(NULL);
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+	}
+</a> 	drawbar();
+ 	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+ }
+</pre>
+</div>
+</body>
+</html>

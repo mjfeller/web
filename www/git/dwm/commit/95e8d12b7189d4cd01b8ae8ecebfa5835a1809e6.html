@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>made fullscreen apps working fine in floating mode (there is no sane way to make them work in tiled mode, thus I switch to floating mode if I run such kind of app), also fixed the xterm issue reported by Sander - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/95e8d12b7189d4cd01b8ae8ecebfa5835a1809e6.html">95e8d12b7189d4cd01b8ae8ecebfa5835a1809e6</a>
+<b>parent</b> <a href="../commit/a55f0e12fe5c1205f4d3e40c164fd087224fad7a.html">a55f0e12fe5c1205f4d3e40c164fd087224fad7a</a>
+<b>Author:</b> arg@10ksloc.org &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Wed,  2 Aug 2006 16:32:05 +0200
+
+made fullscreen apps working fine in floating mode (there is no sane way to make them work in tiled mode, thus I switch to floating mode if I run such kind of app), also fixed the xterm issue reported by Sander
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">32</td><td><span class="i">++++++++++</span><span class="d">----------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.arg.h</a></td><td> | </td><td class="num">18</td><td><span class="i">+++++++++</span><span class="d">---------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">config.h</a></td><td> | </td><td class="num">18</td><td><span class="i">+++++++++</span><span class="d">---------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">draw.c</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">dwm.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">event.c</a></td><td> | </td><td class="num">65</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">main.c</a></td><td> | </td><td class="num">15</td><td><span class="i">++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">tag.c</a></td><td> | </td><td class="num">17</td><td><span class="i">++++++++</span><span class="d">---------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">util.c</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+</table></pre><pre>9 files changed, 92 insertions(+), 79 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,6 @@
+</a>  * See LICENSE file for license details.
+  */
+ #include &quot;dwm.h&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a> #include &lt;stdlib.h&gt;
+ #include &lt;string.h&gt;
+ #include &lt;X11/Xatom.h&gt;
+<a href="#h0-1" id="h0-1" class="h">@@ -219,7 +218,7 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	c-&gt;h = wa-&gt;height;
+ 	c-&gt;th = bh;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	c-&gt;border = 1;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	c-&gt;border = 0;
+</a> 	setsize(c);
+ 
+ 	if(c-&gt;h != sh &amp;&amp; c-&gt;y &lt; bh)
+<a href="#h0-2" id="h0-2" class="h">@@ -254,8 +253,7 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	if(!c-&gt;isfloat)
+ 		c-&gt;isfloat = trans
+ 			|| (c-&gt;maxw &amp;&amp; c-&gt;minw &amp;&amp;
+<a href="#h0-2-3" id="h0-2-3" class="d">-				c-&gt;maxw == c-&gt;minw &amp;&amp; c-&gt;maxh == c-&gt;minh)
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-			|| (c-&gt;w == sw &amp;&amp; c-&gt;h == sh);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+				c-&gt;maxw == c-&gt;minw &amp;&amp; c-&gt;maxh == c-&gt;minh);
+</a> 	settitle(c);
+ 	arrange(NULL);
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -271,7 +269,7 @@ resize(Client *c, Bool sizehints, Corner sticky)
+</a> {
+ 	int bottom = c-&gt;y + c-&gt;h;
+ 	int right = c-&gt;x + c-&gt;w;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	XConfigureEvent e;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	/*XConfigureEvent e;*/
+</a> 	XWindowChanges wc;
+ 
+ 	if(sizehints) {
+<a href="#h0-4" id="h0-4" class="h">@@ -302,21 +300,11 @@ resize(Client *c, Bool sizehints, Corner sticky)
+</a> 	wc.y = c-&gt;y;
+ 	wc.width = c-&gt;w;
+ 	wc.height = c-&gt;h;
+<a href="#h0-4-3" id="h0-4-3" class="d">-	wc.border_width = 1;
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	XConfigureWindow(dpy, c-&gt;win,
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-			CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &amp;wc);
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-	e.type = ConfigureNotify;
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-	e.event = c-&gt;win;
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-	e.window = c-&gt;win;
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-	e.x = c-&gt;x;
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-	e.y = c-&gt;y;
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-	e.width = c-&gt;w;
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-	e.height = c-&gt;h;
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-	e.border_width = c-&gt;border;
+</a><a href="#h0-4-15" id="h0-4-15" class="d">-	e.above = None;
+</a><a href="#h0-4-16" id="h0-4-16" class="d">-	e.override_redirect = False;
+</a><a href="#h0-4-17" id="h0-4-17" class="d">-	XSendEvent(dpy, c-&gt;win, False, StructureNotifyMask, (XEvent *)&amp;e);
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+	if(c-&gt;w == sw &amp;&amp; c-&gt;h == sh)
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+		wc.border_width = 0;
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+	else
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+		wc.border_width = 1;
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+	XConfigureWindow(dpy, c-&gt;win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &amp;wc);
+</a> 	XSync(dpy, False);
+ }
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -403,8 +391,8 @@ togglemax(Arg *arg)
+</a> 		oh = sel-&gt;h;
+ 		sel-&gt;x = sx;
+ 		sel-&gt;y = sy + bh;
+<a href="#h0-5-3" id="h0-5-3" class="d">-		sel-&gt;w = sw - 2 * sel-&gt;border;
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-		sel-&gt;h = sh - 2 * sel-&gt;border - bh;
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+		sel-&gt;w = sw - 2;
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+		sel-&gt;h = sh - 2 - bh;
+</a> 
+ 		higher(sel);
+ 		resize(sel, False, TopLeft);
+<b>diff --git a/<a id="h1" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -3,15 +3,6 @@
+</a>  * See LICENSE file for license details.
+  */
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define DEFMODE			dotile /* dofloat */
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#define FONT			&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-#define BGCOLOR			&quot;#0a2c2d&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-#define FGCOLOR			&quot;#ddeeee&quot;
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-#define BORDERCOLOR		&quot;#176164&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-#define MODKEY			Mod1Mask
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-#define NUMLOCKMASK		Mod2Mask
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-#define MASTERW			52 /* percent */
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-
+</a> enum { Tfnord, Tdev, Tnet, Twork, Tmisc, TLast };
+ #define TAGS \
+ char *tags[TLast] = { \
+<a href="#h1-1" id="h1-1" class="h">@@ -21,7 +12,16 @@ char *tags[TLast] = { \
+</a> 	[Twork] = &quot;work&quot;, \
+ 	[Tmisc] = &quot;misc&quot;, \
+ };
+<a href="#h1-1-3" id="h1-1-3" class="i">+
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+#define DEFMODE			dotile /* dofloat */
+</a> #define DEFTAG			Tdev
+<a href="#h1-1-6" id="h1-1-6" class="i">+#define FONT			&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+#define BGCOLOR			&quot;#0a2c2d&quot;
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+#define FGCOLOR			&quot;#ddeeee&quot;
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+#define BORDERCOLOR		&quot;#176164&quot;
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+#define MODKEY			Mod1Mask
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+#define NUMLOCKMASK		Mod2Mask
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+#define MASTERW			52 /* percent */
+</a> 
+ #define KEYS \
+ 	const char *browse[] = { &quot;firefox&quot;, NULL }; \
+<b>diff --git a/<a id="h2" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -3,15 +3,6 @@
+</a>  * See LICENSE file for license details.
+  */
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-#define DEFMODE			dotile /* dofloat */
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-#define FONT			&quot;fixed&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-#define BGCOLOR			&quot;#666699&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-#define FGCOLOR			&quot;#eeeeee&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-#define BORDERCOLOR		&quot;#9999CC&quot;
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-#define MODKEY			Mod1Mask
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-#define NUMLOCKMASK		Mod2Mask
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-#define MASTERW			52 /* percent */
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-
+</a> enum { Tfnord, Tdev, Tnet, Twork, Tmisc, TLast };
+ #define TAGS \
+ char *tags[TLast] = { \
+<a href="#h2-1" id="h2-1" class="h">@@ -21,7 +12,16 @@ char *tags[TLast] = { \
+</a> 	[Twork] = &quot;work&quot;, \
+ 	[Tmisc] = &quot;misc&quot;, \
+ };
+<a href="#h2-1-3" id="h2-1-3" class="i">+
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+#define DEFMODE			dotile /* dofloat */
+</a> #define DEFTAG			Tdev
+<a href="#h2-1-6" id="h2-1-6" class="i">+#define FONT			&quot;fixed&quot;
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+#define BGCOLOR			&quot;#666699&quot;
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+#define FGCOLOR			&quot;#eeeeee&quot;
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+#define BORDERCOLOR		&quot;#9999CC&quot;
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+#define MODKEY			Mod1Mask
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+#define NUMLOCKMASK		Mod2Mask
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+#define MASTERW			52 /* percent */
+</a> 
+ #define KEYS \
+ 	const char *term[] = { &quot;xterm&quot;, NULL }; \
+<b>diff --git a/<a id="h3" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -3,7 +3,6 @@
+</a>  * See LICENSE file for license details.
+  */
+ #include &quot;dwm.h&quot;
+<a href="#h3-0-3" id="h3-0-3" class="d">-
+</a> #include &lt;stdio.h&gt;
+ #include &lt;string.h&gt;
+ #include &lt;X11/Xlocale.h&gt;
+<b>diff --git a/<a id="h4" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -3,8 +3,8 @@
+</a>  * See LICENSE file for license details.
+  */
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-#include &lt;X11/Xlib.h&gt;
+</a> #include CONFIG
+<a href="#h4-0-5" id="h4-0-5" class="i">+#include &lt;X11/Xlib.h&gt;
+</a> 
+ /* mask shorthands, used in event.c and client.c */
+ #define BUTTONMASK		(ButtonPressMask | ButtonReleaseMask)
+<a href="#h4-1" id="h4-1" class="h">@@ -57,8 +57,8 @@ struct Client {
+</a> 	int tx, ty, tw, th; /* title */
+ 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int grav;
+<a href="#h4-1-3" id="h4-1-3" class="d">-	unsigned int border;
+</a> 	long flags; 
+<a href="#h4-1-5" id="h4-1-5" class="i">+	unsigned int border;
+</a> 	Bool isfloat;
+ 	Bool ismax;
+ 	Client *next;
+<b>diff --git a/<a id="h5" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -3,7 +3,6 @@
+</a>  * See LICENSE file for license details.
+  */
+ #include &quot;dwm.h&quot;
+<a href="#h5-0-3" id="h5-0-3" class="d">-
+</a> #include &lt;stdlib.h&gt;
+ #include &lt;X11/keysym.h&gt;
+ #include &lt;X11/Xatom.h&gt;
+<a href="#h5-1" id="h5-1" class="h">@@ -151,32 +150,60 @@ configurerequest(XEvent *e)
+</a> {
+ 	Client *c;
+ 	XConfigureRequestEvent *ev = &amp;e-&gt;xconfigurerequest;
+<a href="#h5-1-3" id="h5-1-3" class="i">+	XEvent synev;
+</a> 	XWindowChanges wc;
+<a href="#h5-1-5" id="h5-1-5" class="i">+	unsigned long newmask;
+</a> 
+<a href="#h5-1-7" id="h5-1-7" class="d">-	ev-&gt;value_mask &amp;= ~CWSibling;
+</a> 	if((c = getclient(ev-&gt;window))) {
+ 		gravitate(c, True);
+<a href="#h5-1-10" id="h5-1-10" class="d">-		if(ev-&gt;value_mask &amp; CWX)
+</a><a href="#h5-1-11" id="h5-1-11" class="d">-			c-&gt;x = ev-&gt;x;
+</a><a href="#h5-1-12" id="h5-1-12" class="d">-		if(ev-&gt;value_mask &amp; CWY)
+</a><a href="#h5-1-13" id="h5-1-13" class="d">-			c-&gt;y = ev-&gt;y;
+</a><a href="#h5-1-14" id="h5-1-14" class="d">-		if(ev-&gt;value_mask &amp; CWWidth)
+</a><a href="#h5-1-15" id="h5-1-15" class="d">-			c-&gt;w = ev-&gt;width;
+</a><a href="#h5-1-16" id="h5-1-16" class="d">-		if(ev-&gt;value_mask &amp; CWHeight)
+</a><a href="#h5-1-17" id="h5-1-17" class="d">-			c-&gt;h = ev-&gt;height;
+</a><a href="#h5-1-18" id="h5-1-18" class="i">+		if(c-&gt;isfloat) {
+</a><a href="#h5-1-19" id="h5-1-19" class="i">+			if(ev-&gt;value_mask &amp; CWX)
+</a><a href="#h5-1-20" id="h5-1-20" class="i">+				c-&gt;x = ev-&gt;x;
+</a><a href="#h5-1-21" id="h5-1-21" class="i">+			if(ev-&gt;value_mask &amp; CWY)
+</a><a href="#h5-1-22" id="h5-1-22" class="i">+				c-&gt;y = ev-&gt;y;
+</a><a href="#h5-1-23" id="h5-1-23" class="i">+			if(ev-&gt;value_mask &amp; CWWidth)
+</a><a href="#h5-1-24" id="h5-1-24" class="i">+				c-&gt;w = ev-&gt;width;
+</a><a href="#h5-1-25" id="h5-1-25" class="i">+			if(ev-&gt;value_mask &amp; CWHeight)
+</a><a href="#h5-1-26" id="h5-1-26" class="i">+				c-&gt;h = ev-&gt;height;
+</a><a href="#h5-1-27" id="h5-1-27" class="i">+		}
+</a> 		if(ev-&gt;value_mask &amp; CWBorderWidth)
+<a href="#h5-1-29" id="h5-1-29" class="d">-			c-&gt;border = 1;
+</a><a href="#h5-1-30" id="h5-1-30" class="i">+			c-&gt;border = ev-&gt;border_width;
+</a> 		gravitate(c, False);
+<a href="#h5-1-32" id="h5-1-32" class="i">+
+</a> 		resize(c, True, TopLeft);
+<a href="#h5-1-34" id="h5-1-34" class="d">-	}
+</a> 
+<a href="#h5-1-36" id="h5-1-36" class="d">-	wc.x = ev-&gt;x;
+</a><a href="#h5-1-37" id="h5-1-37" class="d">-	wc.y = ev-&gt;y;
+</a><a href="#h5-1-38" id="h5-1-38" class="d">-	wc.width = ev-&gt;width;
+</a><a href="#h5-1-39" id="h5-1-39" class="d">-	wc.height = ev-&gt;height;
+</a><a href="#h5-1-40" id="h5-1-40" class="d">-	wc.border_width = 1;
+</a><a href="#h5-1-41" id="h5-1-41" class="d">-	XConfigureWindow(dpy, ev-&gt;window,
+</a><a href="#h5-1-42" id="h5-1-42" class="d">-			CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &amp;wc);
+</a><a href="#h5-1-43" id="h5-1-43" class="i">+		wc.x = c-&gt;x;
+</a><a href="#h5-1-44" id="h5-1-44" class="i">+		wc.y = c-&gt;y;
+</a><a href="#h5-1-45" id="h5-1-45" class="i">+		wc.width = c-&gt;w;
+</a><a href="#h5-1-46" id="h5-1-46" class="i">+		wc.height = c-&gt;h;
+</a><a href="#h5-1-47" id="h5-1-47" class="i">+		newmask = ev-&gt;value_mask &amp; (~(CWSibling | CWStackMode | CWBorderWidth));
+</a><a href="#h5-1-48" id="h5-1-48" class="i">+		if(newmask)
+</a><a href="#h5-1-49" id="h5-1-49" class="i">+			XConfigureWindow(dpy, c-&gt;win, newmask, &amp;wc);
+</a><a href="#h5-1-50" id="h5-1-50" class="i">+		else {
+</a><a href="#h5-1-51" id="h5-1-51" class="i">+			synev.type = ConfigureNotify;
+</a><a href="#h5-1-52" id="h5-1-52" class="i">+			synev.xconfigure.display = dpy;
+</a><a href="#h5-1-53" id="h5-1-53" class="i">+			synev.xconfigure.event = c-&gt;win;
+</a><a href="#h5-1-54" id="h5-1-54" class="i">+			synev.xconfigure.window = c-&gt;win;
+</a><a href="#h5-1-55" id="h5-1-55" class="i">+			synev.xconfigure.x = c-&gt;x;
+</a><a href="#h5-1-56" id="h5-1-56" class="i">+			synev.xconfigure.y = c-&gt;y;
+</a><a href="#h5-1-57" id="h5-1-57" class="i">+			synev.xconfigure.width = c-&gt;w;
+</a><a href="#h5-1-58" id="h5-1-58" class="i">+			synev.xconfigure.height = c-&gt;h;
+</a><a href="#h5-1-59" id="h5-1-59" class="i">+			synev.xconfigure.border_width = c-&gt;border;
+</a><a href="#h5-1-60" id="h5-1-60" class="i">+			synev.xconfigure.above = None;
+</a><a href="#h5-1-61" id="h5-1-61" class="i">+			/* Send synthetic ConfigureNotify */
+</a><a href="#h5-1-62" id="h5-1-62" class="i">+			XSendEvent(dpy, c-&gt;win, True, NoEventMask, &amp;synev);
+</a><a href="#h5-1-63" id="h5-1-63" class="i">+		}
+</a><a href="#h5-1-64" id="h5-1-64" class="i">+	}
+</a><a href="#h5-1-65" id="h5-1-65" class="i">+	else {
+</a><a href="#h5-1-66" id="h5-1-66" class="i">+		wc.x = ev-&gt;x;
+</a><a href="#h5-1-67" id="h5-1-67" class="i">+		wc.y = ev-&gt;y;
+</a><a href="#h5-1-68" id="h5-1-68" class="i">+		wc.width = ev-&gt;width;
+</a><a href="#h5-1-69" id="h5-1-69" class="i">+		wc.height = ev-&gt;height;
+</a><a href="#h5-1-70" id="h5-1-70" class="i">+		wc.border_width = ev-&gt;border_width;
+</a><a href="#h5-1-71" id="h5-1-71" class="i">+		wc.sibling = ev-&gt;above;
+</a><a href="#h5-1-72" id="h5-1-72" class="i">+		wc.stack_mode = ev-&gt;detail;
+</a><a href="#h5-1-73" id="h5-1-73" class="i">+		XConfigureWindow(dpy, ev-&gt;window, ev-&gt;value_mask, &amp;wc);
+</a><a href="#h5-1-74" id="h5-1-74" class="i">+	}
+</a> 	XSync(dpy, False);
+ }
+ 
+<b>diff --git a/<a id="h6" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -4,7 +4,6 @@
+</a>  */
+ 
+ #include &quot;dwm.h&quot;
+<a href="#h6-0-3" id="h6-0-3" class="d">-
+</a> #include &lt;errno.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+<a href="#h6-1" id="h6-1" class="h">@@ -15,7 +14,6 @@
+</a> #include &lt;X11/Xatom.h&gt;
+ #include &lt;X11/Xproto.h&gt;
+ 
+<a href="#h6-1-3" id="h6-1-3" class="d">-
+</a> /* static */
+ 
+ static int (*xerrorxlib)(Display *, XErrorEvent *);
+<a href="#h6-2" id="h6-2" class="h">@@ -165,6 +163,7 @@ main(int argc, char *argv[])
+</a> 	int i;
+ 	unsigned int mask;
+ 	fd_set rd;
+<a href="#h6-2-3" id="h6-2-3" class="i">+	Bool readin = True;
+</a> 	Window w;
+ 	XEvent ev;
+ 	XSetWindowAttributes wa;
+<a href="#h6-3" id="h6-3" class="h">@@ -251,7 +250,8 @@ main(int argc, char *argv[])
+</a> 	/* main event loop, reads status text from stdin as well */
+ 	while(running) {
+ 		FD_ZERO(&amp;rd);
+<a href="#h6-3-3" id="h6-3-3" class="d">-		FD_SET(STDIN_FILENO, &amp;rd);
+</a><a href="#h6-3-4" id="h6-3-4" class="i">+		if(readin)
+</a><a href="#h6-3-5" id="h6-3-5" class="i">+			FD_SET(STDIN_FILENO, &amp;rd);
+</a> 		FD_SET(ConnectionNumber(dpy), &amp;rd);
+ 
+ 		i = select(ConnectionNumber(dpy) + 1, &amp;rd, 0, 0, 0);
+<a href="#h6-4" id="h6-4" class="h">@@ -267,11 +267,12 @@ main(int argc, char *argv[])
+</a> 						(handler[ev.type])(&amp;ev); /* call handler */
+ 				}
+ 			}
+<a href="#h6-4-3" id="h6-4-3" class="d">-			if(FD_ISSET(STDIN_FILENO, &amp;rd)) {
+</a><a href="#h6-4-4" id="h6-4-4" class="d">-				if(!fgets(stext, sizeof(stext), stdin))
+</a><a href="#h6-4-5" id="h6-4-5" class="d">-					break;
+</a><a href="#h6-4-6" id="h6-4-6" class="d">-				else 
+</a><a href="#h6-4-7" id="h6-4-7" class="i">+			if(readin &amp;&amp; FD_ISSET(STDIN_FILENO, &amp;rd)) {
+</a><a href="#h6-4-8" id="h6-4-8" class="i">+				readin = NULL != fgets(stext, sizeof(stext), stdin);
+</a><a href="#h6-4-9" id="h6-4-9" class="i">+				if(readin)
+</a> 					stext[strlen(stext) - 1] = 0;
+<a href="#h6-4-11" id="h6-4-11" class="i">+				else 
+</a><a href="#h6-4-12" id="h6-4-12" class="i">+					strcpy(stext, &quot;broken pipe&quot;);
+</a> 				drawstatus();
+ 			}
+ 		}
+<b>diff --git a/<a id="h7" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -3,7 +3,6 @@
+</a>  * See LICENSE file for license details.
+  */
+ #include &quot;dwm.h&quot;
+<a href="#h7-0-3" id="h7-0-3" class="d">-
+</a> #include &lt;regex.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;string.h&gt;
+<a href="#h7-1" id="h7-1" class="h">@@ -86,26 +85,26 @@ dotile(Arg *arg)
+</a> 			if(n == 1) {
+ 				c-&gt;x = sx;
+ 				c-&gt;y = sy + bh;
+<a href="#h7-1-3" id="h7-1-3" class="d">-				c-&gt;w = sw - 2 * c-&gt;border;
+</a><a href="#h7-1-4" id="h7-1-4" class="d">-				c-&gt;h = sh - 2 * c-&gt;border - bh;
+</a><a href="#h7-1-5" id="h7-1-5" class="i">+				c-&gt;w = sw - 2;
+</a><a href="#h7-1-6" id="h7-1-6" class="i">+				c-&gt;h = sh - 2 - bh;
+</a> 			}
+ 			else if(i == 0) {
+ 				c-&gt;x = sx;
+ 				c-&gt;y = sy + bh;
+<a href="#h7-1-11" id="h7-1-11" class="d">-				c-&gt;w = mw - 2 * c-&gt;border;
+</a><a href="#h7-1-12" id="h7-1-12" class="d">-				c-&gt;h = sh - 2 * c-&gt;border - bh;
+</a><a href="#h7-1-13" id="h7-1-13" class="i">+				c-&gt;w = mw - 2;
+</a><a href="#h7-1-14" id="h7-1-14" class="i">+				c-&gt;h = sh - 2 - bh;
+</a> 			}
+ 			else if(h &gt; bh) {
+ 				c-&gt;x = sx + mw;
+ 				c-&gt;y = sy + (i - 1) * h + bh;
+<a href="#h7-1-19" id="h7-1-19" class="d">-				c-&gt;w = w - 2 * c-&gt;border;
+</a><a href="#h7-1-20" id="h7-1-20" class="d">-				c-&gt;h = h - 2 * c-&gt;border;
+</a><a href="#h7-1-21" id="h7-1-21" class="i">+				c-&gt;w = w - 2;
+</a><a href="#h7-1-22" id="h7-1-22" class="i">+				c-&gt;h = h - 2;
+</a> 			}
+ 			else { /* fallback if h &lt; bh */
+ 				c-&gt;x = sx + mw;
+ 				c-&gt;y = sy + bh;
+<a href="#h7-1-27" id="h7-1-27" class="d">-				c-&gt;w = w - 2 * c-&gt;border;
+</a><a href="#h7-1-28" id="h7-1-28" class="d">-				c-&gt;h = sh - 2 * c-&gt;border - bh;
+</a><a href="#h7-1-29" id="h7-1-29" class="i">+				c-&gt;w = w - 2;
+</a><a href="#h7-1-30" id="h7-1-30" class="i">+				c-&gt;h = sh - 2 - bh;
+</a> 			}
+ 			resize(c, False, TopLeft);
+ 			i++;
+<b>diff --git a/<a id="h8" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -3,7 +3,6 @@
+</a>  * See LICENSE file for license details.
+  */
+ #include &quot;dwm.h&quot;
+<a href="#h8-0-3" id="h8-0-3" class="d">-
+</a> #include &lt;stdarg.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+</pre>
+</div>
+</body>
+</html>

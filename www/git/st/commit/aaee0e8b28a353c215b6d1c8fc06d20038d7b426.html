@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Reload colors in reset - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/aaee0e8b28a353c215b6d1c8fc06d20038d7b426.html">aaee0e8b28a353c215b6d1c8fc06d20038d7b426</a>
+<b>parent</b> <a href="../commit/8dde8cde41caa311718d2b990ea3356272ee25ee.html">8dde8cde41caa311718d2b990ea3356272ee25ee</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Sat, 20 Jul 2013 21:52:40 +0200
+
+Reload colors in reset
+
+Colors definition can be changed using a OSC sequence, so
+we have to reload them if we want be sure all the colors
+are the correct.
+
+Could be desirable free the colors allocated due to rgb
+colors and inverse colors (XftColorAllocValues in xdraws),
+but it is impossible due we use the same structure for all
+of them.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2428,6 +2428,7 @@ tputc(char *c, int len) {
+</a> 				treset();
+ 				term.esc = 0;
+ 				xresettitle();
+<a href="#h0-0-3" id="h0-0-3" class="i">+				xloadcols();
+</a> 				break;
+ 			case &#39;=&#39;: /* DECPAM -- Application keypad */
+ 				term.mode |= MODE_APPKEYPAD;
+<a href="#h0-1" id="h0-1" class="h">@@ -2589,6 +2590,13 @@ void
+</a> xloadcols(void) {
+ 	int i, r, g, b;
+ 	XRenderColor color = { .alpha = 0xffff };
+<a href="#h0-1-3" id="h0-1-3" class="i">+	static bool loaded;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	Colour *cp;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	if(loaded) {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		for (cp = dc.col; cp &lt; dc.col + LEN(dc.col); ++cp)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+			XftColorFree(xw.dpy, xw.vis, xw.cmap, cp);
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	}
+</a> 
+ 	/* load colors [0-15] colors and [256-LEN(colorname)[ (config.h) */
+ 	for(i = 0; i &lt; LEN(colorname); i++) {
+<a href="#h0-2" id="h0-2" class="h">@@ -2621,6 +2629,7 @@ xloadcols(void) {
+</a> 			die(&quot;Could not allocate color %d\n&quot;, i);
+ 		}
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="i">+	loaded = true;
+</a> }
+ 
+ int
+</pre>
+</div>
+</body>
+</html>

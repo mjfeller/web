@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>-e flag handles arguments. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/732b9601ed2543b1fa6acbc08ddc05818279265f.html">732b9601ed2543b1fa6acbc08ddc05818279265f</a>
+<b>parent</b> <a href="../commit/54bc450dbf057e66bed5f10d13d90a469e5ca8ae.html">54bc450dbf057e66bed5f10d13d90a469e5ca8ae</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 28 Nov 2010 13:17:20 +0100
+
+-e flag handles arguments.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 7 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -545,11 +545,15 @@ die(const char *errstr, ...) {
+</a> 
+ void
+ execsh(void) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	char *args[] = {getenv(&quot;SHELL&quot;), &quot;-i&quot;, NULL};
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	char **args;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	char *envshell = getenv(&quot;SHELL&quot;);
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	DEFAULT(envshell, &quot;sh&quot;);
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a> 	if(opt_cmd)
+<a href="#h0-0-9" id="h0-0-9" class="d">-		args[0] = opt_cmd, args[1] = NULL;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		args = (char*[]){&quot;sh&quot;, &quot;-c&quot;, opt_cmd, NULL};
+</a> 	else
+<a href="#h0-0-12" id="h0-0-12" class="d">-		DEFAULT(args[0], SHELL);
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		args = (char*[]){envshell, &quot;-i&quot;, NULL};
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	
+</a> 	putenv(&quot;TERM=&quot;TNAME);
+ 	execvp(args[0], args);
+ }
+</pre>
+</div>
+</body>
+</html>

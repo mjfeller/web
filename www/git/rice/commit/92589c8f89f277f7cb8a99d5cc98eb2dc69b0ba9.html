@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>installer - rice - config file
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="rice Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>rice</h1><span class="desc">config file
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/92589c8f89f277f7cb8a99d5cc98eb2dc69b0ba9.html">92589c8f89f277f7cb8a99d5cc98eb2dc69b0ba9</a>
+<b>parent</b> <a href="../commit/1ba9421ee04b293aef6445f6ebb3cfcf37b83391.html">1ba9421ee04b293aef6445f6ebb3cfcf37b83391</a>
+<b>Author:</b> Mark Feller &lt;<a href="mailto:mfeller@recurly.com">mfeller@recurly.com</a>&gt;
+<b>Date:</b>   Wed, 15 Jan 2020 13:17:02 -0700
+
+installer
+
+Signed-off-by: Mark Feller &lt;mfeller@recurly.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dots/.config/zsh/kubernetes.zsh</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">install</a></td><td> | </td><td class="num">93</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">pkgs/fedora/packages</a></td><td> | </td><td class="num">23</td><td><span class="i">++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>3 files changed, 62 insertions(+), 56 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dots/.config/zsh/kubernetes.zsh.html">dots/.config/zsh/kubernetes.zsh</a> b/<a href="../file/dots/.config/zsh/kubernetes.zsh.html">dots/.config/zsh/kubernetes.zsh</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -13,7 +13,7 @@ kcc() {
+</a> }
+ 
+ authn() {
+<a href="#h0-0-3" id="h0-0-3" class="d">-    istioctl authn -n mjf-istio tls-check $(pod recurly-app-web) | rg &quot;HOST|mjf-istio&quot; --color=never
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+    istioctl authn -n qa5 tls-check $(pod recurly-app-web) | rg &quot;HOST|qa5&quot; --color=never
+</a> }
+ 
+ # kt() {
+<b>diff --git a/<a id="h1" href="../file/install.html">install</a> b/<a href="../file/install.html">install</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,42 +1,16 @@
+</a> #!/bin/sh
+ #
+ # Auto installer for macOS packages and dot files
+<a href="#h1-0-3" id="h1-0-3" class="i">+dotrepo=${dotrepo:-&quot;https://gitlab.com/mark.feller/rice.git&quot;}
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+pkgfile=${pkgfile:-&quot;https://gitlab.com/mark.feller/rice/raw/master/pkgs/fedora/packages&quot;}
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+logfile=${logfile:-&quot;/var/log/rice.log&quot;}
+</a> 
+<a href="#h1-0-7" id="h1-0-7" class="d">-log() { printf &#39;\033[1;33m%s \033[m%s\033[m %s\n&#39; &quot;-&gt;&quot; &quot;${2:+[1;36m}$1${2:+[m}&quot; &quot;$2&quot; ; }
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-# Determine which package manager exists on the system
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-if [ $(command -v dnf) ]; then
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-    log &quot;Installing packages for Fedora&quot;
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-    os=fedora
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-	installpkg() {
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-        log &quot;Installing $1...&quot;
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-        dnf install -y &quot;$1&quot;
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-    }
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-elif [ $(command -v xbps-install) ]; then
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-    log &quot;Install packages for voidlinux&quot;
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-    os=void
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-    installpkg() {
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-        xbps-install -Sy &quot;$1&quot; &gt;/dev/null 2&gt;&amp;1
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-    }
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-elif [ $(command -v brew) ]; then
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-    log &quot;Installing packages for macOS&quot;
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-    os=macos
+</a><a href="#h1-0-26" id="h1-0-26" class="d">-	installpkg() {
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-        case $2 in
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-            C)
+</a><a href="#h1-0-29" id="h1-0-29" class="d">-                log &quot;Installing $program cask...&quot;
+</a><a href="#h1-0-30" id="h1-0-30" class="d">-                brew cask install &quot;$1&quot; 2&gt; /dev/null || brew cask upgrade &quot;$1&quot;
+</a><a href="#h1-0-31" id="h1-0-31" class="d">-                ;;
+</a><a href="#h1-0-32" id="h1-0-32" class="d">-            *)
+</a><a href="#h1-0-33" id="h1-0-33" class="d">-                log &quot;Installing $program...&quot;
+</a><a href="#h1-0-34" id="h1-0-34" class="d">-                brew install &quot;$1&quot; 2&gt; /dev/null || brew upgrade &quot;$1&quot;
+</a><a href="#h1-0-35" id="h1-0-35" class="d">-                ;;
+</a><a href="#h1-0-36" id="h1-0-36" class="d">-        esac
+</a><a href="#h1-0-37" id="h1-0-37" class="d">-    }
+</a><a href="#h1-0-38" id="h1-0-38" class="d">-fi
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+log() {
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+    printf &#39;\033[1;33m%s \033[m%s\033[m %s\n&#39; &quot;-&gt;&quot; &quot;${2:+[1;36m}$1${2:+[m}&quot; &quot;$2&quot; \
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+        | tee &quot;$logfile&quot;
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+}
+</a> 
+<a href="#h1-0-44" id="h1-0-44" class="d">-dotsrepo=${dotfilesrepo:-&quot;https://gitlab.com/mark.feller/rice.git&quot;}
+</a><a href="#h1-0-45" id="h1-0-45" class="d">-pkgfile=${pkgfile:-&quot;https://gitlab.com/mark.feller/rice/raw/master/pkgs/$os/packages&quot;}
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+die() { log &quot;$2&quot; &amp;&amp; exit 1 ; }
+</a> 
+ trim_string() {
+     # Usage: trim_string &quot;   example   string    &quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -45,34 +19,61 @@ trim_string() {
+</a>     printf &#39;%s\n&#39; &quot;$trim&quot;
+ }
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+pre_install() {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+    # Run any preinstall setup necessary
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+    log &quot;Enabling RPM Fustion&quot;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+    dnf install -y \
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+        https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-&quot;$(rpm -E %fedora)&quot;.noarch.rpm \
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+        https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-&quot;$(rpm -E %fedora)&quot;.noarch.rpm \
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+        &gt; &quot;$logfile&quot;
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+    log &quot;Enabled i3-gaps community repo&quot;
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+    dnf copr enable gregw/i3desktop &gt; &quot;$logfile&quot;
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+    log &quot;Enabled alacritty community repo&quot;
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+    dnf copr enable pschyska/alacritty &gt; &quot;$logfile&quot;
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+}
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+install_package() {
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+    # Install a single package $1 based on its flags $2
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+    
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+    case $2 in
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+        G)
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+            log &quot;Installing go package $1&quot;
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+            go get -u &quot;$1&quot; &gt; &quot;$logfile&quot;
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+            ;;
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+        *)
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+            log &quot;Installing $1...&quot;
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+            dnf install -y &quot;$1&quot; &gt; &quot;$logfile&quot;
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+            ;;
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+    esac
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+}
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+
+</a> install_packages() {
+<a href="#h1-1-35" id="h1-1-35" class="i">+    # Fetch the package file and install all packages
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+    
+</a>     # Copy a real file to our temp pkgfile or attempt to curl the pkgfile
+     ([ -f &quot;$pkgfile&quot; ] &amp;&amp; cp &quot;$pkgfile&quot; /tmp/pkgs) || (log &quot;Downloading package list...&quot; &amp;&amp; curl -Ls &quot;$pkgfile&quot; &gt; /tmp/pkgs)
+ 
+     packages=$(sed &#39;/^$/d&#39; /tmp/pkgs | sed &#39;/^#/d&#39;)
+     while IFS=&#39;	&#39; read -r flag program comment; do
+         program=$(trim_string &quot;$program&quot;)
+<a href="#h1-1-43" id="h1-1-43" class="d">-        installpkg $program $flag
+</a><a href="#h1-1-44" id="h1-1-44" class="i">+        install_package &quot;$program&quot; &quot;$flag&quot;
+</a>     done &lt;&lt;EOF
+ $packages
+ EOF
+ }
+ 
+ install_dots() {
+<a href="#h1-1-51" id="h1-1-51" class="d">-    git clone &quot;$dotsrepo&quot; ~/.config/rice || log &quot;Dots have already been cloned&quot;
+</a><a href="#h1-1-52" id="h1-1-52" class="d">-    (cd ~/.config/rice &amp;&amp; stow --target=$HOME --ignore=&#39;gitignore&#39; dots)
+</a><a href="#h1-1-53" id="h1-1-53" class="d">-}
+</a><a href="#h1-1-54" id="h1-1-54" class="i">+    # Clone and install dot files
+</a> 
+<a href="#h1-1-56" id="h1-1-56" class="d">-pre_install() {
+</a><a href="#h1-1-57" id="h1-1-57" class="d">-    # Enable RPM Fustion free and non-free on Fedora
+</a><a href="#h1-1-58" id="h1-1-58" class="d">-    [ &quot;$os&quot; == &quot;fedora&quot; ] &amp;&amp; {
+</a><a href="#h1-1-59" id="h1-1-59" class="d">-        log &quot;Enabling RPM Fustion&quot;
+</a><a href="#h1-1-60" id="h1-1-60" class="d">-        sudo dnf install -y \
+</a><a href="#h1-1-61" id="h1-1-61" class="d">-             https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+</a><a href="#h1-1-62" id="h1-1-62" class="d">-             https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+</a><a href="#h1-1-63" id="h1-1-63" class="d">-    }
+</a><a href="#h1-1-64" id="h1-1-64" class="i">+    log &quot;Fetching dot files&quot;
+</a><a href="#h1-1-65" id="h1-1-65" class="i">+    git clone &quot;$dotrepo&quot; ~/.config/rice &gt; &quot;$logfile&quot; || log &quot;Dots have already been cloned&quot;
+</a><a href="#h1-1-66" id="h1-1-66" class="i">+    (cd ~/.config/rice &amp;&amp; stow --target=&quot;$HOME&quot; --ignore=&#39;gitignore&#39; dots)
+</a> }
+ 
+<a href="#h1-1-69" id="h1-1-69" class="i">+log &quot;Running installer for Fedora&quot;
+</a> pre_install
+ install_packages
+ install_dots
+<b>diff --git a/<a id="h2" href="../file/pkgs/fedora/packages.html">pkgs/fedora/packages</a> b/<a href="../file/pkgs/fedora/packages.html">pkgs/fedora/packages</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,28 +1,29 @@
+</a> # Tooling
+     git             is a version control system
+     stow            is a tool for managing symlinks for dot files
+<a href="#h2-0-3" id="h2-0-3" class="i">+    go              is the go toolchain
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+    rust            is the rust toolchain
+</a> 
+ # Editor
+     emacs           is the best editor
+     vim             is another editor
+ 
+ # Desktop Environment and System Utilities
+<a href="#h2-0-11" id="h2-0-11" class="d">-    compton         is an xorg composition manager
+</a>     i3-gaps         is the i3 tilling window manager but with gaps.
+     xclip           allows for copying and pasting from the command line.
+<a href="#h2-0-14" id="h2-0-14" class="d">-    xsetroot        sets status bar and other x properties
+</a>     htop            provides system usage information and displays processes
+     dbus            facilities inter-process communication
+     zsh             is a shell that is compatible with bash.
+<a href="#h2-0-18" id="h2-0-18" class="d">-    rust            is the rust toolchain
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-    go              is the go toolchain
+</a> 
+ # File Management
+<a href="#h2-0-22" id="h2-0-22" class="d">-    w3m             is a terminal browser which can also view images
+</a><a href="#h2-0-23" id="h2-0-23" class="d">-    lf              is an extensive terminal file manager
+</a><a href="#h2-0-24" id="h2-0-24" class="d">-    fzf             is a fuzzy finder tool
+</a><a href="#h2-0-25" id="h2-0-25" class="d">-    unrar           extracts rars
+</a><a href="#h2-0-26" id="h2-0-26" class="d">-    unzip           unzips zips
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+    w3m                     is a terminal browser which can also view images
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+G   github.com/gokcehan/lf  is an extensive terminal file manager
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+    fd-find                 is a more friendly find
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+    ripgrep                 is a more friendly grep
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+    bat                     prints files out nicely
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+    fzf                     is a fuzzy finder tool
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+    unrar                   extracts rars
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+    unzip                   unzips zips
+</a> 
+ # Audio and Video
+     pulseaudio      is an audio router
+<a href="#h2-1" id="h2-1" class="h">@@ -36,3 +37,6 @@
+</a> # Notications
+     libnotify       allows desktop notificatio
+     dunst           is a suckless notification system
+<a href="#h2-1-3" id="h2-1-3" class="i">+
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+# Development tool
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+    kubernetes-client  is a the kubernetes command line utility</a><a href="#h2-1-6" id="h2-1-6" class="i">+
+\ No newline at end of file
+</a></pre>
+</div>
+</body>
+</html>

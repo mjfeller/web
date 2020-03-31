@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Use int instead of long for color - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1fe0a5f39a8755da4cd16e92f2ea00676d9ee3ca.html">1fe0a5f39a8755da4cd16e92f2ea00676d9ee3ca</a>
+<b>parent</b> <a href="../commit/4435e0ee6791136e641d58ce6cf00f8665fe3065.html">4435e0ee6791136e641d58ce6cf00f8665fe3065</a>
+<b>Author:</b> Johannes Hofmann &lt;<a href="mailto:johannes.hofmann@gmx.de">johannes.hofmann@gmx.de</a>&gt;
+<b>Date:</b>   Sun, 24 Nov 2013 10:20:45 +0100
+
+Use int instead of long for color
+
+This patch replaces long by int32_t. It saves
+some memory on 64bit systems.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 6 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -180,8 +180,8 @@ typedef unsigned short ushort;
+</a> typedef struct {
+ 	char c[UTF_SIZ]; /* character code */
+ 	ushort mode;      /* attribute flags */
+<a href="#h0-0-3" id="h0-0-3" class="d">-	ulong fg;        /* foreground  */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	ulong bg;        /* background  */
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	uint32_t fg;      /* foreground  */
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	uint32_t bg;      /* background  */
+</a> } Glyph;
+ 
+ typedef Glyph *Line;
+<a href="#h0-1" id="h0-1" class="h">@@ -379,7 +379,7 @@ static void tsetdirtattr(int);
+</a> static void tsetmode(bool, bool, int *, int);
+ static void tfulldirt(void);
+ static void techo(char *, int);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static long tdefcolor(int *, int *, int);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static uint32_t tdefcolor(int *, int *, int);
+</a> static void tselcs(void);
+ static void tdeftran(char);
+ static inline bool match(uint, uint);
+<a href="#h0-2" id="h0-2" class="h">@@ -1666,9 +1666,9 @@ tdeleteline(int n) {
+</a> 	tscrollup(term.c.y, n);
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-long
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+uint32_t
+</a> tdefcolor(int *attr, int *npar, int l) {
+<a href="#h0-2-6" id="h0-2-6" class="d">-	long idx = -1;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	int32_t idx = -1;
+</a> 	uint r, g, b;
+ 
+ 	switch (attr[*npar + 1]) {
+<a href="#h0-3" id="h0-3" class="h">@@ -1717,7 +1717,7 @@ tdefcolor(int *attr, int *npar, int l) {
+</a> void
+ tsetattr(int *attr, int l) {
+ 	int i;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	long idx;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	int32_t idx;
+</a> 
+ 	for(i = 0; i &lt; l; i++) {
+ 		switch(attr[i]) {
+</pre>
+</div>
+</body>
+</html>

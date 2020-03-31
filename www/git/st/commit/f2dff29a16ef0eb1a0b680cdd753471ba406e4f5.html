@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>drawing is faster but the bold attr is not supported anymore. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f2dff29a16ef0eb1a0b680cdd753471ba406e4f5.html">f2dff29a16ef0eb1a0b680cdd753471ba406e4f5</a>
+<b>parent</b> <a href="../commit/4e6915a16b75c1e79142e15a9b23e761140d4e9b.html">4e6915a16b75c1e79142e15a9b23e761140d4e9b</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 28 Oct 2009 14:34:22 +0100
+
+drawing is faster but the bold attr is not supported anymore.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">64</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 39 insertions(+), 27 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ #define FONT &quot;fixed&quot;
+ #define BORDER 3
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define LINESPACE 1 /* additional pixel between each line */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define LINESPACE 0 /* additional pixel between each line */
+</a> 
+ /* Terminal colors */
+ static const char *colorname[] = {
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -3,6 +3,7 @@
+</a> #include &lt;ctype.h&gt;
+ #include &lt;errno.h&gt;
+ #include &lt;fcntl.h&gt;
+<a href="#h1-0-3" id="h1-0-3" class="i">+#include &lt;limits.h&gt;
+</a> #include &lt;locale.h&gt;
+ #include &lt;stdarg.h&gt;
+ #include &lt;stdio.h&gt;
+<a href="#h1-1" id="h1-1" class="h">@@ -24,6 +25,7 @@
+</a> /* Arbitrary sizes */
+ #define ESCSIZ 256
+ #define ESCARG 16
+<a href="#h1-1-3" id="h1-1-3" class="i">+#define MAXDRAWBUF 1024
+</a> 
+ #define SERRNO strerror(errno)
+ #define MIN(a, b)  ((a) &lt; (b) ? (a) : (b))
+<a href="#h1-2" id="h1-2" class="h">@@ -32,6 +34,7 @@
+</a> #define DEFAULT(a, b)     (a) = (a) ? (a) : (b)    
+ #define BETWEEN(x, a, b)  ((a) &lt;= (x) &amp;&amp; (x) &lt;= (b))
+ #define LIMIT(x, a, b)    (x) = (x) &lt; (a) ? (a) : (x) &gt; (b) ? (b) : (x)
+<a href="#h1-2-3" id="h1-2-3" class="i">+#define ATTRCMP(a, b) ((a).mode != (b).mode || (a).fg != (b).fg || (a).bg != (b).bg)
+</a> 
+ /* Attribute, Cursor, Character state, Terminal mode, Screen draw mode */
+ enum { ATnone=0 , ATreverse=1 , ATunderline=2, ATbold=4 };
+<a href="#h1-3" id="h1-3" class="h">@@ -934,6 +937,23 @@ xinit(void) {
+</a> }
+ 
+ void
+<a href="#h1-3-3" id="h1-3-3" class="i">+xdraws (char *s, Glyph base, int x, int y, int len) {
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	unsigned long xfg, xbg;
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+	int winx = x*xw.cw, winy = y*xw.ch + dc.font-&gt;ascent, width = len*xw.cw;
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+	if(base.mode &amp; ATreverse)
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+		xfg = dc.col[base.bg], xbg = dc.col[base.fg];
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+	else
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+		xfg = dc.col[base.fg], xbg = dc.col[base.bg];
+</a><a href="#h1-3-10" id="h1-3-10" class="i">+
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+	XSetBackground(xw.dis, dc.gc, xbg);
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+	XSetForeground(xw.dis, dc.gc, xfg);
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+	XDrawImageString(xw.dis, xw.win, dc.gc, winx, winy, s, len);
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+	
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+	if(base.mode &amp; ATunderline)
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+		XDrawLine(xw.dis, xw.win, dc.gc, winx, winy+1, winx+width-1, winy+1);
+</a><a href="#h1-3-17" id="h1-3-17" class="i">+}
+</a><a href="#h1-3-18" id="h1-3-18" class="i">+
+</a><a href="#h1-3-19" id="h1-3-19" class="i">+void
+</a> xdrawc(int x, int y, Glyph g) {
+ 	XRectangle r = { x * xw.cw, y * xw.ch, xw.cw, xw.ch };
+ 	unsigned long xfg, xbg;
+<a href="#h1-4" id="h1-4" class="h">@@ -944,18 +964,9 @@ xdrawc(int x, int y, Glyph g) {
+</a> 	else
+ 		xfg = dc.col[g.fg], xbg = dc.col[g.bg];
+ 	/* background */
+<a href="#h1-4-3" id="h1-4-3" class="d">-	XSetForeground(xw.dis, dc.gc, xbg);
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-	XFillRectangles(xw.dis, xw.win, dc.gc, &amp;r, 1);
+</a><a href="#h1-4-5" id="h1-4-5" class="d">-	/* string */
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+	XSetBackground(xw.dis, dc.gc, xbg);
+</a> 	XSetForeground(xw.dis, dc.gc, xfg);
+<a href="#h1-4-8" id="h1-4-8" class="d">-	XDrawString(xw.dis, xw.win, dc.gc, r.x, r.y+dc.font-&gt;ascent, &amp;(g.c), 1);
+</a><a href="#h1-4-9" id="h1-4-9" class="d">-	if(g.mode &amp; ATbold)	 /* XXX: bold hack (draw again at x+1) */
+</a><a href="#h1-4-10" id="h1-4-10" class="d">-		XDrawString(xw.dis, xw.win, dc.gc, r.x+1, r.y+dc.font-&gt;ascent, &amp;(g.c), 1);
+</a><a href="#h1-4-11" id="h1-4-11" class="d">-	/* underline */
+</a><a href="#h1-4-12" id="h1-4-12" class="d">-	if(g.mode &amp; ATunderline) {
+</a><a href="#h1-4-13" id="h1-4-13" class="d">-		r.y += dc.font-&gt;ascent + 1;
+</a><a href="#h1-4-14" id="h1-4-14" class="d">-		XDrawLine(xw.dis, xw.win, dc.gc, r.x, r.y, r.x+r.width-1, r.y);
+</a><a href="#h1-4-15" id="h1-4-15" class="d">-	}
+</a><a href="#h1-4-16" id="h1-4-16" class="i">+	XDrawImageString(xw.dis, xw.win, dc.gc, r.x, r.y+dc.font-&gt;ascent, &amp;g.c, 1);
+</a> }
+ 
+ void
+<a href="#h1-5" id="h1-5" class="h">@@ -983,25 +994,26 @@ xcursor(int mode) {
+</a> 
+ void
+ draw(int redraw_all) {
+<a href="#h1-5-3" id="h1-5-3" class="d">-	int x, y;
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-	int changed, set;
+</a><a href="#h1-5-5" id="h1-5-5" class="d">-
+</a><a href="#h1-5-6" id="h1-5-6" class="d">-	if(redraw_all)
+</a><a href="#h1-5-7" id="h1-5-7" class="d">-		XClearWindow(xw.dis, xw.win);
+</a><a href="#h1-5-8" id="h1-5-8" class="d">-
+</a><a href="#h1-5-9" id="h1-5-9" class="d">-	/* XXX: drawing could be optimised */
+</a><a href="#h1-5-10" id="h1-5-10" class="i">+	int i, x, y, ox;
+</a><a href="#h1-5-11" id="h1-5-11" class="i">+	Glyph base, new;
+</a><a href="#h1-5-12" id="h1-5-12" class="i">+	char buf[MAXDRAWBUF];
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+	
+</a> 	for(y = 0; y &lt; term.row; y++) {
+<a href="#h1-5-15" id="h1-5-15" class="i">+		base = term.line[y][0];
+</a><a href="#h1-5-16" id="h1-5-16" class="i">+		i = ox = 0;
+</a> 		for(x = 0; x &lt; term.col; x++) {
+<a href="#h1-5-18" id="h1-5-18" class="d">-			changed = term.line[y][x].state &amp; CRupdate;
+</a><a href="#h1-5-19" id="h1-5-19" class="d">-			set = term.line[y][x].state &amp; CRset;
+</a><a href="#h1-5-20" id="h1-5-20" class="d">-			if(redraw_all || changed) {
+</a><a href="#h1-5-21" id="h1-5-21" class="d">-				term.line[y][x].state &amp;= ~CRupdate;
+</a><a href="#h1-5-22" id="h1-5-22" class="d">-				if(set)
+</a><a href="#h1-5-23" id="h1-5-23" class="d">-					xdrawc(x, y, term.line[y][x]);
+</a><a href="#h1-5-24" id="h1-5-24" class="d">-				else
+</a><a href="#h1-5-25" id="h1-5-25" class="d">-					xclear(x, y, x, y);
+</a><a href="#h1-5-26" id="h1-5-26" class="i">+			new = term.line[y][x];
+</a><a href="#h1-5-27" id="h1-5-27" class="i">+			if(!ATTRCMP(base, new) &amp;&amp; i &lt; MAXDRAWBUF)
+</a><a href="#h1-5-28" id="h1-5-28" class="i">+				buf[i++] = new.c;
+</a><a href="#h1-5-29" id="h1-5-29" class="i">+			else {
+</a><a href="#h1-5-30" id="h1-5-30" class="i">+				xdraws(buf, base, ox, y, i);
+</a><a href="#h1-5-31" id="h1-5-31" class="i">+				buf[0] = new.c;
+</a><a href="#h1-5-32" id="h1-5-32" class="i">+				i = 1;
+</a><a href="#h1-5-33" id="h1-5-33" class="i">+				ox = x;
+</a><a href="#h1-5-34" id="h1-5-34" class="i">+				base = new;
+</a> 			}
+ 		}
+<a href="#h1-5-37" id="h1-5-37" class="i">+		xdraws(buf, base, ox, y, i);
+</a> 	}
+ 	xcursor(CSdraw);
+ }
+</pre>
+</div>
+</body>
+</html>

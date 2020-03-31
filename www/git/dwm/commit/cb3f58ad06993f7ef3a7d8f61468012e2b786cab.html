@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Prepare 6.2 release. - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cb3f58ad06993f7ef3a7d8f61468012e2b786cab.html">cb3f58ad06993f7ef3a7d8f61468012e2b786cab</a>
+<b>parent</b> <a href="../commit/b69c870a3076d78ab595ed1cd4b41cf6b03b2610.html">b69c870a3076d78ab595ed1cd4b41cf6b03b2610</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.ca">anselm@garbe.ca</a>&gt;
+<b>Date:</b>   Sat,  2 Feb 2019 04:50:42 -0800
+
+Prepare 6.2 release.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">LICENSE</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">drw.c</a></td><td> | </td><td class="num">16</td><td><span class="i">+++++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>3 files changed, 17 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/LICENSE.html">LICENSE</a> b/<a href="../file/LICENSE.html">LICENSE</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,6 @@
+</a> MIT/X Consortium License
+ 
+<a href="#h0-0-2" id="h0-0-2" class="d">-© 2006-2017 Anselm R Garbe &lt;anselm@garbe.us&gt;
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+© 2006-2019 Anselm R Garbe &lt;anselm@garbe.ca&gt;
+</a> © 2006-2009 Jukka Salmi &lt;jukka at salmi dot ch&gt;
+ © 2006-2007 Sander van Dijk &lt;a dot h dot vandijk at gmail dot com&gt;
+ © 2007-2011 Peter Hartlich &lt;sgkkr at hartlich dot com&gt;
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,5 +1,5 @@
+</a> # dwm version
+<a href="#h1-0-1" id="h1-0-1" class="d">-VERSION = 6.1
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+VERSION = 6.2
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h2" href="../file/drw.c.html">drw.c</a> b/<a href="../file/drw.c.html">drw.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -132,6 +132,19 @@ xfont_create(Drw *drw, const char *fontname, FcPattern *fontpattern)
+</a> 		die(&quot;no font specified.&quot;);
+ 	}
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+	/* Do not allow using color fonts. This is a workaround for a BadLength
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	 * error from Xft with color glyphs. Modelled on the Xterm workaround. See
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	 * https://bugzilla.redhat.com/show_bug.cgi?id=1498269
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+	 * https://lists.suckless.org/dev/1701/30932.html
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+	 * https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=916349
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	 * and lots more all over the internet.
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	 */
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	FcBool iscol;
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+	if(FcPatternGetBool(xfont-&gt;pattern, FC_COLOR, 0, &amp;iscol) == FcResultMatch &amp;&amp; iscol) {
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+		XftFontClose(drw-&gt;dpy, xfont);
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+		return NULL;
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+	}
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+
+</a> 	font = ecalloc(1, sizeof(Fnt));
+ 	font-&gt;xfont = xfont;
+ 	font-&gt;pattern = pattern;
+<a href="#h2-1" id="h2-1" class="h">@@ -200,7 +213,7 @@ drw_scm_create(Drw *drw, const char *clrnames[], size_t clrcount)
+</a> 	Clr *ret;
+ 
+ 	/* need at least two colors for a scheme */
+<a href="#h2-1-3" id="h2-1-3" class="d">-	if (!drw || !clrnames || clrcount &lt; 2 || !(ret = ecalloc(clrcount, sizeof(Clr))))
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	if (!drw || !clrnames || clrcount &lt; 2 || !(ret = ecalloc(clrcount, sizeof(XftColor))))
+</a> 		return NULL;
+ 
+ 	for (i = 0; i &lt; clrcount; i++)
+<a href="#h2-2" id="h2-2" class="h">@@ -337,6 +350,7 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
+</a> 			fcpattern = FcPatternDuplicate(drw-&gt;fonts-&gt;pattern);
+ 			FcPatternAddCharSet(fcpattern, FC_CHARSET, fccharset);
+ 			FcPatternAddBool(fcpattern, FC_SCALABLE, FcTrue);
+<a href="#h2-2-3" id="h2-2-3" class="i">+			FcPatternAddBool(fcpattern, FC_COLOR, FcFalse);
+</a> 
+ 			FcConfigSubstitute(NULL, fcpattern, FcMatchPattern);
+ 			FcDefaultSubstitute(fcpattern);
+</pre>
+</div>
+</body>
+</html>

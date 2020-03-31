@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed useless updatemaster - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/010fd21b2037923e9ba1f0d67a67bbf8d8da2c89.html">010fd21b2037923e9ba1f0d67a67bbf8d8da2c89</a>
+<b>parent</b> <a href="../commit/1802fad2f9b2a432b04f642b9e954159d1f2554f.html">1802fad2f9b2a432b04f642b9e954159d1f2554f</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Fri, 29 Sep 2006 17:25:49 +0200
+
+removed useless updatemaster
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">main.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">view.c</a></td><td> | </td><td class="num">7</td><td><span class="i">+</span><span class="d">------</span></td></tr>
+</table></pre><pre>4 files changed, 3 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,7 +8,7 @@ const char *tags[] = { &quot;dev&quot;, &quot;work&quot;, &quot;net&quot;, &quot;fnord&quot;, NULL };
+</a> 
+ #define DEFMODE			dotile		/* dofloat */
+ #define FLOATSYMBOL		&quot;&gt;&lt;&gt;&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define STACKPOS		StackRight	/* StackLeft */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define STACKPOS		StackRight	/* StackLeft, StackBottom */
+</a> #define TILESYMBOL		&quot;[]=&quot;
+ 
+ #define FONT			&quot;-*-terminus-medium-*-*-*-12-*-*-*-*-*-iso10646-*&quot;
+<b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -174,7 +174,6 @@ extern void restack(void);			/* restores z layers of all clients */
+</a> extern void togglestackpos(Arg *arg);		/* toggles stack position */
+ extern void togglemode(Arg *arg);		/* toggles global arrange function (dotile/dofloat) */
+ extern void toggleview(Arg *arg);		/* toggles the tag with arg&#39;s index (in)visible */
+<a href="#h1-0-3" id="h1-0-3" class="d">-extern void updatemaster(void);			/* updates master dimension */
+</a> extern void view(Arg *arg);			/* views the tag with arg&#39;s index */
+ extern void viewall(Arg *arg);			/* views all tags, arg is ignored */
+ extern void zoom(Arg *arg);			/* zooms the focused client to master area, arg is ignored */
+<b>diff --git a/<a id="h2" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -133,7 +133,7 @@ setup(void) {
+</a> 	sx = sy = 0;
+ 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+<a href="#h2-0-3" id="h2-0-3" class="d">-	updatemaster();
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	master = ((stackpos == StackBottom ? sh - bh : sw) * MASTER) / 100;
+</a> 
+ 	bx = by = 0;
+ 	bw = sw;
+<b>diff --git a/<a id="h3" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -340,13 +340,8 @@ togglestackpos(Arg *arg) {
+</a> 		stackpos = STACKPOS;
+ 	else
+ 		stackpos = StackBottom;
+<a href="#h3-0-3" id="h3-0-3" class="d">-	updatemaster();
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-	arrange(NULL);
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-}
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-
+</a><a href="#h3-0-7" id="h3-0-7" class="d">-void
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-updatemaster(void) {
+</a> 	master = ((stackpos == StackBottom ? sh - bh : sw) * MASTER) / 100;
+<a href="#h3-0-10" id="h3-0-10" class="i">+	arrange(NULL);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

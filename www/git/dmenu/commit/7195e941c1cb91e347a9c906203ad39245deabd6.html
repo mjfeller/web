@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>re-applied Peter Hartlich&#39;s and Jukkas dmenu-related patches, for odd reasons they disappeared - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7195e941c1cb91e347a9c906203ad39245deabd6.html">7195e941c1cb91e347a9c906203ad39245deabd6</a>
+<b>parent</b> <a href="../commit/12805b69acac4b2daa09ef7570cf1c3161ba6c9d.html">12805b69acac4b2daa09ef7570cf1c3161ba6c9d</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed,  9 Apr 2008 23:31:49 +0100
+
+re-applied Peter Hartlich&#39;s and Jukkas dmenu-related patches, for odd reasons they disappeared
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu_path</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++</span><span class="d">--------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dmenu_run</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>3 files changed, 10 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,5 +1,5 @@
+</a> # dmenu version
+<a href="#h0-0-1" id="h0-0-1" class="d">-VERSION = 3.6
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+VERSION = 3.7
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h1" href="../file/dmenu_path.html">dmenu_path</a> b/<a href="../file/dmenu_path.html">dmenu_path</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -3,24 +3,24 @@ CACHE=$HOME/.dmenu_cache
+</a> IFS=:
+ 
+ uptodate() {
+<a href="#h1-0-3" id="h1-0-3" class="d">-	test ! -f $CACHE &amp;&amp; return 1
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	test -f &quot;$CACHE&quot; &amp;&amp;
+</a> 	for dir in $PATH
+ 	do
+<a href="#h1-0-7" id="h1-0-7" class="d">-		test $dir -nt $CACHE &amp;&amp; return 1
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		test ! $dir -nt &quot;$CACHE&quot; || return 1
+</a> 	done
+<a href="#h1-0-10" id="h1-0-10" class="d">-	return 0
+</a> }
+ 
+ if ! uptodate
+ then
+ 	for dir in $PATH
+ 	do
+<a href="#h1-0-17" id="h1-0-17" class="d">-		for file in &quot;$dir&quot;/*
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+		cd &quot;$dir&quot; &amp;&amp;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+		for file in *
+</a> 		do
+<a href="#h1-0-21" id="h1-0-21" class="d">-			test -x &quot;$file&quot; &amp;&amp; echo &quot;${file##*/}&quot;
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+			test -x &quot;$file&quot; &amp;&amp; echo &quot;$file&quot;
+</a> 		done
+<a href="#h1-0-24" id="h1-0-24" class="d">-	done | sort | uniq &gt; $CACHE.$$
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-	mv $CACHE.$$ $CACHE
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+	done | sort -u &gt; &quot;$CACHE&quot;.$$ &amp;&amp;
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+	mv &quot;$CACHE&quot;.$$ &quot;$CACHE&quot;
+</a> fi
+ 
+<a href="#h1-0-30" id="h1-0-30" class="d">-cat $CACHE
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+cat &quot;$CACHE&quot;
+</a><b>diff --git a/<a id="h2" href="../file/dmenu_run.html">dmenu_run</a> b/<a href="../file/dmenu_run.html">dmenu_run</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,2 +1,2 @@
+</a> #!/bin/sh
+<a href="#h2-0-1" id="h2-0-1" class="d">-exe=`dmenu_path | dmenu $*` &amp;&amp; exec $exe
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+exe=`dmenu_path | dmenu ${1+&quot;$@&quot;}` &amp;&amp; exec $exe
+</a></pre>
+</div>
+</body>
+</html>

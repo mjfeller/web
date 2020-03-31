@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed a bunch of lines, made mode symbols configurable - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/aa471f2d65688f8cf4944c073ff05224bfac8a9c.html">aa471f2d65688f8cf4944c073ff05224bfac8a9c</a>
+<b>parent</b> <a href="../commit/d37dfa1bedbfadb5d39aa1937e77d4fd44319018.html">d37dfa1bedbfadb5d39aa1937e77d4fd44319018</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Fri, 25 Aug 2006 15:12:32 +0200
+
+removed a bunch of lines, made mode symbols configurable
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">draw.c</a></td><td> | </td><td class="num">9</td><td><span class="i">++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">main.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>4 files changed, 7 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,6 +15,8 @@ const char *tags[] = { &quot;work&quot;, &quot;net&quot;, &quot;fnord&quot;, NULL };
+</a> #define NORMFGCOLOR		&quot;#cccccc&quot;
+ #define STATUSBGCOLOR		&quot;#dddddd&quot;
+ #define STATUSFGCOLOR		&quot;#222222&quot;
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define FLOATSYMBOL		&quot;&gt;&lt;&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define TILEDSYMBOL		&quot;|=&quot;
+</a> 
+ #define MODKEY			Mod1Mask
+ #define MASTERW			60 /* percent */
+<b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -15,6 +15,8 @@ const char *tags[] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, NULL };
+</a> #define NORMFGCOLOR		&quot;#cccccc&quot;
+ #define STATUSBGCOLOR		&quot;#dddddd&quot;
+ #define STATUSFGCOLOR		&quot;#222222&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+#define FLOATSYMBOL		&quot;~&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#define TILEDSYMBOL		&quot;#&quot;
+</a> 
+ #define MODKEY			Mod1Mask
+ #define MASTERW			60 /* percent */
+<b>diff --git a/<a id="h2" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -94,18 +94,13 @@ drawall()
+</a> void
+ drawstatus()
+ {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	static const char *mode[] = { &quot;&gt;&lt;&quot;, &quot;|=&quot; };
+</a> 	int i, x;
+ 
+ 	dc.x = dc.y = 0;
+ 	dc.w = bw;
+ 
+<a href="#h2-0-9" id="h2-0-9" class="d">-	if(!modew)
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-		modew = textw(mode[0]) &gt; textw(mode[1]) ? textw(mode[0]) : textw(mode[1]);
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-	drawtext(mode[arrange == dotile ? 1 : 0], dc.status, False);
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-	dc.w = 0;
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-	dc.x = modew;
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+	drawtext(arrange == dotile ? TILEDSYMBOL : FLOATSYMBOL, dc.status, False);
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	dc.w = modew;
+</a> 	for(i = 0; i &lt; ntags; i++) {
+ 		dc.x += dc.w;
+ 		dc.w = textw(tags[i]);
+<b>diff --git a/<a id="h3" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -129,7 +129,7 @@ setup()
+</a> 	dc.status[ColFG] = getcolor(STATUSFGCOLOR);
+ 	setfont(FONT);
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-	modew = 0;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	modew = textw(FLOATSYMBOL) &gt; textw(TILEDSYMBOL) ? textw(FLOATSYMBOL) : textw(TILEDSYMBOL);
+</a> 	sx = sy = 0;
+ 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+</pre>
+</div>
+</body>
+</html>

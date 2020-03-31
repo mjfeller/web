@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add line hieght patch - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/421045c815557ace8c413b4093c6c02816970c8a.html">421045c815557ace8c413b4093c6c02816970c8a</a>
+<b>parent</b> <a href="../commit/4ca9df3e57e09390a59621e696b728d9ce77ca1c.html">4ca9df3e57e09390a59621e696b728d9ce77ca1c</a>
+<b>Author:</b> Mark Feller &lt;<a href="mailto:mfeller@recurly.com">mfeller@recurly.com</a>&gt;
+<b>Date:</b>   Fri, 20 Mar 2020 19:48:18 -0600
+
+Add line hieght patch
+
+Signed-off-by: Mark Feller &lt;mfeller@recurly.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">11</td><td><span class="i">++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.1</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dmenu.c</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>3 files changed, 17 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,17 +6,18 @@ static int centered = 0;                    /* -c option; centers dmenu on scree
+</a> static int min_width = 500;                    /* minimum width when centered */
+ /* -fn option overrides fonts[0]; default X11 font or font set */
+ static const char *fonts[] = {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	&quot;monospace:size=10&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	&quot;Fira Mono:size=11&quot;
+</a> };
+ static const char *prompt      = NULL;      /* -p  option; prompt to the left of input field */
+ static const char *colors[SchemeLast][2] = {
+ 	/*     fg         bg       */
+<a href="#h0-0-9" id="h0-0-9" class="d">-	[SchemeNorm] = { &quot;#bbbbbb&quot;, &quot;#222222&quot; },
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	[SchemeSel] = { &quot;#eeeeee&quot;, &quot;#005577&quot; },
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	[SchemeOut] = { &quot;#000000&quot;, &quot;#00ffff&quot; },
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	[SchemeNorm] = { &quot;#ebdbb2&quot;, &quot;#161819&quot; },
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	[SchemeSel]  = { &quot;#268bd2&quot;, &quot;#1d2021&quot; },
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	[SchemeOut]  = { &quot;#000000&quot;, &quot;#161819&quot; },
+</a> };
+ /* -l option; if nonzero, dmenu uses vertical list with given number of lines */
+ static unsigned int lines      = 0;
+<a href="#h0-0-18" id="h0-0-18" class="i">+static unsigned int lineheight = 25;         /* -h option; minimum height of a menu line     */
+</a> 
+ /*
+  * Characters not considered part of a word while deleting words
+<a href="#h0-1" id="h0-1" class="h">@@ -25,4 +26,4 @@ static unsigned int lines      = 0;
+</a> static const char worddelimiters[] = &quot; &quot;;
+ 
+ /* Size of the window border */
+<a href="#h0-1-3" id="h0-1-3" class="d">-static unsigned int border_width = 0;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static unsigned int border_width = 3;
+</a><b>diff --git a/<a id="h1" href="../file/dmenu.1.html">dmenu.1</a> b/<a href="../file/dmenu.1.html">dmenu.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -53,6 +53,9 @@ dmenu matches menu items case insensitively.
+</a> .BI \-l &quot; lines&quot;
+ dmenu lists items vertically, with the given number of lines.
+ .TP
+<a href="#h1-0-3" id="h1-0-3" class="i">+.BI \-h &quot; height&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+dmenu uses a menu line of at least &#39;height&#39; pixels tall, but no less than 8.
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+.TP
+</a> .BI \-m &quot; monitor&quot;
+ dmenu is displayed on the monitor number supplied. Monitor numbers are starting
+ from 0.
+<b>diff --git a/<a id="h2" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -140,7 +140,7 @@ drawmenu(void)
+</a> {
+ 	unsigned int curpos;
+ 	struct item *item;
+<a href="#h2-0-3" id="h2-0-3" class="d">-	int x = 0, y = 0, w;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	int x = 0, y = 0, fh = drw-&gt;fonts-&gt;h, w;
+</a> 
+ 	drw_setscheme(drw, scheme[SchemeNorm]);
+ 	drw_rect(drw, 0, 0, mw, mh, 1, 1);
+<a href="#h2-1" id="h2-1" class="h">@@ -157,7 +157,7 @@ drawmenu(void)
+</a> 	curpos = TEXTW(text) - TEXTW(&amp;text[cursor]);
+ 	if ((curpos += lrpad / 2 - 1) &lt; w) {
+ 		drw_setscheme(drw, scheme[SchemeNorm]);
+<a href="#h2-1-3" id="h2-1-3" class="d">-		drw_rect(drw, x + curpos, 2, 2, bh - 4, 1, 0);
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+		drw_rect(drw, x + curpos, 2 + (bh-fh)/2, 2, bh - 4, 1, 0);
+</a> 	}
+ 
+ 	if (lines &gt; 0) {
+<a href="#h2-2" id="h2-2" class="h">@@ -618,6 +618,7 @@ setup(void)
+</a> 
+ 	/* calculate menu geometry */
+ 	bh = drw-&gt;fonts-&gt;h + 2;
+<a href="#h2-2-3" id="h2-2-3" class="i">+	bh = MAX(bh,lineheight);	/* make a menu line AT LEAST &#39;lineheight&#39; tall */
+</a> 	lines = MAX(lines, 0);
+ 	mh = (lines + 1) * bh;
+ 	promptw = (prompt &amp;&amp; *prompt) ? TEXTW(prompt) - lrpad / 4 : 0;
+<a href="#h2-3" id="h2-3" class="h">@@ -715,6 +716,7 @@ static void
+</a> usage(void)
+ {
+ 	fputs(&quot;usage: dmenu [-bfiv] [-l lines] [-p prompt] [-fn font] [-m monitor]\n&quot;
+<a href="#h2-3-3" id="h2-3-3" class="i">+	      &quot;             [-h height]\n&quot;
+</a> 	      &quot;             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]\n&quot;, stderr);
+ 	exit(1);
+ }
+<a href="#h2-4" id="h2-4" class="h">@@ -750,6 +752,10 @@ main(int argc, char *argv[])
+</a> 			prompt = argv[++i];
+ 		else if (!strcmp(argv[i], &quot;-fn&quot;))  /* font or font set */
+ 			fonts[0] = argv[++i];
+<a href="#h2-4-3" id="h2-4-3" class="i">+		else if(!strcmp(argv[i], &quot;-h&quot;)) { /* minimum height of one menu line */
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+			lineheight = atoi(argv[++i]);
+</a><a href="#h2-4-5" id="h2-4-5" class="i">+			lineheight = MAX(lineheight,8); /* reasonable default in case of value too small/negative */
+</a><a href="#h2-4-6" id="h2-4-6" class="i">+		}
+</a> 		else if (!strcmp(argv[i], &quot;-nb&quot;))  /* normal background color */
+ 			colors[SchemeNorm][ColBg] = argv[++i];
+ 		else if (!strcmp(argv[i], &quot;-nf&quot;))  /* normal foreground color */
+</pre>
+</div>
+</body>
+</html>

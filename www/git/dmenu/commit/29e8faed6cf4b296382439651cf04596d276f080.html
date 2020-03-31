@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>updated to new libdraw - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/29e8faed6cf4b296382439651cf04596d276f080.html">29e8faed6cf4b296382439651cf04596d276f080</a>
+<b>parent</b> <a href="../commit/d9c24564d2f46312a9ed94539e0299a9859e87d9.html">d9c24564d2f46312a9ed94539e0299a9859e87d9</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Fri,  2 Jul 2010 05:50:19 +0100
+
+updated to new libdraw
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dinput.c</a></td><td> | </td><td class="num">31</td><td><span class="i">++++++++++</span><span class="d">---------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">21</td><td><span class="i">++++++++++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>2 files changed, 20 insertions(+), 32 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dinput.c.html">dinput.c</a> b/<a href="../file/dinput.c.html">dinput.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -21,9 +21,8 @@
+</a> 
+ /* forward declarations */
+ static void cleanup(void);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void drawcursor(void);
+</a> static void drawinput(void);
+<a href="#h0-0-5" id="h0-0-5" class="d">-static Bool grabkeyboard(void);
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+static void grabkeyboard(void);
+</a> static void kpress(XKeyEvent *e);
+ static void run(void);
+ static void setup(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -35,7 +34,7 @@ static char *prompt = NULL;
+</a> static char text[4096];
+ static int promptw = 0;
+ static int screen;
+<a href="#h0-1-3" id="h0-1-3" class="d">-static unsigned int cursor = 0;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static size_t cursor = 0;
+</a> static unsigned int numlockmask = 0;
+ static unsigned int mw, mh;
+ static unsigned long normcol[ColLast];
+<a href="#h0-2" id="h0-2" class="h">@@ -54,46 +53,36 @@ cleanup(void) {
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="d">-drawcursor(void) {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	XRectangle r = { dc.x, dc.y + 2, 1, dc.font.height - 2 };
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-	r.x += textnw(&amp;dc, text, cursor) + dc.font.height / 2;
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-	XSetForeground(dpy, dc.gc, normcol[ColFG]);
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-}
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-void
+</a> drawinput(void)
+ {
+ 	dc.x = 0;
+ 	dc.y = 0;
+ 	dc.w = mw;
+ 	dc.h = mh;
+<a href="#h0-2-19" id="h0-2-19" class="d">-	drawtext(&amp;dc, NULL, normcol, False);
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+	drawtext(&amp;dc, NULL, normcol);
+</a> 	/* print prompt? */
+ 	if(prompt) {
+ 		dc.w = promptw;
+<a href="#h0-2-24" id="h0-2-24" class="d">-		drawtext(&amp;dc, prompt, selcol, False);
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+		drawtext(&amp;dc, prompt, selcol);
+</a> 		dc.x += dc.w;
+ 	}
+ 	dc.w = mw - dc.x;
+<a href="#h0-2-29" id="h0-2-29" class="d">-	drawtext(&amp;dc, *text ? text : NULL, normcol, False);
+</a><a href="#h0-2-30" id="h0-2-30" class="d">-	drawcursor();
+</a><a href="#h0-2-31" id="h0-2-31" class="d">-	XCopyArea(dpy, dc.drawable, win, dc.gc, 0, 0, mw, mh, 0, 0);
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+	drawtext(&amp;dc, text, normcol);
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+	drawcursor(&amp;dc, text, cursor, normcol);
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+	commitdraw(&amp;dc, win);
+</a> }
+ 
+<a href="#h0-2-37" id="h0-2-37" class="d">-Bool
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+void
+</a> grabkeyboard(void) {
+ 	unsigned int len;
+ 
+ 	for(len = 1000; len; len--) {
+ 		if(XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+ 		== GrabSuccess)
+<a href="#h0-2-45" id="h0-2-45" class="d">-			break;
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+			return;
+</a> 		usleep(1000);
+ 	}
+<a href="#h0-2-49" id="h0-2-49" class="d">-	return len &gt; 0;
+</a><a href="#h0-2-50" id="h0-2-50" class="i">+	exit(EXIT_FAILURE);
+</a> }
+ 
+ void
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -162,25 +162,25 @@ drawmenu(void) {
+</a> 	dc.y = 0;
+ 	dc.w = mw;
+ 	dc.h = mh;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	drawtext(&amp;dc, NULL, normcol, False);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	drawtext(&amp;dc, NULL, normcol);
+</a> 	dc.h = dc.font.height + 2;
+ 	dc.y = topbar ? 0 : mh - dc.h;
+ 	/* print prompt? */
+ 	if(prompt) {
+ 		dc.w = promptw;
+<a href="#h1-0-10" id="h1-0-10" class="d">-		drawtext(&amp;dc, prompt, selcol, False);
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+		drawtext(&amp;dc, prompt, selcol);
+</a> 		dc.x += dc.w;
+ 	}
+ 	dc.w = mw - dc.x;
+ 	/* print command */
+ 	if(cmdw &amp;&amp; item &amp;&amp; lines == 0)
+ 		dc.w = cmdw;
+<a href="#h1-0-18" id="h1-0-18" class="d">-	drawtext(&amp;dc, *text ? text : NULL, normcol, False);
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	drawtext(&amp;dc, text, normcol);
+</a> 	if(lines &gt; 0)
+ 		drawmenuv();
+ 	else if(curr)
+ 		drawmenuh();
+<a href="#h1-0-24" id="h1-0-24" class="d">-	XCopyArea(dpy, dc.drawable, win, dc.gc, 0, 0, mw, mh, 0, 0);
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+	commitdraw(&amp;dc, win);
+</a> }
+ 
+ void
+<a href="#h1-1" id="h1-1" class="h">@@ -189,16 +189,16 @@ drawmenuh(void) {
+</a> 
+ 	dc.x += cmdw;
+ 	dc.w = spaceitem;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	drawtext(&amp;dc, curr-&gt;left ? &quot;&lt;&quot; : NULL, normcol, False);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	drawtext(&amp;dc, curr-&gt;left ? &quot;&lt;&quot; : NULL, normcol);
+</a> 	dc.x += dc.w;
+ 	for(i = curr; i != next; i = i-&gt;right) {
+ 		dc.w = MIN(textw(&amp;dc, i-&gt;text), mw / 3);
+<a href="#h1-1-8" id="h1-1-8" class="d">-		drawtext(&amp;dc, i-&gt;text, (sel == i) ? selcol : normcol, False);
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+		drawtext(&amp;dc, i-&gt;text, (sel == i) ? selcol : normcol);
+</a> 		dc.x += dc.w;
+ 	}
+ 	dc.w = spaceitem;
+ 	dc.x = mw - dc.w;
+<a href="#h1-1-14" id="h1-1-14" class="d">-	drawtext(&amp;dc, next ? &quot;&gt;&quot; : NULL, normcol, False);
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+	drawtext(&amp;dc, next ? &quot;&gt;&quot; : NULL, normcol);
+</a> }
+ 
+ void
+<a href="#h1-2" id="h1-2" class="h">@@ -209,7 +209,7 @@ drawmenuv(void) {
+</a> 	dc.y = topbar ? dc.h : 0;
+ 	dc.w = mw - dc.x;
+ 	for(i = curr; i != next; i = i-&gt;right) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-		drawtext(&amp;dc, i-&gt;text, (sel == i) ? selcol : normcol, False);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		drawtext(&amp;dc, i-&gt;text, (sel == i) ? selcol : normcol);
+</a> 		dc.y += dc.h;
+ 	}
+ 	if(!XGetWindowAttributes(dpy, win, &amp;wa))
+<a href="#h1-3" id="h1-3" class="h">@@ -224,11 +224,10 @@ grabkeyboard(void) {
+</a> 	for(len = 1000; len; len--) {
+ 		if(XGrabKeyboard(dpy, root, True, GrabModeAsync, GrabModeAsync, CurrentTime)
+ 		== GrabSuccess)
+<a href="#h1-3-3" id="h1-3-3" class="d">-			break;
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+			return;
+</a> 		usleep(1000);
+ 	}
+<a href="#h1-3-7" id="h1-3-7" class="d">-	if(!len)
+</a><a href="#h1-3-8" id="h1-3-8" class="d">-		exit(EXIT_FAILURE);
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+	exit(EXIT_FAILURE);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

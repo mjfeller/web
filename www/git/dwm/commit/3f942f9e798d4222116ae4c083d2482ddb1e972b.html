@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed obsolete stuff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3f942f9e798d4222116ae4c083d2482ddb1e972b.html">3f942f9e798d4222116ae4c083d2482ddb1e972b</a>
+<b>parent</b> <a href="../commit/7e433694ffa59c5b47f216409d5fd2d68b77742e.html">7e433694ffa59c5b47f216409d5fd2d68b77742e</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Thu, 13 Jul 2006 10:25:57 +0200
+
+removed obsolete stuff
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">mouse.c</a></td><td> | </td><td class="num">25</td><td><span class="i">++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/mouse.c.html">mouse.c</a> b/<a href="../file/mouse.c.html">mouse.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,5 @@
+</a> /*
+  * (C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+<a href="#h0-0-2" id="h0-0-2" class="d">- * (C)opyright MMVI Kris Maglione &lt;fbsdaemon@gmail.com&gt;
+</a>  * See LICENSE file for license details.
+  */
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -17,10 +16,10 @@ void
+</a> mresize(Client *c)
+ {
+ 	XEvent ev;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	int old_cx, old_cy;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	int ocx, ocy;
+</a> 
+<a href="#h0-1-6" id="h0-1-6" class="d">-	old_cx = c-&gt;x;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	old_cy = c-&gt;y;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	ocx = c-&gt;x;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	ocy = c-&gt;y;
+</a> 	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+ 				None, cursor[CurResize], CurrentTime) != GrabSuccess)
+ 		return;
+<a href="#h0-2" id="h0-2" class="h">@@ -34,10 +33,10 @@ mresize(Client *c)
+</a> 			break;
+ 		case MotionNotify:
+ 			XFlush(dpy);
+<a href="#h0-2-3" id="h0-2-3" class="d">-			c-&gt;w = abs(old_cx - ev.xmotion.x);
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-			c-&gt;h = abs(old_cy - ev.xmotion.y);
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-			c-&gt;x = (old_cx &lt;= ev.xmotion.x) ? old_cx : old_cx - c-&gt;w;
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-			c-&gt;y = (old_cy &lt;= ev.xmotion.y) ? old_cy : old_cy - c-&gt;h;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+			c-&gt;w = abs(ocx - ev.xmotion.x);
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+			c-&gt;h = abs(ocy - ev.xmotion.y);
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+			c-&gt;x = (ocx &lt;= ev.xmotion.x) ? ocx : ocx - c-&gt;w;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+			c-&gt;y = (ocy &lt;= ev.xmotion.y) ? ocy : ocy - c-&gt;h;
+</a> 			resize(c);
+ 			break;
+ 		case ButtonRelease:
+<a href="#h0-3" id="h0-3" class="h">@@ -51,12 +50,12 @@ void
+</a> mmove(Client *c)
+ {
+ 	XEvent ev;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	int x1, y1, old_cx, old_cy, di;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	int x1, y1, ocx, ocy, di;
+</a> 	unsigned int dui;
+ 	Window dummy;
+ 
+<a href="#h0-3-8" id="h0-3-8" class="d">-	old_cx = c-&gt;x;
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-	old_cy = c-&gt;y;
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+	ocx = c-&gt;x;
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+	ocy = c-&gt;y;
+</a> 	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+ 				None, cursor[CurMove], CurrentTime) != GrabSuccess)
+ 		return;
+<a href="#h0-4" id="h0-4" class="h">@@ -70,8 +69,8 @@ mmove(Client *c)
+</a> 			break;
+ 		case MotionNotify:
+ 			XFlush(dpy);
+<a href="#h0-4-3" id="h0-4-3" class="d">-			c-&gt;x = old_cx + (ev.xmotion.x - x1);
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-			c-&gt;y = old_cy + (ev.xmotion.y - y1);
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+			c-&gt;x = ocx + (ev.xmotion.x - x1);
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+			c-&gt;y = ocy + (ev.xmotion.y - y1);
+</a> 			resize(c);
+ 			break;
+ 		case ButtonRelease:
+</pre>
+</div>
+</body>
+</html>

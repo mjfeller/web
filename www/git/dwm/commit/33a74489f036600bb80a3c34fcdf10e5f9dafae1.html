@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Julian&#39;s enum approach, however renamed theme into scheme resp. Theme into ClrScheme - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/33a74489f036600bb80a3c34fcdf10e5f9dafae1.html">33a74489f036600bb80a3c34fcdf10e5f9dafae1</a>
+<b>parent</b> <a href="../commit/5364697914fd4272fc1a6494b4fc522d2935427a.html">5364697914fd4272fc1a6494b4fc522d2935427a</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Wed, 19 Jun 2013 19:35:33 +0200
+
+applied Julian&#39;s enum approach,
+	however renamed theme into scheme resp. Theme into ClrScheme
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">drw.c</a></td><td> | </td><td class="num">22</td><td><span class="i">++++++++++</span><span class="d">------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">drw.h</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">49</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">-------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 37 insertions(+), 40 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/drw.c.html">drw.c</a> b/<a href="../file/drw.c.html">drw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -109,9 +109,8 @@ drw_clr_create(Drw *drw, const char *clrname) {
+</a> 
+ void
+ drw_clr_free(Clr *clr) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if(!clr)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		return;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	free(clr);
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	if(clr)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		free(clr);
+</a> }
+ 
+ void
+<a href="#h0-1" id="h0-1" class="h">@@ -121,19 +120,18 @@ drw_setfont(Drw *drw, Fnt *font) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="d">-drw_settheme(Drw *drw, Theme *theme) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	if(!drw || !theme) 
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		return;
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	drw-&gt;theme = theme;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+drw_setscheme(Drw *drw, ClrScheme *scheme) {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	if(drw &amp;&amp; scheme) 
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		drw-&gt;scheme = scheme;
+</a> }
+ 
+ void
+ drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h, int filled, int empty, int invert) {
+ 	int dx;
+ 
+<a href="#h0-1-16" id="h0-1-16" class="d">-	if(!drw || !drw-&gt;font || !drw-&gt;theme)
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	if(!drw || !drw-&gt;font || !drw-&gt;scheme)
+</a> 		return;
+<a href="#h0-1-19" id="h0-1-19" class="d">-	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;theme-&gt;bg-&gt;rgb : drw-&gt;theme-&gt;fg-&gt;rgb);
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;scheme-&gt;bg-&gt;rgb : drw-&gt;scheme-&gt;fg-&gt;rgb);
+</a> 	dx = (drw-&gt;font-&gt;ascent + drw-&gt;font-&gt;descent + 2) / 4;
+ 	if(filled)
+ 		XFillRectangle(drw-&gt;dpy, drw-&gt;drawable, drw-&gt;gc, x+1, y+1, dx+1, dx+1);
+<a href="#h0-2" id="h0-2" class="h">@@ -147,9 +145,9 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *tex
+</a> 	int i, tx, ty, th, len, olen;
+ 	Extnts tex;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(!drw || !drw-&gt;theme)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if(!drw || !drw-&gt;scheme)
+</a> 		return;
+<a href="#h0-2-6" id="h0-2-6" class="d">-	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;theme-&gt;fg-&gt;rgb : drw-&gt;theme-&gt;bg-&gt;rgb);
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;scheme-&gt;fg-&gt;rgb : drw-&gt;scheme-&gt;bg-&gt;rgb);
+</a> 	XFillRectangle(drw-&gt;dpy, drw-&gt;drawable, drw-&gt;gc, x, y, w, h);
+ 	if(!text || !drw-&gt;font)
+ 		return;
+<a href="#h0-3" id="h0-3" class="h">@@ -166,7 +164,7 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *tex
+</a> 	memcpy(buf, text, len);
+ 	if(len &lt; olen)
+ 		for(i = len; i &amp;&amp; i &gt; len - 3; buf[--i] = &#39;.&#39;);
+<a href="#h0-3-3" id="h0-3-3" class="d">-	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;theme-&gt;bg-&gt;rgb : drw-&gt;theme-&gt;fg-&gt;rgb);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;scheme-&gt;bg-&gt;rgb : drw-&gt;scheme-&gt;fg-&gt;rgb);
+</a> 	if(drw-&gt;font-&gt;set)
+ 		XmbDrawString(drw-&gt;dpy, drw-&gt;drawable, drw-&gt;font-&gt;set, drw-&gt;gc, tx, ty, buf, len);
+ 	else
+<b>diff --git a/<a id="h1" href="../file/drw.h.html">drw.h</a> b/<a href="../file/drw.h.html">drw.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -20,7 +20,7 @@ typedef struct {
+</a> 	Clr *fg;
+ 	Clr *bg;
+ 	Clr *border;
+<a href="#h1-0-3" id="h1-0-3" class="d">-} Theme;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+} ClrScheme;
+</a> 
+ typedef struct {
+ 	unsigned int w, h;
+<a href="#h1-1" id="h1-1" class="h">@@ -29,7 +29,7 @@ typedef struct {
+</a> 	Window root;
+ 	Drawable drawable;
+ 	GC gc;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	Theme *theme;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	ClrScheme *scheme;
+</a> 	Fnt *font;
+ } Drw;
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -59,7 +59,7 @@ void drw_cur_free(Drw *drw, Cur *cursor);
+</a> 
+ /* Drawing context manipulation */
+ void drw_setfont(Drw *drw, Fnt *font);
+<a href="#h1-2-3" id="h1-2-3" class="d">-void drw_settheme(Drw *drw, Theme *theme);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+void drw_setscheme(Drw *drw, ClrScheme *scheme);
+</a> 
+ /* Drawing functions */
+ void drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h, int filled, int empty, int invert);
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -57,14 +57,14 @@
+</a> #define TEXTW(X)                (drw_font_getexts_width(drw-&gt;font, X, strlen(X)) + drw-&gt;font-&gt;h)
+ 
+ /* enums */
+<a href="#h2-0-3" id="h2-0-3" class="d">-enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+enum { SchemeNorm, SchemeSel, SchemeLast }; /* color schemes */
+</a> enum { NetSupported, NetWMName, NetWMState,
+        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
+<a href="#h2-0-9" id="h2-0-9" class="d">-       NetWMWindowTypeDialog, NetClientList, NetLast };     /* EWMH atoms */
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+       NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
+</a> enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
+ enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
+<a href="#h2-0-13" id="h2-0-13" class="d">-       ClkClientWin, ClkRootWin, ClkLast };             /* clicks */
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+       ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
+</a> 
+ typedef union {
+ 	int i;
+<a href="#h2-1" id="h2-1" class="h">@@ -260,8 +260,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> static Atom wmatom[WMLast], netatom[NetLast];
+ static Bool running = True;
+ static Cur *cursor[CurLast];
+<a href="#h2-1-3" id="h2-1-3" class="d">-static Theme thmnorm[ColLast];
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-static Theme thmsel[ColLast];
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+static ClrScheme scheme[SchemeLast];
+</a> static Display *dpy;
+ static Drw *drw;
+ static Fnt *fnt;
+<a href="#h2-2" id="h2-2" class="h">@@ -476,12 +475,12 @@ cleanup(void) {
+</a> 	drw_cur_free(drw, cursor[CurResize]);
+ 	drw_cur_free(drw, cursor[CurMove]);
+ 	drw_font_free(dpy, fnt);
+<a href="#h2-2-3" id="h2-2-3" class="d">-	drw_clr_free(thmnorm-&gt;border);
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-	drw_clr_free(thmnorm-&gt;bg);
+</a><a href="#h2-2-5" id="h2-2-5" class="d">-	drw_clr_free(thmnorm-&gt;fg);
+</a><a href="#h2-2-6" id="h2-2-6" class="d">-	drw_clr_free(thmsel-&gt;border);
+</a><a href="#h2-2-7" id="h2-2-7" class="d">-	drw_clr_free(thmsel-&gt;bg);
+</a><a href="#h2-2-8" id="h2-2-8" class="d">-	drw_clr_free(thmsel-&gt;fg);
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+	drw_clr_free(scheme[SchemeNorm].border);
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+	drw_clr_free(scheme[SchemeNorm].bg);
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+	drw_clr_free(scheme[SchemeNorm].fg);
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+	drw_clr_free(scheme[SchemeSel].border);
+</a><a href="#h2-2-13" id="h2-2-13" class="i">+	drw_clr_free(scheme[SchemeSel].bg);
+</a><a href="#h2-2-14" id="h2-2-14" class="i">+	drw_clr_free(scheme[SchemeSel].fg);
+</a> 	drw_free(drw);
+ 	XSync(dpy, False);
+ 	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+<a href="#h2-3" id="h2-3" class="h">@@ -705,14 +704,14 @@ drawbar(Monitor *m) {
+</a> 	x = 0;
+ 	for(i = 0; i &lt; LENGTH(tags); i++) {
+ 		w = TEXTW(tags[i]);
+<a href="#h2-3-3" id="h2-3-3" class="d">-		drw_settheme(drw, m-&gt;tagset[m-&gt;seltags] &amp; 1 &lt;&lt; i ? thmsel : thmnorm);
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+		drw_setscheme(drw, m-&gt;tagset[m-&gt;seltags] &amp; 1 &lt;&lt; i ? &amp;scheme[SchemeSel] : &amp;scheme[SchemeNorm]);
+</a> 		drw_text(drw, x, 0, w, bh, tags[i], urg &amp; 1 &lt;&lt; i);
+ 		drw_rect(drw, x, 0, w, bh, m == selmon &amp;&amp; selmon-&gt;sel &amp;&amp; selmon-&gt;sel-&gt;tags &amp; 1 &lt;&lt; i,
+ 		           occ &amp; 1 &lt;&lt; i, urg &amp; 1 &lt;&lt; i);
+ 		x += w;
+ 	}
+ 	w = blw = TEXTW(m-&gt;ltsymbol);
+<a href="#h2-3-11" id="h2-3-11" class="d">-	drw_settheme(drw, thmnorm);
+</a><a href="#h2-3-12" id="h2-3-12" class="i">+	drw_setscheme(drw, &amp;scheme[SchemeNorm]);
+</a> 	drw_text(drw, x, 0, w, bh, m-&gt;ltsymbol, 0);
+ 	x += w;
+ 	xx = x;
+<a href="#h2-4" id="h2-4" class="h">@@ -730,12 +729,12 @@ drawbar(Monitor *m) {
+</a> 	if((w = x - xx) &gt; bh) {
+ 		x = xx;
+ 		if(m-&gt;sel) {
+<a href="#h2-4-3" id="h2-4-3" class="d">-			drw_settheme(drw, m == selmon ? thmsel : thmnorm);
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+			drw_setscheme(drw, m == selmon ? &amp;scheme[SchemeSel] : &amp;scheme[SchemeNorm]);
+</a> 			drw_text(drw, x, 0, w, bh, m-&gt;sel-&gt;name, 0);
+ 			drw_rect(drw, x, 0, w, bh, m-&gt;sel-&gt;isfixed, m-&gt;sel-&gt;isfloating, 0);
+ 		}
+ 		else {
+<a href="#h2-4-9" id="h2-4-9" class="d">-			drw_settheme(drw, thmnorm);
+</a><a href="#h2-4-10" id="h2-4-10" class="i">+			drw_setscheme(drw, &amp;scheme[SchemeNorm]);
+</a> 			drw_text(drw, x, 0, w, bh, NULL, 0);
+ 		}
+ 	}
+<a href="#h2-5" id="h2-5" class="h">@@ -793,7 +792,7 @@ focus(Client *c) {
+</a> 		detachstack(c);
+ 		attachstack(c);
+ 		grabbuttons(c, True);
+<a href="#h2-5-3" id="h2-5-3" class="d">-		XSetWindowBorder(dpy, c-&gt;win, thmsel-&gt;border-&gt;rgb);
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+		XSetWindowBorder(dpy, c-&gt;win, scheme[SchemeSel].border-&gt;rgb);
+</a> 		setfocus(c);
+ 	}
+ 	else {
+<a href="#h2-6" id="h2-6" class="h">@@ -1041,7 +1040,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 
+ 	wc.border_width = c-&gt;bw;
+ 	XConfigureWindow(dpy, w, CWBorderWidth, &amp;wc);
+<a href="#h2-6-3" id="h2-6-3" class="d">-	XSetWindowBorder(dpy, w, thmnorm-&gt;border-&gt;rgb);
+</a><a href="#h2-6-4" id="h2-6-4" class="i">+	XSetWindowBorder(dpy, w, scheme[SchemeNorm].border-&gt;rgb);
+</a> 	configure(c); /* propagates border_width, if size doesn&#39;t change */
+ 	updatewindowtype(c);
+ 	updatesizehints(c);
+<a href="#h2-7" id="h2-7" class="h">@@ -1523,12 +1522,12 @@ setup(void) {
+</a> 	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
+ 	cursor[CurMove] = drw_cur_create(drw, XC_fleur);
+ 	/* init appearance */
+<a href="#h2-7-3" id="h2-7-3" class="d">-	thmnorm-&gt;border = drw_clr_create(drw, normbordercolor);
+</a><a href="#h2-7-4" id="h2-7-4" class="d">-	thmnorm-&gt;bg = drw_clr_create(drw, normbgcolor);
+</a><a href="#h2-7-5" id="h2-7-5" class="d">-	thmnorm-&gt;fg = drw_clr_create(drw, normfgcolor);
+</a><a href="#h2-7-6" id="h2-7-6" class="d">-	thmsel-&gt;border = drw_clr_create(drw, selbordercolor);
+</a><a href="#h2-7-7" id="h2-7-7" class="d">-	thmsel-&gt;bg = drw_clr_create(drw, selbgcolor);
+</a><a href="#h2-7-8" id="h2-7-8" class="d">-	thmsel-&gt;fg = drw_clr_create(drw, selfgcolor);
+</a><a href="#h2-7-9" id="h2-7-9" class="i">+	scheme[SchemeNorm].border = drw_clr_create(drw, normbordercolor);
+</a><a href="#h2-7-10" id="h2-7-10" class="i">+	scheme[SchemeNorm].bg = drw_clr_create(drw, normbgcolor);
+</a><a href="#h2-7-11" id="h2-7-11" class="i">+	scheme[SchemeNorm].fg = drw_clr_create(drw, normfgcolor);
+</a><a href="#h2-7-12" id="h2-7-12" class="i">+	scheme[SchemeSel].border = drw_clr_create(drw, selbordercolor);
+</a><a href="#h2-7-13" id="h2-7-13" class="i">+	scheme[SchemeSel].bg = drw_clr_create(drw, selbgcolor);
+</a><a href="#h2-7-14" id="h2-7-14" class="i">+	scheme[SchemeSel].fg = drw_clr_create(drw, selfgcolor);
+</a> 	/* init bars */
+ 	updatebars();
+ 	updatestatus();
+<a href="#h2-8" id="h2-8" class="h">@@ -1674,7 +1673,7 @@ unfocus(Client *c, Bool setfocus) {
+</a> 	if(!c)
+ 		return;
+ 	grabbuttons(c, False);
+<a href="#h2-8-3" id="h2-8-3" class="d">-	XSetWindowBorder(dpy, c-&gt;win, thmnorm-&gt;border-&gt;rgb);
+</a><a href="#h2-8-4" id="h2-8-4" class="i">+	XSetWindowBorder(dpy, c-&gt;win, scheme[SchemeNorm].border-&gt;rgb);
+</a> 	if(setfocus) {
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+ 		XDeleteProperty(dpy, root, netatom[NetActiveWindow]);
+</pre>
+</div>
+</body>
+</html>

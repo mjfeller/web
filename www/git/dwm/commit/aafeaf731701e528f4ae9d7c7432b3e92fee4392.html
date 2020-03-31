@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>continued with draw.c and draw.h implementation, now the integration begins - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/aafeaf731701e528f4ae9d7c7432b3e92fee4392.html">aafeaf731701e528f4ae9d7c7432b3e92fee4392</a>
+<b>parent</b> <a href="../commit/f21d46ea7def76221c4173f644eb2188ae9edbb1.html">f21d46ea7def76221c4173f644eb2188ae9edbb1</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Sun,  9 Dec 2012 19:11:11 +0100
+
+continued with draw.c and draw.h implementation, now the integration begins
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">draw.c</a></td><td> | </td><td class="num">75</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">draw.h</a></td><td> | </td><td class="num">25</td><td><span class="i">++++++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>2 files changed, 71 insertions(+), 29 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,7 @@
+</a> /* See LICENSE file for copyright and license details. */
+ #include &lt;stdio.h&gt;
+ #include &lt;stdlib.h&gt;
+<a href="#h0-0-3" id="h0-0-3" class="i">+#include &lt;string.h&gt;
+</a> #include &lt;X11/Xlib.h&gt;
+ 
+ #include &quot;draw.h&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -55,7 +56,6 @@ draw_font_create(Draw *draw, const char *fontname) {
+</a> 	if(font-&gt;set) {
+ 		XFontStruct **xfonts;
+ 		char **font_names;
+<a href="#h0-1-3" id="h0-1-3" class="d">-
+</a> 		XExtentsOfFontSet(font-&gt;set);
+ 		n = XFontsOfFontSet(font-&gt;set, &amp;xfonts, &amp;font_names);
+ 		while(n--) {
+<a href="#h0-2" id="h0-2" class="h">@@ -107,49 +107,96 @@ draw_col_free(Draw *draw, Col *col) {
+</a> 
+ void
+ draw_setfont(Draw *draw, Fnt *font) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(!draw || !font)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if(!draw)
+</a> 		return;
+ 	draw-&gt;font = font;
+ }
+ 
+ void
+ draw_setfg(Draw *draw, Col *col) {
+<a href="#h0-2-11" id="h0-2-11" class="d">-	if(!draw || !col) 
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	if(!draw) 
+</a> 		return;
+ 	draw-&gt;fg = col;
+ }
+ 
+ void
+ draw_setbg(Draw *draw, Col *col) {
+<a href="#h0-2-19" id="h0-2-19" class="d">-	if(!draw || !col)
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+	if(!draw)
+</a> 		return;
+ 	draw-&gt;bg = col;
+ }
+ 
+ void
+<a href="#h0-2-26" id="h0-2-26" class="d">-draw_rect(Draw *draw, int x, int y, unsigned int w, unsigned int h) {
+</a><a href="#h0-2-27" id="h0-2-27" class="d">-	if(!draw)
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+draw_rect(Draw *draw, int x, int y, unsigned int w, unsigned int h, Bool filled, Bool empty, Bool invert) {
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+	int dx;
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+	if(!draw || !draw-&gt;font || !draw-&gt;fg || !draw-&gt;bg)
+</a> 		return;
+<a href="#h0-2-33" id="h0-2-33" class="d">-	/* TODO: draw the rectangle */
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+	XSetForeground(draw-&gt;dpy, draw-&gt;gc, invert ? draw-&gt;bg-&gt;rgb : draw-&gt;fg-&gt;rgb);
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+	dx = (draw-&gt;font-&gt;ascent + draw-&gt;font-&gt;descent + 2) / 4;
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+	if(filled)
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+		XFillRectangle(draw-&gt;dpy, draw-&gt;drawable, draw-&gt;gc, x+1, y+1, dx+1, dx+1);
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+	else if(empty)
+</a><a href="#h0-2-39" id="h0-2-39" class="i">+		XDrawRectangle(draw-&gt;dpy, draw-&gt;drawable, draw-&gt;gc, x+1, y+1, dx, dx);
+</a> }
+ 
+ void
+<a href="#h0-2-43" id="h0-2-43" class="d">-draw_text(Draw *draw, int x, int y, const char *text) {
+</a><a href="#h0-2-44" id="h0-2-44" class="d">-	if(!draw)
+</a><a href="#h0-2-45" id="h0-2-45" class="i">+draw_text(Draw *draw, int x, int y, unsigned int w, unsigned int h, const char *text, Bool invert) {
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+	char buf[256];
+</a><a href="#h0-2-47" id="h0-2-47" class="i">+	int i, tx, ty, len, olen;
+</a><a href="#h0-2-48" id="h0-2-48" class="i">+	TextExtents tex;
+</a><a href="#h0-2-49" id="h0-2-49" class="i">+
+</a><a href="#h0-2-50" id="h0-2-50" class="i">+	if(!draw || !draw-&gt;fg || !draw-&gt;bg)
+</a> 		return;
+<a href="#h0-2-52" id="h0-2-52" class="d">-	/* TODO: draw the text */
+</a><a href="#h0-2-53" id="h0-2-53" class="i">+	XSetForeground(draw-&gt;dpy, draw-&gt;gc, invert ? draw-&gt;fg-&gt;rgb : draw-&gt;bg-&gt;rgb);
+</a><a href="#h0-2-54" id="h0-2-54" class="i">+	XFillRectangle(draw-&gt;dpy, draw-&gt;drawable, draw-&gt;gc, x, y, w, h);
+</a><a href="#h0-2-55" id="h0-2-55" class="i">+	if(!text || !draw-&gt;font)
+</a><a href="#h0-2-56" id="h0-2-56" class="i">+		return;
+</a><a href="#h0-2-57" id="h0-2-57" class="i">+	olen = strlen(text);
+</a><a href="#h0-2-58" id="h0-2-58" class="i">+	draw_getextents(draw, text, olen, &amp;tex);
+</a><a href="#h0-2-59" id="h0-2-59" class="i">+	ty = y + (h / 2) - tex.yOff;
+</a><a href="#h0-2-60" id="h0-2-60" class="i">+	tx = x + tex.xOff;
+</a><a href="#h0-2-61" id="h0-2-61" class="i">+	/* shorten text if necessary */
+</a><a href="#h0-2-62" id="h0-2-62" class="i">+	for(len = MIN(olen, sizeof buf); len &amp;&amp; tex.w &gt; w - tex.h; len--)
+</a><a href="#h0-2-63" id="h0-2-63" class="i">+		draw_getextents(draw, text, len, &amp;tex);
+</a><a href="#h0-2-64" id="h0-2-64" class="i">+	if(!len)
+</a><a href="#h0-2-65" id="h0-2-65" class="i">+		return;
+</a><a href="#h0-2-66" id="h0-2-66" class="i">+	memcpy(buf, text, len);
+</a><a href="#h0-2-67" id="h0-2-67" class="i">+	if(len &lt; olen)
+</a><a href="#h0-2-68" id="h0-2-68" class="i">+		for(i = len; i &amp;&amp; i &gt; len - 3; buf[--i] = &#39;.&#39;);
+</a><a href="#h0-2-69" id="h0-2-69" class="i">+	XSetForeground(draw-&gt;dpy, draw-&gt;gc, invert ? draw-&gt;bg-&gt;rgb : draw-&gt;fg-&gt;rgb);
+</a><a href="#h0-2-70" id="h0-2-70" class="i">+	if(draw-&gt;font-&gt;set)
+</a><a href="#h0-2-71" id="h0-2-71" class="i">+		XmbDrawString(draw-&gt;dpy, draw-&gt;drawable, draw-&gt;font-&gt;set, draw-&gt;gc, tx, ty, buf, len);
+</a><a href="#h0-2-72" id="h0-2-72" class="i">+	else
+</a><a href="#h0-2-73" id="h0-2-73" class="i">+		XDrawString(draw-&gt;dpy, draw-&gt;drawable, draw-&gt;gc, tx, ty, buf, len);
+</a> }
+ 
+ void
+ draw_map(Draw *draw, int x, int y, unsigned int w, unsigned int h) {
+ 	if(!draw)
+ 		return;
+<a href="#h0-2-80" id="h0-2-80" class="d">-	/* TODO: map the draw contents in the region */
+</a><a href="#h0-2-81" id="h0-2-81" class="i">+	XCopyArea(draw-&gt;dpy, draw-&gt;drawable, draw-&gt;win, draw-&gt;gc, x, y, w, h, x, y);
+</a><a href="#h0-2-82" id="h0-2-82" class="i">+	XSync(draw-&gt;dpy, False);
+</a> }
+ 
+<a href="#h0-2-85" id="h0-2-85" class="i">+
+</a> void
+<a href="#h0-2-87" id="h0-2-87" class="d">-draw_getextents(Draw *draw, const char *text, TextExtents *extents) {
+</a><a href="#h0-2-88" id="h0-2-88" class="d">-	if(!draw || !extents)
+</a><a href="#h0-2-89" id="h0-2-89" class="i">+draw_getextents(Draw *draw, const char *text, unsigned int len, TextExtents *extents) {
+</a><a href="#h0-2-90" id="h0-2-90" class="i">+	XRectangle r;
+</a><a href="#h0-2-91" id="h0-2-91" class="i">+
+</a><a href="#h0-2-92" id="h0-2-92" class="i">+	if(!draw || !draw-&gt;font || !text)
+</a> 		return;
+<a href="#h0-2-94" id="h0-2-94" class="d">-	/* TODO: get extents */
+</a><a href="#h0-2-95" id="h0-2-95" class="i">+	if(draw-&gt;font-&gt;set) {
+</a><a href="#h0-2-96" id="h0-2-96" class="i">+		XmbTextExtents(draw-&gt;font-&gt;set, text, len, NULL, &amp;r);
+</a><a href="#h0-2-97" id="h0-2-97" class="i">+		extents-&gt;xOff = r.x;
+</a><a href="#h0-2-98" id="h0-2-98" class="i">+		extents-&gt;yOff = r.y;
+</a><a href="#h0-2-99" id="h0-2-99" class="i">+		extents-&gt;w = r.width;
+</a><a href="#h0-2-100" id="h0-2-100" class="i">+		extents-&gt;h = r.height;
+</a><a href="#h0-2-101" id="h0-2-101" class="i">+	}
+</a><a href="#h0-2-102" id="h0-2-102" class="i">+	else {
+</a><a href="#h0-2-103" id="h0-2-103" class="i">+		extents-&gt;h = draw-&gt;font-&gt;ascent + draw-&gt;font-&gt;descent;
+</a><a href="#h0-2-104" id="h0-2-104" class="i">+		extents-&gt;w = XTextWidth(draw-&gt;font-&gt;xfont, text, len);
+</a><a href="#h0-2-105" id="h0-2-105" class="i">+		extents-&gt;xOff = extents-&gt;h / 2;
+</a><a href="#h0-2-106" id="h0-2-106" class="i">+		extents-&gt;yOff = (extents-&gt;h / 2) + draw-&gt;font-&gt;ascent;
+</a><a href="#h0-2-107" id="h0-2-107" class="i">+	}
+</a> }
+<b>diff --git a/<a id="h1" href="../file/draw.h.html">draw.h</a> b/<a href="../file/draw.h.html">draw.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -13,19 +13,7 @@ struct _XFont {
+</a> 	XFontStruct *xfont;
+ };
+ typedef struct _XFont Fnt;
+<a href="#h1-0-3" id="h1-0-3" class="d">-/* X11 types - end */
+</a> 
+<a href="#h1-0-5" id="h1-0-5" class="d">-typedef struct {
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-	unsigned int w;
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-	unsigned int h;
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	int x;
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-	int y;
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-	int xOff;
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-	int yOff;
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-} TextExtents;
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-/* X11 types - begin */
+</a> typedef struct _XDraw Draw;
+ struct _XDraw {
+ 	unsigned int w, h;
+<a href="#h1-1" id="h1-1" class="h">@@ -39,6 +27,13 @@ struct _XDraw {
+</a> 	Fnt *font;
+ };
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+typedef struct {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	unsigned int w;
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	unsigned int h;
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	int xOff;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	int yOff;
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+} TextExtents;
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+
+</a> /* Drawable abstraction */
+ Draw *draw_create(Display *dpy, int screen, Window win, unsigned int w, unsigned int h);
+ void draw_resize(Draw *draw, unsigned int w, unsigned int h);
+<a href="#h1-2" id="h1-2" class="h">@@ -58,12 +53,12 @@ void draw_setfg(Draw *draw, Col *col);
+</a> void draw_setbg(Draw *draw, Col *col);
+ 
+ /* Drawing functions */
+<a href="#h1-2-3" id="h1-2-3" class="d">-void draw_rect(Draw *draw, int x, int y, unsigned int w, unsigned int h);
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-void draw_text(Draw *draw, int x, int y, const char *text);
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+void draw_rect(Draw *draw, int x, int y, unsigned int w, unsigned int h, Bool filled, Bool empty, Bool invert);
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+void draw_text(Draw *draw, int x, int y, unsigned int w, unsigned int h, const char *text, Bool invert);
+</a> 
+ /* Map functions */
+ void draw_map(Draw *draw, int x, int y, unsigned int w, unsigned int h);
+ 
+ /* Text functions */
+<a href="#h1-2-12" id="h1-2-12" class="d">-void draw_getextents(Draw *draw, const char *text, TextExtents *extents);
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+void draw_getextents(Draw *draw, const char *text, unsigned int len, TextExtents *extents);
+</a> 
+</pre>
+</div>
+</body>
+</html>

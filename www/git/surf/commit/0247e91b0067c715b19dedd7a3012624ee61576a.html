@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Set strict ssl by default and handle insecure content - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0247e91b0067c715b19dedd7a3012624ee61576a.html">0247e91b0067c715b19dedd7a3012624ee61576a</a>
+<b>parent</b> <a href="../commit/2355c20e92d6f47100323e3394d565f8e8bf70dc.html">2355c20e92d6f47100323e3394d565f8e8bf70dc</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Fri,  8 Jul 2016 18:27:07 +0200
+
+Set strict ssl by default and handle insecure content
+
+Non-https content in https pages is now handled separately from https
+connection establishment.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">29</td><td><span class="i">+++++++++++++++++++</span><span class="d">----------</span></td></tr>
+</table></pre><pre>2 files changed, 20 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -30,7 +30,7 @@ static Parameter defconfig[ParameterLast] = {
+</a> 	SETB(SiteQuirks,         1),
+ 	SETB(SpellChecking,      0),
+ 	SETV(SpellLanguages,     ((char *[]){ &quot;en_US&quot;, NULL })),
+<a href="#h0-0-3" id="h0-0-3" class="d">-	SETB(StrictSSL,          0),
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	SETB(StrictSSL,          1),
+</a> 	SETB(Style,              1),
+ 	SETF(ZoomLevel,          1.0),
+ };
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -104,9 +104,9 @@ typedef struct Client {
+</a> 	WebKitWebInspector *inspector;
+ 	WebKitFindController *finder;
+ 	WebKitHitTestResult *mousepos;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	GTlsCertificateFlags tlsflags;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	GTlsCertificateFlags tlserr;
+</a> 	Window xid;
+<a href="#h1-0-6" id="h1-0-6" class="d">-	int progress, fullscreen;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	int progress, fullscreen, https, insecure;
+</a> 	const char *title, *overtitle, *targeturi;
+ 	const char *needle;
+ 	struct Client *next;
+<a href="#h1-1" id="h1-1" class="h">@@ -196,6 +196,8 @@ static gboolean decidepolicy(WebKitWebView *v, WebKitPolicyDecision *d,
+</a> static void decidenavigation(WebKitPolicyDecision *d, Client *c);
+ static void decidenewwindow(WebKitPolicyDecision *d, Client *c);
+ static void decideresource(WebKitPolicyDecision *d, Client *c);
+<a href="#h1-1-3" id="h1-1-3" class="i">+static void insecurecontent(WebKitWebView *v, WebKitInsecureContentEvent e,
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+                            Client *c);
+</a> static void downloadstarted(WebKitWebContext *wc, WebKitDownload *d,
+                             Client *c);
+ static void responsereceived(WebKitDownload *d, GParamSpec *ps, Client *c);
+<a href="#h1-2" id="h1-2" class="h">@@ -452,7 +454,6 @@ newclient(Client *rc)
+</a> 	clients = c;
+ 
+ 	c-&gt;progress = 100;
+<a href="#h1-2-3" id="h1-2-3" class="d">-	c-&gt;tlsflags = G_TLS_CERTIFICATE_VALIDATE_ALL + 1;
+</a> 	c-&gt;view = newview(c, rc ? rc-&gt;view : NULL);
+ 
+ 	return c;
+<a href="#h1-3" id="h1-3" class="h">@@ -574,8 +575,10 @@ gettogglestats(Client *c)
+</a> void
+ getpagestats(Client *c)
+ {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	pagestats[0] = c-&gt;tlsflags &gt; G_TLS_CERTIFICATE_VALIDATE_ALL ? &#39;-&#39; :
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-	               c-&gt;tlsflags &gt; 0 ? &#39;U&#39; : &#39;T&#39;;
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+	if (c-&gt;https)
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+		pagestats[0] = (c-&gt;tlserr || c-&gt;insecure) ?  &#39;U&#39; : &#39;T&#39;;
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+	else
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+		pagestats[0] = &#39;-&#39;;
+</a> 	pagestats[1] = &#39;\0&#39;;
+ }
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -1006,6 +1009,8 @@ newview(Client *c, WebKitWebView *rv)
+</a> 			 G_CALLBACK(createview), c);
+ 	g_signal_connect(G_OBJECT(v), &quot;decide-policy&quot;,
+ 			 G_CALLBACK(decidepolicy), c);
+<a href="#h1-4-3" id="h1-4-3" class="i">+	g_signal_connect(G_OBJECT(v), &quot;insecure-content-detected&quot;,
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+			 G_CALLBACK(insecurecontent), c);
+</a> 	g_signal_connect(G_OBJECT(v), &quot;load-changed&quot;,
+ 			 G_CALLBACK(loadchanged), c);
+ 	g_signal_connect(G_OBJECT(v), &quot;mouse-target-changed&quot;,
+<a href="#h1-5" id="h1-5" class="h">@@ -1227,7 +1232,7 @@ loadchanged(WebKitWebView *v, WebKitLoadEvent e, Client *c)
+</a> 		curconfig = defconfig;
+ 		setatom(c, AtomUri, title);
+ 		c-&gt;title = title;
+<a href="#h1-5-3" id="h1-5-3" class="d">-		c-&gt;tlsflags = G_TLS_CERTIFICATE_VALIDATE_ALL + 1;
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		c-&gt;https = c-&gt;insecure = 0;
+</a> 		seturiparameters(c, geturi(c));
+ 		break;
+ 	case WEBKIT_LOAD_REDIRECTED:
+<a href="#h1-6" id="h1-6" class="h">@@ -1236,10 +1241,8 @@ loadchanged(WebKitWebView *v, WebKitLoadEvent e, Client *c)
+</a> 		seturiparameters(c, geturi(c));
+ 		break;
+ 	case WEBKIT_LOAD_COMMITTED:
+<a href="#h1-6-3" id="h1-6-3" class="d">-		if (!webkit_web_view_get_tls_info(c-&gt;view, NULL,
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-		    &amp;(c-&gt;tlsflags)))
+</a><a href="#h1-6-5" id="h1-6-5" class="d">-			c-&gt;tlsflags = G_TLS_CERTIFICATE_VALIDATE_ALL + 1;
+</a><a href="#h1-6-6" id="h1-6-6" class="d">-
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+		c-&gt;https = webkit_web_view_get_tls_info(c-&gt;view, NULL,
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+		                                        &amp;c-&gt;tlserr);
+</a> 		break;
+ 	case WEBKIT_LOAD_FINISHED:
+ 		/* Disabled until we write some WebKitWebExtension for
+<a href="#h1-7" id="h1-7" class="h">@@ -1427,6 +1430,12 @@ decideresource(WebKitPolicyDecision *d, Client *c)
+</a> }
+ 
+ void
+<a href="#h1-7-3" id="h1-7-3" class="i">+insecurecontent(WebKitWebView *v, WebKitInsecureContentEvent e, Client *c)
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+{
+</a><a href="#h1-7-5" id="h1-7-5" class="i">+	c-&gt;insecure = 1;
+</a><a href="#h1-7-6" id="h1-7-6" class="i">+}
+</a><a href="#h1-7-7" id="h1-7-7" class="i">+
+</a><a href="#h1-7-8" id="h1-7-8" class="i">+void
+</a> downloadstarted(WebKitWebContext *wc, WebKitDownload *d, Client *c)
+ {
+ 	g_signal_connect(G_OBJECT(d), &quot;notify::response&quot;,
+</pre>
+</div>
+</body>
+</html>

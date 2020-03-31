@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>handling WM_STATE seems to make DnD in gtk/qt apps working, well let&#39;s handle this in dwm as well - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a5cb80b86cdedb8cd1f3a02de47f204bd174f649.html">a5cb80b86cdedb8cd1f3a02de47f204bd174f649</a>
+<b>parent</b> <a href="../commit/7e98db251e383674440d75dc42d98ab6eed79ac7.html">7e98db251e383674440d75dc42d98ab6eed79ac7</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Sun, 28 Jan 2007 20:29:41 +0100
+
+handling WM_STATE seems to make DnD in gtk/qt apps working, well let&#39;s handle this in dwm as well
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">main.c</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 11 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -53,6 +53,13 @@ grabbuttons(Client *c, Bool focused) {
+</a> 				GrabModeAsync, GrabModeSync, None, None);
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+setclientstate(Client *c, long state) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	long data[] = {state, None};
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	XChangeProperty(dpy, c-&gt;win, wmatom[WMState], wmatom[WMState], 32,
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+			PropModeReplace, (unsigned char *)data, 2);
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+}
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a> static int
+ xerrordummy(Display *dsply, XErrorEvent *ee) {
+ 	return 0;
+<a href="#h0-1" id="h0-1" class="h">@@ -169,6 +176,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	stack = clients = c;
+ 	XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+ 	XMapWindow(dpy, c-&gt;win);
+<a href="#h0-1-3" id="h0-1-3" class="i">+	setclientstate(c, NormalState);
+</a> 	if(isvisible(c))
+ 		focus(c);
+ 	arrange();
+<a href="#h0-2" id="h0-2" class="h">@@ -293,6 +301,7 @@ unmanage(Client *c) {
+</a> 		focus(nc);
+ 	}
+ 	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+<a href="#h0-2-3" id="h0-2-3" class="i">+	setclientstate(c, WithdrawnState);
+</a> 	free(c-&gt;tags);
+ 	free(c);
+ 	XSync(dpy, False);
+<b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -40,7 +40,7 @@
+</a> #define PROTODELWIN		1
+ 
+ enum { NetSupported, NetWMName, NetLast };		/* EWMH atoms */
+<a href="#h1-0-3" id="h1-0-3" class="d">-enum { WMProtocols, WMDelete, WMLast };			/* default atoms */
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+enum { WMProtocols, WMDelete, WMState, WMLast };	/* default atoms */
+</a> enum { CurNormal, CurResize, CurMove, CurLast };	/* cursor */
+ enum { ColBorder, ColFG, ColBG, ColLast };		/* color */
+ 
+<b>diff --git a/<a id="h2" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -92,6 +92,7 @@ setup(void) {
+</a> 	/* init atoms */
+ 	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+ 	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+<a href="#h2-0-3" id="h2-0-3" class="i">+	wmatom[WMState] = XInternAtom(dpy, &quot;WM_STATE&quot;, False);
+</a> 	netatom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+ 	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+ 	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
+</pre>
+</div>
+</body>
+</html>

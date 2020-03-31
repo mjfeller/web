@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Import the arg.h from st which fixed the oob bug. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/581075796aa380f32a0313c4c64a608e55f8b374.html">581075796aa380f32a0313c4c64a608e55f8b374</a>
+<b>parent</b> <a href="../commit/934705c420a25054b9be55a5321e97d6d56579e2.html">934705c420a25054b9be55a5321e97d6d56579e2</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Mon, 22 Feb 2016 06:47:46 +0100
+
+Import the arg.h from st which fixed the oob bug.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">arg.h</a></td><td> | </td><td class="num">47</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>1 file changed, 27 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/arg.h.html">arg.h</a> b/<a href="../file/arg.h.html">arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,39 +3,46 @@
+</a>  * by 20h
+  */
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-#ifndef __ARG_H__
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-#define __ARG_H__
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#ifndef ARG_H__
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#define ARG_H__
+</a> 
+ extern char *argv0;
+ 
+<a href="#h0-0-10" id="h0-0-10" class="d">-#define USED(x) ((void)(x))
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+/* use main(int argc, char *argv[]) */
+</a> #define ARGBEGIN	for (argv0 = *argv, argv++, argc--;\
+<a href="#h0-0-14" id="h0-0-14" class="d">-					argv[0] &amp;&amp; argv[0][1]\
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-					&amp;&amp; argv[0][0] == &#39;-&#39;;\
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+					argv[0] &amp;&amp; argv[0][0] == &#39;-&#39;\
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+					&amp;&amp; argv[0][1];\
+</a> 					argc--, argv++) {\
+<a href="#h0-0-19" id="h0-0-19" class="d">-				char _argc;\
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-				char **_argv;\
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+				char argc_;\
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+				char **argv_;\
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+				int brk_;\
+</a> 				if (argv[0][1] == &#39;-&#39; &amp;&amp; argv[0][2] == &#39;\0&#39;) {\
+ 					argv++;\
+ 					argc--;\
+ 					break;\
+ 				}\
+<a href="#h0-0-29" id="h0-0-29" class="d">-				for (argv[0]++, _argv = argv; argv[0][0];\
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+				for (brk_ = 0, argv[0]++, argv_ = argv;\
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+						argv[0][0] &amp;&amp; !brk_;\
+</a> 						argv[0]++) {\
+<a href="#h0-0-33" id="h0-0-33" class="d">-					if (_argv != argv)\
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+					if (argv_ != argv)\
+</a> 						break;\
+<a href="#h0-0-36" id="h0-0-36" class="d">-					_argc = argv[0][0];\
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-					switch (_argc)
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+					argc_ = argv[0][0];\
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+					switch (argc_)
+</a> #define ARGEND			}\
+<a href="#h0-0-42" id="h0-0-42" class="d">-				USED(_argc);\
+</a><a href="#h0-0-43" id="h0-0-43" class="d">-			}\
+</a><a href="#h0-0-44" id="h0-0-44" class="d">-			USED(argv);\
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-			USED(argc);
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+			}
+</a> 
+<a href="#h0-0-48" id="h0-0-48" class="d">-#define EARGF(x)	((argv[1] == NULL)? ((x), abort(), (char *)0) :\
+</a><a href="#h0-0-49" id="h0-0-49" class="d">-			(argc--, argv++, argv[0]))
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+#define ARGC()		argc_
+</a> 
+<a href="#h0-0-52" id="h0-0-52" class="d">-#endif
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+#define EARGF(x)	((argv[0][1] == &#39;\0&#39; &amp;&amp; argv[1] == NULL)?\
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+				((x), abort(), (char *)0) :\
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+				(brk_ = 1, (argv[0][1] != &#39;\0&#39;)?\
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+					(&amp;argv[0][1]) :\
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+					(argc--, argv++, argv[0])))
+</a> 
+<a href="#h0-0-59" id="h0-0-59" class="i">+#define ARGF()		((argv[0][1] == &#39;\0&#39; &amp;&amp; argv[1] == NULL)?\
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+				(char *)0 :\
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+				(brk_ = 1, (argv[0][1] != &#39;\0&#39;)?\
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+					(&amp;argv[0][1]) :\
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+					(argc--, argv++, argv[0])))
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+
+</a><a href="#h0-0-65" id="h0-0-65" class="i">+#endif
+</a></pre>
+</div>
+</body>
+</html>

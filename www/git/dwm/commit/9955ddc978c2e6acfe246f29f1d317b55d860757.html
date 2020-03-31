@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>using execl now, argv changed, using cmd and const char defs directly in the KEYS struct - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9955ddc978c2e6acfe246f29f1d317b55d860757.html">9955ddc978c2e6acfe246f29f1d317b55d860757</a>
+<b>parent</b> <a href="../commit/0dfe729f90069de070495c82ddc72cc476a4f3ab.html">0dfe729f90069de070495c82ddc72cc476a4f3ab</a>
+<b>Author:</b> arg@10ksloc.org &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Fri,  4 Aug 2006 12:00:55 +0200
+
+using execl now, argv changed, using cmd and const char defs directly in the KEYS struct
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">17</td><td><span class="i">++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">6</td><td><span class="i">++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">util.c</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>4 files changed, 18 insertions(+), 18 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -17,13 +17,6 @@ const char *tags[] = { &quot;fnord&quot;, &quot;dev&quot;, &quot;net&quot;, &quot;work&quot;, &quot;misc&quot;, NULL };
+</a> #define MASTERW			60 /* percent */
+ 
+ #define KEYS \
+<a href="#h0-0-3" id="h0-0-3" class="d">-	const char *browse[] = { &quot;firefox&quot;, NULL }; \
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	const char *gimp[] = { &quot;gimp&quot;, NULL }; \
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	const char *term[] = { \
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-		&quot;urxvt&quot;, &quot;-tr&quot;, &quot;+sb&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-cr&quot;, &quot;white&quot;, \
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-		&quot;-fn&quot;, &quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;, NULL \
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	}; \
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	const char *xlock[] = { &quot;xlock&quot;, NULL }; \
+</a> static Key key[] = { \
+ 	/* modifier		key		function	arguments */ \
+ 	{ MODKEY,		XK_0,		view,		{ .i = 0 } }, \
+<a href="#h0-1" id="h0-1" class="h">@@ -50,10 +43,12 @@ static Key key[] = { \
+</a> 	{ MODKEY|ShiftMask,	XK_4,		replacetag,	{ .i = 5 } }, \
+ 	{ MODKEY|ShiftMask,	XK_c,		killclient,	{ 0 } }, \
+ 	{ MODKEY|ShiftMask,	XK_q,		quit,		{ 0 } }, \
+<a href="#h0-1-3" id="h0-1-3" class="d">-	{ MODKEY|ShiftMask,	XK_Return,	spawn,		{ .argv = term } }, \
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	{ MODKEY|ShiftMask,	XK_g,		spawn,		{ .argv = gimp } }, \
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	{ MODKEY|ShiftMask,	XK_l,		spawn,		{ .argv = xlock } }, \
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	{ MODKEY|ShiftMask,	XK_w,		spawn,		{ .argv = browse } }, \
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	{ MODKEY|ShiftMask,	XK_x,		spawn, \
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+		{ .cmd = &quot;exec `ls -lL /usr/bin /usr/local/bin 2&gt;/dev/null |&quot; \
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		&quot; awk &#39;NF&gt;2 &amp;&amp; $1 ~ /^[^d].*x/ {print $NF}&#39; | sort | uniq | dmenu`&quot; } }, \
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	{ MODKEY|ShiftMask,	XK_Return,	spawn, \
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		{ .cmd = &quot;exec urxvt -tr +sb -bg black -fg white -cr white &quot; \
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+			&quot;-fn &#39;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&#39;&quot; } }, \
+</a> };
+ 
+ #define RULES \
+<b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -17,7 +17,6 @@ const char *tags[] = { &quot;0&quot;, &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, NULL };
+</a> #define MASTERW			60 /* percent */
+ 
+ #define KEYS \
+<a href="#h1-0-3" id="h1-0-3" class="d">-	const char *term[] = { &quot;xterm&quot;, NULL }; \
+</a> static Key key[] = { \
+ 	/* modifier		key		function	arguments */ \
+ 	{ MODKEY,		XK_0,		view,		{ .i = 0 } }, \
+<a href="#h1-1" id="h1-1" class="h">@@ -44,7 +43,10 @@ static Key key[] = { \
+</a> 	{ MODKEY|ShiftMask,	XK_4,		replacetag,	{ .i = 4 } }, \
+ 	{ MODKEY|ShiftMask,	XK_c,		killclient,	{ 0 } }, \
+ 	{ MODKEY|ShiftMask,	XK_q,		quit,		{ 0 } }, \
+<a href="#h1-1-3" id="h1-1-3" class="d">-	{ MODKEY|ShiftMask,	XK_Return,	spawn,		{ .argv = term } }, \
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	/* { MODKEY|ShiftMask,	XK_x,		spawn, */ \
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	/*	{ .cmd = &quot;exec `ls -lL /usr/bin /usr/local/bin 2&gt;/dev/null |&quot; */ \
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	/*	&quot; awk &#39;NF&gt;2 &amp;&amp; $1 ~ /^[^d].*x/ {print $NF}&#39; | sort | uniq | dmenu`&quot; } }, */ \
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	{ MODKEY|ShiftMask,	XK_Return,	spawn,		{ .cmd = &quot;exec xterm&quot; } }, \
+</a> };
+ 
+ #define RULES \
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -17,7 +17,7 @@ typedef struct DC DC;
+</a> typedef struct Fnt Fnt;
+ 
+ union Arg {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	const char **argv;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	const char *cmd;
+</a> 	int i;
+ };
+ 
+<b>diff --git a/<a id="h3" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -43,17 +43,20 @@ eprint(const char *errstr, ...)
+</a> void
+ spawn(Arg *arg)
+ {
+<a href="#h3-0-3" id="h3-0-3" class="d">-	char **argv = (char **)arg-&gt;argv;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	static char *shell = NULL;
+</a> 
+<a href="#h3-0-6" id="h3-0-6" class="d">-	if(!argv || !argv[0])
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	if(!shell &amp;&amp; !(shell = getenv(&quot;SHELL&quot;)))
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+		shell = &quot;/bin/sh&quot;;
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+	if(!arg-&gt;cmd)
+</a> 		return;
+ 	if(fork() == 0) {
+ 		if(fork() == 0) {
+ 			if(dpy)
+ 				close(ConnectionNumber(dpy));
+ 			setsid();
+<a href="#h3-0-17" id="h3-0-17" class="d">-			execvp(argv[0], argv);
+</a><a href="#h3-0-18" id="h3-0-18" class="d">-			fprintf(stderr, &quot;dwm: execvp %s&quot;, argv[0]);
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+			execl(shell, shell, &quot;-c&quot;, arg-&gt;cmd, NULL);
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+			fprintf(stderr, &quot;dwm: execl &#39;%s&#39;&quot;, arg-&gt;cmd);
+</a> 			perror(&quot; failed&quot;);
+ 		}
+ 		exit(0);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed unnecessary bx, by, bw variables - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3c35b90dd3e79e42b115f850dee077eda9816363.html">3c35b90dd3e79e42b115f850dee077eda9816363</a>
+<b>parent</b> <a href="../commit/1d63030665674496930612ef9a272afb6b75c174.html">1d63030665674496930612ef9a272afb6b75c174</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Tue, 16 Jan 2007 11:33:42 +0100
+
+removed unnecessary bx, by, bw variables
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">draw.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">main.c</a></td><td> | </td><td class="num">7</td><td><span class="i">++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>3 files changed, 6 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -114,17 +114,17 @@ drawstatus(void) {
+</a> 	drawtext(arrange == dofloat ? FLOATSYMBOL : TILESYMBOL, dc.norm, False, False);
+ 	x = dc.x + dc.w;
+ 	dc.w = textw(stext);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	dc.x = bw - dc.w;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	dc.x = sw - dc.w;
+</a> 	if(dc.x &lt; x) {
+ 		dc.x = x;
+<a href="#h0-0-7" id="h0-0-7" class="d">-		dc.w = bw - x;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		dc.w = sw - x;
+</a> 	}
+ 	drawtext(stext, dc.norm, False, False);
+ 	if((dc.w = dc.x - x) &gt; bh) {
+ 		dc.x = x;
+ 		drawtext(sel ? sel-&gt;name : NULL, sel ? dc.sel : dc.norm, False, False);
+ 	}
+<a href="#h0-0-15" id="h0-0-15" class="d">-	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, bw, bh, 0, 0);
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, sw, bh, 0, 0);
+</a> 	XSync(dpy, False);
+ }
+ 
+<b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -90,7 +90,7 @@ struct Client {
+</a> 
+ extern const char *tags[];			/* all tags */
+ extern char stext[256];				/* status text */
+<a href="#h1-0-3" id="h1-0-3" class="d">-extern int bx, by, bw, bh, bmw;			/* bar geometry, bar mode label width */
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+extern int bh, bmw;				/* bar height, bar mode label width */
+</a> extern int screen, sx, sy, sw, sh;		/* screen geometry */
+ extern int wax, way, wah, waw;			/* windowarea geometry */
+ extern unsigned int master, nmaster;		/* master percent, number of master clients */
+<b>diff --git a/<a id="h2" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -19,7 +19,7 @@
+</a> 
+ char stext[256];
+ Bool *seltag;
+<a href="#h2-0-3" id="h2-0-3" class="d">-int bx, by, bw, bh, bmw, masterd, screen, sx, sy, sw, sh, wax, way, waw, wah;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+int bh, bmw, screen, sx, sy, sw, sh, wax, way, waw, wah;
+</a> unsigned int master, nmaster, ntags, numlockmask;
+ Atom wmatom[WMLast], netatom[NetLast];
+ Bool running = True;
+<a href="#h2-1" id="h2-1" class="h">@@ -136,14 +136,11 @@ setup(void) {
+</a> 	nmaster = NMASTER;
+ 	bmw = textw(TILESYMBOL) &gt; textw(FLOATSYMBOL) ? textw(TILESYMBOL) : textw(FLOATSYMBOL);
+ 	/* bar */
+<a href="#h2-1-3" id="h2-1-3" class="d">-	bx = sx;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	by = sy;
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-	bw = sw;
+</a> 	dc.h = bh = dc.font.height + 2;
+ 	wa.override_redirect = 1;
+ 	wa.background_pixmap = ParentRelative;
+ 	wa.event_mask = ButtonPressMask | ExposureMask;
+<a href="#h2-1-10" id="h2-1-10" class="d">-	barwin = XCreateWindow(dpy, root, bx, by, bw, bh, 0, DefaultDepth(dpy, screen),
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+	barwin = XCreateWindow(dpy, root, sx, sy, sw, bh, 0, DefaultDepth(dpy, screen),
+</a> 			CopyFromParent, DefaultVisual(dpy, screen),
+ 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+ 	XDefineCursor(dpy, barwin, cursor[CurNormal]);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Remove cleanup and deglobalize and rework data structures - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b00f444a4ea0d9ffa5cd7dcda71c97cdf05d322e.html">b00f444a4ea0d9ffa5cd7dcda71c97cdf05d322e</a>
+<b>parent</b> <a href="../commit/cd3c546c37d91e24b8c55bab88bfcb920d8ea895.html">cd3c546c37d91e24b8c55bab88bfcb920d8ea895</a>
+<b>Author:</b> FRIGN &lt;<a href="mailto:dev@frign.de">dev@frign.de</a>&gt;
+<b>Date:</b>   Sun, 11 Sep 2016 23:08:19 +0200
+
+Remove cleanup and deglobalize and rework data structures
+
+The cleanup removal is a joint-venture with Markus. We assume the X server does
+the cleanup, so we don&#39;t need it. The idea is that the fds are closed at exit
+and thus already indicate to the X server that the client has quit. Analogously
+the same applies to freeing memory sections previously allocated for the X
+server.
+
+We love XXXXXL burgers and therefore removed
+XUngrabPointer
+XUngrabKeyboard
+XFreeColors
+XFreePixmap
+XDestroyWindow
+Lines of Code.
+
+For a project like slock there is no need to carry around global state. By
+moving the three structures to main() it is now clear which functions modify
+which state, greatly improving the readability of the code, especially given
+slock is a suid program.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">78</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">-------------------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 23 insertions(+), 55 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -33,18 +33,18 @@ enum {
+</a> 
+ #include &quot;config.h&quot;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-typedef struct {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+struct lock {
+</a> 	int screen;
+ 	Window root, win;
+ 	Pixmap pmap;
+ 	unsigned long colors[NUMCOLS];
+<a href="#h0-0-9" id="h0-0-9" class="d">-} Lock;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+};
+</a> 
+<a href="#h0-0-12" id="h0-0-12" class="d">-static Lock **locks;
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-static int nscreens;
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-static Bool rr;
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-static int rrevbase;
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-static int rrerrbase;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+struct xrandr {
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	int active;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	int evbase;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	int errbase;
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+};
+</a> 
+ static void
+ die(const char *errstr, ...)
+<a href="#h0-1" id="h0-1" class="h">@@ -123,7 +123,8 @@ getpw(void)
+</a> }
+ 
+ static void
+<a href="#h0-1-3" id="h0-1-3" class="d">-readpw(Display *dpy, const char *pws)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+       const char *pws)
+</a> {
+ 	char buf[32], passwd[256], *encrypted;
+ 	int num, screen, running, failure;
+<a href="#h0-2" id="h0-2" class="h">@@ -194,7 +195,7 @@ readpw(Display *dpy, const char *pws)
+</a> 				}
+ 				oldc = color;
+ 			}
+<a href="#h0-2-3" id="h0-2-3" class="d">-		} else if (rr &amp;&amp; ev.type == rrevbase + RRScreenChangeNotify) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		} else if (rr-&gt;active &amp;&amp; ev.type == rr-&gt;evbase + RRScreenChangeNotify) {
+</a> 			XRRScreenChangeNotifyEvent *rre = (XRRScreenChangeNotifyEvent*)&amp;ev;
+ 			for (screen = 0; screen &lt; nscreens; screen++) {
+ 				if (locks[screen]-&gt;win == rre-&gt;window) {
+<a href="#h0-3" id="h0-3" class="h">@@ -207,44 +208,17 @@ readpw(Display *dpy, const char *pws)
+</a> 	}
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-static void
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-unlockscreen(Display *dpy, Lock *lock)
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-{
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-	if(dpy == NULL || lock == NULL)
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-		return;
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-	XUngrabPointer(dpy, CurrentTime);
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-	XUngrabKeyboard(dpy, CurrentTime);
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-	XFreeColors(dpy, DefaultColormap(dpy, lock-&gt;screen), lock-&gt;colors, NUMCOLS, 0);
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-	XFreePixmap(dpy, lock-&gt;pmap);
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-	XDestroyWindow(dpy, lock-&gt;win);
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-	free(lock);
+</a><a href="#h0-3-16" id="h0-3-16" class="d">-}
+</a><a href="#h0-3-17" id="h0-3-17" class="d">-
+</a><a href="#h0-3-18" id="h0-3-18" class="d">-static void
+</a><a href="#h0-3-19" id="h0-3-19" class="d">-cleanup(Display *dpy)
+</a><a href="#h0-3-20" id="h0-3-20" class="d">-{
+</a><a href="#h0-3-21" id="h0-3-21" class="d">-	int s;
+</a><a href="#h0-3-22" id="h0-3-22" class="d">-
+</a><a href="#h0-3-23" id="h0-3-23" class="d">-	for (s = 0; s &lt; nscreens; ++s)
+</a><a href="#h0-3-24" id="h0-3-24" class="d">-		unlockscreen(dpy, locks[s]);
+</a><a href="#h0-3-25" id="h0-3-25" class="d">-
+</a><a href="#h0-3-26" id="h0-3-26" class="d">-	free(locks);
+</a><a href="#h0-3-27" id="h0-3-27" class="d">-	XCloseDisplay(dpy);
+</a><a href="#h0-3-28" id="h0-3-28" class="d">-}
+</a><a href="#h0-3-29" id="h0-3-29" class="d">-
+</a><a href="#h0-3-30" id="h0-3-30" class="d">-static Lock *
+</a><a href="#h0-3-31" id="h0-3-31" class="d">-lockscreen(Display *dpy, int screen)
+</a><a href="#h0-3-32" id="h0-3-32" class="i">+static struct lock *
+</a><a href="#h0-3-33" id="h0-3-33" class="i">+lockscreen(Display *dpy, struct xrandr *rr, int screen)
+</a> {
+ 	char curs[] = {0, 0, 0, 0, 0, 0, 0, 0};
+ 	int i, ptgrab, kbgrab;
+<a href="#h0-3-37" id="h0-3-37" class="d">-	Lock *lock;
+</a><a href="#h0-3-38" id="h0-3-38" class="i">+	struct lock *lock;
+</a> 	XColor color, dummy;
+ 	XSetWindowAttributes wa;
+ 	Cursor invisible;
+ 
+<a href="#h0-3-43" id="h0-3-43" class="d">-	if (dpy == NULL || screen &lt; 0 || !(lock = malloc(sizeof(Lock))))
+</a><a href="#h0-3-44" id="h0-3-44" class="i">+	if (dpy == NULL || screen &lt; 0 || !(lock = malloc(sizeof(struct lock))))
+</a> 		return NULL;
+ 
+ 	lock-&gt;screen = screen;
+<a href="#h0-4" id="h0-4" class="h">@@ -281,7 +255,7 @@ lockscreen(Display *dpy, int screen)
+</a> 		/* input is grabbed: we can lock the screen */
+ 		if (ptgrab == GrabSuccess &amp;&amp; kbgrab == GrabSuccess) {
+ 			XMapRaised(dpy, lock-&gt;win);
+<a href="#h0-4-3" id="h0-4-3" class="d">-			if (rr)
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+			if (rr-&gt;active)
+</a> 				XRRSelectInput(dpy, lock-&gt;win, RRScreenChangeNotifyMask);
+ 
+ 			XSelectInput(dpy, lock-&gt;root, SubstructureNotifyMask);
+<a href="#h0-5" id="h0-5" class="h">@@ -312,13 +286,15 @@ usage(void)
+</a> 
+ int
+ main(int argc, char **argv) {
+<a href="#h0-5-3" id="h0-5-3" class="i">+	struct xrandr rr;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	struct lock **locks;
+</a> 	struct passwd *pwd;
+ 	struct group *grp;
+ 	uid_t duid;
+ 	gid_t dgid;
+ 	const char *pws;
+ 	Display *dpy;
+<a href="#h0-5-11" id="h0-5-11" class="d">-	int s, nlocks;
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+	int s, nlocks, nscreens;
+</a> 
+ 	ARGBEGIN {
+ 	case &#39;v&#39;:
+<a href="#h0-6" id="h0-6" class="h">@@ -360,16 +336,14 @@ main(int argc, char **argv) {
+</a> 		die(&quot;slock: setuid: %s\n&quot;, strerror(errno));
+ 
+ 	/* check for Xrandr support */
+<a href="#h0-6-3" id="h0-6-3" class="d">-	rr = XRRQueryExtension(dpy, &amp;rrevbase, &amp;rrerrbase);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	rr.active = XRRQueryExtension(dpy, &amp;rr.evbase, &amp;rr.errbase);
+</a> 
+ 	/* get number of screens in display &quot;dpy&quot; and blank them */
+ 	nscreens = ScreenCount(dpy);
+<a href="#h0-6-8" id="h0-6-8" class="d">-	if (!(locks = calloc(nscreens, sizeof(Lock *)))) {
+</a><a href="#h0-6-9" id="h0-6-9" class="d">-		XCloseDisplay(dpy);
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+	if (!(locks = calloc(nscreens, sizeof(struct lock *))))
+</a> 		die(&quot;slock: out of memory\n&quot;);
+<a href="#h0-6-12" id="h0-6-12" class="d">-	}
+</a> 	for (nlocks = 0, s = 0; s &lt; nscreens; s++) {
+<a href="#h0-6-14" id="h0-6-14" class="d">-		if ((locks[s] = lockscreen(dpy, s)) != NULL)
+</a><a href="#h0-6-15" id="h0-6-15" class="i">+		if ((locks[s] = lockscreen(dpy, &amp;rr, s)) != NULL)
+</a> 			nlocks++;
+ 		else
+ 			break;
+<a href="#h0-7" id="h0-7" class="h">@@ -377,16 +351,13 @@ main(int argc, char **argv) {
+</a> 	XSync(dpy, 0);
+ 
+ 	/* did we manage to lock everything? */
+<a href="#h0-7-3" id="h0-7-3" class="d">-	if (nlocks != nscreens) {
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-		cleanup(dpy);
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+	if (nlocks != nscreens)
+</a> 		return 1;
+<a href="#h0-7-7" id="h0-7-7" class="d">-	}
+</a> 
+ 	/* run post-lock command */
+ 	if (argc &gt; 0) {
+ 		switch (fork()) {
+ 		case -1:
+<a href="#h0-7-13" id="h0-7-13" class="d">-			cleanup(dpy);
+</a> 			die(&quot;slock: fork failed: %s\n&quot;, strerror(errno));
+ 		case 0:
+ 			if (close(ConnectionNumber(dpy)) &lt; 0)
+<a href="#h0-8" id="h0-8" class="h">@@ -399,10 +370,7 @@ main(int argc, char **argv) {
+</a> 	}
+ 
+ 	/* everything is now blank. Wait for the correct password */
+<a href="#h0-8-3" id="h0-8-3" class="d">-	readpw(dpy, pws);
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-
+</a><a href="#h0-8-5" id="h0-8-5" class="d">-	/* password ok, unlock everything and quit */
+</a><a href="#h0-8-6" id="h0-8-6" class="d">-	cleanup(dpy);
+</a><a href="#h0-8-7" id="h0-8-7" class="i">+	readpw(dpy, &amp;rr, locks, nscreens, pws);
+</a> 
+ 	return 0;
+ }
+</pre>
+</div>
+</body>
+</html>

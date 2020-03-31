@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Trying a different cookie handling system. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0835ea21245ee6db049619f3c49ce6c4c41d0be2.html">0835ea21245ee6db049619f3c49ce6c4c41d0be2</a>
+<b>parent</b> <a href="../commit/75cc43047fc21ddcacd564766bb3211d9d0746e6.html">75cc43047fc21ddcacd564766bb3211d9d0746e6</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue, 20 Oct 2009 14:10:21 +0200
+
+Trying a different cookie handling system.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">87</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 46 insertions(+), 41 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -62,8 +62,6 @@ typedef struct {
+</a> 
+ static Display *dpy;
+ static Atom uriprop;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static SoupCookieJar *cookiejar;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-static SoupSession *session;
+</a> static Client *clients = NULL;
+ static GdkNativeWindow embed = 0;
+ static gboolean showxid = FALSE;
+<a href="#h0-1" id="h0-1" class="h">@@ -73,7 +71,6 @@ static char *progname;
+</a> 
+ static const char *autouri(Client *c);
+ static char *buildpath(const char *path);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void changecookie(SoupCookieJar *jar, SoupCookie *o, SoupCookie *n, gpointer p);
+</a> static void cleanup(void);
+ static void clipboard(Client *c, const Arg *arg);
+ static void context(WebKitWebView *v, GtkMenu *m, Client *c);
+<a href="#h0-2" id="h0-2" class="h">@@ -93,7 +90,6 @@ static void itemclick(GtkMenuItem *mi, Client *c);
+</a> static gboolean keypress(GtkWidget *w, GdkEventKey *ev, Client *c);
+ static void linkhover(WebKitWebView *v, const char* t, const char* l, Client *c);
+ static void loadcommit(WebKitWebView *v, WebKitWebFrame *f, Client *c);
+<a href="#h0-2-3" id="h0-2-3" class="d">-static void loadfinished(WebKitWebView *v, WebKitWebFrame *f, Client *c);
+</a> static void loadstart(WebKitWebView *v, WebKitWebFrame *f, Client *c);
+ static void loaduri(Client *c, const Arg *arg);
+ static void navigate(Client *c, const Arg *arg);
+<a href="#h0-3" id="h0-3" class="h">@@ -105,8 +101,9 @@ static GdkFilterReturn processx(GdkXEvent *xevent, GdkEvent *event, gpointer d);
+</a> static void print(Client *c, const Arg *arg);
+ static void progresschange(WebKitWebView *v, gint p, Client *c);
+ static void reload(Client *c, const Arg *arg);
+<a href="#h0-3-3" id="h0-3-3" class="d">-static void reloadcookie();
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+static void request(SoupSession *s, SoupMessage *m, gpointer p);
+</a> static void sigchld(int unused);
+<a href="#h0-3-6" id="h0-3-6" class="i">+static void setcookie(SoupMessage *m, gpointer p);
+</a> static void setup(void);
+ static void spawn(Client *c, const Arg *arg);
+ static void scroll(Client *c, const Arg *arg);
+<a href="#h0-4" id="h0-4" class="h">@@ -157,18 +154,6 @@ buildpath(const char *path) {
+</a> }
+ 
+ void
+<a href="#h0-4-3" id="h0-4-3" class="d">-changecookie(SoupCookieJar *jar, SoupCookie *oc, SoupCookie *c, gpointer p) {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	SoupDate *e;
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-	if(c &amp;&amp; c-&gt;expires == NULL) {
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-		e = soup_date_new_from_time_t(time(NULL) + sessiontime);
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-		c = soup_cookie_copy(c);
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-		soup_cookie_set_expires(c, e);
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-		soup_cookie_jar_add_cookie(cookiejar, c);
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-	}
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-}
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-void
+</a> cleanup(void) {
+ 	while(clients)
+ 		destroyclient(clients);
+<a href="#h0-5" id="h0-5" class="h">@@ -181,11 +166,15 @@ cleanup(void) {
+</a> void
+ clipboard(Client *c, const Arg *arg) {
+ 	gboolean paste = *(gboolean *)arg;
+<a href="#h0-5-3" id="h0-5-3" class="i">+	const char *uri;
+</a> 
+ 	if(paste)
+ 		gtk_clipboard_request_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY), pasteuri, c);
+<a href="#h0-5-7" id="h0-5-7" class="d">-	else
+</a><a href="#h0-5-8" id="h0-5-8" class="d">-		gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY), webkit_web_view_get_uri(c-&gt;view), -1);
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+	else {
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+		if(!(uri = autouri(c)))
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+			uri = geturi(c);
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+		gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY), uri, -1);
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+	}
+</a> }
+ 
+ void
+<a href="#h0-6" id="h0-6" class="h">@@ -410,13 +399,7 @@ loadcommit(WebKitWebView *view, WebKitWebFrame *f, Client *c) {
+</a> }
+ 
+ void
+<a href="#h0-6-3" id="h0-6-3" class="d">-loadfinished(WebKitWebView *v, WebKitWebFrame *f, Client *c) {
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-	reloadcookie();
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-}
+</a><a href="#h0-6-6" id="h0-6-6" class="d">-
+</a><a href="#h0-6-7" id="h0-6-7" class="d">-void
+</a> loadstart(WebKitWebView *view, WebKitWebFrame *f, Client *c) {
+<a href="#h0-6-9" id="h0-6-9" class="d">-	reloadcookie();
+</a> 	c-&gt;progress = 0;
+ 	update(c);
+ }
+<a href="#h0-7" id="h0-7" class="h">@@ -488,7 +471,6 @@ newclient(void) {
+</a> 	c-&gt;view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;title-changed&quot;, G_CALLBACK(titlechange), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;load-progress-changed&quot;, G_CALLBACK(progresschange), c);
+<a href="#h0-7-3" id="h0-7-3" class="d">-	g_signal_connect(G_OBJECT(c-&gt;view), &quot;load-finished&quot;, G_CALLBACK(loadfinished), c);
+</a> 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;load-committed&quot;, G_CALLBACK(loadcommit), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;load-started&quot;, G_CALLBACK(loadstart), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;hovering-over-link&quot;, G_CALLBACK(linkhover), c);
+<a href="#h0-8" id="h0-8" class="h">@@ -587,7 +569,7 @@ createwindow(WebKitWebView  *v, WebKitWebFrame *f, Client *c) {
+</a> 
+ void
+ pasteuri(GtkClipboard *clipboard, const char *text, gpointer d) {
+<a href="#h0-8-3" id="h0-8-3" class="d">-	Arg arg = {.v = text };
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+	Arg arg = { .v = text };
+</a> 	if(text != NULL)
+ 		loaduri((Client *) d, &amp;arg);
+ }
+<a href="#h0-9" id="h0-9" class="h">@@ -641,16 +623,6 @@ reload(Client *c, const Arg *arg) {
+</a> }
+ 
+ void
+<a href="#h0-9-3" id="h0-9-3" class="d">-reloadcookie(void) {
+</a><a href="#h0-9-4" id="h0-9-4" class="d">-	SoupSession *s;
+</a><a href="#h0-9-5" id="h0-9-5" class="d">-
+</a><a href="#h0-9-6" id="h0-9-6" class="d">-	/* This forces the cookie to be written to hdd */
+</a><a href="#h0-9-7" id="h0-9-7" class="d">-	s = webkit_get_default_session();
+</a><a href="#h0-9-8" id="h0-9-8" class="d">-	soup_session_remove_feature(s, SOUP_SESSION_FEATURE(cookiejar));
+</a><a href="#h0-9-9" id="h0-9-9" class="d">-	soup_session_add_feature(s, SOUP_SESSION_FEATURE(cookiejar));
+</a><a href="#h0-9-10" id="h0-9-10" class="d">-} 
+</a><a href="#h0-9-11" id="h0-9-11" class="d">-
+</a><a href="#h0-9-12" id="h0-9-12" class="d">-void
+</a> scroll(Client *c, const Arg *arg) {
+ 	gdouble v;
+ 	GtkAdjustment *a;
+<a href="#h0-10" id="h0-10" class="h">@@ -664,6 +636,42 @@ scroll(Client *c, const Arg *arg) {
+</a> }
+ 
+ void
+<a href="#h0-10-3" id="h0-10-3" class="i">+request(SoupSession *s, SoupMessage *m, gpointer p) {
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+	SoupCookieJar *cookies;
+</a><a href="#h0-10-5" id="h0-10-5" class="i">+	SoupMessageHeaders *h;
+</a><a href="#h0-10-6" id="h0-10-6" class="i">+	char *cookiestr;
+</a><a href="#h0-10-7" id="h0-10-7" class="i">+	soup_message_add_header_handler(m, &quot;got-headers&quot;, &quot;Set-Cookie&quot;,
+</a><a href="#h0-10-8" id="h0-10-8" class="i">+			G_CALLBACK(setcookie), NULL);
+</a><a href="#h0-10-9" id="h0-10-9" class="i">+
+</a><a href="#h0-10-10" id="h0-10-10" class="i">+	h = m-&gt;request_headers;
+</a><a href="#h0-10-11" id="h0-10-11" class="i">+	cookies = soup_cookie_jar_text_new(cookiefile, TRUE);
+</a><a href="#h0-10-12" id="h0-10-12" class="i">+	cookiestr = soup_cookie_jar_get_cookies(cookies, soup_message_get_uri(m), FALSE);
+</a><a href="#h0-10-13" id="h0-10-13" class="i">+	if(cookiestr)
+</a><a href="#h0-10-14" id="h0-10-14" class="i">+		soup_message_headers_append(h, &quot;Cookie&quot;, cookiestr);
+</a><a href="#h0-10-15" id="h0-10-15" class="i">+	g_object_unref(cookies);
+</a><a href="#h0-10-16" id="h0-10-16" class="i">+}
+</a><a href="#h0-10-17" id="h0-10-17" class="i">+
+</a><a href="#h0-10-18" id="h0-10-18" class="i">+void
+</a><a href="#h0-10-19" id="h0-10-19" class="i">+setcookie(SoupMessage *m, gpointer p) {
+</a><a href="#h0-10-20" id="h0-10-20" class="i">+	SoupCookieJar *cookies;
+</a><a href="#h0-10-21" id="h0-10-21" class="i">+	SoupCookie *c;
+</a><a href="#h0-10-22" id="h0-10-22" class="i">+	SoupDate *e;
+</a><a href="#h0-10-23" id="h0-10-23" class="i">+	GSList *l;
+</a><a href="#h0-10-24" id="h0-10-24" class="i">+
+</a><a href="#h0-10-25" id="h0-10-25" class="i">+	cookies = soup_cookie_jar_text_new(cookiefile, FALSE);
+</a><a href="#h0-10-26" id="h0-10-26" class="i">+	for (l = soup_cookies_from_response(m); l; l = l-&gt;next){
+</a><a href="#h0-10-27" id="h0-10-27" class="i">+		c = (SoupCookie *)l-&gt;data;
+</a><a href="#h0-10-28" id="h0-10-28" class="i">+		if(c &amp;&amp; c-&gt;expires == NULL) {
+</a><a href="#h0-10-29" id="h0-10-29" class="i">+			e = soup_date_new_from_time_t(time(NULL) + sessiontime);
+</a><a href="#h0-10-30" id="h0-10-30" class="i">+			c = soup_cookie_copy(c);
+</a><a href="#h0-10-31" id="h0-10-31" class="i">+			soup_cookie_set_expires(c, e);
+</a><a href="#h0-10-32" id="h0-10-32" class="i">+		}
+</a><a href="#h0-10-33" id="h0-10-33" class="i">+		soup_cookie_jar_add_cookie(cookies, c);
+</a><a href="#h0-10-34" id="h0-10-34" class="i">+	}
+</a><a href="#h0-10-35" id="h0-10-35" class="i">+	g_slist_free(l);
+</a><a href="#h0-10-36" id="h0-10-36" class="i">+	g_object_unref(cookies);
+</a><a href="#h0-10-37" id="h0-10-37" class="i">+}
+</a><a href="#h0-10-38" id="h0-10-38" class="i">+void
+</a> sigchld(int unused) {
+ 	if(signal(SIGCHLD, sigchld) == SIG_ERR)
+ 		die(&quot;Can&#39;t install SIGCHLD handler&quot;);
+<a href="#h0-11" id="h0-11" class="h">@@ -681,7 +689,6 @@ setup(void) {
+</a> 		g_thread_init(NULL);
+ 
+ 	dpy = GDK_DISPLAY();
+<a href="#h0-11-3" id="h0-11-3" class="d">-	session = webkit_get_default_session();
+</a> 	uriprop = XInternAtom(dpy, &quot;_SURF_URI&quot;, False);
+ 
+ 	/* create dirs and files */
+<a href="#h0-12" id="h0-12" class="h">@@ -692,9 +699,7 @@ setup(void) {
+</a> 
+ 	/* cookie persistance */
+ 	s = webkit_get_default_session();
+<a href="#h0-12-3" id="h0-12-3" class="d">-	cookiejar = soup_cookie_jar_text_new(cookiefile, FALSE);
+</a><a href="#h0-12-4" id="h0-12-4" class="d">-	soup_session_add_feature(s, SOUP_SESSION_FEATURE(cookiejar));
+</a><a href="#h0-12-5" id="h0-12-5" class="d">-	g_signal_connect(cookiejar, &quot;changed&quot;, G_CALLBACK(changecookie), NULL);
+</a><a href="#h0-12-6" id="h0-12-6" class="i">+	g_signal_connect_after(s, &quot;request-queued&quot;, G_CALLBACK(request), NULL);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

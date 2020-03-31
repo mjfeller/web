@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>introduced Layout struct - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cdbc84b9a87c427b3d0a202475b0f5aae315fb90.html">cdbc84b9a87c427b3d0a202475b0f5aae315fb90</a>
+<b>parent</b> <a href="../commit/b2f895166af45b5d84abab90032bd3cc75391dc8.html">b2f895166af45b5d84abab90032bd3cc75391dc8</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Mon, 19 Feb 2007 16:40:36 +0100
+
+introduced Layout struct
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.arg.h</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">config.default.h</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">dwm.1</a></td><td> | </td><td class="num">38</td><td><span class="i">+++++++++++++++++++</span><span class="d">-------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">dwm.h</a></td><td> | </td><td class="num">19</td><td><span class="i">++++++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">event.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">main.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">screen.c</a></td><td> | </td><td class="num">82</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------</span></td></tr>
+</table></pre><pre>9 files changed, 115 insertions(+), 82 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -263,7 +263,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	setclientstate(c, NormalState);
+ 	if(isvisible(c))
+ 		focus(c);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	arrange();
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ Client *
+<a href="#h0-1" id="h0-1" class="h">@@ -430,7 +430,7 @@ unmanage(Client *c) {
+</a> 	XSync(dpy, False);
+ 	XSetErrorHandler(xerror);
+ 	XUngrabServer(dpy);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	arrange();
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -440,7 +440,7 @@ zoom(Arg *arg) {
+</a> 
+ 	if(!sel)
+ 		return;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(sel-&gt;isfloat || (arrange == dofloat)) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if(sel-&gt;isfloat || (lt-&gt;arrange == dofloat)) {
+</a> 		togglemax(sel);
+ 		return;
+ 	}
+<a href="#h0-3" id="h0-3" class="h">@@ -452,5 +452,5 @@ zoom(Arg *arg) {
+</a> 	detach(c);
+ 	attach(c);
+ 	focus(c);
+<a href="#h0-3-3" id="h0-3-3" class="d">-	arrange();
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	lt-&gt;arrange();
+</a> }
+<b>diff --git a/<a id="h1" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -5,9 +5,12 @@
+</a> #define TAGS \
+ const char *tags[] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot;, NULL };
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define DEFMODE			dotile		/* dofloat */
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#define FLOATSYMBOL		&quot;&gt;&lt;&gt;&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-#define TILESYMBOL		&quot;[]=&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+#define LAYOUTS \
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+static Layout layout[] = { \
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	/* symbol		function */ \
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	{ &quot;[]=&quot;,		dotile }, /* first entry is default */ \
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	{ &quot;&gt;&lt;&gt;&quot;,		dofloat }, \
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+};
+</a> 
+ #define BORDERPX		1
+ #define FONT			&quot;-*-terminus-medium-r-*-*-14-*-*-*-*-*-*-*&quot;
+<a href="#h1-1" id="h1-1" class="h">@@ -60,7 +63,7 @@ static Key key[] = { \
+</a> 	{ MODKEY|ControlMask|ShiftMask,	XK_8,		toggletag,	{ .i = 7 } }, \
+ 	{ MODKEY|ControlMask|ShiftMask,	XK_9,		toggletag,	{ .i = 8 } }, \
+ 	{ MODKEY|ShiftMask,		XK_c,		killclient,	{ 0 } }, \
+<a href="#h1-1-3" id="h1-1-3" class="d">-	{ MODKEY,			XK_space,	togglemode,	{ 0 } }, \
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	{ MODKEY,			XK_space,	togglelayout,	{ 0 } }, \
+</a> 	{ MODKEY|ShiftMask,		XK_space,	togglefloat,	{ 0 } }, \
+ 	{ MODKEY,			XK_0,		view,		{ .i = -1 } }, \
+ 	{ MODKEY,			XK_1,		view,		{ .i = 0 } }, \
+<b>diff --git a/<a id="h2" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,9 +5,12 @@
+</a> #define TAGS \
+ const char *tags[] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot;, NULL };
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-#define DEFMODE			dotile		/* dofloat */
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-#define FLOATSYMBOL		&quot;&gt;&lt;&gt;&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-#define TILESYMBOL		&quot;[]=&quot;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+#define LAYOUTS \
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+Layout layout[] = { \
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+	/* symbol		function */ \
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+	{ &quot;[]=&quot;,		dotile }, /* first entry is default */ \
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	{ &quot;&gt;&lt;&gt;&quot;,		dofloat }, \
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+};
+</a> 
+ #define BORDERPX		1
+ #define FONT			&quot;-*-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*&quot;
+<a href="#h2-1" id="h2-1" class="h">@@ -55,7 +58,7 @@ static Key key[] = { \
+</a> 	{ MODKEY|ControlMask|ShiftMask,	XK_8,		toggletag,	{ .i = 7 } }, \
+ 	{ MODKEY|ControlMask|ShiftMask,	XK_9,		toggletag,	{ .i = 8 } }, \
+ 	{ MODKEY|ShiftMask,		XK_c,		killclient,	{ 0 } }, \
+<a href="#h2-1-3" id="h2-1-3" class="d">-	{ MODKEY,			XK_space,	togglemode,	{ 0 } }, \
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	{ MODKEY,			XK_space,	togglelayout,	{ 0 } }, \
+</a> 	{ MODKEY|ShiftMask,		XK_space,	togglefloat,	{ 0 } }, \
+ 	{ MODKEY,			XK_0,		view,		{ .i = -1 } }, \
+ 	{ MODKEY,			XK_1,		view,		{ .i = 0 } }, \
+<b>diff --git a/<a id="h3" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -17,8 +17,8 @@ LIBS = -L/usr/lib -lc -L${X11LIB} -lX11
+</a> # flags
+ CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+ LDFLAGS = ${LIBS}
+<a href="#h3-0-3" id="h3-0-3" class="d">-#CFLAGS = -g -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-#LDFLAGS = -g ${LIBS}
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+CFLAGS = -g -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+LDFLAGS = -g ${LIBS}
+</a> 
+ # Solaris
+ #CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+<b>diff --git a/<a id="h4" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -6,19 +6,19 @@ dwm \- dynamic window manager
+</a> .RB [ \-v ]
+ .SH DESCRIPTION
+ dwm is a dynamic window manager for X. It manages windows in tiling and
+<a href="#h4-0-3" id="h4-0-3" class="d">-floating modes. Either mode can be applied dynamically, optimizing the
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+floating layouts. Either layout can be applied dynamically, optimizing the
+</a> environment for the application in use and the task performed.
+ .P
+<a href="#h4-0-7" id="h4-0-7" class="d">-In tiling mode windows are managed in a master and stacking area. The master
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+In tiling layout windows are managed in a master and stacking area. The master
+</a> area contains the windows which currently need most attention, whereas the
+<a href="#h4-0-10" id="h4-0-10" class="d">-stacking area contains all other windows. In floating mode windows can be
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+stacking area contains all other windows. In floating layout windows can be
+</a> resized and moved freely. Dialog windows are always managed floating,
+<a href="#h4-0-13" id="h4-0-13" class="d">-regardless of the mode applied.
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+regardless of the layout applied.
+</a> .P
+ Windows are grouped by tags. Each window can be tagged with one or multiple
+ tags. Selecting certain tags displays all windows with these tags.
+ .P
+<a href="#h4-0-19" id="h4-0-19" class="d">-dwm contains a small status bar which displays all available tags, the mode,
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+dwm contains a small status bar which displays all available tags, the layout,
+</a> the title of the focused window, and the text read from standard input. The
+ selected tags are indicated with a different color. The tags of the focused
+ window are indicated with a filled square in the top left corner.  The tags
+<a href="#h4-1" id="h4-1" class="h">@@ -37,17 +37,17 @@ prints version information to standard output, then exits.
+</a> is read and displayed in the status text area.
+ .TP
+ .B Button1
+<a href="#h4-1-3" id="h4-1-3" class="d">-click on a tag label to display all windows with that tag, click on the mode
+</a><a href="#h4-1-4" id="h4-1-4" class="d">-label toggles between tiling and floating mode.
+</a><a href="#h4-1-5" id="h4-1-5" class="i">+click on a tag label to display all windows with that tag, click on the layout
+</a><a href="#h4-1-6" id="h4-1-6" class="i">+label toggles between tiling and floating layout.
+</a> .TP
+ .B Button3
+ click on a tag label adds/removes all windows with that tag to/from the view.
+ .TP
+ .B Button4
+<a href="#h4-1-12" id="h4-1-12" class="d">-click on the mode label increases the number of windows in the master area (tiling mode only).
+</a><a href="#h4-1-13" id="h4-1-13" class="i">+click on the layout label increases the number of windows in the master area (tiling layout only).
+</a> .TP
+ .B Button5
+<a href="#h4-1-16" id="h4-1-16" class="d">-click on the mode label decreases the number of windows in the master area (tiling mode only).
+</a><a href="#h4-1-17" id="h4-1-17" class="i">+click on the layout label decreases the number of windows in the master area (tiling layout only).
+</a> .TP
+ .B Mod1-Button1
+ click on a tag label applies that tag to the focused window.
+<a href="#h4-2" id="h4-2" class="h">@@ -67,19 +67,19 @@ Focus next window.
+</a> Focus previous window.
+ .TP
+ .B Mod1-Return
+<a href="#h4-2-3" id="h4-2-3" class="d">-Zooms/cycles current window to/from master area (tiling mode), toggles maximization of current window (floating mode).
+</a><a href="#h4-2-4" id="h4-2-4" class="i">+Zooms/cycles current window to/from master area (tiling layout), toggles maximization of current window (floating layout).
+</a> .TP
+ .B Mod1-g
+<a href="#h4-2-7" id="h4-2-7" class="d">-Grow master area (tiling mode only).
+</a><a href="#h4-2-8" id="h4-2-8" class="i">+Grow master area (tiling layout only).
+</a> .TP
+ .B Mod1-s
+<a href="#h4-2-11" id="h4-2-11" class="d">-Shrink master area (tiling mode only).
+</a><a href="#h4-2-12" id="h4-2-12" class="i">+Shrink master area (tiling layout only).
+</a> .TP
+ .B Mod1-i
+<a href="#h4-2-15" id="h4-2-15" class="d">-Increase the number of windows in the master area (tiling mode only).
+</a><a href="#h4-2-16" id="h4-2-16" class="i">+Increase the number of windows in the master area (tiling layout only).
+</a> .TP
+ .B Mod1-d
+<a href="#h4-2-19" id="h4-2-19" class="d">-Decrease the number of windows in the master area (tiling mode only).
+</a><a href="#h4-2-20" id="h4-2-20" class="i">+Decrease the number of windows in the master area (tiling layout only).
+</a> .TP
+ .B Mod1-Shift-[1..n]
+ Apply
+<a href="#h4-3" id="h4-3" class="h">@@ -98,10 +98,10 @@ tag to/from current window.
+</a> Close focused window.
+ .TP
+ .B Mod1-space
+<a href="#h4-3-3" id="h4-3-3" class="d">-Toggle between tiling and floating mode (affects all windows).
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+Toggle between tiling and floating layout (affects all windows).
+</a> .TP
+ .B Mod1-Shift-space
+<a href="#h4-3-7" id="h4-3-7" class="d">-Toggle focused window between floating and non-floating state (tiling mode only).
+</a><a href="#h4-3-8" id="h4-3-8" class="i">+Toggle focused window between floating and non-floating state (tiling layout only).
+</a> .TP
+ .B Mod1-[1..n]
+ View all windows with
+<a href="#h4-4" id="h4-4" class="h">@@ -121,13 +121,13 @@ Quit dwm.
+</a> .SS Mouse commands
+ .TP
+ .B Mod1-Button1
+<a href="#h4-4-3" id="h4-4-3" class="d">-Move current window while dragging (floating mode only).
+</a><a href="#h4-4-4" id="h4-4-4" class="i">+Move current window while dragging (floating layout only).
+</a> .TP
+ .B Mod1-Button2
+<a href="#h4-4-7" id="h4-4-7" class="d">-Zooms/cycles current window to/from master area (tiling mode), toggles maximization of current window (floating mode).
+</a><a href="#h4-4-8" id="h4-4-8" class="i">+Zooms/cycles current window to/from master area (tiling layout), toggles maximization of current window (floating layout).
+</a> .TP
+ .B Mod1-Button3
+<a href="#h4-4-11" id="h4-4-11" class="d">-Resize current window while dragging (floating mode only).
+</a><a href="#h4-4-12" id="h4-4-12" class="i">+Resize current window while dragging (floating layout only).
+</a> .SH CUSTOMIZATION
+ dwm is customized by creating a custom config.h and (re)compiling the source
+ code. This keeps it fast, secure and simple.
+<b>diff --git a/<a id="h5" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -24,9 +24,8 @@
+</a>  *
+  * Keys and tagging rules are organized as arrays and defined in the config.h
+  * file. These arrays are kept static in event.o and tag.o respectively,
+<a href="#h5-0-3" id="h5-0-3" class="d">- * because no other part of dwm needs access to them.  The current mode is
+</a><a href="#h5-0-4" id="h5-0-4" class="d">- * represented by the arrange() function pointer, which wether points to
+</a><a href="#h5-0-5" id="h5-0-5" class="d">- * dofloat() or dotile(). 
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+ * because no other part of dwm needs access to them.  The current layout is
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+ * represented by the lt pointer.
+</a>  *
+  * To understand everything else, start reading main.c:main().
+  */
+<a href="#h5-1" id="h5-1" class="h">@@ -81,21 +80,26 @@ struct Client {
+</a> 	Window win;
+ };
+ 
+<a href="#h5-1-3" id="h5-1-3" class="i">+typedef struct {
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+	const char *symbol;
+</a><a href="#h5-1-5" id="h5-1-5" class="i">+	void (*arrange)(void);
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+} Layout;
+</a><a href="#h5-1-7" id="h5-1-7" class="i">+
+</a> extern const char *tags[];			/* all tags */
+ extern char stext[256];				/* status text */
+<a href="#h5-1-10" id="h5-1-10" class="d">-extern int bh, bmw;				/* bar height, bar mode label width */
+</a> extern int screen, sx, sy, sw, sh;		/* screen geometry */
+ extern int wax, way, wah, waw;			/* windowarea geometry */
+<a href="#h5-1-13" id="h5-1-13" class="i">+extern unsigned int bh, blw;			/* bar height, bar layout label width */
+</a> extern unsigned int master, nmaster;		/* master percent, number of master clients */
+ extern unsigned int ntags, numlockmask;		/* number of tags, dynamic lock mask */
+ extern void (*handler[LASTEvent])(XEvent *);	/* event handler */
+<a href="#h5-1-17" id="h5-1-17" class="d">-extern void (*arrange)(void);			/* arrange function, indicates mode  */
+</a> extern Atom wmatom[WMLast], netatom[NetLast];
+ extern Bool running, selscreen, *seltag;	/* seltag is array of Bool */
+ extern Client *clients, *sel, *stack;		/* global client list and stack */
+ extern Cursor cursor[CurLast];
+ extern DC dc;					/* global draw context */
+ extern Display *dpy;
+<a href="#h5-1-24" id="h5-1-24" class="i">+extern Layout *lt;
+</a> extern Window root, barwin;
+ 
+ /* client.c */
+<a href="#h5-2" id="h5-2" class="h">@@ -124,17 +128,18 @@ extern void sendevent(Window w, Atom a, long value);	/* send synthetic event to 
+</a> extern int xerror(Display *dsply, XErrorEvent *ee);	/* dwm&#39;s X error handler */
+ 
+ /* screen.c */
+<a href="#h5-2-3" id="h5-2-3" class="d">-extern void compileregexps(void);		/* initialize regexps of rules defined in config.h */
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+extern void compileregs(void);			/* initialize regexps of rules defined in config.h */
+</a> extern void dofloat(void);			/* arranges all windows floating */
+ extern void dotile(void);			/* arranges all windows tiled */
+ extern void incnmaster(Arg *arg);		/* increments nmaster with arg&#39;s index value */
+<a href="#h5-2-8" id="h5-2-8" class="i">+extern void initlayouts(void);			/* initialize layout array */
+</a> extern Bool isvisible(Client *c);		/* returns True if client is visible */
+ extern void resizemaster(Arg *arg);		/* resizes the master percent with arg&#39;s index value */
+ extern void restack(void);			/* restores z layers of all clients */
+ extern void settags(Client *c, Client *trans);	/* sets tags of c */
+ extern void tag(Arg *arg);			/* tags c with arg&#39;s index */
+ extern void togglefloat(Arg *arg);		/* toggles focusesd client between floating/non-floating state */
+<a href="#h5-2-15" id="h5-2-15" class="d">-extern void togglemode(Arg *arg);		/* toggles global arrange function (dotile/dofloat) */
+</a><a href="#h5-2-16" id="h5-2-16" class="i">+extern void togglelayout(Arg *arg);		/* toggles layout */
+</a> extern void toggletag(Arg *arg);		/* toggles c tags with arg&#39;s index */
+ extern void toggleview(Arg *arg);		/* toggles the tag with arg&#39;s index (in)visible */
+ extern void view(Arg *arg);			/* views the tag with arg&#39;s index */
+<b>diff --git a/<a id="h6" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -137,10 +137,10 @@ buttonpress(XEvent *e) {
+</a> 				return;
+ 			}
+ 		}
+<a href="#h6-0-3" id="h6-0-3" class="d">-		if(ev-&gt;x &lt; x + bmw)
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+		if(ev-&gt;x &lt; x + blw)
+</a> 			switch(ev-&gt;button) {
+ 			case Button1:
+<a href="#h6-0-7" id="h6-0-7" class="d">-				togglemode(NULL);
+</a><a href="#h6-0-8" id="h6-0-8" class="i">+				togglelayout(NULL);
+</a> 				break;
+ 			case Button4:
+ 				a.i = 1;
+<a href="#h6-1" id="h6-1" class="h">@@ -156,14 +156,14 @@ buttonpress(XEvent *e) {
+</a> 		focus(c);
+ 		if(CLEANMASK(ev-&gt;state) != MODKEY)
+ 			return;
+<a href="#h6-1-3" id="h6-1-3" class="d">-		if(ev-&gt;button == Button1 &amp;&amp; (arrange == dofloat || c-&gt;isfloat)) {
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+		if(ev-&gt;button == Button1 &amp;&amp; (lt-&gt;arrange == dofloat || c-&gt;isfloat)) {
+</a> 			restack();
+ 			movemouse(c);
+ 		}
+ 		else if(ev-&gt;button == Button2)
+ 			zoom(NULL);
+ 		else if(ev-&gt;button == Button3
+<a href="#h6-1-11" id="h6-1-11" class="d">-		&amp;&amp; (arrange == dofloat || c-&gt;isfloat) &amp;&amp; !c-&gt;isfixed)
+</a><a href="#h6-1-12" id="h6-1-12" class="i">+		&amp;&amp; (lt-&gt;arrange == dofloat || c-&gt;isfloat) &amp;&amp; !c-&gt;isfixed)
+</a> 		{
+ 			restack();
+ 			resizemouse(c);
+<a href="#h6-2" id="h6-2" class="h">@@ -181,7 +181,7 @@ configurerequest(XEvent *e) {
+</a> 		c-&gt;ismax = False;
+ 		if(ev-&gt;value_mask &amp; CWBorderWidth)
+ 			c-&gt;border = ev-&gt;border_width;
+<a href="#h6-2-3" id="h6-2-3" class="d">-		if(c-&gt;isfixed || c-&gt;isfloat || (arrange == dofloat)) {
+</a><a href="#h6-2-4" id="h6-2-4" class="i">+		if(c-&gt;isfixed || c-&gt;isfloat || (lt-&gt;arrange == dofloat)) {
+</a> 			if(ev-&gt;value_mask &amp; CWX)
+ 				c-&gt;x = ev-&gt;x;
+ 			if(ev-&gt;value_mask &amp; CWY)
+<a href="#h6-3" id="h6-3" class="h">@@ -310,7 +310,7 @@ propertynotify(XEvent *e) {
+</a> 			case XA_WM_TRANSIENT_FOR:
+ 				XGetTransientForHint(dpy, c-&gt;win, &amp;trans);
+ 				if(!c-&gt;isfloat &amp;&amp; (c-&gt;isfloat = (trans != 0)))
+<a href="#h6-3-3" id="h6-3-3" class="d">-					arrange();
+</a><a href="#h6-3-4" id="h6-3-4" class="i">+					lt-&gt;arrange();
+</a> 				break;
+ 			case XA_WM_NORMAL_HINTS:
+ 				updatesizehints(c);
+<b>diff --git a/<a id="h7" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -18,8 +18,8 @@
+</a> /* extern */
+ 
+ char stext[256];
+<a href="#h7-0-3" id="h7-0-3" class="d">-int bh, bmw, screen, sx, sy, sw, sh, wax, way, waw, wah;
+</a><a href="#h7-0-4" id="h7-0-4" class="d">-unsigned int ntags, numlockmask;
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+int screen, sx, sy, sw, sh, wax, way, waw, wah;
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+unsigned int bh, ntags, numlockmask;
+</a> Atom wmatom[WMLast], netatom[NetLast];
+ Bool running = True;
+ Bool *seltag;
+<a href="#h7-1" id="h7-1" class="h">@@ -246,7 +246,7 @@ setup(void) {
+</a> 	wa.cursor = cursor[CurNormal];
+ 	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &amp;wa);
+ 	grabkeys();
+<a href="#h7-1-3" id="h7-1-3" class="d">-	compileregexps();
+</a><a href="#h7-1-4" id="h7-1-4" class="i">+	compileregs();
+</a> 	for(ntags = 0; tags[ntags]; ntags++);
+ 	seltag = emallocz(sizeof(Bool) * ntags);
+ 	seltag[0] = True;
+<a href="#h7-2" id="h7-2" class="h">@@ -262,7 +262,7 @@ setup(void) {
+</a> 	sx = sy = 0;
+ 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+<a href="#h7-2-3" id="h7-2-3" class="d">-	bmw = textw(TILESYMBOL) &gt; textw(FLOATSYMBOL) ? textw(TILESYMBOL) : textw(FLOATSYMBOL);
+</a><a href="#h7-2-4" id="h7-2-4" class="i">+	initlayouts();
+</a> 	/* bar */
+ 	dc.h = bh = dc.font.height + 2;
+ 	wa.override_redirect = 1;
+<a href="#h7-3" id="h7-3" class="h">@@ -312,8 +312,8 @@ drawstatus(void) {
+</a> 			drawtext(tags[i], dc.norm, sel &amp;&amp; sel-&gt;tags[i], isoccupied(i));
+ 		dc.x += dc.w;
+ 	}
+<a href="#h7-3-3" id="h7-3-3" class="d">-	dc.w = bmw;
+</a><a href="#h7-3-4" id="h7-3-4" class="d">-	drawtext(arrange == dofloat ? FLOATSYMBOL : TILESYMBOL, dc.norm, False, False);
+</a><a href="#h7-3-5" id="h7-3-5" class="i">+	dc.w = blw;
+</a><a href="#h7-3-6" id="h7-3-6" class="i">+	drawtext(lt-&gt;symbol, dc.norm, False, False);
+</a> 	x = dc.x + dc.w;
+ 	dc.w = textw(stext);
+ 	dc.x = sw - dc.w;
+<b>diff --git a/<a id="h8" href="../file/screen.c.html">screen.c</a> b/<a href="../file/screen.c.html">screen.c</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -9,9 +9,10 @@
+</a> #include &lt;sys/types.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+ 
+<a href="#h8-0-3" id="h8-0-3" class="d">-void (*arrange)(void) = DEFMODE;
+</a> unsigned int master = MASTER;
+ unsigned int nmaster = NMASTER;
+<a href="#h8-0-6" id="h8-0-6" class="i">+unsigned int blw = 0;
+</a><a href="#h8-0-7" id="h8-0-7" class="i">+Layout *lt = NULL;
+</a> 
+ /* static */
+ 
+<a href="#h8-1" id="h8-1" class="h">@@ -24,39 +25,41 @@ typedef struct {
+</a> typedef struct {
+ 	regex_t *propregex;
+ 	regex_t *tagregex;
+<a href="#h8-1-3" id="h8-1-3" class="d">-} Regexps;
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+} Regs;
+</a> 
+<a href="#h8-1-6" id="h8-1-6" class="i">+LAYOUTS
+</a> TAGS
+ RULES
+ 
+<a href="#h8-1-10" id="h8-1-10" class="d">-static Regexps *regexps = NULL;
+</a><a href="#h8-1-11" id="h8-1-11" class="d">-static unsigned int len = 0;
+</a><a href="#h8-1-12" id="h8-1-12" class="i">+static Regs *regs = NULL;
+</a><a href="#h8-1-13" id="h8-1-13" class="i">+static unsigned int nrules = 0;
+</a><a href="#h8-1-14" id="h8-1-14" class="i">+static unsigned int nlayouts = 0;
+</a> 
+ /* extern */
+ 
+ void
+<a href="#h8-1-19" id="h8-1-19" class="d">-compileregexps(void) {
+</a><a href="#h8-1-20" id="h8-1-20" class="i">+compileregs(void) {
+</a> 	unsigned int i;
+ 	regex_t *reg;
+ 
+<a href="#h8-1-24" id="h8-1-24" class="d">-	if(regexps)
+</a><a href="#h8-1-25" id="h8-1-25" class="i">+	if(regs)
+</a> 		return;
+<a href="#h8-1-27" id="h8-1-27" class="d">-	len = sizeof rule / sizeof rule[0];
+</a><a href="#h8-1-28" id="h8-1-28" class="d">-	regexps = emallocz(len * sizeof(Regexps));
+</a><a href="#h8-1-29" id="h8-1-29" class="d">-	for(i = 0; i &lt; len; i++) {
+</a><a href="#h8-1-30" id="h8-1-30" class="i">+	nrules = sizeof rule / sizeof rule[0];
+</a><a href="#h8-1-31" id="h8-1-31" class="i">+	regs = emallocz(nrules * sizeof(Regs));
+</a><a href="#h8-1-32" id="h8-1-32" class="i">+	for(i = 0; i &lt; nrules; i++) {
+</a> 		if(rule[i].prop) {
+ 			reg = emallocz(sizeof(regex_t));
+ 			if(regcomp(reg, rule[i].prop, REG_EXTENDED))
+ 				free(reg);
+ 			else
+<a href="#h8-1-38" id="h8-1-38" class="d">-				regexps[i].propregex = reg;
+</a><a href="#h8-1-39" id="h8-1-39" class="i">+				regs[i].propregex = reg;
+</a> 		}
+ 		if(rule[i].tags) {
+ 			reg = emallocz(sizeof(regex_t));
+ 			if(regcomp(reg, rule[i].tags, REG_EXTENDED))
+ 				free(reg);
+ 			else
+<a href="#h8-1-46" id="h8-1-46" class="d">-				regexps[i].tagregex = reg;
+</a><a href="#h8-1-47" id="h8-1-47" class="i">+				regs[i].tagregex = reg;
+</a> 		}
+ 	}
+ }
+<a href="#h8-2" id="h8-2" class="h">@@ -138,16 +141,29 @@ dotile(void) {
+</a> 
+ void
+ incnmaster(Arg *arg) {
+<a href="#h8-2-3" id="h8-2-3" class="d">-	if((arrange == dofloat) || (nmaster + arg-&gt;i &lt; 1)
+</a><a href="#h8-2-4" id="h8-2-4" class="i">+	if((lt-&gt;arrange == dofloat) || (nmaster + arg-&gt;i &lt; 1)
+</a> 	|| (wah / (nmaster + arg-&gt;i) &lt;= 2 * BORDERPX))
+ 		return;
+ 	nmaster += arg-&gt;i;
+ 	if(sel)
+<a href="#h8-2-9" id="h8-2-9" class="d">-		arrange();
+</a><a href="#h8-2-10" id="h8-2-10" class="i">+		lt-&gt;arrange();
+</a> 	else
+ 		drawstatus();
+ }
+ 
+<a href="#h8-2-15" id="h8-2-15" class="i">+void
+</a><a href="#h8-2-16" id="h8-2-16" class="i">+initlayouts(void) {
+</a><a href="#h8-2-17" id="h8-2-17" class="i">+	unsigned int i, w;
+</a><a href="#h8-2-18" id="h8-2-18" class="i">+
+</a><a href="#h8-2-19" id="h8-2-19" class="i">+	lt = &amp;layout[0];
+</a><a href="#h8-2-20" id="h8-2-20" class="i">+	nlayouts = sizeof layout / sizeof layout[0];
+</a><a href="#h8-2-21" id="h8-2-21" class="i">+	for(blw = i = 0; i &lt; nlayouts; i++) {
+</a><a href="#h8-2-22" id="h8-2-22" class="i">+		w = textw(layout[i].symbol);
+</a><a href="#h8-2-23" id="h8-2-23" class="i">+		if(w &gt; blw)
+</a><a href="#h8-2-24" id="h8-2-24" class="i">+			blw = w;
+</a><a href="#h8-2-25" id="h8-2-25" class="i">+	}
+</a><a href="#h8-2-26" id="h8-2-26" class="i">+}
+</a><a href="#h8-2-27" id="h8-2-27" class="i">+
+</a> Bool
+ isvisible(Client *c) {
+ 	unsigned int i;
+<a href="#h8-3" id="h8-3" class="h">@@ -160,7 +176,7 @@ isvisible(Client *c) {
+</a> 
+ void
+ resizemaster(Arg *arg) {
+<a href="#h8-3-3" id="h8-3-3" class="d">-	if(arrange != dotile)
+</a><a href="#h8-3-4" id="h8-3-4" class="i">+	if(lt-&gt;arrange != dotile)
+</a> 		return;
+ 	if(arg-&gt;i == 0)
+ 		master = MASTER;
+<a href="#h8-4" id="h8-4" class="h">@@ -170,7 +186,7 @@ resizemaster(Arg *arg) {
+</a> 			return;
+ 		master += arg-&gt;i;
+ 	}
+<a href="#h8-4-3" id="h8-4-3" class="d">-	arrange();
+</a><a href="#h8-4-4" id="h8-4-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<a href="#h8-5" id="h8-5" class="h">@@ -181,9 +197,9 @@ restack(void) {
+</a> 	drawstatus();
+ 	if(!sel)
+ 		return;
+<a href="#h8-5-3" id="h8-5-3" class="d">-	if(sel-&gt;isfloat || arrange == dofloat)
+</a><a href="#h8-5-4" id="h8-5-4" class="i">+	if(sel-&gt;isfloat || lt-&gt;arrange == dofloat)
+</a> 		XRaiseWindow(dpy, sel-&gt;win);
+<a href="#h8-5-6" id="h8-5-6" class="d">-	if(arrange != dofloat) {
+</a><a href="#h8-5-7" id="h8-5-7" class="i">+	if(lt-&gt;arrange != dofloat) {
+</a> 		if(!sel-&gt;isfloat)
+ 			XLowerWindow(dpy, sel-&gt;win);
+ 		for(c = nexttiled(clients); c; c = nexttiled(c-&gt;next)) {
+<a href="#h8-6" id="h8-6" class="h">@@ -212,11 +228,11 @@ settags(Client *c, Client *trans) {
+</a> 		snprintf(prop, sizeof prop, &quot;%s:%s:%s&quot;,
+ 				ch.res_class ? ch.res_class : &quot;&quot;,
+ 				ch.res_name ? ch.res_name : &quot;&quot;, c-&gt;name);
+<a href="#h8-6-3" id="h8-6-3" class="d">-		for(i = 0; i &lt; len; i++)
+</a><a href="#h8-6-4" id="h8-6-4" class="d">-			if(regexps[i].propregex &amp;&amp; !regexec(regexps[i].propregex, prop, 1, &amp;tmp, 0)) {
+</a><a href="#h8-6-5" id="h8-6-5" class="i">+		for(i = 0; i &lt; nrules; i++)
+</a><a href="#h8-6-6" id="h8-6-6" class="i">+			if(regs[i].propregex &amp;&amp; !regexec(regs[i].propregex, prop, 1, &amp;tmp, 0)) {
+</a> 				c-&gt;isfloat = rule[i].isfloat;
+<a href="#h8-6-8" id="h8-6-8" class="d">-				for(j = 0; regexps[i].tagregex &amp;&amp; j &lt; ntags; j++) {
+</a><a href="#h8-6-9" id="h8-6-9" class="d">-					if(!regexec(regexps[i].tagregex, tags[j], 1, &amp;tmp, 0)) {
+</a><a href="#h8-6-10" id="h8-6-10" class="i">+				for(j = 0; regs[i].tagregex &amp;&amp; j &lt; ntags; j++) {
+</a><a href="#h8-6-11" id="h8-6-11" class="i">+					if(!regexec(regs[i].tagregex, tags[j], 1, &amp;tmp, 0)) {
+</a> 						matched = True;
+ 						c-&gt;tags[j] = True;
+ 					}
+<a href="#h8-7" id="h8-7" class="h">@@ -242,15 +258,15 @@ tag(Arg *arg) {
+</a> 		sel-&gt;tags[i] = (arg-&gt;i == -1) ? True : False;
+ 	if(arg-&gt;i &gt;= 0 &amp;&amp; arg-&gt;i &lt; ntags)
+ 		sel-&gt;tags[arg-&gt;i] = True;
+<a href="#h8-7-3" id="h8-7-3" class="d">-	arrange();
+</a><a href="#h8-7-4" id="h8-7-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+ togglefloat(Arg *arg) {
+<a href="#h8-7-9" id="h8-7-9" class="d">-	if(!sel || arrange == dofloat)
+</a><a href="#h8-7-10" id="h8-7-10" class="i">+	if(!sel || lt-&gt;arrange == dofloat)
+</a> 		return;
+ 	sel-&gt;isfloat = !sel-&gt;isfloat;
+<a href="#h8-7-13" id="h8-7-13" class="d">-	arrange();
+</a><a href="#h8-7-14" id="h8-7-14" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<a href="#h8-8" id="h8-8" class="h">@@ -263,14 +279,20 @@ toggletag(Arg *arg) {
+</a> 	for(i = 0; i &lt; ntags &amp;&amp; !sel-&gt;tags[i]; i++);
+ 	if(i == ntags)
+ 		sel-&gt;tags[arg-&gt;i] = True;
+<a href="#h8-8-3" id="h8-8-3" class="d">-	arrange();
+</a><a href="#h8-8-4" id="h8-8-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<a href="#h8-8-8" id="h8-8-8" class="d">-togglemode(Arg *arg) {
+</a><a href="#h8-8-9" id="h8-8-9" class="d">-	arrange = (arrange == dofloat) ? dotile : dofloat;
+</a><a href="#h8-8-10" id="h8-8-10" class="i">+togglelayout(Arg *arg) {
+</a><a href="#h8-8-11" id="h8-8-11" class="i">+	unsigned int i;
+</a><a href="#h8-8-12" id="h8-8-12" class="i">+
+</a><a href="#h8-8-13" id="h8-8-13" class="i">+	for(i = 0; i &lt; nlayouts &amp;&amp; lt != &amp;layout[i]; i++);
+</a><a href="#h8-8-14" id="h8-8-14" class="i">+	if(i == nlayouts - 1)
+</a><a href="#h8-8-15" id="h8-8-15" class="i">+		lt = &amp;layout[0];
+</a><a href="#h8-8-16" id="h8-8-16" class="i">+	else
+</a><a href="#h8-8-17" id="h8-8-17" class="i">+		lt = &amp;layout[++i];
+</a> 	if(sel)
+<a href="#h8-8-19" id="h8-8-19" class="d">-		arrange();
+</a><a href="#h8-8-20" id="h8-8-20" class="i">+		lt-&gt;arrange();
+</a> 	else
+ 		drawstatus();
+ }
+<a href="#h8-9" id="h8-9" class="h">@@ -283,7 +305,7 @@ toggleview(Arg *arg) {
+</a> 	for(i = 0; i &lt; ntags &amp;&amp; !seltag[i]; i++);
+ 	if(i == ntags)
+ 		seltag[arg-&gt;i] = True; /* cannot toggle last view */
+<a href="#h8-9-3" id="h8-9-3" class="d">-	arrange();
+</a><a href="#h8-9-4" id="h8-9-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<a href="#h8-10" id="h8-10" class="h">@@ -294,5 +316,5 @@ view(Arg *arg) {
+</a> 		seltag[i] = (arg-&gt;i == -1) ? True : False;
+ 	if(arg-&gt;i &gt;= 0 &amp;&amp; arg-&gt;i &lt; ntags)
+ 		seltag[arg-&gt;i] = True;
+<a href="#h8-10-3" id="h8-10-3" class="d">-	arrange();
+</a><a href="#h8-10-4" id="h8-10-4" class="i">+	lt-&gt;arrange();
+</a> }
+</pre>
+</div>
+</body>
+</html>

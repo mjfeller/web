@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>using EXIT_stuff in exit() now - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/849e631510ed6533ac930449804e477fe67a43c2.html">849e631510ed6533ac930449804e477fe67a43c2</a>
+<b>parent</b> <a href="../commit/789717d109016279bd541efe5b72899fbcf68335.html">789717d109016279bd541efe5b72899fbcf68335</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Tue, 18 Jul 2006 08:18:54 +0200
+
+using EXIT_stuff in exit() now
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">main.c</a></td><td> | </td><td class="num">9</td><td><span class="i">++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">util.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 7 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -179,14 +179,13 @@ main(int argc, char *argv[])
+</a> 
+ 	for(i = 1; (i &lt; argc) &amp;&amp; (argv[i][0] == &#39;-&#39;); i++) {
+ 		switch (argv[i][1]) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-		case &#39;v&#39;:
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-			fprintf(stdout, &quot;%s&quot;,
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-					&quot;dwm-&quot;VERSION&quot;, (C)opyright MMVI Anselm R. Garbe\n&quot;);
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-			exit(0);
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-			break;
+</a> 		default:
+ 			eprint(&quot;usage: dwm [-v]\n&quot;);
+ 			break;
+<a href="#h0-0-11" id="h0-0-11" class="i">+		case &#39;v&#39;:
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+			fputs(&quot;dwm-&quot;VERSION&quot;, (C)opyright MMVI Anselm R. Garbe\n&quot;, stdout);
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+			exit(EXIT_SUCCESS);
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+			break;
+</a> 		}
+ 	}
+ 
+<b>diff --git a/<a id="h1" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -17,7 +17,7 @@ bad_malloc(unsigned int size)
+</a> {
+ 	fprintf(stderr, &quot;fatal: could not malloc() %d bytes\n&quot;,
+ 			(int) size);
+<a href="#h1-0-3" id="h1-0-3" class="d">-	exit(1);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	exit(EXIT_FAILURE);
+</a> }
+ 
+ /* extern */
+<a href="#h1-1" id="h1-1" class="h">@@ -37,7 +37,7 @@ eprint(const char *errstr, ...) {
+</a> 	va_start(ap, errstr);
+ 	vfprintf(stderr, errstr, ap);
+ 	va_end(ap);
+<a href="#h1-1-3" id="h1-1-3" class="d">-	exit(1);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	exit(EXIT_FAILURE);
+</a> }
+ 
+ void
+<a href="#h1-2" id="h1-2" class="h">@@ -55,7 +55,7 @@ spawn(Arg *arg)
+</a> 			fprintf(stderr, &quot;dwm: execvp %s&quot;, argv[0]);
+ 			perror(&quot; failed&quot;);
+ 		}
+<a href="#h1-2-3" id="h1-2-3" class="d">-		exit (0);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		exit(EXIT_FAILURE);
+</a> 	}
+ 	wait(0);
+ }
+</pre>
+</div>
+</body>
+</html>

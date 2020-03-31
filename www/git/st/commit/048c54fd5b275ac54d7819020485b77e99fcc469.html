@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix selecting clearing and BCE - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/048c54fd5b275ac54d7819020485b77e99fcc469.html">048c54fd5b275ac54d7819020485b77e99fcc469</a>
+<b>parent</b> <a href="../commit/6b03bb769a105f797bce40aa0258cf035266e7bf.html">6b03bb769a105f797bce40aa0258cf035266e7bf</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Tue, 23 Apr 2013 20:34:52 +0200
+
+Fix selecting clearing and BCE
+
+The commit b78c5085f72 changed the st behaviour enabling BCE capability,
+that means erase regions using background color. Problem comes when you
+clear a region with a selection, because in this case the real mode of the
+Glyph is not the value of term.line[y][x], due in drawregion we had enabled
+the ATTR_REVERSE bit.
+
+Signed-off-by: Christoph Lohmann &lt;20h@r-36.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 3 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1410,7 +1410,7 @@ tsetchar(char *c, Glyph *attr, int x, int y) {
+</a> 
+ void
+ tclearregion(int x1, int y1, int x2, int y2) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	int x, y, temp;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	int x, y, temp, mask;
+</a> 
+ 	if(x1 &gt; x2)
+ 		temp = x1, x1 = x2, x2 = temp;
+<a href="#h0-1" id="h0-1" class="h">@@ -1425,7 +1425,9 @@ tclearregion(int x1, int y1, int x2, int y2) {
+</a> 	for(y = y1; y &lt;= y2; y++) {
+ 		term.dirty[y] = 1;
+ 		for(x = x1; x &lt;= x2; x++) {
+<a href="#h0-1-3" id="h0-1-3" class="i">+			mask = selected(x, y) ? ATTR_REVERSE : 0;
+</a> 			term.line[y][x] = term.c.attr;
+<a href="#h0-1-5" id="h0-1-5" class="i">+			term.line[y][x].mode ^= mask;
+</a> 			memcpy(term.line[y][x].c, &quot; &quot;, 2);
+ 		}
+ 	}
+</pre>
+</div>
+</body>
+</html>

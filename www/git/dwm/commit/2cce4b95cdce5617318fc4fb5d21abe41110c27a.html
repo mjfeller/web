@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Gottox patch to simplify the resizing of col, instead of resizing the current area, it only resizes the master area in the future (seems more predictable) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2cce4b95cdce5617318fc4fb5d21abe41110c27a.html">2cce4b95cdce5617318fc4fb5d21abe41110c27a</a>
+<b>parent</b> <a href="../commit/8e6eb52196c581351925811c15afa0d4deb5130a.html">8e6eb52196c581351925811c15afa0d4deb5130a</a>
+<b>Author:</b> arg@mig29 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Tue, 31 Oct 2006 12:06:38 +0100
+
+applied Gottox patch to simplify the resizing of col, instead of resizing the current area, it only resizes the master area in the future (seems more predictable)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">view.c</a></td><td> | </td><td class="num">19</td><td><span class="i">++</span><span class="d">-----------------</span></td></tr>
+</table></pre><pre>3 files changed, 5 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,5 +1,5 @@
+</a> # dwm version
+<a href="#h0-0-1" id="h0-0-1" class="d">-VERSION = 2.0
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+VERSION = 2.1
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -63,10 +63,10 @@ Focus previous window.
+</a> Zooms/cycles current window to/from master area (tiling mode), toggles maximization current window (floating mode).
+ .TP
+ .B Mod1-g
+<a href="#h1-0-3" id="h1-0-3" class="d">-Grow current area (tiling mode only).
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+Grow master area (tiling mode only).
+</a> .TP
+ .B Mod1-s
+<a href="#h1-0-7" id="h1-0-7" class="d">-Shrink current area (tiling mode only).
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+Shrink master area (tiling mode only).
+</a> .TP
+ .B Mod1-Shift-[1..n]
+ Apply
+<b>diff --git a/<a id="h2" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -196,24 +196,9 @@ isvisible(Client *c) {
+</a> 
+ void
+ resizecol(Arg *arg) {
+<a href="#h2-0-3" id="h2-0-3" class="d">-	unsigned int n;
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-	Client *c;
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-	for(n = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-		if(isvisible(c) &amp;&amp; !c-&gt;isfloat)
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-			n++;
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-	if(!sel || sel-&gt;isfloat || n &lt; 2 || (arrange == dofloat))
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+	if(master + arg-&gt;i &gt; 950 || master + arg-&gt;i &lt; 50)
+</a> 		return;
+<a href="#h2-0-12" id="h2-0-12" class="d">-	if(sel == getnext(clients)) {
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-		if(master + arg-&gt;i &gt; 950 || master + arg-&gt;i &lt; 50)
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-			return;
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-		master += arg-&gt;i;
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-	}
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-	else {
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-		if(master - arg-&gt;i &gt; 950 || master - arg-&gt;i &lt; 50)
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-			return;
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-		master -= arg-&gt;i;
+</a><a href="#h2-0-21" id="h2-0-21" class="d">-	}
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+	master += arg-&gt;i;
+</a> 	arrange();
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

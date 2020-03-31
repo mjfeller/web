@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>	proceeded, though we still miss a real Tag struct - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/00ca643bd7ccba6efd001cc679525a53a3c75586.html">00ca643bd7ccba6efd001cc679525a53a3c75586</a>
+<b>parent</b> <a href="../commit/0271ac0ed7b422ffac8ff848193deceedb0872da.html">0271ac0ed7b422ffac8ff848193deceedb0872da</a>
+<b>Author:</b> anselm@anselm1 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Wed, 27 Feb 2008 21:50:50 +0000
+
+	proceeded, though we still miss a real Tag struct
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">6</td><td><span class="i">++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">58</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>2 files changed, 39 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -12,8 +12,10 @@
+</a> #define SELFGCOLOR		&quot;#ffffff&quot;
+ 
+ /* tagging */
+<a href="#h0-0-3" id="h0-0-3" class="d">-const char tags[][MAXTAGLEN] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;www&quot; };
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-int initags[LENGTH(tags)]    = { [0] = 1 };
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+const char tags[][MAXTAGLEN]     = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;nil&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;www&quot; };
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+unsigned int vtags[LENGTH(tags)] = {  0 ,  0 ,  0 ,  0 ,   0  ,  1 ,  1 ,  1 ,   1   };
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+Bool initags[LENGTH(tags)]       = { [0] = True, [5] = True };
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+
+</a> Rule rules[] = {
+ 	/* class:instance:title substr	tags ref	isfloating */
+ 	{ &quot;Firefox&quot;,			tags[8],	False },
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -67,10 +67,10 @@ struct Client {
+</a> 	int x, y, w, h;
+ 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int minax, maxax, minay, maxay;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	int *tags;
+</a> 	long flags;
+ 	unsigned int border, oldborder;
+ 	Bool isbanned, isfixed, isfloating, isurgent;
+<a href="#h1-0-7" id="h1-0-7" class="i">+	Bool *tags;
+</a> 	Client *next;
+ 	Client *prev;
+ 	Client *snext;
+<a href="#h1-1" id="h1-1" class="h">@@ -110,8 +110,12 @@ typedef struct {
+</a> 	Bool isfloating;
+ } Rule;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+typedef struct {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	const char name[MAXTAGLEN];
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	unsigned int view;
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+} Tag;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a> struct View {
+<a href="#h1-1-9" id="h1-1-9" class="d">-	int id;
+</a> 	int x, y, w, h, wax, way, wah, waw;
+ 	double mwfact;
+ 	Layout *layout;
+<a href="#h1-2" id="h1-2" class="h">@@ -119,6 +123,7 @@ struct View {
+</a> };
+ 
+ /* function declarations */
+<a href="#h1-2-3" id="h1-2-3" class="i">+void addtag(Client *c, const char *t);
+</a> void applyrules(Client *c);
+ void arrange(void);
+ void attach(Client *c);
+<a href="#h1-3" id="h1-3" class="h">@@ -153,7 +158,7 @@ long getstate(Window w);
+</a> Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+ void grabbuttons(Client *c, Bool focused);
+ void grabkeys(void);
+<a href="#h1-3-3" id="h1-3-3" class="d">-unsigned int idxoftag(const char *tag);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+unsigned int idxoftag(const char *t);
+</a> void initfont(const char *fontstr);
+ Bool isoccupied(unsigned int t);
+ Bool isprotodel(Client *c);
+<a href="#h1-4" id="h1-4" class="h">@@ -208,8 +213,6 @@ char stext[256], buf[256];
+</a> int nviews = 1;
+ View *selview;
+ int screen;
+<a href="#h1-4-3" id="h1-4-3" class="d">-int *seltags;
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-int *prevtags;
+</a> int (*xerrorxlib)(Display *, XErrorEvent *);
+ unsigned int bh, bpos;
+ unsigned int blw = 0;
+<a href="#h1-5" id="h1-5" class="h">@@ -234,6 +237,8 @@ Bool domwfact = True;
+</a> Bool dozoom = True;
+ Bool otherwm, readin;
+ Bool running = True;
+<a href="#h1-5-3" id="h1-5-3" class="i">+Bool *prevtags;
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+Bool *seltags;
+</a> Client *clients = NULL;
+ Client *sel = NULL;
+ Client *stack = NULL;
+<a href="#h1-6" id="h1-6" class="h">@@ -248,17 +253,24 @@ Window root;
+</a> 
+ /* function implementations */
+ void
+<a href="#h1-6-3" id="h1-6-3" class="i">+addtag(Client *c, const char *t) {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+	unsigned int i, tidx = idxoftag(t);
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+	for(i = 0; i &lt; LENGTH(tags); i++)
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+		if(c-&gt;tags[i] &amp;&amp; vtags[i] != vtags[tidx])
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+			return; /* conflict */
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+	c-&gt;tags[tidx] = True;
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+}
+</a><a href="#h1-6-11" id="h1-6-11" class="i">+
+</a><a href="#h1-6-12" id="h1-6-12" class="i">+void
+</a> applyrules(Client *c) {
+ 	unsigned int i;
+<a href="#h1-6-15" id="h1-6-15" class="d">-	Bool matched_tag = False;
+</a><a href="#h1-6-16" id="h1-6-16" class="i">+	Bool matched = False;
+</a> 	Rule *r;
+ 	XClassHint ch = { 0 };
+ 
+ 	/* rule matching */
+ 	XGetClassHint(dpy, c-&gt;win, &amp;ch);
+<a href="#h1-6-22" id="h1-6-22" class="d">-	snprintf(buf, sizeof buf, &quot;%s:%s:%s&quot;,
+</a><a href="#h1-6-23" id="h1-6-23" class="d">-			ch.res_class ? ch.res_class : &quot;&quot;,
+</a><a href="#h1-6-24" id="h1-6-24" class="d">-			ch.res_name ? ch.res_name : &quot;&quot;, c-&gt;name);
+</a> 	for(i = 0; i &lt; LENGTH(rules); i++) {
+ 		r = &amp;rules[i];
+ 		if(strstr(c-&gt;name, r-&gt;prop)
+<a href="#h1-7" id="h1-7" class="h">@@ -267,8 +279,8 @@ applyrules(Client *c) {
+</a> 		{
+ 			c-&gt;isfloating = r-&gt;isfloating;
+ 			if(r-&gt;tag) {
+<a href="#h1-7-3" id="h1-7-3" class="d">-				matched_tag = True;
+</a><a href="#h1-7-4" id="h1-7-4" class="d">-				c-&gt;tags[idxoftag(r-&gt;tag)] = selview-&gt;id;
+</a><a href="#h1-7-5" id="h1-7-5" class="i">+				addtag(c, r-&gt;tag);
+</a><a href="#h1-7-6" id="h1-7-6" class="i">+				matched = True;
+</a> 			}
+ 		}
+ 	}
+<a href="#h1-8" id="h1-8" class="h">@@ -276,7 +288,7 @@ applyrules(Client *c) {
+</a> 		XFree(ch.res_class);
+ 	if(ch.res_name)
+ 		XFree(ch.res_name);
+<a href="#h1-8-3" id="h1-8-3" class="d">-	if(!matched_tag)
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	if(!matched)
+</a> 		memcpy(c-&gt;tags, seltags, sizeof initags);
+ }
+ 
+<a href="#h1-9" id="h1-9" class="h">@@ -532,7 +544,7 @@ drawbar(View *v) {
+</a> 	for(c = stack; c &amp;&amp; (!isvisible(c) || getview(c) != v); c = c-&gt;snext);
+ 	for(i = 0; i &lt; LENGTH(tags); i++) {
+ 		dc.w = textw(tags[i]);
+<a href="#h1-9-3" id="h1-9-3" class="d">-		if(seltags[i] &amp;&amp; seltags[i] == v-&gt;id) {
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+		if(seltags[i]) {
+</a> 			drawtext(v, tags[i], dc.sel, isurgent(i));
+ 			drawsquare(v, c &amp;&amp; c-&gt;tags[i], isoccupied(i), isurgent(i), dc.sel);
+ 		}
+<a href="#h1-10" id="h1-10" class="h">@@ -902,10 +914,10 @@ grabkeys(void)  {
+</a> }
+ 
+ unsigned int
+<a href="#h1-10-3" id="h1-10-3" class="d">-idxoftag(const char *tag) {
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+idxoftag(const char *t) {
+</a> 	unsigned int i;
+ 
+<a href="#h1-10-7" id="h1-10-7" class="d">-	for(i = 0; (i &lt; LENGTH(tags)) &amp;&amp; (tags[i] != tag); i++);
+</a><a href="#h1-10-8" id="h1-10-8" class="i">+	for(i = 0; (i &lt; LENGTH(tags)) &amp;&amp; (tags[i] != t); i++);
+</a> 	return (i &lt; LENGTH(tags)) ? i : 0;
+ }
+ 
+<a href="#h1-11" id="h1-11" class="h">@@ -1559,7 +1571,6 @@ nviews = 2; /* aim Xinerama */
+</a> 	for(i = 0; i &lt; nviews; i++) {
+ 		/* init geometry */
+ 		v = &amp;views[i];
+<a href="#h1-11-3" id="h1-11-3" class="d">-		v-&gt;id = i + 1;
+</a> 
+ 		if(nviews != 1 &amp;&amp; isxinerama) {
+ 
+<a href="#h1-12" id="h1-12" class="h">@@ -1653,8 +1664,8 @@ tag(const char *arg) {
+</a> 	if(!sel)
+ 		return;
+ 	for(i = 0; i &lt; LENGTH(tags); i++)
+<a href="#h1-12-3" id="h1-12-3" class="d">-		sel-&gt;tags[i] = (NULL == arg) ? selview-&gt;id : 0;
+</a><a href="#h1-12-4" id="h1-12-4" class="d">-	sel-&gt;tags[idxoftag(arg)] = selview-&gt;id;
+</a><a href="#h1-12-5" id="h1-12-5" class="i">+		sel-&gt;tags[i] = (NULL == arg);
+</a><a href="#h1-12-6" id="h1-12-6" class="i">+	sel-&gt;tags[idxoftag(arg)] = True;
+</a> 	arrange();
+ }
+ 
+<a href="#h1-13" id="h1-13" class="h">@@ -1750,7 +1761,7 @@ toggletag(const char *arg) {
+</a> 	sel-&gt;tags[i] = !sel-&gt;tags[i];
+ 	for(j = 0; j &lt; LENGTH(tags) &amp;&amp; !sel-&gt;tags[j]; j++);
+ 	if(j == LENGTH(tags))
+<a href="#h1-13-3" id="h1-13-3" class="d">-		sel-&gt;tags[i] = selview-&gt;id; /* at least one tag must be enabled */
+</a><a href="#h1-13-4" id="h1-13-4" class="i">+		sel-&gt;tags[i] = True; /* at least one tag must be enabled */
+</a> 	arrange();
+ }
+ 
+<a href="#h1-14" id="h1-14" class="h">@@ -1762,7 +1773,7 @@ toggleview(const char *arg) {
+</a> 	seltags[i] = !seltags[i];
+ 	for(j = 0; j &lt; LENGTH(tags) &amp;&amp; !seltags[j]; j++);
+ 	if(j == LENGTH(tags))
+<a href="#h1-14-3" id="h1-14-3" class="d">-		seltags[i] = selview-&gt;id; /* at least one tag must be viewed */
+</a><a href="#h1-14-4" id="h1-14-4" class="i">+		seltags[i] = True; /* at least one tag must be viewed */
+</a> 	arrange();
+ }
+ 
+<a href="#h1-15" id="h1-15" class="h">@@ -1903,11 +1914,12 @@ updatewmhints(Client *c) {
+</a> void
+ view(const char *arg) {
+ 	unsigned int i;
+<a href="#h1-15-3" id="h1-15-3" class="d">-	int tmp[LENGTH(tags)];
+</a><a href="#h1-15-4" id="h1-15-4" class="i">+	Bool tmp[LENGTH(tags)];
+</a> 
+ 	for(i = 0; i &lt; LENGTH(tags); i++)
+<a href="#h1-15-7" id="h1-15-7" class="d">-		tmp[i] = (NULL == arg) ? selview-&gt;id : 0;
+</a><a href="#h1-15-8" id="h1-15-8" class="d">-	tmp[idxoftag(arg)] = selview-&gt;id;
+</a><a href="#h1-15-9" id="h1-15-9" class="i">+		tmp[i] = (NULL == arg);
+</a><a href="#h1-15-10" id="h1-15-10" class="i">+	tmp[idxoftag(arg)] = True;
+</a><a href="#h1-15-11" id="h1-15-11" class="i">+
+</a> 	if(memcmp(seltags, tmp, sizeof initags) != 0) {
+ 		memcpy(prevtags, seltags, sizeof initags);
+ 		memcpy(seltags, tmp, sizeof initags);
+</pre>
+</div>
+</body>
+</html>

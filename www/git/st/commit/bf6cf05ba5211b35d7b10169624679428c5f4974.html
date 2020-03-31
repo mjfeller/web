@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fixing the brightening on bold. For the 256 colors and greyscale I assumed a - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bf6cf05ba5211b35d7b10169624679428c5f4974.html">bf6cf05ba5211b35d7b10169624679428c5f4974</a>
+<b>parent</b> <a href="../commit/5caa46cf575a48e6421aaf8757e066f6d32263d9.html">5caa46cf575a48e6421aaf8757e066f6d32263d9</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Fri,  5 Oct 2012 22:51:08 +0200
+
+Fixing the brightening on bold. For the 256 colors and greyscale I assumed a
+
+reasonable solution.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">19</td><td><span class="i">++++++++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 18 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2192,10 +2192,27 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 
+ 	if(base.mode &amp; ATTR_REVERSE)
+ 		temp = fg, fg = bg, bg = temp;
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a> 	if(base.mode &amp; ATTR_BOLD) {
+<a href="#h0-0-5" id="h0-0-5" class="d">-		fg = &amp;dc.xft_col[base.fg + 8];
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		if(BETWEEN(base.fg, 0, 7)) {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+			/* basic system colors */
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+			fg = &amp;dc.xft_col[base.fg + 8];
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+		} else if(BETWEEN(base.fg, 16, 195)) {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+			/* 256 colors */
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+			fg = &amp;dc.xft_col[base.fg + 36];
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		} else if(BETWEEN(base.fg, 232, 251)) {
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+			/* greyscale */
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+			fg = &amp;dc.xft_col[base.fg + 4];
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+		}
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		/*
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		 * Those ranges will not be brightened:
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		 *	8 - 15 – bright system colors
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+		 *	196 - 231 – highest 256 color cube
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		 *	252 - 255 – brightest colors in grescale
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+		 */
+</a> 		font = &amp;dc.bfont;
+ 	}
+<a href="#h0-0-24" id="h0-0-24" class="i">+
+</a> 	if(base.mode &amp; ATTR_ITALIC)
+ 		font = &amp;dc.ifont;
+ 	if(base.mode &amp; (ATTR_ITALIC|ATTR_ITALIC))
+</pre>
+</div>
+</body>
+</html>

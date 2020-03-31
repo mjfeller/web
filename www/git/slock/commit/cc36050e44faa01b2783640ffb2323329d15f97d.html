@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>yet another DPMS fix, still trying to prevent the error handler - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cc36050e44faa01b2783640ffb2323329d15f97d.html">cc36050e44faa01b2783640ffb2323329d15f97d</a>
+<b>parent</b> <a href="../commit/049ccf9a906dd9d4b261d3e9bb4166eaadb62731.html">049ccf9a906dd9d4b261d3e9bb4166eaadb62731</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed,  9 Apr 2008 23:42:19 +0100
+
+yet another DPMS fix, still trying to prevent the error handler
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 3 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -125,8 +125,10 @@ main(int argc, char **argv) {
+</a> 
+ 	/* main event loop */
+ 	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev)) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-		if(len == 0 &amp;&amp; DPMSCapable(dpy)) 
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		if(len == 0 &amp;&amp; DPMSCapable(dpy)) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+			DPMSEnabled(dpy);
+</a> 			DPMSForceLevel(dpy, DPMSModeOff);
+<a href="#h0-0-7" id="h0-0-7" class="i">+		}
+</a> 		if(ev.type == KeyPress) {
+ 			buf[0] = 0;
+ 			num = XLookupString(&amp;ev.xkey, buf, sizeof buf, &amp;ksym, 0);
+</pre>
+</div>
+</body>
+</html>

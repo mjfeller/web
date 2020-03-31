@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>setlayout and setgeom are now togglable again - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/20cd3360876f551c0f3b4c9c5a827a64b829e6ef.html">20cd3360876f551c0f3b4c9c5a827a64b829e6ef</a>
+<b>parent</b> <a href="../commit/a6a216f28cbc49afaace269c2662382a351fda24.html">a6a216f28cbc49afaace269c2662382a351fda24</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 24 Mar 2008 13:49:19 +0000
+
+setlayout and setgeom are now togglable again
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">14</td><td><span class="i">++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">46</td><td><span class="i">++++++++++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>3 files changed, 38 insertions(+), 42 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -22,15 +22,11 @@ Rule rules[] = {
+</a> /*   func name  bx  by  bw  wx  wy  ww     wh  mx  my       mw  mh     tx  ty     tw  th  mox moy mow moh */
+ DEFGEOM(single,  0,  0, sw,  0, bh, sw, sh-bh, wx, wy, 0.55*sw, wh, mx+mw, wy, ww-mw, wh,  wx, wy, ww, wh)
+ DEFGEOM(dual,    0,  0,1280, 0, bh, ww, wh-bh, wx, wy, 1280,800-bh,  1280,  0, ww-mw, sh,  mx, my, mw, mh)
+<a href="#h0-0-3" id="h0-0-3" class="d">-/* DEFGEOM(growmaster, bx, by, bw, wx, wy, ww, wh, mx, my, mw+20, mh, mx+mw, ty, tw-20, th, mox, moy, mow, moh) */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-/* DEFGEOM(shrinkmaster, bx, by, bw, wx, wy, ww, wh, mx, my, mw-20, mh, mx+mw, ty, tw+20, th, mox, moy, mow, moh) */
+</a> 
+ Geom geoms[] = {
+ 	/* symbol	function */
+<a href="#h0-0-8" id="h0-0-8" class="d">-	{ &quot;&lt;&gt;&quot;,		single },	/* first entry is default */
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	{ &quot;)(&quot;,		dual },
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-/*	{ &quot;+|&quot;,		growmaster },*/
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-/*	{ &quot;|-&quot;,		shrinkmaster },*/
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	{ &quot;[]&quot;,		single },	/* first entry is default */
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	{ &quot;[][]&quot;,	dual },
+</a> };
+ 
+ /* layout(s) */
+<a href="#h0-1" id="h0-1" class="h">@@ -49,22 +45,18 @@ Layout layouts[] = {
+</a> #define MODKEY			Mod1Mask
+ Key keys[] = {
+ 	/* modifier			key		function	argument */
+<a href="#h0-1-3" id="h0-1-3" class="d">-	{ MODKEY,			XK_a,		setgeom,	&quot;)(&quot; },
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	{ MODKEY,			XK_d,		setgeom,	&quot;&lt;&gt;&quot; },
+</a> 	{ MODKEY,			XK_p,		spawn,
+ 		&quot;exec dmenu_run -fn &#39;&quot;FONT&quot;&#39; -nb &#39;&quot;NORMBGCOLOR&quot;&#39; -nf &#39;&quot;NORMFGCOLOR&quot;&#39; -sb &#39;&quot;SELBGCOLOR&quot;&#39; -sf &#39;&quot;SELFGCOLOR&quot;&#39;&quot; },
+<a href="#h0-1-7" id="h0-1-7" class="d">-	{ MODKEY|ShiftMask,		XK_Return,	spawn, &quot;exec uxterm&quot; },
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	{ MODKEY|ShiftMask,		XK_Return,	spawn,		&quot;exec uxterm&quot; },
+</a> 	{ MODKEY,			XK_j,		focusnext,	NULL },
+ 	{ MODKEY,			XK_k,		focusprev,	NULL },
+ 	{ MODKEY,			XK_r,		reapply,	NULL },
+ 	{ MODKEY,			XK_Return,	zoom,		NULL },
+ 	{ MODKEY,			XK_Tab,		viewprevtag,	NULL },
+<a href="#h0-1-14" id="h0-1-14" class="d">-	{ MODKEY,			XK_m,		setlayout,	&quot;[M]&quot; },
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-	{ MODKEY,			XK_f,		setlayout,	&quot;&gt;&lt;&gt;&quot; },
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-	{ MODKEY,			XK_v,		setlayout,	&quot;[]=&quot; },
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-	{ MODKEY,			XK_h,		setlayout,	&quot;[]|&quot; },
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-	{ MODKEY|ShiftMask,		XK_space,	togglefloating,	NULL },
+</a> 	{ MODKEY|ShiftMask,		XK_c,		killclient,	NULL },
+<a href="#h0-1-20" id="h0-1-20" class="i">+	{ MODKEY,			XK_space,	setlayout,	NULL },
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	{ MODKEY|ShiftMask,		XK_space,	togglefloating,	NULL },
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	{ MODKEY|ControlMask,		XK_space,	setgeom,	NULL },
+</a> 	{ MODKEY,			XK_0,		view,		NULL },
+ 	{ MODKEY,			XK_1,		view,		tags[0] },
+ 	{ MODKEY,			XK_2,		view,		tags[1] },
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -57,17 +57,11 @@ click on a tag label adds/removes that tag to/from the focused window.
+</a> Start
+ .BR xterm.
+ .TP
+<a href="#h1-0-3" id="h1-0-3" class="d">-.B Mod1\-f
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-Applies floating layout.
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+.B Mod1\-space
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+Toggles between layouts.
+</a> .TP
+<a href="#h1-0-8" id="h1-0-8" class="d">-.B Mod1\-m
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-Applies monocle layout.
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-.TP
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-.B Mod1\-v
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-Applies vertical tiled layout.
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-.TP
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-.B Mod1\-h
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-Applies horizontal tiled layout.
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+.B Mod1\-Control\-space
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+Toggles between geometries.
+</a> .TP
+ .B Mod1\-j
+ Focus next window.
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -322,6 +322,10 @@ buttonpress(XEvent *e) {
+</a> 	XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+ 
+ 	if(ev-&gt;window == barwin) {
+<a href="#h2-0-3" id="h2-0-3" class="i">+		if((ev-&gt;x &lt; bgw) &amp;&amp; ev-&gt;button == Button1) {
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+			setgeom(NULL);
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+			return;
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		}
+</a> 		x = bgw;
+ 		for(i = 0; i &lt; LENGTH(tags); i++) {
+ 			x += textw(tags[i]);
+<a href="#h2-1" id="h2-1" class="h">@@ -341,6 +345,8 @@ buttonpress(XEvent *e) {
+</a> 				return;
+ 			}
+ 		}
+<a href="#h2-1-3" id="h2-1-3" class="i">+		if((ev-&gt;x &lt; x + blw) &amp;&amp; ev-&gt;button == Button1) 
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+			setlayout(NULL);
+</a> 	}
+ 	else if((c = getclient(ev-&gt;window))) {
+ 		focus(c);
+<a href="#h2-2" id="h2-2" class="h">@@ -426,7 +432,7 @@ configurenotify(XEvent *e) {
+</a> 	if(ev-&gt;window == root &amp;&amp; (ev-&gt;width != sw || ev-&gt;height != sh)) {
+ 		sw = ev-&gt;width;
+ 		sh = ev-&gt;height;
+<a href="#h2-2-3" id="h2-2-3" class="d">-		setgeom(NULL);
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+		setgeom(geom-&gt;symbol);
+</a> 	}
+ }
+ 
+<a href="#h2-3" id="h2-3" class="h">@@ -1417,12 +1423,18 @@ void
+</a> setgeom(const char *arg) {
+ 	unsigned int i;
+ 
+<a href="#h2-3-3" id="h2-3-3" class="d">-	for(i = 0; arg &amp;&amp; i &lt; LENGTH(geoms); i++)
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-		if(!strcmp(geoms[i].symbol, arg))
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-			break;
+</a><a href="#h2-3-6" id="h2-3-6" class="d">-	if(i == LENGTH(geoms))
+</a><a href="#h2-3-7" id="h2-3-7" class="d">-		return;
+</a><a href="#h2-3-8" id="h2-3-8" class="d">-	geom = &amp;geoms[i];
+</a><a href="#h2-3-9" id="h2-3-9" class="i">+	if(!arg) {
+</a><a href="#h2-3-10" id="h2-3-10" class="i">+		if(++geom == &amp;geoms[LENGTH(geoms)])
+</a><a href="#h2-3-11" id="h2-3-11" class="i">+			geom = &amp;geoms[0];
+</a><a href="#h2-3-12" id="h2-3-12" class="i">+	}
+</a><a href="#h2-3-13" id="h2-3-13" class="i">+	else {
+</a><a href="#h2-3-14" id="h2-3-14" class="i">+		for(i = 0; i &lt; LENGTH(geoms); i++)
+</a><a href="#h2-3-15" id="h2-3-15" class="i">+			if(!strcmp(geoms[i].symbol, arg))
+</a><a href="#h2-3-16" id="h2-3-16" class="i">+				break;
+</a><a href="#h2-3-17" id="h2-3-17" class="i">+		if(i == LENGTH(geoms))
+</a><a href="#h2-3-18" id="h2-3-18" class="i">+			return;
+</a><a href="#h2-3-19" id="h2-3-19" class="i">+		geom = &amp;geoms[i];
+</a><a href="#h2-3-20" id="h2-3-20" class="i">+	}
+</a> 	geom-&gt;apply();
+ 	updatebarpos();
+ 	arrange();
+<a href="#h2-4" id="h2-4" class="h">@@ -1430,20 +1442,18 @@ setgeom(const char *arg) {
+</a> 
+ void
+ setlayout(const char *arg) {
+<a href="#h2-4-3" id="h2-4-3" class="d">-	static Layout *revert = 0;
+</a> 	unsigned int i;
+ 
+<a href="#h2-4-6" id="h2-4-6" class="d">-	if(!arg)
+</a><a href="#h2-4-7" id="h2-4-7" class="d">-		return;
+</a><a href="#h2-4-8" id="h2-4-8" class="d">-	for(i = 0; i &lt; LENGTH(layouts); i++)
+</a><a href="#h2-4-9" id="h2-4-9" class="d">-		if(!strcmp(arg, layouts[i].symbol))
+</a><a href="#h2-4-10" id="h2-4-10" class="d">-			break;
+</a><a href="#h2-4-11" id="h2-4-11" class="d">-	if(i == LENGTH(layouts))
+</a><a href="#h2-4-12" id="h2-4-12" class="d">-		return;
+</a><a href="#h2-4-13" id="h2-4-13" class="d">-	if(revert &amp;&amp; &amp;layouts[i] == lt)
+</a><a href="#h2-4-14" id="h2-4-14" class="d">-		lt = revert;
+</a><a href="#h2-4-15" id="h2-4-15" class="i">+	if(!arg) {
+</a><a href="#h2-4-16" id="h2-4-16" class="i">+		if(++lt == &amp;layouts[LENGTH(layouts)])
+</a><a href="#h2-4-17" id="h2-4-17" class="i">+			lt = &amp;layouts[0];
+</a><a href="#h2-4-18" id="h2-4-18" class="i">+	}
+</a> 	else {
+<a href="#h2-4-20" id="h2-4-20" class="d">-		revert = lt;
+</a><a href="#h2-4-21" id="h2-4-21" class="i">+		for(i = 0; i &lt; LENGTH(layouts); i++)
+</a><a href="#h2-4-22" id="h2-4-22" class="i">+			if(!strcmp(arg, layouts[i].symbol))
+</a><a href="#h2-4-23" id="h2-4-23" class="i">+				break;
+</a><a href="#h2-4-24" id="h2-4-24" class="i">+		if(i == LENGTH(layouts))
+</a><a href="#h2-4-25" id="h2-4-25" class="i">+			return;
+</a> 		lt = &amp;layouts[i];
+ 	}
+ 	if(sel)
+</pre>
+</div>
+</body>
+</html>

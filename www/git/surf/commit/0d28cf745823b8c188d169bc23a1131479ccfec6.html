@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>making config-files configurable in config.h - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0d28cf745823b8c188d169bc23a1131479ccfec6.html">0d28cf745823b8c188d169bc23a1131479ccfec6</a>
+<b>parent</b> <a href="../commit/92cb8792e17e7f0c61131da3be1bddda5375bc47.html">92cb8792e17e7f0c61131da3be1bddda5375bc47</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue, 13 Oct 2009 21:52:43 +0200
+
+making config-files configurable in config.h
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">74</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 46 insertions(+), 32 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,6 +1,10 @@
+</a> /* modifier 0 means no modifier */
+ static gchar *progress       = &quot;#FF0000&quot;;
+ static gchar *progress_trust = &quot;#00FF00&quot;;
+<a href="#h0-0-3" id="h0-0-3" class="i">+static gchar *stylefile      = &quot;.surf/style.css&quot;;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static gchar *scriptfile     = &quot;.surf/script.js&quot;;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static gchar *cookiefile     = &quot;.surf/cookie.txt&quot;;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+static gchar *dldir          = &quot;.surf/dl&quot;;
+</a> #define MODKEY GDK_CONTROL_MASK
+ static Key keys[] = {
+     /* modifier	            keyval      function    arg             Focus */
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -67,8 +67,8 @@ static Client *clients = NULL;
+</a> static GdkNativeWindow embed = 0;
+ static gboolean showxid = FALSE;
+ static gboolean ignore_once = FALSE;
+<a href="#h1-0-3" id="h1-0-3" class="d">-static gchar *workdir;
+</a> 
+<a href="#h1-0-5" id="h1-0-5" class="i">+static gchar *buildpath(const gchar *path);
+</a> static void cleanup(void);
+ static void clipboard(Client *c, const Arg *arg);
+ static gchar *copystr(gchar **str, const gchar *src);
+<a href="#h1-1" id="h1-1" class="h">@@ -118,11 +118,35 @@ static void zoom(Client *c, const Arg *arg);
+</a> /* configuration, allows nested code to access above variables */
+ #include &quot;config.h&quot;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+gchar *
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+buildpath(const gchar *path) {
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	gchar *apath, *p;
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	FILE *f;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	/* creating directory */
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+	if(path[0] == &#39;/&#39;)
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+		apath = g_strdup(path);
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+	else
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		apath = g_strconcat(g_get_home_dir(), &quot;/&quot;, path, NULL);
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+	if((p = strrchr(apath, &#39;/&#39;))) {
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+		*p = &#39;\0&#39;;
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+		g_mkdir_with_parents(apath, 0755);
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+		*p = &#39;/&#39;;
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+	}
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+	/* creating file (gives error when apath ends with &quot;/&quot;) */
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+	if((f = g_fopen(apath, &quot;a&quot;)))
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+		fclose(f);
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+	puts(apath);
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+	return apath;
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+}
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+
+</a> void
+ cleanup(void) {
+ 	while(clients)
+ 		destroyclient(clients);
+<a href="#h1-1-29" id="h1-1-29" class="d">-	g_free(workdir);
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+	g_free(stylefile);
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+	g_free(scriptfile);
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+	g_free(dldir);
+</a> }
+ 
+ void
+<a href="#h1-2" id="h1-2" class="h">@@ -221,14 +245,12 @@ download(WebKitDownload *o, GParamSpec *pspec, Client *c) {
+</a> gboolean
+ initdownload(WebKitWebView *view, WebKitDownload *o, Client *c) {
+ 	const gchar *filename;
+<a href="#h1-2-3" id="h1-2-3" class="d">-	gchar *uri, *path, *html;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	gchar *uri, *html;
+</a> 
+ 	stop(c, NULL);
+ 	c-&gt;download = o;
+ 	filename = webkit_download_get_suggested_filename(o);
+<a href="#h1-2-9" id="h1-2-9" class="d">-	path = g_build_filename(workdir, &quot;dl&quot;, 
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-			filename, NULL);
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-	uri = g_strconcat(&quot;file://&quot;, path, NULL);
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+	uri = g_strconcat(&quot;file://&quot;, dldir, &quot;/&quot;, filename, NULL);
+</a> 	webkit_download_set_destination_uri(c-&gt;download, uri);
+ 	c-&gt;progress = 0;
+ 	g_free(uri);
+<a href="#h1-3" id="h1-3" class="h">@@ -374,7 +396,7 @@ Client *
+</a> newclient(void) {
+ 	Client *c;
+ 	WebKitWebSettings *settings;
+<a href="#h1-3-3" id="h1-3-3" class="d">-	gchar *filename;
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	gchar *uri;
+</a> 
+ 	if(!(c = calloc(1, sizeof(Client))))
+ 		die(&quot;Cannot malloc!\n&quot;);
+<a href="#h1-4" id="h1-4" class="h">@@ -452,9 +474,9 @@ newclient(void) {
+</a> 	webkit_web_view_set_full_content_zoom(c-&gt;view, TRUE);
+ 	settings = webkit_web_view_get_settings(c-&gt;view);
+ 	g_object_set(G_OBJECT(settings), &quot;user-agent&quot;, &quot;surf&quot;, NULL);
+<a href="#h1-4-3" id="h1-4-3" class="d">-	filename = g_build_filename(workdir, &quot;style.css&quot;, NULL);
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-	filename = g_strdup_printf(&quot;file://%s&quot;, filename);
+</a><a href="#h1-4-5" id="h1-4-5" class="d">-	g_object_set(G_OBJECT(settings), &quot;user-stylesheet-uri&quot;, filename, NULL);
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+	uri = g_strconcat(&quot;file://&quot;, stylefile, NULL);
+</a><a href="#h1-4-7" id="h1-4-7" class="i">+	g_object_set(G_OBJECT(settings), &quot;user-stylesheet-uri&quot;, uri, NULL);
+</a><a href="#h1-4-8" id="h1-4-8" class="i">+	g_free(uri);
+</a> 
+ 	c-&gt;download = NULL;
+ 	c-&gt;title = NULL;
+<a href="#h1-5" id="h1-5" class="h">@@ -553,9 +575,6 @@ reload(Client *c, const Arg *arg) {
+</a> 
+ void
+ rereadcookies(void) {
+<a href="#h1-5-3" id="h1-5-3" class="d">-	const gchar *filename;
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-
+</a><a href="#h1-5-5" id="h1-5-5" class="d">-	filename = g_build_filename(workdir, &quot;cookies&quot;, NULL);
+</a> }
+ 
+ void
+<a href="#h1-6" id="h1-6" class="h">@@ -578,9 +597,7 @@ setcookie(char *name, char *val, char *dom, char *path, long exp) {
+</a> 
+ void
+ setup(void) {
+<a href="#h1-6-3" id="h1-6-3" class="d">-	const gchar *home, *name;
+</a> 	SoupSession *s;
+<a href="#h1-6-5" id="h1-6-5" class="d">-	FILE *tmp;
+</a> 
+ 	gtk_init(NULL, NULL);
+ 	if (!g_thread_supported())
+<a href="#h1-7" id="h1-7" class="h">@@ -591,22 +608,14 @@ setup(void) {
+</a> 	urlprop = XInternAtom(dpy, &quot;_SURF_URL&quot;, False);
+ 
+ 	/* create dirs and files */
+<a href="#h1-7-3" id="h1-7-3" class="d">-	home = g_get_home_dir();
+</a><a href="#h1-7-4" id="h1-7-4" class="d">-	workdir = g_strdup(g_build_filename(home, &quot;.surf&quot;, NULL));
+</a><a href="#h1-7-5" id="h1-7-5" class="d">-	g_mkdir_with_parents(workdir, 0755);
+</a><a href="#h1-7-6" id="h1-7-6" class="d">-	name = g_build_filename(workdir, &quot;dl&quot;, NULL);
+</a><a href="#h1-7-7" id="h1-7-7" class="d">-	g_mkdir(name, 0755);
+</a><a href="#h1-7-8" id="h1-7-8" class="d">-	name = g_build_filename(workdir, &quot;style.css&quot;, NULL);
+</a><a href="#h1-7-9" id="h1-7-9" class="d">-	if((tmp = g_fopen(name, &quot;a&quot;)));
+</a><a href="#h1-7-10" id="h1-7-10" class="d">-		fclose(tmp);
+</a><a href="#h1-7-11" id="h1-7-11" class="d">-	name = g_build_filename(workdir, &quot;script.js&quot;, NULL);
+</a><a href="#h1-7-12" id="h1-7-12" class="d">-	if((tmp = g_fopen(name, &quot;a&quot;)));
+</a><a href="#h1-7-13" id="h1-7-13" class="d">-		fclose(tmp);
+</a><a href="#h1-7-14" id="h1-7-14" class="i">+	cookiefile = buildpath(cookiefile);
+</a><a href="#h1-7-15" id="h1-7-15" class="i">+	dldir = buildpath(dldir);
+</a><a href="#h1-7-16" id="h1-7-16" class="i">+	scriptfile = buildpath(scriptfile);
+</a><a href="#h1-7-17" id="h1-7-17" class="i">+	stylefile = buildpath(stylefile);
+</a> 
+ 	/* cookie persistance */
+ 	s = webkit_get_default_session();
+<a href="#h1-7-21" id="h1-7-21" class="d">-	name = g_build_filename(workdir, &quot;cookies.txt&quot;, NULL);
+</a><a href="#h1-7-22" id="h1-7-22" class="d">-	cookiejar = soup_cookie_jar_text_new(name, FALSE);
+</a><a href="#h1-7-23" id="h1-7-23" class="i">+	cookiejar = soup_cookie_jar_text_new(cookiefile, FALSE);
+</a> 	soup_session_add_feature(s, SOUP_SESSION_FEATURE(cookiejar));
+ }
+ 
+<a href="#h1-8" id="h1-8" class="h">@@ -693,14 +702,13 @@ update(Client *c) {
+</a> void
+ windowobjectcleared(GtkWidget *w, WebKitWebFrame *frame, JSContextRef js, JSObjectRef win, Client *c) {
+ 	JSStringRef jsscript;
+<a href="#h1-8-3" id="h1-8-3" class="d">-	gchar *script, *filename;
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	gchar *script;
+</a> 	JSValueRef exception = NULL;
+ 	GError *error;
+ 	
+<a href="#h1-8-8" id="h1-8-8" class="d">-	filename = g_build_filename(workdir, &quot;script.js&quot;, NULL);
+</a><a href="#h1-8-9" id="h1-8-9" class="d">-	if(g_file_get_contents(filename, &amp;script, NULL, &amp;error)) {
+</a><a href="#h1-8-10" id="h1-8-10" class="i">+	if(g_file_get_contents(scriptfile, &amp;script, NULL, &amp;error)) {
+</a> 		jsscript = JSStringCreateWithUTF8CString(script);
+<a href="#h1-8-12" id="h1-8-12" class="d">-		JSEvaluateScript (js, jsscript, JSContextGetGlobalObject(js), NULL, 0, &amp;exception);
+</a><a href="#h1-8-13" id="h1-8-13" class="i">+		JSEvaluateScript(js, jsscript, JSContextGetGlobalObject(js), NULL, 0, &amp;exception);
+</a> 	}
+ }
+ 
+<a href="#h1-9" id="h1-9" class="h">@@ -729,6 +737,8 @@ int main(int argc, char *argv[]) {
+</a> 			else
+ 				usage();
+ 		}
+<a href="#h1-9-3" id="h1-9-3" class="i">+		else if(!strcmp(argv[i], &quot;--&quot;))
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+			break;
+</a> 		else if(!strcmp(argv[i], &quot;-v&quot;))
+ 			die(&quot;surf-&quot;VERSION&quot;, © 2009 surf engineers, see LICENSE for details\n&quot;);
+ 		else if(argv[i][0] == &#39;-&#39;)
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added isdestroyed flag to unmanage - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a3a859b4e93d65fd22619449d18e0437d5c2774b.html">a3a859b4e93d65fd22619449d18e0437d5c2774b</a>
+<b>parent</b> <a href="../commit/9c066c24b3d0b7767651f0f403db2e4007a847c8.html">9c066c24b3d0b7767651f0f403db2e4007a847c8</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Tue,  8 Sep 2009 13:13:03 +0100
+
+added isdestroyed flag to unmanage
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">31</td><td><span class="i">++++++++++++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>1 file changed, 16 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -218,7 +218,7 @@ static void togglefloating(const Arg *arg);
+</a> static void toggletag(const Arg *arg);
+ static void toggleview(const Arg *arg);
+ static void unfocus(Client *c);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void unmanage(Client *c);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void unmanage(Client *c, Bool isdestroyed);
+</a> static void unmapnotify(XEvent *e);
+ static void updategeom(void);
+ static void updatebarpos(Monitor *m);
+<a href="#h0-1" id="h0-1" class="h">@@ -466,7 +466,7 @@ cleanup(void) {
+</a> 	selmon-&gt;lt[selmon-&gt;sellt] = &amp;foo;
+ 	for(m = mons; m; m = m-&gt;next)
+ 		while(m-&gt;stack)
+<a href="#h0-1-3" id="h0-1-3" class="d">-			unmanage(m-&gt;stack);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			unmanage(m-&gt;stack, False);
+</a> 	if(dc.font.set)
+ 		XFreeFontSet(dpy, dc.font.set);
+ 	else
+<a href="#h0-2" id="h0-2" class="h">@@ -595,7 +595,7 @@ destroynotify(XEvent *e) {
+</a> 	XDestroyWindowEvent *ev = &amp;e-&gt;xdestroywindow;
+ 
+ 	if((c = wintoclient(ev-&gt;window)))
+<a href="#h0-2-3" id="h0-2-3" class="d">-		unmanage(c);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		unmanage(c, True);
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -1626,24 +1626,25 @@ unfocus(Client *c) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="d">-unmanage(Client *c) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+unmanage(Client *c, Bool isdestroyed) {
+</a> 	XWindowChanges wc;
+ 
+<a href="#h0-3-7" id="h0-3-7" class="d">-	wc.border_width = c-&gt;oldbw;
+</a> 	/* The server grab construct avoids race conditions. */
+<a href="#h0-3-9" id="h0-3-9" class="d">-	XGrabServer(dpy);
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-	XSetErrorHandler(xerrordummy);
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-	XConfigureWindow(dpy, c-&gt;win, CWBorderWidth, &amp;wc); /* restore border */
+</a> 	detach(c);
+ 	detachstack(c);
+<a href="#h0-3-14" id="h0-3-14" class="d">-	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-	setclientstate(c, WithdrawnState);
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+	if(!isdestroyed) {
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+		wc.border_width = c-&gt;oldbw;
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+		XGrabServer(dpy);
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+		XSetErrorHandler(xerrordummy);
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+		XConfigureWindow(dpy, c-&gt;win, CWBorderWidth, &amp;wc); /* restore border */
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+		XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+		setclientstate(c, WithdrawnState);
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+		XSync(dpy, False);
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+		XSetErrorHandler(xerror);
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+		XUngrabServer(dpy);
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+	}
+</a> 	free(c);
+<a href="#h0-3-28" id="h0-3-28" class="d">-	XSync(dpy, False);
+</a><a href="#h0-3-29" id="h0-3-29" class="d">-	XSetErrorHandler(xerror);
+</a><a href="#h0-3-30" id="h0-3-30" class="d">-	XUngrabServer(dpy);
+</a> 	focus(NULL);
+<a href="#h0-3-32" id="h0-3-32" class="d">-	arrange();
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -1652,7 +1653,7 @@ unmapnotify(XEvent *e) {
+</a> 	XUnmapEvent *ev = &amp;e-&gt;xunmap;
+ 
+ 	if((c = wintoclient(ev-&gt;window)))
+<a href="#h0-4-3" id="h0-4-3" class="d">-		unmanage(c);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		unmanage(c, False);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

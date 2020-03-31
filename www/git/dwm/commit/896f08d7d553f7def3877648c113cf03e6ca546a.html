@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed several other stuff, coming closer to something useful - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/896f08d7d553f7def3877648c113cf03e6ca546a.html">896f08d7d553f7def3877648c113cf03e6ca546a</a>
+<b>parent</b> <a href="../commit/83d23908d3438d7f1f62533a7c8d96fc1019df55.html">83d23908d3438d7f1f62533a7c8d96fc1019df55</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Tue, 11 Jul 2006 23:46:39 +0200
+
+fixed several other stuff, coming closer to something useful
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bar.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">client.c</a></td><td> | </td><td class="num">29</td><td><span class="i">++++++++++++++++</span><span class="d">-------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">config.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">wm.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 23 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bar.c.html">bar.c</a> b/<a href="../file/bar.c.html">bar.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,7 +15,7 @@ draw_bar()
+</a> 	if(stack) {
+ 		brush.rect.width = textwidth(&amp;brush.font, stack-&gt;name) + labelheight(&amp;brush.font);
+ 		swap((void **)&amp;brush.fg, (void **)&amp;brush.bg);
+<a href="#h0-0-3" id="h0-0-3" class="d">-		draw(dpy, &amp;brush, False, stack-&gt;name);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		draw(dpy, &amp;brush, True, stack-&gt;name);
+</a> 		swap((void **)&amp;brush.fg, (void **)&amp;brush.bg);
+ 		brush.rect.x += brush.rect.width;
+ 	}
+<b>diff --git a/<a id="h1" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -104,19 +104,21 @@ manage(Window w, XWindowAttributes *wa)
+</a> 
+ 	c = emallocz(sizeof(Client));
+ 	c-&gt;win = w;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	c-&gt;x = wa-&gt;x;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	c-&gt;y = wa-&gt;y;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	c-&gt;w = wa-&gt;width;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	c-&gt;tx = c-&gt;x = wa-&gt;x;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	c-&gt;ty = c-&gt;y = wa-&gt;y;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	c-&gt;tw = c-&gt;w = wa-&gt;width;
+</a> 	c-&gt;h = wa-&gt;height;
+<a href="#h1-0-10" id="h1-0-10" class="i">+	c-&gt;th = barrect.height;
+</a> 	update_size(c);
+ 	XSetWindowBorderWidth(dpy, c-&gt;win, 1);
+<a href="#h1-0-13" id="h1-0-13" class="i">+	XSetWindowBorder(dpy, c-&gt;win, brush.border);
+</a> 	XSelectInput(dpy, c-&gt;win, CLIENT_MASK);
+ 	XGetTransientForHint(dpy, c-&gt;win, &amp;c-&gt;trans);
+ 	twa.override_redirect = 1;
+ 	twa.background_pixmap = ParentRelative;
+<a href="#h1-0-18" id="h1-0-18" class="d">-	twa.event_mask = ExposureMask;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	twa.event_mask = SubstructureNotifyMask | ExposureMask;
+</a> 
+<a href="#h1-0-21" id="h1-0-21" class="d">-	c-&gt;title = XCreateWindow(dpy, root, c-&gt;x, c-&gt;y, c-&gt;w, barrect.height,
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+	c-&gt;title = XCreateWindow(dpy, root, c-&gt;tx, c-&gt;ty, c-&gt;tw, c-&gt;th,
+</a> 			0, DefaultDepth(dpy, screen), CopyFromParent,
+ 			DefaultVisual(dpy, screen),
+ 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;twa);
+<a href="#h1-1" id="h1-1" class="h">@@ -145,7 +147,6 @@ resize(Client *c)
+</a> 	XConfigureEvent e;
+ 
+ 	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+<a href="#h1-1-3" id="h1-1-3" class="d">-	XMoveResizeWindow(dpy, c-&gt;title, c-&gt;x + c-&gt;w / 3, c-&gt;y, 2 * c-&gt;w / 3, barrect.height);
+</a> 	e.type = ConfigureNotify;
+ 	e.event = c-&gt;win;
+ 	e.window = c-&gt;win;
+<a href="#h1-2" id="h1-2" class="h">@@ -177,7 +178,6 @@ unmanage(Client *c)
+</a> 	XSetErrorHandler(dummy_error_handler);
+ 
+ 	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+<a href="#h1-2-3" id="h1-2-3" class="d">-	XUnmapWindow(dpy, c-&gt;win);
+</a> 	XDestroyWindow(dpy, c-&gt;title);
+ 
+ 	for(l=&amp;clients; *l &amp;&amp; *l != c; l=&amp;(*l)-&gt;next);
+<a href="#h1-3" id="h1-3" class="h">@@ -210,17 +210,20 @@ getclient(Window w)
+</a> void
+ draw_client(Client *c)
+ {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	if(!c)
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-		return;
+</a> 	if(c == stack)
+ 		draw_bar();
+ 
+<a href="#h1-3-8" id="h1-3-8" class="i">+	c-&gt;tw = textwidth(&amp;brush.font, c-&gt;name) + labelheight(&amp;brush.font);
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+	c-&gt;tx = c-&gt;x + c-&gt;w - c-&gt;tw + 2;
+</a><a href="#h1-3-10" id="h1-3-10" class="i">+	c-&gt;ty = c-&gt;y;
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+	XMoveResizeWindow(dpy, c-&gt;title, c-&gt;tx, c-&gt;ty, c-&gt;tw, c-&gt;th);
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+
+</a> 	brush.rect.x = brush.rect.y = 0;
+<a href="#h1-3-14" id="h1-3-14" class="d">-	brush.rect.width = 2 * c-&gt;w / 3;
+</a><a href="#h1-3-15" id="h1-3-15" class="d">-	brush.rect.height = barrect.height;
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+	brush.rect.width = c-&gt;tw;
+</a><a href="#h1-3-17" id="h1-3-17" class="i">+	brush.rect.height = c-&gt;th;
+</a> 
+ 	draw(dpy, &amp;brush, True, c-&gt;name);
+<a href="#h1-3-20" id="h1-3-20" class="d">-	XCopyArea(dpy, brush.drawable, c-&gt;title, brush.gc, 0, 0,
+</a><a href="#h1-3-21" id="h1-3-21" class="d">-			brush.rect.width, brush.rect.height, 0, 0);
+</a><a href="#h1-3-22" id="h1-3-22" class="i">+	XCopyArea(dpy, brush.drawable, c-&gt;title, brush.gc,
+</a><a href="#h1-3-23" id="h1-3-23" class="i">+			0, 0, c-&gt;tw, c-&gt;th, 0, 0);
+</a> 	XFlush(dpy);
+ }
+<b>diff --git a/<a id="h2" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -6,5 +6,5 @@
+</a> #define FONT		&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;
+ #define BGCOLOR		&quot;#000000&quot;
+ #define FGCOLOR		&quot;#ffaa00&quot;
+<a href="#h2-0-3" id="h2-0-3" class="d">-#define BORDERCOLOR	&quot;#000000&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+#define BORDERCOLOR	&quot;#ee8800&quot;
+</a> #define STATUSDELAY	10 /* milliseconds */
+<b>diff --git a/<a id="h3" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -204,6 +204,10 @@ propertynotify(XEvent *e)
+</a> 		}
+ 		if(ev-&gt;atom == XA_WM_NAME || ev-&gt;atom == net_atom[NetWMName]) {
+ 			update_name(c);
+<a href="#h3-0-3" id="h3-0-3" class="i">+			if(c == stack)
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+				draw_bar();
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+			else
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+				draw_client(c);
+</a> 		}
+ 	}
+ }
+<b>diff --git a/<a id="h4" href="../file/wm.h.html">wm.h</a> b/<a href="../file/wm.h.html">wm.h</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -25,6 +25,7 @@ struct Client {
+</a> 	char name[256], tag[256];
+ 	int proto;
+ 	int x, y, w, h;
+<a href="#h4-0-3" id="h4-0-3" class="i">+	int tx, ty, tw, th;
+</a> 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	long flags; 
+ 	Window win;
+</pre>
+</div>
+</body>
+</html>

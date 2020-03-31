@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding the -c option to close on last client close. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/39594f1935e8cd8f27c55b4716b8194a99e4b65d.html">39594f1935e8cd8f27c55b4716b8194a99e4b65d</a>
+<b>parent</b> <a href="../commit/34a643f79c3c1dc2577990ce0c8d69703f6738b4.html">34a643f79c3c1dc2577990ce0c8d69703f6738b4</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Tue, 25 Dec 2012 16:50:32 +0100
+
+Adding the -c option to close on last client close.
+
+Thanks for the suggestion by Kyle Kramer!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.1</a></td><td> | </td><td class="num">6</td><td><span class="i">+++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.c</a></td><td> | </td><td class="num">26</td><td><span class="i">++++++++++++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>2 files changed, 23 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.1.html">tabbed.1</a> b/<a href="../file/tabbed.1.html">tabbed.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,6 +3,7 @@
+</a> tabbed \- generic tabbed interface
+ .SH SYNOPSIS
+ .B tabbed
+<a href="#h0-0-3" id="h0-0-3" class="i">+.RB [ \-c ]
+</a> .RB [ \-d ]
+ .RB [ \-h ]
+ .RB [ \-s ]
+<a href="#h0-1" id="h0-1" class="h">@@ -21,12 +22,15 @@ disabled by providing the -s parameter. If no command is provided
+</a> tabbed will just print its xid and run no command.
+ .SH OPTIONS
+ .TP
+<a href="#h0-1-3" id="h0-1-3" class="i">+.B \-c
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+close tabbed when the last tab is closed. Mutually exclusive with -f.
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+.TP
+</a> .B \-d
+ detaches tabbed from the terminal and prints its XID to stdout.
+ .TP
+ .B \-f
+ fill up tabbed again by spawning the provided command, when the last tab is
+<a href="#h0-1-11" id="h0-1-11" class="d">-closed.
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+closed. Mutually exclusive with -c.
+</a> .TP
+ .B \-h
+ will print the usage of tabbed.
+<b>diff --git a/<a id="h1" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -147,7 +147,8 @@ static void (*handler[LASTEvent]) (const XEvent *) = {
+</a> };
+ static int bh, wx, wy, ww, wh;
+ static unsigned int numlockmask = 0;
+<a href="#h1-0-3" id="h1-0-3" class="d">-static Bool running = True, nextfocus, doinitspawn = True, fillagain = False;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+static Bool running = True, nextfocus, doinitspawn = True,
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	    fillagain = False, closelastclient = False;
+</a> static Display *dpy;
+ static DC dc;
+ static Atom wmatom[WMLast];
+<a href="#h1-1" id="h1-1" class="h">@@ -980,8 +981,13 @@ unmanage(int c) {
+</a> 		focus(sel);
+ 	}
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if(nclients == 0 &amp;&amp; fillagain)
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-		spawn(NULL);
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	if(nclients == 0) {
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+		if (closelastclient) {
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+			running = False;
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+		} else if (fillagain &amp;&amp; running) {
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+			spawn(NULL);
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+		}
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+	}
+</a> 
+ 	drawbar();
+ 	XSync(dpy, False);
+<a href="#h1-2" id="h1-2" class="h">@@ -1057,14 +1063,18 @@ usage(void) {
+</a> 
+ int
+ main(int argc, char *argv[]) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-	int detach = 0, replace = 0;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	Bool detach = False;
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	int replace = 0;
+</a> 
+ 	ARGBEGIN {
+<a href="#h1-2-8" id="h1-2-8" class="i">+	case &#39;c&#39;:
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+		closelastclient = True;
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+		fillagain = False;
+</a> 	case &#39;d&#39;:
+<a href="#h1-2-12" id="h1-2-12" class="d">-		detach = 1;
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+		detach = True;
+</a> 		break;
+ 	case &#39;f&#39;:
+<a href="#h1-2-16" id="h1-2-16" class="d">-		fillagain = 1;
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+		fillagain = True;
+</a> 		break;
+ 	case &#39;n&#39;:
+ 		wmname = EARGF(usage());
+<a href="#h1-3" id="h1-3" class="h">@@ -1101,9 +1111,9 @@ main(int argc, char *argv[]) {
+</a> 	fflush(NULL);
+ 
+ 	if(detach) {
+<a href="#h1-3-3" id="h1-3-3" class="d">-		if(fork() == 0)
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		if(fork() == 0) {
+</a> 			fclose(stdout);
+<a href="#h1-3-6" id="h1-3-6" class="d">-		else {
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+		} else {
+</a> 			if(dpy)
+ 				close(ConnectionNumber(dpy));
+ 			return EXIT_SUCCESS;
+</pre>
+</div>
+</body>
+</html>

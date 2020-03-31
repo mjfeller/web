@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added heretag command which allows to tag a client of a foreign tag with current tag - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4f8b08d330a6c377ab919f48b8e922d1c5ded601.html">4f8b08d330a6c377ab919f48b8e922d1c5ded601</a>
+<b>parent</b> <a href="../commit/849e631510ed6533ac930449804e477fe67a43c2.html">849e631510ed6533ac930449804e477fe67a43c2</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Tue, 18 Jul 2006 11:38:31 +0200
+
+added heretag command which allows to tag a client of a foreign tag with current tag
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">draw.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.1</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dwm.h</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">tag.c</a></td><td> | </td><td class="num">27</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>6 files changed, 42 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -66,8 +66,8 @@ focusnext(Arg *arg)
+</a> 	if(!sel)
+ 		return;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if(!(c = getnext(sel-&gt;next)))
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		c = getnext(clients);
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	if(!(c = getnext(sel-&gt;next, tsel)))
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		c = getnext(clients, tsel);
+</a> 	if(c) {
+ 		higher(c);
+ 		c-&gt;revert = sel;
+<a href="#h0-1" id="h0-1" class="h">@@ -410,8 +410,8 @@ zoom(Arg *arg)
+</a> 	if(!sel)
+ 		return;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(sel == getnext(clients) &amp;&amp; sel-&gt;next)  {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		if((c = getnext(sel-&gt;next)))
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	if(sel == getnext(clients, tsel) &amp;&amp; sel-&gt;next)  {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+		if((c = getnext(sel-&gt;next, tsel)))
+</a> 			sel = c;
+ 	}
+ 
+<b>diff --git a/<a id="h1" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -97,7 +97,7 @@ drawall()
+</a> {
+ 	Client *c;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-	for(c = clients; c; c = getnext(c-&gt;next))
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	for(c = clients; c; c = getnext(c-&gt;next, tsel))
+</a> 		drawtitle(c);
+ 	drawstatus();
+ }
+<b>diff --git a/<a id="h2" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -93,6 +93,14 @@ Append
+</a> tag to current
+ .B window
+ .TP
+<a href="#h2-0-3" id="h2-0-3" class="i">+.B Control-Shift-[0..n]
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+Replace current
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+.B window
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+of
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+.B nth
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+tag with current tag.
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+.B window
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+.TP
+</a> .B Control-Button1
+ Zooms the clicked
+ .B window
+<b>diff --git a/<a id="h3" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -145,7 +145,8 @@ extern int xerror(Display *dsply, XErrorEvent *ee);
+</a> extern void appendtag(Arg *arg);
+ extern void dofloat(Arg *arg);
+ extern void dotile(Arg *arg);
+<a href="#h3-0-3" id="h3-0-3" class="d">-extern Client *getnext(Client *c);
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+extern Client *getnext(Client *c, unsigned int t);
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+extern void heretag(Arg *arg);
+</a> extern void replacetag(Arg *arg);
+ extern void settags(Client *c);
+ extern void view(Arg *arg);
+<b>diff --git a/<a id="h4" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -35,6 +35,10 @@ Key key[] = {
+</a> 	{ Mod1Mask,				XK_m,		maximize,		{ 0 } }, 
+ 	{ Mod1Mask,				XK_space,	dotile,		{ 0 } }, 
+ 	{ Mod1Mask,				XK_Return,	zoom,		{ 0 } },
+<a href="#h4-0-3" id="h4-0-3" class="i">+	{ ControlMask|ShiftMask,XK_0,		heretag,	{ .i = Tscratch } }, 
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	{ ControlMask|ShiftMask,XK_1,		heretag,	{ .i = Tdev } }, 
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+	{ ControlMask|ShiftMask,XK_2,		heretag,	{ .i = Twww } }, 
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+	{ ControlMask|ShiftMask,XK_3,		heretag,	{ .i = Twork } }, 
+</a> 	{ Mod1Mask|ShiftMask,	XK_0,		replacetag,		{ .i = Tscratch } }, 
+ 	{ Mod1Mask|ShiftMask,	XK_1,		replacetag,		{ .i = Tdev } }, 
+ 	{ Mod1Mask|ShiftMask,	XK_2,		replacetag,		{ .i = Twww } }, 
+<b>diff --git a/<a id="h5" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -49,7 +49,7 @@ dofloat(Arg *arg)
+</a> 			ban(c);
+ 	}
+ 	if(sel &amp;&amp; !sel-&gt;tags[tsel]) {
+<a href="#h5-0-3" id="h5-0-3" class="d">-		if((sel = getnext(clients))) {
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+		if((sel = getnext(clients, tsel))) {
+</a> 			higher(sel);
+ 			focus(sel);
+ 		}
+<a href="#h5-1" id="h5-1" class="h">@@ -106,7 +106,7 @@ dotile(Arg *arg)
+</a> 			ban(c);
+ 	}
+ 	if(!sel || (sel &amp;&amp; !sel-&gt;tags[tsel])) {
+<a href="#h5-1-3" id="h5-1-3" class="d">-		if((sel = getnext(clients))) {
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+		if((sel = getnext(clients, tsel))) {
+</a> 			higher(sel);
+ 			focus(sel);
+ 		}
+<a href="#h5-2" id="h5-2" class="h">@@ -115,13 +115,32 @@ dotile(Arg *arg)
+</a> }
+ 
+ Client *
+<a href="#h5-2-3" id="h5-2-3" class="d">-getnext(Client *c)
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+getnext(Client *c, unsigned int t)
+</a> {
+<a href="#h5-2-6" id="h5-2-6" class="d">-	for(; c &amp;&amp; !c-&gt;tags[tsel]; c = c-&gt;next);
+</a><a href="#h5-2-7" id="h5-2-7" class="i">+	for(; c &amp;&amp; !c-&gt;tags[t]; c = c-&gt;next);
+</a> 	return c;
+ }
+ 
+ void
+<a href="#h5-2-12" id="h5-2-12" class="i">+heretag(Arg *arg)
+</a><a href="#h5-2-13" id="h5-2-13" class="i">+{
+</a><a href="#h5-2-14" id="h5-2-14" class="i">+	int i;
+</a><a href="#h5-2-15" id="h5-2-15" class="i">+	Client *c;
+</a><a href="#h5-2-16" id="h5-2-16" class="i">+
+</a><a href="#h5-2-17" id="h5-2-17" class="i">+	if(arg-&gt;i == tsel)
+</a><a href="#h5-2-18" id="h5-2-18" class="i">+		return;
+</a><a href="#h5-2-19" id="h5-2-19" class="i">+
+</a><a href="#h5-2-20" id="h5-2-20" class="i">+	if(!(c = getnext(clients, arg-&gt;i)))
+</a><a href="#h5-2-21" id="h5-2-21" class="i">+		return;
+</a><a href="#h5-2-22" id="h5-2-22" class="i">+
+</a><a href="#h5-2-23" id="h5-2-23" class="i">+	for(i = 0; i &lt; TLast; i++)
+</a><a href="#h5-2-24" id="h5-2-24" class="i">+		c-&gt;tags[i] = NULL;
+</a><a href="#h5-2-25" id="h5-2-25" class="i">+	c-&gt;tags[tsel] = tags[tsel];
+</a><a href="#h5-2-26" id="h5-2-26" class="i">+	arrange(NULL);
+</a><a href="#h5-2-27" id="h5-2-27" class="i">+	focus(c);
+</a><a href="#h5-2-28" id="h5-2-28" class="i">+}
+</a><a href="#h5-2-29" id="h5-2-29" class="i">+
+</a><a href="#h5-2-30" id="h5-2-30" class="i">+void
+</a> replacetag(Arg *arg)
+ {
+ 	int i;
+</pre>
+</div>
+</body>
+</html>

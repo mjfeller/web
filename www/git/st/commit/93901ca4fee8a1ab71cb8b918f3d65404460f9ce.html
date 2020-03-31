@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add HTS sequence - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/93901ca4fee8a1ab71cb8b918f3d65404460f9ce.html">93901ca4fee8a1ab71cb8b918f3d65404460f9ce</a>
+<b>parent</b> <a href="../commit/ee7fd748ac7bfabda2ac37251d230b45adb3e138.html">ee7fd748ac7bfabda2ac37251d230b45adb3e138</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Wed, 29 Aug 2012 19:59:43 +0200
+
+Add HTS sequence
+
+This sequence adds a new tab stop in the current horizontal position. This
+means that tputtab must be look for the next tab stop in the tabs array
+instead of using a hard coded value offset. Also, CHT sequence XXX message
+is removed because it is not a vt10x sequence (as far as I know it is a
+vt50x sequence), and it is not implemented by linux virtual terminal neither
+by xterm.
+
+Signed-off-by: Roberto E. Vargas Caballero &lt;k0ga@shike2.com&gt;
+---
+ st.c |   12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1214,7 +1214,6 @@ csihandle(void) {
+</a> 		DEFAULT(escseq.arg[1], 1);
+ 		tmoveto(escseq.arg[1]-1, escseq.arg[0]-1);
+ 		break;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	/* XXX: (CSI n I) CHT -- Cursor Forward Tabulation &lt;n&gt; tab stops */
+</a> 	case &#39;J&#39;: /* ED -- Clear screen */
+ 		sel.bx = -1;
+ 		switch(escseq.arg[0]) {
+<a href="#h0-1" id="h0-1" class="h">@@ -1429,8 +1428,11 @@ csireset(void) {
+</a> 
+ void
+ tputtab(void) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	int space = TAB - term.c.x % TAB;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	tmoveto(term.c.x + space, term.c.y);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	unsigned x;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	for (x = term.c.x + 1; x &lt; term.col &amp;&amp; !term.tabs[x]; ++x)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+		/* nothing */ ;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	tmoveto(x, term.c.y);
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -1491,6 +1493,10 @@ tputc(char *c) {
+</a> 				tnewline(1); /* always go to first col */
+ 				term.esc = 0;
+ 				break;
+<a href="#h0-2-3" id="h0-2-3" class="i">+			case &#39;H&#39;: /* HTS -- Horizontal tab stop */
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+				term.tabs[term.c.x] = 1;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+				term.esc = 0;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+				break;
+</a> 			case &#39;M&#39;: /* RI -- Reverse index */
+ 				if(term.c.y == term.top)
+ 					tscrolldown(term.top, 1);
+</pre>
+</div>
+</body>
+</html>

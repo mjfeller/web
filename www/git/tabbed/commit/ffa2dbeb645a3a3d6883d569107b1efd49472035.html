@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Correcting the lastsel handling in tabbed. It should be more predictable now. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ffa2dbeb645a3a3d6883d569107b1efd49472035.html">ffa2dbeb645a3a3d6883d569107b1efd49472035</a>
+<b>parent</b> <a href="../commit/5e1c53ad3cecdfcb773e606a65ae853a524d8136.html">5e1c53ad3cecdfcb773e606a65ae853a524d8136</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Tue, 27 Nov 2012 20:25:56 +0100
+
+Correcting the lastsel handling in tabbed. It should be more predictable now.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.1</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.c</a></td><td> | </td><td class="num">40</td><td><span class="i">++++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>2 files changed, 23 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.1.html">tabbed.1</a> b/<a href="../file/tabbed.1.html">tabbed.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -65,7 +65,7 @@ move selected tab one to the left
+</a> move selected tab one to the right
+ .TP
+ .B Ctrl\-Tab
+<a href="#h0-0-3" id="h0-0-3" class="d">-toggle between tabs
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+toggle between the selected and last selected tab
+</a> .TP
+ .B Ctrl\-q
+ close tab
+<b>diff --git a/<a id="h1" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -437,8 +437,8 @@ focus(int c) {
+</a> 
+ 	if(sel != c)
+ 		lastsel = sel;
+<a href="#h1-0-3" id="h1-0-3" class="d">-
+</a> 	sel = c;
+<a href="#h1-0-5" id="h1-0-5" class="i">+
+</a> 	drawbar();
+ }
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -682,9 +682,6 @@ manage(Window w) {
+</a> 		XSync(dpy, False);
+ 		focus((nextfocus)? 0 : ((sel &lt; 0)? 0 : sel));
+ 		nextfocus = foreground;
+<a href="#h1-1-3" id="h1-1-3" class="d">-
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-		if(lastsel &lt; 0)
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-			lastsel = 0;
+</a> 	}
+ }
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -919,45 +916,52 @@ textnw(const char *text, unsigned int len) {
+</a> 
+ void
+ unmanage(int c) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-	int pc;
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-	if(c &lt; 0 || c &gt;= nclients)
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+	if(c &lt; 0 || c &gt;= nclients) {
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+		drawbar();
+</a> 		return;
+<a href="#h1-2-9" id="h1-2-9" class="i">+	}
+</a> 
+ 	if(!nclients) {
+ 		return;
+ 	} else if(c == 0) {
+ 		/* First client. */
+<a href="#h1-2-15" id="h1-2-15" class="d">-		pc = 0;
+</a> 		nclients--;
+ 		free(clients[0]);
+ 		memmove(&amp;clients[0], &amp;clients[1], sizeof(Client *) * nclients);
+ 	} else if(c == nclients - 1) {
+ 		/* Last client. */
+ 		nclients--;
+<a href="#h1-2-22" id="h1-2-22" class="d">-		pc = nclients - 1;
+</a> 		free(clients[c]);
+ 		clients = erealloc(clients, sizeof(Client *) * nclients);
+ 	} else {
+ 		/* Somewhere inbetween. */
+<a href="#h1-2-27" id="h1-2-27" class="d">-		pc = c + 1;
+</a> 		free(clients[c]);
+ 		memmove(&amp;clients[c], &amp;clients[c+1],
+ 				sizeof(Client *) * (nclients - (c + 1)));
+ 		nclients--;
+ 	}
+ 
+<a href="#h1-2-34" id="h1-2-34" class="d">-	if(c == lastsel)
+</a><a href="#h1-2-35" id="h1-2-35" class="d">-		lastsel = 0;
+</a><a href="#h1-2-36" id="h1-2-36" class="d">-	if(c == sel) {
+</a><a href="#h1-2-37" id="h1-2-37" class="d">-		sel = pc;
+</a><a href="#h1-2-38" id="h1-2-38" class="d">-		focus(lastsel);
+</a><a href="#h1-2-39" id="h1-2-39" class="i">+	if(c == lastsel) {
+</a><a href="#h1-2-40" id="h1-2-40" class="i">+		lastsel = -1;
+</a><a href="#h1-2-41" id="h1-2-41" class="i">+	} else if(lastsel &gt; c) {
+</a><a href="#h1-2-42" id="h1-2-42" class="i">+		lastsel--;
+</a> 	}
+ 
+<a href="#h1-2-45" id="h1-2-45" class="d">-	if(nclients == 0) {
+</a><a href="#h1-2-46" id="h1-2-46" class="d">-		if(fillagain)
+</a><a href="#h1-2-47" id="h1-2-47" class="d">-			spawn(NULL);
+</a><a href="#h1-2-48" id="h1-2-48" class="i">+	if(sel &gt; c &amp;&amp; c &gt; 0) {
+</a><a href="#h1-2-49" id="h1-2-49" class="i">+		sel--;
+</a><a href="#h1-2-50" id="h1-2-50" class="i">+		lastsel = -1;
+</a> 	}
+<a href="#h1-2-52" id="h1-2-52" class="i">+	if(c == nclients &amp;&amp; nclients &gt; 0)
+</a><a href="#h1-2-53" id="h1-2-53" class="i">+		sel = nclients - 1;
+</a><a href="#h1-2-54" id="h1-2-54" class="i">+
+</a><a href="#h1-2-55" id="h1-2-55" class="i">+	if(lastsel &gt; -1) {
+</a><a href="#h1-2-56" id="h1-2-56" class="i">+		focus(lastsel);
+</a><a href="#h1-2-57" id="h1-2-57" class="i">+	} else {
+</a><a href="#h1-2-58" id="h1-2-58" class="i">+		focus(sel);
+</a><a href="#h1-2-59" id="h1-2-59" class="i">+	}
+</a><a href="#h1-2-60" id="h1-2-60" class="i">+
+</a><a href="#h1-2-61" id="h1-2-61" class="i">+	if(nclients == 0 &amp;&amp; fillagain)
+</a><a href="#h1-2-62" id="h1-2-62" class="i">+		spawn(NULL);
+</a> 
+ 	drawbar();
+ 	XSync(dpy, False);
+</pre>
+</div>
+</body>
+</html>

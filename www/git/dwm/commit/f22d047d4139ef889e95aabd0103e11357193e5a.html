@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>make it easier for the user, if Xinerama support is given, always use the screen 0 as window area/bar area, everything else can be used for floating clients - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f22d047d4139ef889e95aabd0103e11357193e5a.html">f22d047d4139ef889e95aabd0103e11357193e5a</a>
+<b>parent</b> <a href="../commit/4a5c8d84dbf410b8b9aa4dc81954568f10ca104f.html">4a5c8d84dbf410b8b9aa4dc81954568f10ca104f</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 19 May 2008 15:05:46 +0100
+
+make it easier for the user, if Xinerama support is given, always use the screen 0 as window area/bar area, everything else can be used for floating clients
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">11</td><td><span class="i">++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>3 files changed, 37 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,14 +10,19 @@ MANPREFIX = ${PREFIX}/share/man
+</a> X11INC = /usr/X11R6/include
+ X11LIB = /usr/X11R6/lib
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+# Xinerama, uncomment if you don&#39;t want it
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+XINERAMALIBS = -L${X11LIB} -lXinerama
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+XINERAMAFLAGS = -DXINERAMA
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a> # includes and libs
+ INCS = -I. -I/usr/include -I${X11INC}
+<a href="#h0-0-9" id="h0-0-9" class="d">-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 ${XINERAMALIBS}
+</a> 
+ # flags
+<a href="#h0-0-13" id="h0-0-13" class="d">-CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; ${XINERAMAFLAGS}
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+CFLAGS = -Os ${INCS} ${CPPFLAGS}
+</a> LDFLAGS = -s ${LIBS}
+<a href="#h0-0-17" id="h0-0-17" class="d">-#CFLAGS = -g -std=c99 -pedantic -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+#CFLAGS = -g -std=c99 -pedantic -Wall -O2 ${INCS} ${CPPFLAGS}
+</a> #LDFLAGS = -g ${LIBS}
+ 
+ # Solaris
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -57,6 +57,9 @@ click on a tag label adds/removes that tag to/from the focused window.
+</a> Start
+ .BR xterm.
+ .TP
+<a href="#h1-0-3" id="h1-0-3" class="i">+.B Mod1\-b
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+Toggles bar on and off.
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+.TP
+</a> .B Mod1\-space
+ Toggles between layouts.
+ .TP
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -39,6 +39,9 @@
+</a> #include &lt;X11/Xlib.h&gt;
+ #include &lt;X11/Xproto.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+<a href="#h2-0-3" id="h2-0-3" class="i">+#ifdef XINERAMA
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+#include &lt;X11/extensions/Xinerama.h&gt;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+#endif
+</a> 
+ /* macros */
+ #define MAX(a, b)       ((a) &gt; (b) ? (a) : (b))
+<a href="#h2-1" id="h2-1" class="h">@@ -1579,22 +1582,32 @@ updatebar(void) {
+</a> 
+ void
+ updategeom(void) {
+<a href="#h2-1-3" id="h2-1-3" class="d">-	unsigned int i;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-#ifdef CUSTOMGEOM /* define your own if you are Xinerama user */
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-	CUSTOMGEOM
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-#else
+</a><a href="#h2-1-8" id="h2-1-8" class="d">-	/* bar geometry*/
+</a><a href="#h2-1-9" id="h2-1-9" class="d">-	bx = 0;
+</a><a href="#h2-1-10" id="h2-1-10" class="d">-	by = showbar ? (topbar ? 0 : sh - bh) : -bh;
+</a><a href="#h2-1-11" id="h2-1-11" class="d">-	bw = sw;
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+	int i;
+</a><a href="#h2-1-13" id="h2-1-13" class="i">+#ifdef XINERAMA
+</a><a href="#h2-1-14" id="h2-1-14" class="i">+	XineramaScreenInfo *info = NULL;
+</a> 
+ 	/* window area geometry */
+<a href="#h2-1-17" id="h2-1-17" class="d">-	wx = sx;
+</a><a href="#h2-1-18" id="h2-1-18" class="d">-	wy = showbar &amp;&amp; topbar ? sy + bh : sy;
+</a><a href="#h2-1-19" id="h2-1-19" class="d">-	ww = sw;
+</a><a href="#h2-1-20" id="h2-1-20" class="d">-	wh = showbar ? sh - bh : sh;
+</a><a href="#h2-1-21" id="h2-1-21" class="i">+	if(XineramaIsActive(dpy)) {
+</a><a href="#h2-1-22" id="h2-1-22" class="i">+		info = XineramaQueryScreens(dpy, &amp;i);
+</a><a href="#h2-1-23" id="h2-1-23" class="i">+		wx = info[0].x_org;
+</a><a href="#h2-1-24" id="h2-1-24" class="i">+		wy = showbar &amp;&amp; topbar ? info[0].y_org + info[0].height + bh : info[0].y_org;
+</a><a href="#h2-1-25" id="h2-1-25" class="i">+		ww = info[0].width;
+</a><a href="#h2-1-26" id="h2-1-26" class="i">+		wh = showbar ? info[0].height - bh : info[0].height;
+</a><a href="#h2-1-27" id="h2-1-27" class="i">+		XFree(info);
+</a><a href="#h2-1-28" id="h2-1-28" class="i">+	}
+</a><a href="#h2-1-29" id="h2-1-29" class="i">+	else
+</a> #endif
+<a href="#h2-1-31" id="h2-1-31" class="i">+	{
+</a><a href="#h2-1-32" id="h2-1-32" class="i">+		wx = sx;
+</a><a href="#h2-1-33" id="h2-1-33" class="i">+		wy = showbar &amp;&amp; topbar ? sy + bh : sy;
+</a><a href="#h2-1-34" id="h2-1-34" class="i">+		ww = sw;
+</a><a href="#h2-1-35" id="h2-1-35" class="i">+		wh = showbar ? sh - bh : sh;
+</a><a href="#h2-1-36" id="h2-1-36" class="i">+	}
+</a><a href="#h2-1-37" id="h2-1-37" class="i">+
+</a><a href="#h2-1-38" id="h2-1-38" class="i">+	/* bar geometry*/
+</a><a href="#h2-1-39" id="h2-1-39" class="i">+	bx = wx;
+</a><a href="#h2-1-40" id="h2-1-40" class="i">+	by = showbar ? (topbar ? 0 : wy + wh) : -bh;
+</a><a href="#h2-1-41" id="h2-1-41" class="i">+	bw = ww;
+</a> 
+ 	/* update layout geometries */
+ 	for(i = 0; i &lt; LENGTH(layouts); i++)
+</pre>
+</div>
+</body>
+</html>

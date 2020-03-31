@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>made Xinerama screen index customizable - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e3838e85855d051190bde6c77265bc72b53a9d04.html">e3838e85855d051190bde6c77265bc72b53a9d04</a>
+<b>parent</b> <a href="../commit/016dca4f694cb51c7db77aeeefcb55b8869f3842.html">016dca4f694cb51c7db77aeeefcb55b8869f3842</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 11 Jun 2008 19:55:07 +0100
+
+made Xinerama screen index customizable
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 12 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,10 +8,14 @@
+</a> #define SELBORDERCOLOR  &quot;#0066ff&quot;
+ #define SELBGCOLOR      &quot;#0066ff&quot;
+ #define SELFGCOLOR      &quot;#ffffff&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static uint borderpx  = 1;        /* border pixel of windows */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-static uint snap      = 32;       /* snap pixel */
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-static Bool showbar   = True;     /* False means no bar */
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-static Bool topbar    = True;     /* False means bottom bar */
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+static uint borderpx    = 1;        /* border pixel of windows */
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+static uint snap        = 32;       /* snap pixel */
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+static Bool showbar     = True;     /* False means no bar */
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+static Bool topbar      = True;     /* False means bottom bar */
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+#ifdef XINERAMA
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+static uint xidx        = 0;        /* Xinerama screen index to use */
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+#endif
+</a> 
+ /* tagging */
+ static const char tags[][MAXTAGLEN] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot; };
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1554,10 +1554,10 @@ updategeom(void) {
+</a> 	/* window area geometry */
+ 	if(XineramaIsActive(dpy)) {
+ 		info = XineramaQueryScreens(dpy, &amp;i);
+<a href="#h1-0-3" id="h1-0-3" class="d">-		wx = info[0].x_org;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-		wy = showbar &amp;&amp; topbar ? info[0].y_org + bh : info[0].y_org;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-		ww = info[0].width;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-		wh = showbar ? info[0].height - bh : info[0].height;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		wx = info[xidx].x_org;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		wy = showbar &amp;&amp; topbar ?  info[xidx].y_org + bh : info[xidx].y_org;
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		ww = info[xidx].width;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+		wh = showbar ? info[xidx].height - bh : info[xidx].height;
+</a> 		XFree(info);
+ 	}
+ 	else
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>made code more readable - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a05beb6585713aeb661cf30c080e77fbfdb28867.html">a05beb6585713aeb661cf30c080e77fbfdb28867</a>
+<b>parent</b> <a href="../commit/48b6e9a3968e54a87f022c8e68b5bec5423cb75f.html">48b6e9a3968e54a87f022c8e68b5bec5423cb75f</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Tue, 11 Jul 2006 22:49:09 +0200
+
+made code more readable
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">50</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">kb.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">mouse.c</a></td><td> | </td><td class="num">52</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">wm.h</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>5 files changed, 67 insertions(+), 70 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -44,6 +44,24 @@ update_name(Client *c)
+</a> }
+ 
+ void
+<a href="#h0-0-3" id="h0-0-3" class="i">+update_size(Client *c)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+{
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	XSizeHints size;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	long msize;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	if(!XGetWMNormalHints(dpy, c-&gt;win, &amp;size, &amp;msize) || !size.flags)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		size.flags = PSize;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	c-&gt;flags = size.flags;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	c-&gt;basew = size.base_width;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	c-&gt;baseh = size.base_height;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	c-&gt;incw = size.width_inc;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	c-&gt;inch = size.height_inc;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	c-&gt;maxw = size.max_width;
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	c-&gt;maxh = size.max_height;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	c-&gt;minw = size.min_width;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	c-&gt;minh = size.min_height;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+}
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+void
+</a> focus(Client *c)
+ {
+ 	Client **l;
+<a href="#h0-1" id="h0-1" class="h">@@ -62,31 +80,24 @@ manage(Window w, XWindowAttributes *wa)
+</a> {
+ 	Client *c, **l;
+ 	XSetWindowAttributes twa;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	long msize;
+</a> 
+ 	c = emallocz(sizeof(Client));
+ 	c-&gt;win = w;
+<a href="#h0-1-7" id="h0-1-7" class="d">-	c-&gt;r[RFloat].x = wa-&gt;x;
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	c-&gt;r[RFloat].y = wa-&gt;y;
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	c-&gt;r[RFloat].width = wa-&gt;width;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	c-&gt;r[RFloat].height = wa-&gt;height;
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	c-&gt;x = wa-&gt;x;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	c-&gt;y = wa-&gt;y;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	c-&gt;w = wa-&gt;width;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	c-&gt;h = wa-&gt;height;
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	update_size(c);
+</a> 	XSetWindowBorderWidth(dpy, c-&gt;win, 1);
+ 	XSelectInput(dpy, c-&gt;win, CLIENT_MASK);
+ 	XGetTransientForHint(dpy, c-&gt;win, &amp;c-&gt;trans);
+<a href="#h0-1-19" id="h0-1-19" class="d">-	if(!XGetWMNormalHints(dpy, c-&gt;win, &amp;c-&gt;size, &amp;msize) || !c-&gt;size.flags)
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-		c-&gt;size.flags = PSize;
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-	c-&gt;fixedsize =
+</a><a href="#h0-1-22" id="h0-1-22" class="d">-		(c-&gt;size.flags &amp; PMinSize &amp;&amp; c-&gt;size.flags &amp; PMaxSize
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-		 &amp;&amp; c-&gt;size.min_width == c-&gt;size.max_width
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-		 &amp;&amp; c-&gt;size.min_height == c-&gt;size.max_height);
+</a> 	update_name(c);
+ 	twa.override_redirect = 1;
+ 	twa.background_pixmap = ParentRelative;
+ 	twa.event_mask = ExposureMask;
+ 
+<a href="#h0-1-30" id="h0-1-30" class="d">-	c-&gt;title = XCreateWindow(dpy, root, c-&gt;r[RFloat].x, c-&gt;r[RFloat].y,
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-			c-&gt;r[RFloat].width, barrect.height, 0,
+</a><a href="#h0-1-32" id="h0-1-32" class="d">-			DefaultDepth(dpy, screen), CopyFromParent,
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+	c-&gt;title = XCreateWindow(dpy, root, c-&gt;x, c-&gt;y, c-&gt;w, barrect.height,
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+			0, DefaultDepth(dpy, screen), CopyFromParent,
+</a> 			DefaultVisual(dpy, screen),
+ 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;twa);
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -110,15 +121,14 @@ resize(Client *c)
+</a> {
+ 	XConfigureEvent e;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;r[RFloat].x, c-&gt;r[RFloat].y,
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-			c-&gt;r[RFloat].width, c-&gt;r[RFloat].height);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+</a> 	e.type = ConfigureNotify;
+ 	e.event = c-&gt;win;
+ 	e.window = c-&gt;win;
+<a href="#h0-2-9" id="h0-2-9" class="d">-	e.x = c-&gt;r[RFloat].x;
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-	e.y = c-&gt;r[RFloat].y;
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-	e.width = c-&gt;r[RFloat].width;
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-	e.height = c-&gt;r[RFloat].height;
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+	e.x = c-&gt;x;
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+	e.y = c-&gt;y;
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	e.width = c-&gt;w;
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+	e.height = c-&gt;h;
+</a> 	e.border_width = 0;
+ 	e.above = None;
+ 	e.override_redirect = False;
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -79,13 +79,13 @@ configurerequest(XEvent *e)
+</a> 	ev-&gt;value_mask &amp;= ~CWSibling;
+ 	if((c = getclient(ev-&gt;window))) {
+ 		if(ev-&gt;value_mask &amp; CWX)
+<a href="#h1-0-3" id="h1-0-3" class="d">-			c-&gt;r[RFloat].x = ev-&gt;x;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+			c-&gt;x = ev-&gt;x;
+</a> 		if(ev-&gt;value_mask &amp; CWY)
+<a href="#h1-0-6" id="h1-0-6" class="d">-			c-&gt;r[RFloat].y = ev-&gt;y;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+			c-&gt;y = ev-&gt;y;
+</a> 		if(ev-&gt;value_mask &amp; CWWidth)
+<a href="#h1-0-9" id="h1-0-9" class="d">-			c-&gt;r[RFloat].width = ev-&gt;width;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+			c-&gt;w = ev-&gt;width;
+</a> 		if(ev-&gt;value_mask &amp; CWHeight)
+<a href="#h1-0-12" id="h1-0-12" class="d">-			c-&gt;r[RFloat].height = ev-&gt;height;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+			c-&gt;h = ev-&gt;height;
+</a> 	}
+ 
+ 	wc.x = ev-&gt;x;
+<a href="#h1-1" id="h1-1" class="h">@@ -179,7 +179,6 @@ static void
+</a> propertynotify(XEvent *e)
+ {
+ 	XPropertyEvent *ev = &amp;e-&gt;xproperty;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	long msize;
+</a> 	Client *c;
+ 
+ 	if(ev-&gt;state == PropertyDelete)
+<a href="#h1-2" id="h1-2" class="h">@@ -195,16 +194,9 @@ propertynotify(XEvent *e)
+</a> 			case XA_WM_TRANSIENT_FOR:
+ 				XGetTransientForHint(dpy, c-&gt;win, &amp;c-&gt;trans);
+ 				break;
+<a href="#h1-2-3" id="h1-2-3" class="i">+				update_size(c);
+</a> 			case XA_WM_NORMAL_HINTS:
+<a href="#h1-2-5" id="h1-2-5" class="d">-				if(!XGetWMNormalHints(dpy, c-&gt;win, &amp;c-&gt;size, &amp;msize)
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-						|| !c-&gt;size.flags)
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-					c-&gt;size.flags = PSize;
+</a><a href="#h1-2-8" id="h1-2-8" class="d">-				if(c-&gt;size.flags &amp; PMinSize &amp;&amp; c-&gt;size.flags &amp; PMaxSize
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-						&amp;&amp; c-&gt;size.min_width == c-&gt;size.max_width
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-						&amp;&amp; c-&gt;size.min_height == c-&gt;size.max_height)
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-					c-&gt;fixedsize = True;
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-				else
+</a><a href="#h1-2-13" id="h1-2-13" class="d">-					c-&gt;fixedsize = False;
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+				update_size(c);
+</a> 				break;
+ 		}
+ 		if(ev-&gt;atom == XA_WM_NAME || ev-&gt;atom == net_atom[NetWMName]) {
+<b>diff --git a/<a id="h2" href="../file/kb.c.html">kb.c</a> b/<a href="../file/kb.c.html">kb.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -8,7 +8,7 @@
+</a> #include &lt;X11/keysym.h&gt;
+ 
+ static const char *term[] = { 
+<a href="#h2-0-3" id="h2-0-3" class="d">-	&quot;xterm&quot;, &quot;-u8&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-fn&quot;,
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;xterm&quot;, &quot;-bg&quot;, &quot;black&quot;, &quot;-fg&quot;, &quot;white&quot;, &quot;-fn&quot;,
+</a> 	&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;, 0 
+ };
+ 
+<b>diff --git a/<a id="h3" href="../file/mouse.c.html">mouse.c</a> b/<a href="../file/mouse.c.html">mouse.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -16,22 +16,22 @@
+</a> static void
+ mmatch(Client *c, int x1, int y1, int x2, int y2)
+ {
+<a href="#h3-0-3" id="h3-0-3" class="d">-	c-&gt;r[RFloat].width = abs(x1 - x2);
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-	c-&gt;r[RFloat].height = abs(y1 - y2);
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-	c-&gt;r[RFloat].width -=
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-		(c-&gt;r[RFloat].width - c-&gt;size.base_width) % c-&gt;size.width_inc;
+</a><a href="#h3-0-7" id="h3-0-7" class="d">-	c-&gt;r[RFloat].height -=
+</a><a href="#h3-0-8" id="h3-0-8" class="d">-		(c-&gt;r[RFloat].height - c-&gt;size.base_height) % c-&gt;size.height_inc;
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-	if(c-&gt;size.min_width &amp;&amp; c-&gt;r[RFloat].width &lt; c-&gt;size.min_width)
+</a><a href="#h3-0-10" id="h3-0-10" class="d">-		c-&gt;r[RFloat].width = c-&gt;size.min_width;
+</a><a href="#h3-0-11" id="h3-0-11" class="d">-	if(c-&gt;size.min_height &amp;&amp; c-&gt;r[RFloat].height &lt; c-&gt;size.min_height)
+</a><a href="#h3-0-12" id="h3-0-12" class="d">-		c-&gt;r[RFloat].height = c-&gt;size.min_height;
+</a><a href="#h3-0-13" id="h3-0-13" class="d">-	if(c-&gt;size.max_width &amp;&amp; c-&gt;r[RFloat].width &gt; c-&gt;size.max_width)
+</a><a href="#h3-0-14" id="h3-0-14" class="d">-		c-&gt;r[RFloat].width = c-&gt;size.max_width;
+</a><a href="#h3-0-15" id="h3-0-15" class="d">-	if(c-&gt;size.max_height &amp;&amp; c-&gt;r[RFloat].height &gt; c-&gt;size.max_height)
+</a><a href="#h3-0-16" id="h3-0-16" class="d">-		c-&gt;r[RFloat].height = c-&gt;size.max_height;
+</a><a href="#h3-0-17" id="h3-0-17" class="d">-	c-&gt;r[RFloat].x = (x1 &lt;= x2) ? x1 : x1 - c-&gt;r[RFloat].width;
+</a><a href="#h3-0-18" id="h3-0-18" class="d">-	c-&gt;r[RFloat].y = (y1 &lt;= y2) ? y1 : y1 - c-&gt;r[RFloat].height;
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+	c-&gt;w = abs(x1 - x2);
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+	c-&gt;h = abs(y1 - y2);
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+	if(c-&gt;incw)
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+		c-&gt;w -= (c-&gt;w - c-&gt;basew) % c-&gt;incw;
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+	if(c-&gt;inch)
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+		c-&gt;h -= (c-&gt;h - c-&gt;baseh) % c-&gt;inch;
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+	if(c-&gt;minw &amp;&amp; c-&gt;w &lt; c-&gt;minw)
+</a><a href="#h3-0-26" id="h3-0-26" class="i">+		c-&gt;w = c-&gt;minw;
+</a><a href="#h3-0-27" id="h3-0-27" class="i">+	if(c-&gt;minh &amp;&amp; c-&gt;h &lt; c-&gt;minh)
+</a><a href="#h3-0-28" id="h3-0-28" class="i">+		c-&gt;h = c-&gt;minh;
+</a><a href="#h3-0-29" id="h3-0-29" class="i">+	if(c-&gt;maxw &amp;&amp; c-&gt;w &gt; c-&gt;maxw)
+</a><a href="#h3-0-30" id="h3-0-30" class="i">+		c-&gt;w = c-&gt;maxw;
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+	if(c-&gt;maxh &amp;&amp; c-&gt;h &gt; c-&gt;maxh)
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+		c-&gt;h = c-&gt;maxh;
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+	c-&gt;x = (x1 &lt;= x2) ? x1 : x1 - c-&gt;w;
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+	c-&gt;y = (y1 &lt;= y2) ? y1 : y1 - c-&gt;h;
+</a> }
+ 
+ void
+<a href="#h3-1" id="h3-1" class="h">@@ -40,14 +40,13 @@ mresize(Client *c)
+</a> 	XEvent ev;
+ 	int old_cx, old_cy;
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-	old_cx = c-&gt;r[RFloat].x;
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-	old_cy = c-&gt;r[RFloat].y;
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	old_cx = c-&gt;x;
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+	old_cy = c-&gt;y;
+</a> 	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+ 				None, cursor[CurResize], CurrentTime) != GrabSuccess)
+ 		return;
+ 	XGrabServer(dpy);
+<a href="#h3-1-11" id="h3-1-11" class="d">-	XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0,
+</a><a href="#h3-1-12" id="h3-1-12" class="d">-			c-&gt;r[RFloat].width, c-&gt;r[RFloat].height);
+</a><a href="#h3-1-13" id="h3-1-13" class="i">+	XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w, c-&gt;h);
+</a> 	for(;;) {
+ 		XMaskEvent(dpy, MouseMask, &amp;ev);
+ 		switch(ev.type) {
+<a href="#h3-2" id="h3-2" class="h">@@ -55,7 +54,7 @@ mresize(Client *c)
+</a> 		case MotionNotify:
+ 			XUngrabServer(dpy);
+ 			mmatch(c, old_cx, old_cy, ev.xmotion.x, ev.xmotion.y);
+<a href="#h3-2-3" id="h3-2-3" class="d">-			XResizeWindow(dpy, c-&gt;win, c-&gt;r[RFloat].width, c-&gt;r[RFloat].height);
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+			XResizeWindow(dpy, c-&gt;win, c-&gt;w, c-&gt;h);
+</a> 			XGrabServer(dpy);
+ 			break;
+ 		case ButtonRelease:
+<a href="#h3-3" id="h3-3" class="h">@@ -75,8 +74,8 @@ mmove(Client *c)
+</a> 	unsigned int dui;
+ 	Window dummy;
+ 
+<a href="#h3-3-3" id="h3-3-3" class="d">-	old_cx = c-&gt;r[RFloat].x;
+</a><a href="#h3-3-4" id="h3-3-4" class="d">-	old_cy = c-&gt;r[RFloat].y;
+</a><a href="#h3-3-5" id="h3-3-5" class="i">+	old_cx = c-&gt;x;
+</a><a href="#h3-3-6" id="h3-3-6" class="i">+	old_cy = c-&gt;y;
+</a> 	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+ 				None, cursor[CurMove], CurrentTime) != GrabSuccess)
+ 		return;
+<a href="#h3-4" id="h3-4" class="h">@@ -88,10 +87,9 @@ mmove(Client *c)
+</a> 		default: break;
+ 		case MotionNotify:
+ 			XUngrabServer(dpy);
+<a href="#h3-4-3" id="h3-4-3" class="d">-			c-&gt;r[RFloat].x = old_cx + (ev.xmotion.x - x1);
+</a><a href="#h3-4-4" id="h3-4-4" class="d">-			c-&gt;r[RFloat].y = old_cy + (ev.xmotion.y - y1);
+</a><a href="#h3-4-5" id="h3-4-5" class="d">-			XMoveResizeWindow(dpy, c-&gt;win, c-&gt;r[RFloat].x, c-&gt;r[RFloat].y,
+</a><a href="#h3-4-6" id="h3-4-6" class="d">-					c-&gt;r[RFloat].width, c-&gt;r[RFloat].height);
+</a><a href="#h3-4-7" id="h3-4-7" class="i">+			c-&gt;x = old_cx + (ev.xmotion.x - x1);
+</a><a href="#h3-4-8" id="h3-4-8" class="i">+			c-&gt;y = old_cy + (ev.xmotion.y - y1);
+</a><a href="#h3-4-9" id="h3-4-9" class="i">+			XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+</a> 			XGrabServer(dpy);
+ 			break;
+ 		case ButtonRelease:
+<b>diff --git a/<a id="h4" href="../file/wm.h.html">wm.h</a> b/<a href="../file/wm.h.html">wm.h</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -21,19 +21,15 @@ enum { NetSupported, NetWMName, NetLast };
+</a> /* cursor */
+ enum { CurNormal, CurResize, CurMove, CurInput, CurLast };
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-/* rects */
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-enum { RFloat, RGrid, RLast };
+</a><a href="#h4-0-5" id="h4-0-5" class="d">-
+</a> struct Client {
+<a href="#h4-0-7" id="h4-0-7" class="d">-	char name[256];
+</a><a href="#h4-0-8" id="h4-0-8" class="d">-	char tag[256];
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+	char name[256], tag[256];
+</a> 	int proto;
+<a href="#h4-0-11" id="h4-0-11" class="d">-	Bool fixedsize;
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+	int x, y, w, h;
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	long flags; 
+</a> 	Window win;
+ 	Window trans;
+ 	Window title;
+<a href="#h4-0-18" id="h4-0-18" class="d">-	XSizeHints size;
+</a><a href="#h4-0-19" id="h4-0-19" class="d">-	XRectangle r[RLast];
+</a> 	Client *next;
+ 	Client *snext;
+ };
+<a href="#h4-1" id="h4-1" class="h">@@ -75,6 +71,7 @@ extern void focus(Client *c);
+</a> extern void update_name(Client *c);
+ extern void draw_client(Client *c);
+ extern void resize(Client *c);
+<a href="#h4-1-3" id="h4-1-3" class="i">+extern void update_size(Client *c);
+</a> 
+ /* event.c */
+ extern unsigned int discard_events(long even_mask);
+</pre>
+</div>
+</body>
+</html>

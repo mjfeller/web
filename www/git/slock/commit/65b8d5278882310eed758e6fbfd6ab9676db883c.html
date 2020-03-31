@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Revert &quot;No need for usage()&quot; - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/65b8d5278882310eed758e6fbfd6ab9676db883c.html">65b8d5278882310eed758e6fbfd6ab9676db883c</a>
+<b>parent</b> <a href="../commit/ec46680fe10ffc69007b0a8b29d9e69c72704053.html">ec46680fe10ffc69007b0a8b29d9e69c72704053</a>
+<b>Author:</b> Markus Teich &lt;<a href="mailto:markus.teich@stusta.mhn.de">markus.teich@stusta.mhn.de</a>&gt;
+<b>Date:</b>   Mon, 15 Feb 2016 14:15:45 +0100
+
+Revert &quot;No need for usage()&quot;
+
+This reverts most of commit a6dc051e3744ce5b14c54d2d246d3e8258207e76 and fixes
+some related stuff:
+
+- keep spelling fixes from original commit
+- make -h and -v also work when followed by more arguments
+- any unknown flag prints usage
+- fix output of -v to display &quot;slock: version 1.3&quot; instead of &quot;slock: slock-1.3&quot;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.1</a></td><td> | </td><td class="num">16</td><td><span class="i">+++++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">slock.c</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 28 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.1.html">slock.1</a> b/<a href="../file/slock.1.html">slock.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,17 +3,27 @@
+</a> slock \- simple X screen locker
+ .SH SYNOPSIS
+ .B slock
+<a href="#h0-0-3" id="h0-0-3" class="d">-.RB [
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-.IR cmd
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-]
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+.RB [ \-v
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+|
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+.IR cmd ]
+</a> .SH DESCRIPTION
+ .B slock
+ is an X screen locker. If provided,
+ .IR cmd
+ is executed after the screen has been locked.
+<a href="#h0-0-14" id="h0-0-14" class="i">+.SH OPTIONS
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+.TP
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+.B \-v
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+prints version information to stdout, then exits.
+</a> .SH EXAMPLES
+ $ slock /usr/sbin/s2ram
+ .SH CUSTOMIZATION
+ .B slock
+ can be customized by creating a custom config.h and (re)compiling the source
+ code. This keeps it fast, secure and simple.
+<a href="#h0-0-24" id="h0-0-24" class="i">+.SH AUTHORS
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+See the LICENSE file for the authors.
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+.SH LICENSE
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+See the LICENSE file for the terms of redistribution.
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+.SH BUGS
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+Please report them.
+</a><b>diff --git a/<a id="h1" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -273,15 +273,28 @@ lockscreen(Display *dpy, int screen)
+</a> 	return NULL;
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-int
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-main(int argc, char **argv)
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+static void
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+usage(void)
+</a> {
+<a href="#h1-0-8" id="h1-0-8" class="i">+	fprintf(stderr, &quot;usage: slock [-v|POST_LOCK_CMD]\n&quot;);
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	exit(1);
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+}
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+int
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+main(int argc, char **argv) {
+</a> #ifndef HAVE_BSD_AUTH
+ 	const char *pws;
+ #endif
+ 	Display *dpy;
+ 	int screen;
+ 
+<a href="#h1-0-20" id="h1-0-20" class="i">+	if ((argc &gt;= 2) &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+		die(&quot;version %s, © 2006-2016 slock engineers\n&quot;, VERSION);
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+	/* treat first argument starting with a &#39;-&#39; as option */
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+	if ((argc &gt;= 2) &amp;&amp; argv[1][0] == &#39;-&#39;)
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+		usage();
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+
+</a> #ifdef __linux__
+ 	dontkillme();
+ #endif
+</pre>
+</div>
+</body>
+</html>

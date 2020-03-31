@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cleanup &amp; bugfix in xdraws(). - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b61925b5d6fd8af0ad0ccc922db60dff1746cfe2.html">b61925b5d6fd8af0ad0ccc922db60dff1746cfe2</a>
+<b>parent</b> <a href="../commit/81a048d6cfda84a06353911130fee029df077c8d.html">81a048d6cfda84a06353911130fee029df077c8d</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 20 Nov 2010 22:24:04 +0100
+
+cleanup &amp; bugfix in xdraws().
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">251</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 125 insertions(+), 126 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -131,20 +131,17 @@ typedef struct {
+</a> 	char s[ESC_BUF_SIZ];
+ } Key;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-typedef struct {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	XFontSet fs;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	short lbearing;
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	short rbearing;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	int ascent;
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	int descent;
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-} FontInfo;
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-
+</a> /* Drawing Context */
+ typedef struct {
+ 	unsigned long col[256];
+<a href="#h0-0-14" id="h0-0-14" class="d">-	FontInfo font;
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-	FontInfo bfont;
+</a> 	GC gc;
+<a href="#h0-0-17" id="h0-0-17" class="i">+	struct {
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		int ascent;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+		int descent;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		short lbearing;
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+		short rbearing;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		XFontSet set;
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	} font, bfont;
+</a> } DC;
+ 
+ /* TODO: use better name for vars... */
+<a href="#h0-1" id="h0-1" class="h">@@ -222,10 +219,10 @@ static inline int selected(int, int);
+</a> static void selcopy(void);
+ static void selpaste(void);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-static int stou(char *, long *);
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-static int utos(long *, char *);
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-static int slen(char *);
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-static int canstou(char *, int);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+static int utf8decode(char *, long *);
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+static int utf8encode(long *, char *);
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+static int utf8size(char *);
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+static int isfullutf8(char *, int);
+</a> 
+ static void (*handler[LASTEvent])(XEvent *) = {
+ 	[KeyPress] = kpress,
+<a href="#h0-2" id="h0-2" class="h">@@ -254,8 +251,8 @@ static char *opt_cmd   = NULL;
+</a> static char *opt_title = NULL;
+ static char *opt_class = NULL;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-/* UTF-8 decode */
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-static int stou(char *s, long *u) {
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+int
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+utf8decode(char *s, long *u) {
+</a> 	unsigned char c;
+ 	int i, n, rtn;
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -264,28 +261,28 @@ static int stou(char *s, long *u) {
+</a> 	if(~c&amp;B7) { /* 0xxxxxxx */
+ 		*u = c;
+ 		return rtn;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	} else if ((c&amp;(B7|B6|B5)) == (B7|B6)) { /* 110xxxxx */
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	} else if((c&amp;(B7|B6|B5)) == (B7|B6)) { /* 110xxxxx */
+</a> 		*u = c&amp;(B4|B3|B2|B1|B0);
+ 		n = 1;
+<a href="#h0-3-7" id="h0-3-7" class="d">-	} else if ((c&amp;(B7|B6|B5|B4)) == (B7|B6|B5)) { /* 1110xxxx */
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	} else if((c&amp;(B7|B6|B5|B4)) == (B7|B6|B5)) { /* 1110xxxx */
+</a> 		*u = c&amp;(B3|B2|B1|B0);
+ 		n = 2;
+<a href="#h0-3-11" id="h0-3-11" class="d">-	} else if ((c&amp;(B7|B6|B5|B4|B3)) == (B7|B6|B5|B4)) { /* 11110xxx */
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+	} else if((c&amp;(B7|B6|B5|B4|B3)) == (B7|B6|B5|B4)) { /* 11110xxx */
+</a> 		*u = c&amp;(B2|B1|B0);
+ 		n = 3;
+ 	} else
+ 		goto invalid;
+<a href="#h0-3-17" id="h0-3-17" class="d">-	for (i=n,++s; i&gt;0; --i,++rtn,++s) {
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+	for(i=n,++s; i&gt;0; --i,++rtn,++s) {
+</a> 		c = *s;
+<a href="#h0-3-20" id="h0-3-20" class="d">-		if ((c&amp;(B7|B6)) != B7) /* 10xxxxxx */
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+		if((c&amp;(B7|B6)) != B7) /* 10xxxxxx */
+</a> 			goto invalid;
+ 		*u &lt;&lt;= 6;
+ 		*u |= c&amp;(B5|B4|B3|B2|B1|B0);
+ 	}
+<a href="#h0-3-26" id="h0-3-26" class="d">-	if ((n == 1 &amp;&amp; *u &lt; 0x80) ||
+</a><a href="#h0-3-27" id="h0-3-27" class="d">-	    (n == 2 &amp;&amp; *u &lt; 0x800) ||
+</a><a href="#h0-3-28" id="h0-3-28" class="d">-	    (n == 3 &amp;&amp; *u &lt; 0x10000) ||
+</a><a href="#h0-3-29" id="h0-3-29" class="d">-	    (*u &gt;= 0xD800 &amp;&amp; *u &lt;= 0xDFFF))
+</a><a href="#h0-3-30" id="h0-3-30" class="i">+	if((n == 1 &amp;&amp; *u &lt; 0x80) ||
+</a><a href="#h0-3-31" id="h0-3-31" class="i">+	   (n == 2 &amp;&amp; *u &lt; 0x800) ||
+</a><a href="#h0-3-32" id="h0-3-32" class="i">+	   (n == 3 &amp;&amp; *u &lt; 0x10000) ||
+</a><a href="#h0-3-33" id="h0-3-33" class="i">+	   (*u &gt;= 0xD800 &amp;&amp; *u &lt;= 0xDFFF))
+</a> 		goto invalid;
+ 	return rtn;
+ invalid:
+<a href="#h0-4" id="h0-4" class="h">@@ -293,30 +290,30 @@ invalid:
+</a> 	return rtn;
+ }
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-/* UTF-8 encode */
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-static int utos(long *u, char *s) {
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+int
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+utf8encode(long *u, char *s) {
+</a> 	unsigned char *sp;
+ 	unsigned long uc;
+ 	int i, n;
+ 
+ 	sp = (unsigned char*) s;
+ 	uc = *u;
+<a href="#h0-4-13" id="h0-4-13" class="d">-	if (uc &lt; 0x80) {
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+	if(uc &lt; 0x80) {
+</a> 		*sp = uc; /* 0xxxxxxx */
+ 		return 1;
+<a href="#h0-4-17" id="h0-4-17" class="d">-	} else if (*u &lt; 0x800) {
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+	} else if(*u &lt; 0x800) {
+</a> 		*sp = (uc &gt;&gt; 6) | (B7|B6); /* 110xxxxx */
+ 		n = 1;
+<a href="#h0-4-21" id="h0-4-21" class="d">-	} else if (uc &lt; 0x10000) {
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+	} else if(uc &lt; 0x10000) {
+</a> 		*sp = (uc &gt;&gt; 12) | (B7|B6|B5); /* 1110xxxx */
+ 		n = 2;
+<a href="#h0-4-25" id="h0-4-25" class="d">-	} else if (uc &lt;= 0x10FFFF) {
+</a><a href="#h0-4-26" id="h0-4-26" class="i">+	} else if(uc &lt;= 0x10FFFF) {
+</a> 		*sp = (uc &gt;&gt; 18) | (B7|B6|B5|B4); /* 11110xxx */
+ 		n = 3;
+ 	} else {
+ 		goto invalid;
+ 	}
+<a href="#h0-4-32" id="h0-4-32" class="d">-	for (i=n,++sp; i&gt;0; --i,++sp)
+</a><a href="#h0-4-33" id="h0-4-33" class="i">+	for(i=n,++sp; i&gt;0; --i,++sp)
+</a> 		*sp = ((uc &gt;&gt; 6*(i-1)) &amp; (B5|B4|B3|B2|B1|B0)) | B7; /* 10xxxxxx */
+ 	return n+1;
+ invalid:
+<a href="#h0-5" id="h0-5" class="h">@@ -329,34 +326,32 @@ invalid:
+</a> 
+ /* use this if your buffer is less than UTF_SIZ, it returns 1 if you can decode
+    UTF-8 otherwise return 0 */
+<a href="#h0-5-3" id="h0-5-3" class="d">-static int canstou(char *s, int b) {
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	unsigned char c = *s;
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-	int n;
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+int
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+isfullutf8(char *s, int b) {
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+	unsigned char *c1, *c2, *c3;
+</a> 
+<a href="#h0-5-10" id="h0-5-10" class="d">-	if (b &lt; 1)
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+	c1 = (unsigned char *) s;
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+	c2 = (unsigned char *) ++s;
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+	c3 = (unsigned char *) ++s;
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+	if(b &lt; 1)
+</a> 		return 0;
+<a href="#h0-5-16" id="h0-5-16" class="d">-	else if (~c&amp;B7)
+</a><a href="#h0-5-17" id="h0-5-17" class="d">-		return 1;
+</a><a href="#h0-5-18" id="h0-5-18" class="d">-	else if ((c&amp;(B7|B6|B5)) == (B7|B6))
+</a><a href="#h0-5-19" id="h0-5-19" class="d">-		n = 1;
+</a><a href="#h0-5-20" id="h0-5-20" class="d">-	else if ((c&amp;(B7|B6|B5|B4)) == (B7|B6|B5))
+</a><a href="#h0-5-21" id="h0-5-21" class="d">-		n = 2;
+</a><a href="#h0-5-22" id="h0-5-22" class="d">-	else if ((c&amp;(B7|B6|B5|B4|B3)) == (B7|B6|B5|B4))
+</a><a href="#h0-5-23" id="h0-5-23" class="d">-		n = 3;
+</a><a href="#h0-5-24" id="h0-5-24" class="d">-	else
+</a><a href="#h0-5-25" id="h0-5-25" class="d">-		return 1;
+</a><a href="#h0-5-26" id="h0-5-26" class="d">-	for (--b,++s; n&gt;0&amp;&amp;b&gt;0; --n,--b,++s) {
+</a><a href="#h0-5-27" id="h0-5-27" class="d">-		c = *s;
+</a><a href="#h0-5-28" id="h0-5-28" class="d">-		if ((c&amp;(B7|B6)) != B7)
+</a><a href="#h0-5-29" id="h0-5-29" class="d">-			break; 
+</a><a href="#h0-5-30" id="h0-5-30" class="d">-	}
+</a><a href="#h0-5-31" id="h0-5-31" class="d">-	if (n &gt; 0 &amp;&amp; b == 0)
+</a><a href="#h0-5-32" id="h0-5-32" class="i">+	else if((*c1&amp;(B7|B6|B5)) == (B7|B6) &amp;&amp; b == 1)
+</a><a href="#h0-5-33" id="h0-5-33" class="i">+		return 0;
+</a><a href="#h0-5-34" id="h0-5-34" class="i">+	else if((*c1&amp;(B7|B6|B5|B4)) == (B7|B6|B5) &amp;&amp;
+</a><a href="#h0-5-35" id="h0-5-35" class="i">+	    ((b == 1) || 
+</a><a href="#h0-5-36" id="h0-5-36" class="i">+	    ((b == 2) &amp;&amp; (*c2&amp;(B7|B6)) == B7)))
+</a><a href="#h0-5-37" id="h0-5-37" class="i">+		return 0;
+</a><a href="#h0-5-38" id="h0-5-38" class="i">+	else if((*c1&amp;(B7|B6|B5|B4|B3)) == (B7|B6|B5|B4) &amp;&amp;
+</a><a href="#h0-5-39" id="h0-5-39" class="i">+	    ((b == 1) ||
+</a><a href="#h0-5-40" id="h0-5-40" class="i">+	    ((b == 2) &amp;&amp; (*c2&amp;(B7|B6)) == B7) ||
+</a><a href="#h0-5-41" id="h0-5-41" class="i">+	    ((b == 3) &amp;&amp; (*c2&amp;(B7|B6)) == B7 &amp;&amp; (*c3&amp;(B7|B6)) == B7)))
+</a> 		return 0;
+ 	else
+ 		return 1;
+ }
+ 
+<a href="#h0-5-47" id="h0-5-47" class="d">-static int slen(char *s) {
+</a><a href="#h0-5-48" id="h0-5-48" class="i">+int
+</a><a href="#h0-5-49" id="h0-5-49" class="i">+utf8size(char *s) {
+</a> 	unsigned char c = *s;
+ 
+ 	if (~c&amp;B7)
+<a href="#h0-6" id="h0-6" class="h">@@ -369,13 +364,15 @@ static int slen(char *s) {
+</a> 		return 4;
+ }
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-static void selinit(void) {
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+void
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+selinit(void) {
+</a> 	sel.mode = 0;
+ 	sel.bx = -1;
+ 	sel.clip = NULL;
+ }
+ 
+<a href="#h0-6-11" id="h0-6-11" class="d">-static inline int selected(int x, int y) {
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+static inline int 
+</a><a href="#h0-6-13" id="h0-6-13" class="i">+selected(int x, int y) {
+</a> 	if(sel.ey == y &amp;&amp; sel.by == y) {
+ 		int bx = MIN(sel.bx, sel.ex);
+ 		int ex = MAX(sel.bx, sel.ex);
+<a href="#h0-7" id="h0-7" class="h">@@ -385,7 +382,8 @@ static inline int selected(int x, int y) {
+</a> 		|| (y==sel.b.y &amp;&amp; x&gt;=sel.b.x &amp;&amp; (x&lt;=sel.e.x || sel.b.y!=sel.e.y));
+ }
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-static void getbuttoninfo(XEvent *e, int *b, int *x, int *y) {
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+void
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+getbuttoninfo(XEvent *e, int *b, int *x, int *y) {
+</a> 	if(b) 
+ 		*b = e-&gt;xbutton.button;
+ 
+<a href="#h0-8" id="h0-8" class="h">@@ -397,13 +395,15 @@ static void getbuttoninfo(XEvent *e, int *b, int *x, int *y) {
+</a> 	sel.e.y = MAX(sel.by, sel.ey);
+ }
+ 
+<a href="#h0-8-3" id="h0-8-3" class="d">-static void bpress(XEvent *e) {
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+void
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+bpress(XEvent *e) {
+</a> 	sel.mode = 1;
+ 	sel.ex = sel.bx = e-&gt;xbutton.x/xw.cw;
+ 	sel.ey = sel.by = e-&gt;xbutton.y/xw.ch;
+ }
+ 
+<a href="#h0-8-11" id="h0-8-11" class="d">-static void selcopy() {
+</a><a href="#h0-8-12" id="h0-8-12" class="i">+void
+</a><a href="#h0-8-13" id="h0-8-13" class="i">+selcopy(void) {
+</a> 	char *str, *ptr;
+ 	int ls, x, y, sz, sl;
+ 
+<a href="#h0-9" id="h0-9" class="h">@@ -415,7 +415,7 @@ static void selcopy() {
+</a> 		for(y = 0; y &lt; term.row; y++) {
+ 			for(x = 0; x &lt; term.col; x++)
+ 				if(term.line[y][x].state &amp; GLYPH_SET &amp;&amp; (ls = selected(x, y))) {
+<a href="#h0-9-3" id="h0-9-3" class="d">-					sl = slen(term.line[y][x].c);
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+					sl = utf8size(term.line[y][x].c);
+</a> 					memcpy(ptr, term.line[y][x].c, sl);
+ 					ptr += sl;
+ 				}
+<a href="#h0-10" id="h0-10" class="h">@@ -427,7 +427,8 @@ static void selcopy() {
+</a> 	xsetsel(str);
+ }
+ 
+<a href="#h0-10-3" id="h0-10-3" class="d">-static void selnotify(XEvent *e) {
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+void
+</a><a href="#h0-10-5" id="h0-10-5" class="i">+selnotify(XEvent *e) {
+</a> 	unsigned long nitems;
+ 	unsigned long ofs, rem;
+ 	int format;
+<a href="#h0-11" id="h0-11" class="h">@@ -449,12 +450,13 @@ static void selnotify(XEvent *e) {
+</a> 	} while(rem &gt; 0);
+ }
+ 
+<a href="#h0-11-3" id="h0-11-3" class="d">-static void selpaste() {
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+void
+</a><a href="#h0-11-5" id="h0-11-5" class="i">+selpaste() {
+</a> 	XConvertSelection(xw.dis, XA_PRIMARY, XA_STRING, XA_PRIMARY, xw.win, CurrentTime);
+ }
+ 
+<a href="#h0-11-9" id="h0-11-9" class="d">-static void selrequest(XEvent *e)
+</a><a href="#h0-11-10" id="h0-11-10" class="d">-{
+</a><a href="#h0-11-11" id="h0-11-11" class="i">+void
+</a><a href="#h0-11-12" id="h0-11-12" class="i">+selrequest(XEvent *e) {
+</a> 	XSelectionRequestEvent *xsre;
+ 	XSelectionEvent xev;
+ 	Atom xa_targets;
+<a href="#h0-12" id="h0-12" class="h">@@ -488,7 +490,8 @@ static void selrequest(XEvent *e)
+</a> 		fprintf(stderr, &quot;Error sending SelectionNotify event\n&quot;);
+ }
+ 
+<a href="#h0-12-3" id="h0-12-3" class="d">-static void xsetsel(char *str) {
+</a><a href="#h0-12-4" id="h0-12-4" class="i">+void
+</a><a href="#h0-12-5" id="h0-12-5" class="i">+xsetsel(char *str) {
+</a> 	/* register the selection for both the clipboard and the primary */
+ 	Atom clipboard;
+ 
+<a href="#h0-13" id="h0-13" class="h">@@ -504,7 +507,8 @@ static void xsetsel(char *str) {
+</a> }
+ 
+ /* TODO: doubleclick to select word */
+<a href="#h0-13-3" id="h0-13-3" class="d">-static void brelease(XEvent *e) {
+</a><a href="#h0-13-4" id="h0-13-4" class="i">+void
+</a><a href="#h0-13-5" id="h0-13-5" class="i">+brelease(XEvent *e) {
+</a> 	int b;
+ 	sel.mode = 0;
+ 	getbuttoninfo(e, &amp;b, &amp;sel.ex, &amp;sel.ey);
+<a href="#h0-14" id="h0-14" class="h">@@ -519,7 +523,8 @@ static void brelease(XEvent *e) {
+</a> 	draw(1);
+ }
+ 
+<a href="#h0-14-3" id="h0-14-3" class="d">-static void bmotion(XEvent *e) {
+</a><a href="#h0-14-4" id="h0-14-4" class="i">+void
+</a><a href="#h0-14-5" id="h0-14-5" class="i">+bmotion(XEvent *e) {
+</a> 	if (sel.mode) {
+ 		getbuttoninfo(e, NULL, &amp;sel.ex, &amp;sel.ey);
+ 		/* XXX: draw() can&#39;t keep up, disabled for now.
+<a href="#h0-15" id="h0-15" class="h">@@ -528,26 +533,6 @@ static void bmotion(XEvent *e) {
+</a> 	}
+ }
+ 
+<a href="#h0-15-3" id="h0-15-3" class="d">-#ifdef DEBUG
+</a><a href="#h0-15-4" id="h0-15-4" class="d">-void
+</a><a href="#h0-15-5" id="h0-15-5" class="d">-tdump(void) {
+</a><a href="#h0-15-6" id="h0-15-6" class="d">-	int row, col;
+</a><a href="#h0-15-7" id="h0-15-7" class="d">-	Glyph c;
+</a><a href="#h0-15-8" id="h0-15-8" class="d">-
+</a><a href="#h0-15-9" id="h0-15-9" class="d">-	for(row = 0; row &lt; term.row; row++) {
+</a><a href="#h0-15-10" id="h0-15-10" class="d">-		for(col = 0; col &lt; term.col; col++) {
+</a><a href="#h0-15-11" id="h0-15-11" class="d">-			if(col == term.c.x &amp;&amp; row == term.c.y)
+</a><a href="#h0-15-12" id="h0-15-12" class="d">-				putchar(&#39;#&#39;);
+</a><a href="#h0-15-13" id="h0-15-13" class="d">-			else {
+</a><a href="#h0-15-14" id="h0-15-14" class="d">-				c = term.line[row][col];
+</a><a href="#h0-15-15" id="h0-15-15" class="d">-				putchar(c.state &amp; GLYPH_SET ? c.c : &#39;.&#39;);
+</a><a href="#h0-15-16" id="h0-15-16" class="d">-			}
+</a><a href="#h0-15-17" id="h0-15-17" class="d">-		}
+</a><a href="#h0-15-18" id="h0-15-18" class="d">-		putchar(&#39;\n&#39;);
+</a><a href="#h0-15-19" id="h0-15-19" class="d">-	}
+</a><a href="#h0-15-20" id="h0-15-20" class="d">-}
+</a><a href="#h0-15-21" id="h0-15-21" class="d">-#endif
+</a><a href="#h0-15-22" id="h0-15-22" class="d">-
+</a> void
+ die(const char *errstr, ...) {
+ 	va_list ap;
+<a href="#h0-16" id="h0-16" class="h">@@ -631,9 +616,9 @@ ttyread(void) {
+</a> 		die(&quot;Couldn&#39;t read from shell: %s\n&quot;, SERRNO);
+ 	else {
+ 		buflen += ret;
+<a href="#h0-16-3" id="h0-16-3" class="d">-		for(ptr=buf; buflen&gt;=UTF_SIZ||canstou(ptr,buflen); buflen-=br) {
+</a><a href="#h0-16-4" id="h0-16-4" class="d">-			br = stou(ptr, &amp;u);
+</a><a href="#h0-16-5" id="h0-16-5" class="d">-			utos(&amp;u, s);
+</a><a href="#h0-16-6" id="h0-16-6" class="i">+		for(ptr=buf; buflen&gt;=UTF_SIZ||isfullutf8(ptr,buflen); buflen-=br) {
+</a><a href="#h0-16-7" id="h0-16-7" class="i">+			br = utf8decode(ptr, &amp;u);
+</a><a href="#h0-16-8" id="h0-16-8" class="i">+			utf8encode(&amp;u, s);
+</a> 			tputc(s);
+ 			ptr += br;
+ 		}
+<a href="#h0-17" id="h0-17" class="h">@@ -1460,49 +1445,63 @@ xhints(void)
+</a> 	XSetWMProperties(xw.dis, xw.win, NULL, NULL, NULL, 0, &amp;size, &amp;wm, &amp;class);
+ }
+ 
+<a href="#h0-17-3" id="h0-17-3" class="i">+XFontSet
+</a><a href="#h0-17-4" id="h0-17-4" class="i">+xinitfont(char *fontstr)
+</a><a href="#h0-17-5" id="h0-17-5" class="i">+{
+</a><a href="#h0-17-6" id="h0-17-6" class="i">+	XFontSet set;
+</a><a href="#h0-17-7" id="h0-17-7" class="i">+	char *def, **missing;
+</a><a href="#h0-17-8" id="h0-17-8" class="i">+	int n;
+</a><a href="#h0-17-9" id="h0-17-9" class="i">+
+</a><a href="#h0-17-10" id="h0-17-10" class="i">+	missing = NULL;
+</a><a href="#h0-17-11" id="h0-17-11" class="i">+	set = XCreateFontSet(xw.dis, fontstr, &amp;missing, &amp;n, &amp;def);
+</a><a href="#h0-17-12" id="h0-17-12" class="i">+	if(missing) {
+</a><a href="#h0-17-13" id="h0-17-13" class="i">+		while(n--)
+</a><a href="#h0-17-14" id="h0-17-14" class="i">+			fprintf(stderr, &quot;st: missing fontset: %s\n&quot;, missing[n]);
+</a><a href="#h0-17-15" id="h0-17-15" class="i">+		XFreeStringList(missing);
+</a><a href="#h0-17-16" id="h0-17-16" class="i">+	}
+</a><a href="#h0-17-17" id="h0-17-17" class="i">+	return set;
+</a><a href="#h0-17-18" id="h0-17-18" class="i">+}
+</a><a href="#h0-17-19" id="h0-17-19" class="i">+
+</a> void
+<a href="#h0-17-21" id="h0-17-21" class="d">-xsetfontinfo(FontInfo *fi)
+</a><a href="#h0-17-22" id="h0-17-22" class="i">+xgetfontinfo(XFontSet set, int *ascent, int *descent, short *lbearing, short *rbearing)
+</a> {
+ 	XFontStruct **xfonts;
+<a href="#h0-17-25" id="h0-17-25" class="d">-	int fnum;
+</a><a href="#h0-17-26" id="h0-17-26" class="d">-	int i;
+</a><a href="#h0-17-27" id="h0-17-27" class="d">-	char **fontnames;
+</a><a href="#h0-17-28" id="h0-17-28" class="d">-
+</a><a href="#h0-17-29" id="h0-17-29" class="d">-	fi-&gt;lbearing = 0;
+</a><a href="#h0-17-30" id="h0-17-30" class="d">-	fi-&gt;rbearing = 0;
+</a><a href="#h0-17-31" id="h0-17-31" class="d">-	fi-&gt;ascent = 0;
+</a><a href="#h0-17-32" id="h0-17-32" class="d">-	fi-&gt;descent = 0;
+</a><a href="#h0-17-33" id="h0-17-33" class="d">-	fnum = XFontsOfFontSet(fi-&gt;fs, &amp;xfonts, &amp;fontnames);
+</a><a href="#h0-17-34" id="h0-17-34" class="d">-	for(i=0; i&lt;fnum; i++,xfonts++,fontnames++) {
+</a><a href="#h0-17-35" id="h0-17-35" class="d">-		puts(*fontnames);
+</a><a href="#h0-17-36" id="h0-17-36" class="d">-		if(fi-&gt;ascent &lt; (*xfonts)-&gt;ascent)
+</a><a href="#h0-17-37" id="h0-17-37" class="d">-			fi-&gt;ascent = (*xfonts)-&gt;ascent;
+</a><a href="#h0-17-38" id="h0-17-38" class="d">-		if(fi-&gt;descent &lt; (*xfonts)-&gt;descent)
+</a><a href="#h0-17-39" id="h0-17-39" class="d">-			fi-&gt;descent = (*xfonts)-&gt;descent;
+</a><a href="#h0-17-40" id="h0-17-40" class="d">-		if(fi-&gt;rbearing &lt; (*xfonts)-&gt;max_bounds.rbearing)
+</a><a href="#h0-17-41" id="h0-17-41" class="d">-			fi-&gt;rbearing = (*xfonts)-&gt;max_bounds.rbearing;
+</a><a href="#h0-17-42" id="h0-17-42" class="d">-		if(fi-&gt;lbearing &lt; (*xfonts)-&gt;min_bounds.lbearing)
+</a><a href="#h0-17-43" id="h0-17-43" class="d">-			fi-&gt;lbearing = (*xfonts)-&gt;min_bounds.lbearing;
+</a><a href="#h0-17-44" id="h0-17-44" class="i">+	char **font_names;
+</a><a href="#h0-17-45" id="h0-17-45" class="i">+	int i, n;
+</a><a href="#h0-17-46" id="h0-17-46" class="i">+
+</a><a href="#h0-17-47" id="h0-17-47" class="i">+	*ascent = *descent = *lbearing = *rbearing = 0;
+</a><a href="#h0-17-48" id="h0-17-48" class="i">+	n = XFontsOfFontSet(set, &amp;xfonts, &amp;font_names);
+</a><a href="#h0-17-49" id="h0-17-49" class="i">+	for(i = 0; i &lt; n; i++) {
+</a><a href="#h0-17-50" id="h0-17-50" class="i">+		*ascent = MAX(*ascent, (*xfonts)-&gt;ascent);
+</a><a href="#h0-17-51" id="h0-17-51" class="i">+		*descent = MAX(*descent, (*xfonts)-&gt;descent);
+</a><a href="#h0-17-52" id="h0-17-52" class="i">+		*lbearing = MAX(*lbearing, (*xfonts)-&gt;min_bounds.lbearing);
+</a><a href="#h0-17-53" id="h0-17-53" class="i">+		*rbearing = MAX(*rbearing, (*xfonts)-&gt;max_bounds.rbearing);
+</a><a href="#h0-17-54" id="h0-17-54" class="i">+		xfonts++;
+</a> 	}
+ }
+ 
+ void
+<a href="#h0-17-59" id="h0-17-59" class="i">+initfonts(char *fontstr, char *bfontstr)
+</a><a href="#h0-17-60" id="h0-17-60" class="i">+{
+</a><a href="#h0-17-61" id="h0-17-61" class="i">+	if((dc.font.set = xinitfont(fontstr)) == NULL ||
+</a><a href="#h0-17-62" id="h0-17-62" class="i">+	   (dc.bfont.set = xinitfont(bfontstr)) == NULL)
+</a><a href="#h0-17-63" id="h0-17-63" class="i">+		die(&quot;Can&#39;t load font %s\n&quot;, dc.font.set ? BOLDFONT : FONT);
+</a><a href="#h0-17-64" id="h0-17-64" class="i">+	xgetfontinfo(dc.font.set, &amp;dc.font.ascent, &amp;dc.font.descent,
+</a><a href="#h0-17-65" id="h0-17-65" class="i">+	    &amp;dc.font.lbearing, &amp;dc.font.rbearing);
+</a><a href="#h0-17-66" id="h0-17-66" class="i">+	xgetfontinfo(dc.bfont.set, &amp;dc.bfont.ascent, &amp;dc.bfont.descent,
+</a><a href="#h0-17-67" id="h0-17-67" class="i">+	    &amp;dc.bfont.lbearing, &amp;dc.bfont.rbearing);
+</a><a href="#h0-17-68" id="h0-17-68" class="i">+}
+</a><a href="#h0-17-69" id="h0-17-69" class="i">+
+</a><a href="#h0-17-70" id="h0-17-70" class="i">+void
+</a> xinit(void) {
+ 	XSetWindowAttributes attrs;
+<a href="#h0-17-73" id="h0-17-73" class="d">-	char **mc;
+</a><a href="#h0-17-74" id="h0-17-74" class="d">-	char *ds;
+</a><a href="#h0-17-75" id="h0-17-75" class="d">-	int nmc;
+</a> 
+ 	if(!(xw.dis = XOpenDisplay(NULL)))
+ 		die(&quot;Can&#39;t open display\n&quot;);
+ 	xw.scr = XDefaultScreen(xw.dis);
+ 	
+ 	/* font */
+<a href="#h0-17-82" id="h0-17-82" class="d">-	if ((dc.font.fs = XCreateFontSet(xw.dis, FONT, &amp;mc, &amp;nmc, &amp;ds)) == NULL ||
+</a><a href="#h0-17-83" id="h0-17-83" class="d">-	    (dc.bfont.fs = XCreateFontSet(xw.dis, BOLDFONT, &amp;mc, &amp;nmc, &amp;ds)) == NULL)
+</a><a href="#h0-17-84" id="h0-17-84" class="d">-		die(&quot;Can&#39;t load font %s\n&quot;, dc.font.fs ? BOLDFONT : FONT); 
+</a><a href="#h0-17-85" id="h0-17-85" class="d">-	xsetfontinfo(&amp;dc.font);
+</a><a href="#h0-17-86" id="h0-17-86" class="d">-	xsetfontinfo(&amp;dc.bfont);
+</a><a href="#h0-17-87" id="h0-17-87" class="i">+	initfonts(FONT, BOLDFONT);
+</a> 
+ 	/* XXX: Assuming same size for bold font */
+  	xw.cw = dc.font.rbearing - dc.font.lbearing;
+<a href="#h0-18" id="h0-18" class="h">@@ -1550,9 +1549,9 @@ xinit(void) {
+</a> }
+ 
+ void
+<a href="#h0-18-3" id="h0-18-3" class="d">-xdraws(char *s, Glyph base, int x, int y, int cl, int sl) {
+</a><a href="#h0-18-4" id="h0-18-4" class="i">+xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 	unsigned long xfg, xbg;
+<a href="#h0-18-6" id="h0-18-6" class="d">-	int winx = x*xw.cw, winy = y*xw.ch + dc.font.ascent, width = cl*xw.cw;
+</a><a href="#h0-18-7" id="h0-18-7" class="i">+	int winx = x*xw.cw, winy = y*xw.ch + dc.font.ascent, width = charlen*xw.cw;
+</a> 	int i;
+ 
+ 	if(base.mode &amp; ATTR_REVERSE)
+<a href="#h0-19" id="h0-19" class="h">@@ -1564,7 +1563,7 @@ xdraws(char *s, Glyph base, int x, int y, int cl, int sl) {
+</a> 	XSetForeground(xw.dis, dc.gc, xfg);
+ 
+ 	if(base.mode &amp; ATTR_GFX)
+<a href="#h0-19-3" id="h0-19-3" class="d">-		for(i = 0; i &lt; cl; i++) {
+</a><a href="#h0-19-4" id="h0-19-4" class="i">+		for(i = 0; i &lt; bytelen; i++) {
+</a> 			char c = gfx[(unsigned int)s[i] % 256];
+ 			if(c)
+ 				s[i] = c;
+<a href="#h0-20" id="h0-20" class="h">@@ -1572,8 +1571,8 @@ xdraws(char *s, Glyph base, int x, int y, int cl, int sl) {
+</a> 				s[i] -= 0x5f;
+ 		}
+ 
+<a href="#h0-20-3" id="h0-20-3" class="d">-	XmbDrawImageString(xw.dis, xw.buf, base.mode &amp; ATTR_BOLD ? dc.bfont.fs : dc.font.fs,
+</a><a href="#h0-20-4" id="h0-20-4" class="d">-	    dc.gc, winx, winy, s, sl);
+</a><a href="#h0-20-5" id="h0-20-5" class="i">+	XmbDrawImageString(xw.dis, xw.buf, base.mode &amp; ATTR_BOLD ? dc.bfont.set : dc.font.set,
+</a><a href="#h0-20-6" id="h0-20-6" class="i">+	    dc.gc, winx, winy, s, bytelen);
+</a> 	
+ 	if(base.mode &amp; ATTR_UNDERLINE)
+ 		XDrawLine(xw.dis, xw.buf, dc.gc, winx, winy+1, winx+width-1, winy+1);
+<a href="#h0-21" id="h0-21" class="h">@@ -1594,14 +1593,14 @@ xdrawcursor(void) {
+</a> 
+ 	/* remove the old cursor */
+ 	if(term.line[oldy][oldx].state &amp; GLYPH_SET) {
+<a href="#h0-21-3" id="h0-21-3" class="d">-		sl = slen(term.line[oldy][oldx].c);
+</a><a href="#h0-21-4" id="h0-21-4" class="i">+		sl = utf8size(term.line[oldy][oldx].c);
+</a> 		xdraws(term.line[oldy][oldx].c, term.line[oldy][oldx], oldx, oldy, 1, sl);
+ 	} else
+ 		xclear(oldx, oldy, oldx, oldy);
+ 	
+ 	/* draw the new one */
+ 	if(!(term.c.state &amp; CURSOR_HIDE) &amp;&amp; (xw.state &amp; WIN_FOCUSED)) {
+<a href="#h0-21-11" id="h0-21-11" class="d">-		sl = slen(g.c);
+</a><a href="#h0-21-12" id="h0-21-12" class="i">+		sl = utf8size(g.c);
+</a> 		xdraws(g.c, g, term.c.x, term.c.y, 1, sl);
+ 		oldx = term.c.x, oldy = term.c.y;
+ 	}
+<a href="#h0-22" id="h0-22" class="h">@@ -1611,7 +1610,7 @@ xdrawcursor(void) {
+</a> /* basic drawing routines */
+ void
+ xdrawc(int x, int y, Glyph g) {
+<a href="#h0-22-3" id="h0-22-3" class="d">-	int sl = slen(g.c);
+</a><a href="#h0-22-4" id="h0-22-4" class="i">+	int sl = utf8size(g.c);
+</a> 	XRectangle r = { x * xw.cw, y * xw.ch, xw.cw, xw.ch };
+ 	XSetBackground(xw.dis, dc.gc, dc.col[g.bg]);
+ 	XSetForeground(xw.dis, dc.gc, dc.col[g.fg]);
+<a href="#h0-23" id="h0-23" class="h">@@ -1663,7 +1662,7 @@ draw(int redraw_all) {
+</a> 					ox = x;
+ 					base = new;
+ 				}
+<a href="#h0-23-3" id="h0-23-3" class="d">-				sl = slen(new.c);
+</a><a href="#h0-23-4" id="h0-23-4" class="i">+				sl = utf8size(new.c);
+</a> 				memcpy(buf+ib, new.c, sl);
+ 				ib += sl;
+ 				++ic;
+</pre>
+</div>
+</body>
+</html>

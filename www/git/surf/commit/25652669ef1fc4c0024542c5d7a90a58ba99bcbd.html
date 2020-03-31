@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add config option for cross requests from file URLs - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/25652669ef1fc4c0024542c5d7a90a58ba99bcbd.html">25652669ef1fc4c0024542c5d7a90a58ba99bcbd</a>
+<b>parent</b> <a href="../commit/bcd05ae321de686840fd560931f2894f62ba8345.html">bcd05ae321de686840fd560931f2894f62ba8345</a>
+<b>Author:</b> Constantine Bytensky &lt;<a href="mailto:kostya3@gmail.com">kostya3@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 18 May 2017 14:46:49 +0300
+
+Add config option for cross requests from file URLs
+
+I use it to open local .xml files with .xsl style-sheets.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 8 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -18,6 +18,7 @@ static Parameter defconfig[ParameterLast] = {
+</a> 	SETV(DefaultCharset,     &quot;UTF-8&quot;),
+ 	SETB(DiskCache,          1),
+ 	SETB(DNSPrefetch,        0),
+<a href="#h0-0-3" id="h0-0-3" class="i">+	SETB(FileURLsCrossAccess,0),
+</a> 	SETI(FontSize,           12),
+ 	SETB(FrameFlattening,    0),
+ 	SETB(Geolocation,        0),
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -69,6 +69,7 @@ typedef enum {
+</a> 	DiskCache,
+ 	DefaultCharset,
+ 	DNSPrefetch,
+<a href="#h1-0-3" id="h1-0-3" class="i">+	FileURLsCrossAccess,
+</a> 	FontSize,
+ 	FrameFlattening,
+ 	Geolocation,
+<a href="#h1-1" id="h1-1" class="h">@@ -711,6 +712,10 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a> 	case DNSPrefetch:
+ 		webkit_settings_set_enable_dns_prefetching(s, a-&gt;b);
+ 		return; /* do not update */
+<a href="#h1-1-3" id="h1-1-3" class="i">+	case FileURLsCrossAccess:
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		webkit_settings_set_allow_file_access_from_file_urls(s, a-&gt;b);
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+		webkit_settings_set_allow_universal_access_from_file_urls(s, a-&gt;b);
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+		return; /* do not update */
+</a> 	case FontSize:
+ 		webkit_settings_set_default_font_size(s, a-&gt;i);
+ 		return; /* do not update */
+<a href="#h1-2" id="h1-2" class="h">@@ -1026,6 +1031,8 @@ newview(Client *c, WebKitWebView *rv)
+</a> 		    webkit_web_view_new_with_related_view(rv));
+ 	} else {
+ 		settings = webkit_settings_new_with_settings(
+<a href="#h1-2-3" id="h1-2-3" class="i">+		   &quot;allow-file-access-from-file-urls&quot;, curconfig[FileURLsCrossAccess].val.b,
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		   &quot;allow-universal-access-from-file-urls&quot;, curconfig[FileURLsCrossAccess].val.b,
+</a> 		   &quot;auto-load-images&quot;, curconfig[LoadImages].val.b,
+ 		   &quot;default-charset&quot;, curconfig[DefaultCharset].val.v,
+ 		   &quot;default-font-size&quot;, curconfig[FontSize].val.i,
+</pre>
+</div>
+</body>
+</html>

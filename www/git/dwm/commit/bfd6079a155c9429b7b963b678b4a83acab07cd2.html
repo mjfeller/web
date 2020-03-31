@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied yiyus tagset patch - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bfd6079a155c9429b7b963b678b4a83acab07cd2.html">bfd6079a155c9429b7b963b678b4a83acab07cd2</a>
+<b>parent</b> <a href="../commit/7f70d90219c4a33c79ff93b49fb24ee7a6f62b4d.html">7f70d90219c4a33c79ff93b49fb24ee7a6f62b4d</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 27 Apr 2008 18:33:31 +0100
+
+applied yiyus tagset patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">37</td><td><span class="i">++++++++++++++++</span><span class="d">---------------------</span></td></tr>
+</table></pre><pre>1 file changed, 16 insertions(+), 21 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -214,7 +214,7 @@ char stext[256];
+</a> int screen, sx, sy, sw, sh;
+ int (*xerrorxlib)(Display *, XErrorEvent *);
+ int bx, by, bw, bh, blw, bgw, mx, my, mw, mh, mox, moy, mow, moh, tx, ty, tw, th, wx, wy, ww, wh;
+<a href="#h0-0-3" id="h0-0-3" class="d">-int viewtags_set = 0;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+int seltags = 0;
+</a> double mfact;
+ unsigned int numlockmask = 0;
+ void (*handler[LASTEvent]) (XEvent *) = {
+<a href="#h0-1" id="h0-1" class="h">@@ -234,8 +234,7 @@ void (*handler[LASTEvent]) (XEvent *) = {
+</a> Atom wmatom[WMLast], netatom[NetLast];
+ Bool otherwm, readin;
+ Bool running = True;
+<a href="#h0-1-3" id="h0-1-3" class="d">-Bool *seltags;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-Bool *viewtags[2];
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+Bool *tagset[2];
+</a> Client *clients = NULL;
+ Client *sel = NULL;
+ Client *stack = NULL;
+<a href="#h0-2" id="h0-2" class="h">@@ -278,7 +277,7 @@ applyrules(Client *c) {
+</a> 	if(ch.res_name)
+ 		XFree(ch.res_name);
+ 	if(!matched)
+<a href="#h0-2-3" id="h0-2-3" class="d">-		memcpy(c-&gt;tags, seltags, TAGSZ);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		memcpy(c-&gt;tags, tagset[seltags], TAGSZ);
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -538,7 +537,7 @@ drawbar(void) {
+</a> 	for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+ 	for(i = 0; i &lt; LENGTH(tags); i++) {
+ 		dc.w = textw(tags[i]);
+<a href="#h0-3-3" id="h0-3-3" class="d">-		if(seltags[i]) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		if(tagset[seltags][i]) {
+</a> 			drawtext(tags[i], dc.sel, isurgent(i));
+ 			drawsquare(c &amp;&amp; c-&gt;tags[i], isoccupied(i), isurgent(i), dc.sel);
+ 		}
+<a href="#h0-4" id="h0-4" class="h">@@ -933,7 +932,7 @@ isvisible(Client *c) {
+</a> 	unsigned int i;
+ 
+ 	for(i = 0; i &lt; LENGTH(tags); i++)
+<a href="#h0-4-3" id="h0-4-3" class="d">-		if(c-&gt;tags[i] &amp;&amp; seltags[i])
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		if(c-&gt;tags[i] &amp;&amp; tagset[seltags][i])
+</a> 			return True;
+ 	return False;
+ }
+<a href="#h0-5" id="h0-5" class="h">@@ -1505,10 +1504,9 @@ setup(void) {
+</a> 		XSetFont(dpy, dc.gc, dc.font.xfont-&gt;fid);
+ 
+ 	/* init tags */
+<a href="#h0-5-3" id="h0-5-3" class="d">-	viewtags[0] = emallocz(TAGSZ);
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	viewtags[1] = emallocz(TAGSZ);
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-	viewtags[0][0] = viewtags[1][0] = True;
+</a><a href="#h0-5-6" id="h0-5-6" class="d">-	seltags = viewtags[0];
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	tagset[0] = emallocz(TAGSZ);
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+	tagset[1] = emallocz(TAGSZ);
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+	tagset[0][0] = tagset[1][0] = True;
+</a> 
+ 	/* init bar */
+ 	for(blw = i = 0; LENGTH(layouts) &gt; 1 &amp;&amp; i &lt; LENGTH(layouts); i++) {
+<a href="#h0-6" id="h0-6" class="h">@@ -1701,10 +1699,10 @@ toggleview(const char *arg) {
+</a> 	unsigned int i, j;
+ 
+ 	i = idxoftag(arg);
+<a href="#h0-6-3" id="h0-6-3" class="d">-	seltags[i] = !seltags[i];
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-	for(j = 0; j &lt; LENGTH(tags) &amp;&amp; !seltags[j]; j++);
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+	tagset[seltags][i] = !tagset[seltags][i];
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+	for(j = 0; j &lt; LENGTH(tags) &amp;&amp; !tagset[seltags][j]; j++);
+</a> 	if(j == LENGTH(tags))
+<a href="#h0-6-8" id="h0-6-8" class="d">-		seltags[i] = True; /* at least one tag must be viewed */
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+		tagset[seltags][i] = True; /* at least one tag must be viewed */
+</a> 	arrange();
+ }
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -1837,18 +1835,15 @@ view(const char *arg) {
+</a> 		tmp[i] = (NULL == arg);
+ 	tmp[idxoftag(arg)] = True;
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-	if(memcmp(seltags, tmp, TAGSZ) != 0) {
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-		seltags = viewtags[viewtags_set ^= 1];  /* toggle tagset */
+</a><a href="#h0-7-5" id="h0-7-5" class="d">-		memcpy(seltags, tmp, TAGSZ);
+</a><a href="#h0-7-6" id="h0-7-6" class="d">-		arrange();
+</a><a href="#h0-7-7" id="h0-7-7" class="d">-	}
+</a><a href="#h0-7-8" id="h0-7-8" class="d">-	else
+</a><a href="#h0-7-9" id="h0-7-9" class="d">-		viewprevtag(NULL);
+</a><a href="#h0-7-10" id="h0-7-10" class="i">+	seltags ^= 1; /* toggle sel tagset */
+</a><a href="#h0-7-11" id="h0-7-11" class="i">+	if(memcmp(tagset[seltags ^ 1], tmp, TAGSZ) != 0)
+</a><a href="#h0-7-12" id="h0-7-12" class="i">+		memcpy(tagset[seltags], tmp, TAGSZ);
+</a><a href="#h0-7-13" id="h0-7-13" class="i">+	arrange();
+</a> }
+ 
+ void
+ viewprevtag(const char *arg) {
+<a href="#h0-7-18" id="h0-7-18" class="d">-	seltags = viewtags[viewtags_set ^= 1];  /* toggle tagset */
+</a><a href="#h0-7-19" id="h0-7-19" class="i">+	seltags ^= 1; /* toggle sel tagset */
+</a> 	arrange();
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

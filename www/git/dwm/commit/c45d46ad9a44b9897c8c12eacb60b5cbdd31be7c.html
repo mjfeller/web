@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>use buffer instead of pointer for mon-&gt;ltsymbol - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c45d46ad9a44b9897c8c12eacb60b5cbdd31be7c.html">c45d46ad9a44b9897c8c12eacb60b5cbdd31be7c</a>
+<b>parent</b> <a href="../commit/6f55de83100547e6f78ebc276dfdbca5ee2581d9.html">6f55de83100547e6f78ebc276dfdbca5ee2581d9</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 22 Sep 2009 09:53:11 +0100
+
+use buffer instead of pointer for mon-&gt;ltsymbol
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -121,7 +121,7 @@ typedef struct {
+</a> } Layout;
+ 
+ struct Monitor {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	const char *ltsymbol;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	char ltsymbol[16];
+</a> 	float mfact;
+ 	int num;
+ 	int by;               /* bar geometry */
+<a href="#h0-1" id="h0-1" class="h">@@ -386,7 +386,7 @@ arrange(void) {
+</a> 		showhide(m-&gt;stack);
+ 	focus(NULL);
+ 	for(m = mons; m; m = m-&gt;next) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-		m-&gt;ltsymbol = m-&gt;lt[m-&gt;sellt]-&gt;symbol;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		strncpy(m-&gt;ltsymbol, m-&gt;lt[m-&gt;sellt]-&gt;symbol, sizeof m-&gt;ltsymbol);
+</a> 		if(m-&gt;lt[m-&gt;sellt]-&gt;arrange)
+ 			m-&gt;lt[m-&gt;sellt]-&gt;arrange(m);
+ 		restack(m);
+<a href="#h0-2" id="h0-2" class="h">@@ -605,7 +605,7 @@ createmon(void) {
+</a> 	m-&gt;topbar = topbar;
+ 	m-&gt;lt[0] = &amp;layouts[0];
+ 	m-&gt;lt[1] = &amp;layouts[1 % LENGTH(layouts)];
+<a href="#h0-2-3" id="h0-2-3" class="d">-	m-&gt;ltsymbol = layouts[0].symbol;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	strncpy(m-&gt;ltsymbol, layouts[0].symbol, sizeof m-&gt;ltsymbol);
+</a> 	return m;
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -1163,17 +1163,14 @@ maprequest(XEvent *e) {
+</a> 
+ void
+ monocle(Monitor *m) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-	static char ntext[8];
+</a> 	unsigned int n = 0;
+ 	Client *c;
+ 
+ 	for(c = m-&gt;clients; c; c = c-&gt;next)
+ 		if(ISVISIBLE(c))
+ 			n++;
+<a href="#h0-3-10" id="h0-3-10" class="d">-	if(n &gt; 0) { /* override layout symbol */
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-		snprintf(ntext, sizeof ntext, &quot;[%d]&quot;, n);
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-		m-&gt;ltsymbol = ntext;
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-	}
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+	if(n &gt; 0) /* override layout symbol */
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+		snprintf(m-&gt;ltsymbol, sizeof m-&gt;ltsymbol, &quot;[%d]&quot;, n);
+</a> 	for(c = nexttiled(m-&gt;clients); c; c = nexttiled(c-&gt;next))
+ 		resize(c, m-&gt;wx, m-&gt;wy, m-&gt;ww - 2 * c-&gt;bw, m-&gt;wh - 2 * c-&gt;bw, False);
+ }
+</pre>
+</div>
+</body>
+</html>

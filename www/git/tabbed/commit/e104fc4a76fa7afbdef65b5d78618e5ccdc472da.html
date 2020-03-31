@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>closing windows works better. still not good enough... - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e104fc4a76fa7afbdef65b5d78618e5ccdc472da.html">e104fc4a76fa7afbdef65b5d78618e5ccdc472da</a>
+<b>parent</b> <a href="../commit/f36b3df20f70c8135f2b2a3ae2f180f569e397b2.html">f36b3df20f70c8135f2b2a3ae2f180f569e397b2</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue,  8 Sep 2009 18:55:43 +0200
+
+closing windows works better. still not good enough...
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 23 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -123,7 +123,7 @@ static Window root, win;
+</a> static Bool running = True;
+ static unsigned int numlockmask = 0;
+ static unsigned bh, wx, wy, ww, wh;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static Client *clients, *sel;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static Client *clients = NULL, *sel = NULL;
+</a> static Listener *listeners;
+ static Bool badwindow = False;
+ /* configuration, allows nested code to access above variables */
+<a href="#h0-1" id="h0-1" class="h">@@ -199,6 +199,12 @@ drawbar() {
+</a> 	int n, width;
+ 	Client *c, *fc;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+	if(!clients) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		dc.x = 0;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		dc.w = ww;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+		drawtext(&quot;Tabbed&quot;, dc.norm);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		return;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	}
+</a> 	width = ww;
+ 	for(c = clients; c; c = c-&gt;next)
+ 		c-&gt;tabx = -1;
+<a href="#h0-2" id="h0-2" class="h">@@ -283,8 +289,12 @@ expose(XEvent *e) {
+</a> 
+ void
+ focus(Client *c) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(!c || !clients)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if(!c)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		c = clients;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	if(!c) {
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		sel = NULL;
+</a> 		return;
+<a href="#h0-2-9" id="h0-2-9" class="i">+	}
+</a> 	XRaiseWindow(dpy, c-&gt;win);
+ 	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+ 	XSelectInput(dpy, c-&gt;win, PropertyChangeMask|StructureNotifyMask);
+<a href="#h0-3" id="h0-3" class="h">@@ -318,6 +328,8 @@ getfirsttab() {
+</a> 	unsigned int n, seli;
+ 	Client *c, *fc;
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+	if(!sel)
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		return NULL;
+</a> 	c = fc = clients;
+ 	for(n = 0; c; c = c-&gt;next, n++);
+ 	if(n * tabwidth &gt; ww) {
+<a href="#h0-4" id="h0-4" class="h">@@ -580,6 +592,7 @@ run(void) {
+</a> 	XSync(dpy, False);
+ 	xfd = ConnectionNumber(dpy);
+ 	buf[LENGTH(buf) - 1] = &#39;\0&#39;; /* 0-terminator is never touched */
+<a href="#h0-4-3" id="h0-4-3" class="i">+	drawbar();
+</a> 	while(running) {
+ 		FD_ZERO(&amp;rd);
+ 		maxfd = xfd;
+<a href="#h0-5" id="h0-5" class="h">@@ -701,12 +714,15 @@ void
+</a> unmanage(Client *c) {
+ 	Client *pc;
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-	for(pc = clients; pc &amp;&amp; pc-&gt;next &amp;&amp; pc-&gt;next != c; pc = pc-&gt;next);
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	if(pc)
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+	focus(NULL);
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+	if(!clients)
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+		return;
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+	else if(c == clients)
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+		clients = c-&gt;next;
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+	else {
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+		for(pc = clients; pc &amp;&amp; pc-&gt;next &amp;&amp; pc-&gt;next != c; pc = pc-&gt;next);
+</a> 		pc-&gt;next = c-&gt;next;
+<a href="#h0-5-13" id="h0-5-13" class="d">-	else
+</a><a href="#h0-5-14" id="h0-5-14" class="d">-		pc = clients = c-&gt;next;
+</a><a href="#h0-5-15" id="h0-5-15" class="d">-	focus(pc);
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+	}
+</a> 	free(c);
+ 	XSync(dpy, False);
+ }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add write I/O to file - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a984ffc4cb755c6dcdbc153b2591dca0ae6a8ead.html">a984ffc4cb755c6dcdbc153b2591dca0ae6a8ead</a>
+<b>parent</b> <a href="../commit/cfefa054e80afa22d6948bf997a6818e778801f6.html">cfefa054e80afa22d6948bf997a6818e778801f6</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Mon,  3 Sep 2012 21:52:21 +0200
+
+Add write I/O to file
+
+This is a theorical feature listed in http://st.suckless.org/goals. All the
+input/output of the terminal will be written to a file, which can be very
+useful for debugging, and also allow interconnect st to other process
+through named pipes.
+---
+ st.1 |    6 ++++++
+ st.c |   14 +++++++++++++-
+ 2 files changed, 19 insertions(+), 1 deletion(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.1</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 19 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.1.html">st.1</a> b/<a href="../file/st.1.html">st.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,6 +10,8 @@ st \- simple terminal
+</a> .RB [ \-w 
+ .IR windowid ]
+ .RB [ \-v ]
+<a href="#h0-0-3" id="h0-0-3" class="i">+.RB [ \-f
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+.IR file ]
+</a> .RB [ \-e
+ .IR command ...]
+ .SH DESCRIPTION
+<a href="#h0-1" id="h0-1" class="h">@@ -30,6 +32,10 @@ embeds st within the window identified by
+</a> .B \-v
+ prints version information to stderr, then exits.
+ .TP
+<a href="#h0-1-3" id="h0-1-3" class="i">+.BI \-f &quot; file&quot;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+writes all the I/O to
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+.I file
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+.TP
+</a> .BI \-e &quot; program &quot; [ &quot; arguments &quot; &quot;... ]&quot;
+ st executes
+ .I program
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -36,7 +36,7 @@
+</a> 
+ #define USAGE \
+ 	&quot;st &quot; VERSION &quot; (c) 2010-2012 st engineers\n&quot; \
+<a href="#h1-0-3" id="h1-0-3" class="d">-	&quot;usage: st [-t title] [-c class] [-w windowid] [-v] [-e command...]\n&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	&quot;usage: st [-t title] [-c class] [-w windowid] [-v] [-f file] [-e command...]\n&quot;
+</a> 
+ /* XEMBED messages */
+ #define XEMBED_FOCUS_IN  4
+<a href="#h1-1" id="h1-1" class="h">@@ -342,7 +342,9 @@ static STREscape strescseq;
+</a> static int cmdfd;
+ static pid_t pid;
+ static Selection sel;
+<a href="#h1-1-3" id="h1-1-3" class="i">+static FILE *fileio;
+</a> static char **opt_cmd  = NULL;
+<a href="#h1-1-5" id="h1-1-5" class="i">+static char *opt_io    = NULL;
+</a> static char *opt_title = NULL;
+ static char *opt_embed = NULL;
+ static char *opt_class = NULL;
+<a href="#h1-2" id="h1-2" class="h">@@ -776,6 +778,10 @@ ttynew(void) {
+</a> 		close(s);
+ 		cmdfd = m;
+ 		signal(SIGCHLD, sigchld);
+<a href="#h1-2-3" id="h1-2-3" class="i">+		if (opt_io &amp;&amp; !(fileio = fopen(opt_io, &quot;w&quot;))) {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+			fprintf(stderr, &quot;Error opening %s:%s&quot;,
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+				opt_io, strerror(errno));
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+		}
+</a> 	}
+ }
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -1534,6 +1540,9 @@ tputtab(bool forward) {
+</a> void
+ tputc(char *c) {
+ 	char ascii = *c;
+<a href="#h1-3-3" id="h1-3-3" class="i">+
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	if (fileio)
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+		putc(ascii, fileio);
+</a> 	if(term.esc &amp; ESC_START) {
+ 		if(term.esc &amp; ESC_CSI) {
+ 			csiescseq.buf[csiescseq.len++] = ascii;
+<a href="#h1-4" id="h1-4" class="h">@@ -2269,6 +2278,9 @@ main(int argc, char *argv[]) {
+</a> 		case &#39;w&#39;:
+ 			if(++i &lt; argc) opt_embed = argv[i];
+ 			break;
+<a href="#h1-4-3" id="h1-4-3" class="i">+		case &#39;f&#39;:
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+			if (++i &lt; argc) opt_io = argv[i];
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+			break;
+</a> 		case &#39;e&#39;:
+ 			/* eat every remaining arguments */
+ 			if(++i &lt; argc) opt_cmd = &amp;argv[i];
+</pre>
+</div>
+</body>
+</html>

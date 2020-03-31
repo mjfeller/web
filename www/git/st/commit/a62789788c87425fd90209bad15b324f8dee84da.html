@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Implementing italic-bold. This will require an increase of the avgWdth. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a62789788c87425fd90209bad15b324f8dee84da.html">a62789788c87425fd90209bad15b324f8dee84da</a>
+<b>parent</b> <a href="../commit/b1563526561a913dc2a69ee78eb5aaa09cc98978.html">b1563526561a913dc2a69ee78eb5aaa09cc98978</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Fri, 14 Sep 2012 19:46:07 +0200
+
+Implementing italic-bold. This will require an increase of the avgWdth.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 13 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,8 +1,9 @@
+</a> 
+<a href="#h0-0-1" id="h0-0-1" class="d">-#define FONT &quot;-*-*-medium-r-*-*-*-120-75-75-*-60-*-*&quot;
+</a><a href="#h0-0-2" id="h0-0-2" class="d">-#define BOLDFONT &quot;-*-*-bold-r-*-*-*-120-75-75-*-60-*-*&quot;
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+#define FONT &quot;-*-*-medium-r-*-*-*-120-75-75-*-70-*-*&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define BOLDFONT &quot;-*-*-bold-r-*-*-*-120-75-75-*-70-*-*&quot;
+</a> /* If italic is not availbel, fall back to bold. */
+<a href="#h0-0-6" id="h0-0-6" class="d">-#define ITALICFONT &quot;-*-*-medium-o-*-*-*-120-75-75-*-60-*-*,&quot; BOLDFONT
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+#define ITALICFONT &quot;-*-*-medium-o-*-*-*-120-75-75-*-70-*-*,&quot; BOLDFONT
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+#define ITALICBOLDFONT &quot;-*-*-bold-o-*-*-*-120-75-75-*-70-*-*,&quot; BOLDFONT
+</a> 
+ /* Space in pixels around the terminal buffer */
+ #define BORDER 2
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -240,7 +240,7 @@ typedef struct {
+</a> 		short lbearing;
+ 		short rbearing;
+ 		XFontSet set;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	} font, bfont, ifont;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	} font, bfont, ifont, ibfont;
+</a> } DC;
+ 
+ static void die(const char*, ...);
+<a href="#h1-1" id="h1-1" class="h">@@ -1945,13 +1945,15 @@ xgetfontinfo(XFontSet set, int *ascent, int *descent, short *lbearing, short *rb
+</a> }
+ 
+ void
+<a href="#h1-1-3" id="h1-1-3" class="d">-initfonts(char *fontstr, char *bfontstr, char *ifontstr) {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+initfonts(char *fontstr, char *bfontstr, char *ifontstr, char *ibfontstr) {
+</a> 	if((dc.font.set = xinitfont(fontstr)) == NULL)
+ 		die(&quot;Can&#39;t load font %s\n&quot;, fontstr);
+ 	if((dc.bfont.set = xinitfont(bfontstr)) == NULL)
+ 		die(&quot;Can&#39;t load bfont %s\n&quot;, bfontstr);
+ 	if((dc.ifont.set = xinitfont(ifontstr)) == NULL)
+ 		die(&quot;Can&#39;t load ifont %s\n&quot;, ifontstr);
+<a href="#h1-1-11" id="h1-1-11" class="i">+	if((dc.ibfont.set = xinitfont(ibfontstr)) == NULL)
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		die(&quot;Can&#39;t load ibfont %s\n&quot;, ibfontstr);
+</a> 
+ 	xgetfontinfo(dc.font.set, &amp;dc.font.ascent, &amp;dc.font.descent,
+ 	    &amp;dc.font.lbearing, &amp;dc.font.rbearing);
+<a href="#h1-2" id="h1-2" class="h">@@ -1959,6 +1961,8 @@ initfonts(char *fontstr, char *bfontstr, char *ifontstr) {
+</a> 	    &amp;dc.bfont.lbearing, &amp;dc.bfont.rbearing);
+ 	xgetfontinfo(dc.ifont.set, &amp;dc.ifont.ascent, &amp;dc.ifont.descent,
+ 	    &amp;dc.ifont.lbearing, &amp;dc.ifont.rbearing);
+<a href="#h1-2-3" id="h1-2-3" class="i">+	xgetfontinfo(dc.ibfont.set, &amp;dc.ibfont.ascent, &amp;dc.ibfont.descent,
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	    &amp;dc.ibfont.lbearing, &amp;dc.ibfont.rbearing);
+</a> }
+ 
+ void
+<a href="#h1-3" id="h1-3" class="h">@@ -1973,7 +1977,7 @@ xinit(void) {
+</a> 	xw.scr = XDefaultScreen(xw.dpy);
+ 
+ 	/* font */
+<a href="#h1-3-3" id="h1-3-3" class="d">-	initfonts(FONT, BOLDFONT, ITALICFONT);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	initfonts(FONT, BOLDFONT, ITALICFONT, ITALICBOLDFONT);
+</a> 
+ 	/* XXX: Assuming same size for bold font */
+ 	xw.cw = dc.font.rbearing - dc.font.lbearing;
+<a href="#h1-4" id="h1-4" class="h">@@ -2068,6 +2072,8 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 
+ 	if(base.mode &amp; ATTR_ITALIC)
+ 		fontset = dc.ifont.set;
+<a href="#h1-4-3" id="h1-4-3" class="i">+	if(base.mode &amp; (ATTR_ITALIC|ATTR_ITALIC))
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		fontset = dc.ibfont.set;
+</a> 
+ 	XSetBackground(xw.dpy, dc.gc, dc.col[bg]);
+ 	XSetForeground(xw.dpy, dc.gc, dc.col[fg]);
+</pre>
+</div>
+</body>
+</html>

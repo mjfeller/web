@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix atom value parsing in SETPROP - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1554354f1689c2205a809e23d29c9e21d38e0be5.html">1554354f1689c2205a809e23d29c9e21d38e0be5</a>
+<b>parent</b> <a href="../commit/3c2acda0b745ffd887a99f8f32b64064665fa553.html">3c2acda0b745ffd887a99f8f32b64064665fa553</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq+hackers@fifth.space">quinq+hackers@fifth.space</a>&gt;
+<b>Date:</b>   Tue, 13 Oct 2015 13:32:09 +0200
+
+Fix atom value parsing in SETPROP
+
+xprop(1) encloses the returned atom string value in double quotes while
+it doesn&#39;t when the value is unset. Original simple parsing would fail
+and parse the atom name instead of getting an empty value.
+
+Signed-off-by: Christoph Lohmann &lt;20h@r-36.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 3 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -37,7 +37,9 @@ static Bool allowgeolocation      = TRUE;
+</a> 
+ #define SETPROP(p, q) { \
+ 	.v = (char *[]){ &quot;/bin/sh&quot;, &quot;-c&quot;, \
+<a href="#h0-0-3" id="h0-0-3" class="d">-		&quot;prop=\&quot;`xprop -id $2 $0 | cut -d &#39;\&quot;&#39; -f 2 | xargs -0 printf %b | dmenu`\&quot; &amp;&amp;&quot; \
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		&quot;prop=\&quot;`xprop -id $2 $0 &quot; \
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		&quot;| sed \&quot;s/^$0(STRING) = \\(\\\\\&quot;\\?\\)\\(.*\\)\\1$/\\2/\&quot; &quot; \
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		&quot;| xargs -0 printf %b | dmenu`\&quot; &amp;&amp;&quot; \
+</a> 		&quot;xprop -id $2 -f $1 8s -set $1 \&quot;$prop\&quot;&quot;, \
+ 		p, q, winid, NULL \
+ 	} \
+</pre>
+</div>
+</body>
+</html>

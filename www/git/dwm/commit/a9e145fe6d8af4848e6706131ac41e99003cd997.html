@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>changed focusmon/tagmon to work on prev/next instead (-1/+1), changed shortcuts to Mod1-, Mod1-. and Mod1-Shift-, Mod1-Shift-. - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a9e145fe6d8af4848e6706131ac41e99003cd997.html">a9e145fe6d8af4848e6706131ac41e99003cd997</a>
+<b>parent</b> <a href="../commit/5dd92c765570caa6d96ab125aa655e30cf82eb20.html">5dd92c765570caa6d96ab125aa655e30cf82eb20</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Thu,  2 Jul 2009 20:37:26 +0100
+
+changed focusmon/tagmon to work on prev/next instead (-1/+1), changed shortcuts to Mod1-, Mod1-. and Mod1-Shift-, Mod1-Shift-.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">46</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>3 files changed, 49 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -71,10 +71,10 @@ static Key keys[] = {
+</a> 	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
+ 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
+ 	{ MODKEY|ShiftMask,             XK_0,      tag,            {.ui = ~0 } },
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ MODKEY,                       XK_w,      focusmon,       {.ui = 0 } },
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ MODKEY,                       XK_e,      focusmon,       {.ui = 1 } },
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	{ MODKEY|ShiftMask,             XK_w,      tagmon,         {.ui = 0 } },
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	{ MODKEY|ShiftMask,             XK_e,      tagmon,         {.ui = 1 } },
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	{ MODKEY,                       XK_comma,  focusmon,       {.i = -1 } },
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	{ MODKEY,                       XK_period, focusmon,       {.i = +1 } },
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	{ MODKEY|ShiftMask,             XK_comma,  tagmon,         {.i = -1 } },
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	{ MODKEY|ShiftMask,             XK_period, tagmon,         {.i = +1 } },
+</a> 	TAGKEYS(                        XK_1,                      0)
+ 	TAGKEYS(                        XK_2,                      1)
+ 	TAGKEYS(                        XK_3,                      2)
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -19,14 +19,14 @@ layout applied.
+</a> Windows are grouped by tags. Each window can be tagged with one or multiple
+ tags. Selecting certain tags displays all windows with these tags.
+ .P
+<a href="#h1-0-3" id="h1-0-3" class="d">-dwm contains a small status bar which displays all available tags, the layout,
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+Each screen contains a small status bar which displays all available tags, the layout,
+</a> the title of the focused window, and the text read from the root window name
+<a href="#h1-0-6" id="h1-0-6" class="d">-property. A floating window is indicated with an empty square and a maximised
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-floating window is indicated with a filled square before the windows title.
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-The selected tags are indicated with a different color. The tags of the focused
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-window are indicated with a filled square in the top left corner.  The tags
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-which are applied to one or more windows are indicated with an empty square in
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-the top left corner.
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+property, if the screen is focused. A floating window is indicated with an
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+empty square and a maximised floating window is indicated with a filled square
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+before the windows title.  The selected tags are indicated with a different
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+color. The tags of the focused window are indicated with a filled square in the
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+top left corner.  The tags which are applied to one or more windows are
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+indicated with an empty square in the top left corner.
+</a> .P
+ dwm draws a small border around windows to indicate the focus state.
+ .SH OPTIONS
+<a href="#h1-1" id="h1-1" class="h">@@ -57,6 +57,18 @@ click on a tag label adds/removes that tag to/from the focused window.
+</a> Start
+ .BR xterm.
+ .TP
+<a href="#h1-1-3" id="h1-1-3" class="i">+.B Mod1\-,
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+Focus previous screen, if any.
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+.TP
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+.B Mod1\-.
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+Focus next screen, if any.
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+.TP
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+.B Mod1\-Shift\-,
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+Send focused window to previous screen, if any.
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+.TP
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+.B Mod1\-Shift\-,
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+Send focused window to next screen, if any.
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+.TP
+</a> .B Mod1\-b
+ Toggles bar on and off.
+ .TP
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -11,9 +11,9 @@
+</a>  * in O(1) time.
+  *
+  * Each child of the root window is called a client, except windows which have
+<a href="#h2-0-3" id="h2-0-3" class="d">- * set the override_redirect flag.  Clients are organized in a global
+</a><a href="#h2-0-4" id="h2-0-4" class="d">- * linked client list, the focus history is remembered through a global
+</a><a href="#h2-0-5" id="h2-0-5" class="d">- * stack list. Each client contains a bit array to indicate the tags of a
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+ * set the override_redirect flag.  Clients are organized in a linked client
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+ * list on each monitor, the focus history is remembered through a stack list
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+ * on each monitor. Each client contains a bit array to indicate the tags of a
+</a>  * client.
+  *
+  * Keys and tagging rules are organized as arrays and defined in config.h.
+<a href="#h2-1" id="h2-1" class="h">@@ -164,6 +164,7 @@ static void destroynotify(XEvent *e);
+</a> static void detach(Client *c);
+ static void detachstack(Client *c);
+ static void die(const char *errstr, ...);
+<a href="#h2-1-3" id="h2-1-3" class="i">+static Monitor *dirtomon(int dir);
+</a> static void drawbar(Monitor *m);
+ static void drawbars(void);
+ static void drawsquare(Bool filled, Bool empty, Bool invert, unsigned long col[ColLast]);
+<a href="#h2-2" id="h2-2" class="h">@@ -180,7 +181,6 @@ static long getstate(Window w);
+</a> static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+ static void grabbuttons(Client *c, Bool focused);
+ static void grabkeys(void);
+<a href="#h2-2-3" id="h2-2-3" class="d">-static Monitor *idxtomon(unsigned int n);
+</a> static void initfont(const char *fontstr);
+ static Bool isprotodel(Client *c);
+ static void keypress(XEvent *e);
+<a href="#h2-3" id="h2-3" class="h">@@ -621,6 +621,22 @@ die(const char *errstr, ...) {
+</a> 	exit(EXIT_FAILURE);
+ }
+ 
+<a href="#h2-3-3" id="h2-3-3" class="i">+Monitor *
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+dirtomon(int dir) {
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+	Monitor *m = NULL;
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+
+</a><a href="#h2-3-7" id="h2-3-7" class="i">+	if(dir &gt; 0)
+</a><a href="#h2-3-8" id="h2-3-8" class="i">+		if(!(m = selmon-&gt;next))
+</a><a href="#h2-3-9" id="h2-3-9" class="i">+			m = mons;
+</a><a href="#h2-3-10" id="h2-3-10" class="i">+	else {
+</a><a href="#h2-3-11" id="h2-3-11" class="i">+		if(selmon == mons)
+</a><a href="#h2-3-12" id="h2-3-12" class="i">+			for(m = mons; m-&gt;next; m = m-&gt;next);
+</a><a href="#h2-3-13" id="h2-3-13" class="i">+		else
+</a><a href="#h2-3-14" id="h2-3-14" class="i">+			for(m = mons; m-&gt;next != selmon; m = m-&gt;next);
+</a><a href="#h2-3-15" id="h2-3-15" class="i">+	}
+</a><a href="#h2-3-16" id="h2-3-16" class="i">+	return m;
+</a><a href="#h2-3-17" id="h2-3-17" class="i">+}
+</a><a href="#h2-3-18" id="h2-3-18" class="i">+
+</a> void
+ drawbar(Monitor *m) {
+ 	int x;
+<a href="#h2-4" id="h2-4" class="h">@@ -797,10 +813,11 @@ focusin(XEvent *e) { /* there are some broken focus acquiring clients */
+</a> 
+ void
+ focusmon(const Arg *arg) {
+<a href="#h2-4-3" id="h2-4-3" class="d">-	Monitor *m;
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+	Monitor *m = NULL;
+</a> 
+<a href="#h2-4-6" id="h2-4-6" class="d">-	if(!(m = idxtomon(arg-&gt;ui)) || m == selmon)
+</a><a href="#h2-4-7" id="h2-4-7" class="i">+	if(!mons-&gt;next)
+</a> 		return;
+<a href="#h2-4-9" id="h2-4-9" class="i">+	m = dirtomon(arg-&gt;i);
+</a> 	unfocus(selmon-&gt;sel);
+ 	selmon = m;
+ 	focus(NULL);
+<a href="#h2-5" id="h2-5" class="h">@@ -934,15 +951,6 @@ grabkeys(void) {
+</a> 	}
+ }
+ 
+<a href="#h2-5-3" id="h2-5-3" class="d">-Monitor *
+</a><a href="#h2-5-4" id="h2-5-4" class="d">-idxtomon(unsigned int n) {
+</a><a href="#h2-5-5" id="h2-5-5" class="d">-	unsigned int i;
+</a><a href="#h2-5-6" id="h2-5-6" class="d">-	Monitor *m;
+</a><a href="#h2-5-7" id="h2-5-7" class="d">-
+</a><a href="#h2-5-8" id="h2-5-8" class="d">-	for(m = mons, i = 0; m &amp;&amp; i != n; m = m-&gt;next, i++);
+</a><a href="#h2-5-9" id="h2-5-9" class="d">-	return m;
+</a><a href="#h2-5-10" id="h2-5-10" class="d">-}
+</a><a href="#h2-5-11" id="h2-5-11" class="d">-
+</a> void
+ initfont(const char *fontstr) {
+ 	char *def, **missing;
+<a href="#h2-6" id="h2-6" class="h">@@ -1512,11 +1520,9 @@ tag(const Arg *arg) {
+</a> 
+ void
+ tagmon(const Arg *arg) {
+<a href="#h2-6-3" id="h2-6-3" class="d">-	Monitor *m;
+</a><a href="#h2-6-4" id="h2-6-4" class="d">-
+</a><a href="#h2-6-5" id="h2-6-5" class="d">-	if(!selmon-&gt;sel || !(m = idxtomon(arg-&gt;ui)))
+</a><a href="#h2-6-6" id="h2-6-6" class="d">-		return;
+</a><a href="#h2-6-7" id="h2-6-7" class="d">-	sendmon(selmon-&gt;sel, m);
+</a><a href="#h2-6-8" id="h2-6-8" class="i">+	if(!selmon-&gt;sel || !mons-&gt;next)
+</a><a href="#h2-6-9" id="h2-6-9" class="i">+		return
+</a><a href="#h2-6-10" id="h2-6-10" class="i">+	sendmon(selmon-&gt;sel, dirtomon(arg-&gt;i));
+</a> }
+ 
+ int
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Pass new dimensions into ttyresize - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/dbe8676d7d69651132bde2b6d9ec3787cbbc552a.html">dbe8676d7d69651132bde2b6d9ec3787cbbc552a</a>
+<b>parent</b> <a href="../commit/a8314643b1aeaa2187dad71dc5748aaac1760c1b.html">a8314643b1aeaa2187dad71dc5748aaac1760c1b</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 10 Oct 2017 15:51:23 -0500
+
+Pass new dimensions into ttyresize
+
+This removes another reference to TermWindow from st.c.
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">x.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>3 files changed, 7 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -905,14 +905,14 @@ ttysend(char *s, size_t n)
+</a> }
+ 
+ void
+<a href="#h0-0-3" id="h0-0-3" class="d">-ttyresize(void)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+ttyresize(int tw, int th)
+</a> {
+ 	struct winsize w;
+ 
+ 	w.ws_row = term.row;
+ 	w.ws_col = term.col;
+<a href="#h0-0-10" id="h0-0-10" class="d">-	w.ws_xpixel = win.tw;
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	w.ws_ypixel = win.th;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	w.ws_xpixel = tw;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	w.ws_ypixel = th;
+</a> 	if (ioctl(cmdfd, TIOCSWINSZ, &amp;w) &lt; 0)
+ 		fprintf(stderr, &quot;Couldn&#39;t set window size: %s\n&quot;, strerror(errno));
+ }
+<b>diff --git a/<a id="h1" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -187,7 +187,7 @@ void tsetdirtattr(int);
+</a> int match(uint, uint);
+ void ttynew(void);
+ size_t ttyread(void);
+<a href="#h1-0-3" id="h1-0-3" class="d">-void ttyresize(void);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+void ttyresize(int, int);
+</a> void ttysend(char *, size_t);
+ void ttywrite(const char *, size_t);
+ 
+<b>diff --git a/<a id="h2" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -192,7 +192,7 @@ zoomabs(const Arg *arg)
+</a> 	xunloadfonts();
+ 	xloadfonts(usedfont, arg-&gt;f);
+ 	cresize(0, 0);
+<a href="#h2-0-3" id="h2-0-3" class="d">-	ttyresize();
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	ttyresize(win.tw, win.th);
+</a> 	redraw();
+ 	xhints();
+ }
+<a href="#h2-1" id="h2-1" class="h">@@ -1679,7 +1679,7 @@ resize(XEvent *e)
+</a> 		return;
+ 
+ 	cresize(e-&gt;xconfigure.width, e-&gt;xconfigure.height);
+<a href="#h2-1-3" id="h2-1-3" class="d">-	ttyresize();
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	ttyresize(win.tw, win.th);
+</a> }
+ 
+ void
+<a href="#h2-2" id="h2-2" class="h">@@ -1710,7 +1710,7 @@ run(void)
+</a> 
+ 	cresize(w, h);
+ 	ttynew();
+<a href="#h2-2-3" id="h2-2-3" class="d">-	ttyresize();
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+	ttyresize(win.tw, win.th);
+</a> 
+ 	clock_gettime(CLOCK_MONOTONIC, &amp;last);
+ 	lastblink = last;
+</pre>
+</div>
+</body>
+</html>

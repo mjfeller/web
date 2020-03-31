@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed -t, now using isatty() instead of select() to prevent execution from an interactive shell - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/66b2e8379f0b851d0535a50321e22b58fdaa247d.html">66b2e8379f0b851d0535a50321e22b58fdaa247d</a>
+<b>parent</b> <a href="../commit/665488a6eedeecf743e44bd9624105c8b47c4f97.html">665488a6eedeecf743e44bd9624105c8b47c4f97</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Mon, 19 Feb 2007 21:18:36 +0100
+
+removed -t, now using isatty() instead of select() to prevent execution from an interactive shell
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.1</a></td><td> | </td><td class="num">4</td><td><span class="i"></span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">main.c</a></td><td> | </td><td class="num">42</td><td><span class="i">+++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 15 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.1.html">dmenu.1</a> b/<a href="../file/dmenu.1.html">dmenu.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,7 +10,6 @@ dmenu \- dynamic menu
+</a> .RB [ \-p &quot; &lt;prompt&gt;&quot;]
+ .RB [ \-sb &quot; &lt;color&gt;&quot;]
+ .RB [ \-sf &quot; &lt;color&gt;&quot;]
+<a href="#h0-0-3" id="h0-0-3" class="d">-.RB [ \-t &quot; &lt;seconds&gt;&quot;]
+</a> .RB [ \-v ]
+ .SH DESCRIPTION
+ .SS Overview
+<a href="#h0-1" id="h0-1" class="h">@@ -41,9 +40,6 @@ defines the selected background color (#RGB, #RRGGBB, and color names are suppor
+</a> .B \-sf &lt;color&gt;
+ defines the selected foreground color (#RGB, #RRGGBB, and color names are supported).
+ .TP
+<a href="#h0-1-3" id="h0-1-3" class="d">-.B \-t &lt;seconds&gt;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-defines the seconds to wait for standard input, before exiting (default is 3).
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-.TP
+</a> .B \-v
+ prints version information to standard output, then exits.
+ .SH USAGE
+<b>diff --git a/<a id="h1" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -10,8 +10,6 @@
+</a> #include &lt;stdio.h&gt;
+ #include &lt;string.h&gt;
+ #include &lt;unistd.h&gt;
+<a href="#h1-0-3" id="h1-0-3" class="d">-#include &lt;sys/select.h&gt;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#include &lt;sys/time.h&gt;
+</a> #include &lt;X11/Xutil.h&gt;
+ #include &lt;X11/keysym.h&gt;
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -457,6 +455,12 @@ readstdin(void) {
+</a> 	return maxname;
+ }
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+static void
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+usage(void) {
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	eprint(&quot;usage: dmenu [-b] [-fn &lt;font&gt;] [-nb &lt;color&gt;] [-nf &lt;color&gt;]\n&quot;
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+		&quot;             [-p &lt;prompt&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-v]\n&quot;);
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+}
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+
+</a> /* extern */
+ 
+ int screen;
+<a href="#h1-2" id="h1-2" class="h">@@ -472,16 +476,16 @@ main(int argc, char *argv[]) {
+</a> 	char *normfg = NORMFGCOLOR;
+ 	char *selbg = SELBGCOLOR;
+ 	char *selfg = SELFGCOLOR;
+<a href="#h1-2-3" id="h1-2-3" class="d">-	fd_set rd;
+</a> 	int i, j;
+<a href="#h1-2-5" id="h1-2-5" class="d">-	struct timeval timeout;
+</a> 	Item *itm;
+ 	XEvent ev;
+ 	XModifierKeymap *modmap;
+ 	XSetWindowAttributes wa;
+ 
+<a href="#h1-2-11" id="h1-2-11" class="d">-	timeout.tv_usec = 0;
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-	timeout.tv_sec = 3;
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+	if(isatty(STDIN_FILENO)) {
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+		fputs(&quot;error: dmenu can&#39;t run in an interactive shell\n&quot;, stdout);
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+		usage();
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+	}
+</a> 	/* command line args */
+ 	for(i = 1; i &lt; argc; i++)
+ 		if(!strncmp(argv[i], &quot;-b&quot;, 3)) {
+<a href="#h1-3" id="h1-3" class="h">@@ -505,41 +509,26 @@ main(int argc, char *argv[]) {
+</a> 		else if(!strncmp(argv[i], &quot;-sf&quot;, 4)) {
+ 			if(++i &lt; argc) selfg = argv[i];
+ 		}
+<a href="#h1-3-3" id="h1-3-3" class="d">-		else if(!strncmp(argv[i], &quot;-t&quot;, 3)) {
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-			if(++i &lt; argc) timeout.tv_sec = atoi(argv[i]);
+</a><a href="#h1-3-5" id="h1-3-5" class="d">-		}
+</a><a href="#h1-3-6" id="h1-3-6" class="d">-		else if(!strncmp(argv[i], &quot;-v&quot;, 3)) {
+</a><a href="#h1-3-7" id="h1-3-7" class="d">-			fputs(&quot;dmenu-&quot;VERSION&quot;, (C)opyright MMVI-MMVII Anselm R. Garbe\n&quot;, stdout);
+</a><a href="#h1-3-8" id="h1-3-8" class="d">-			exit(EXIT_SUCCESS);
+</a><a href="#h1-3-9" id="h1-3-9" class="d">-		}
+</a><a href="#h1-3-10" id="h1-3-10" class="i">+		else if(!strncmp(argv[i], &quot;-v&quot;, 3))
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+			eprint(&quot;dmenu-&quot;VERSION&quot;, (C)opyright MMVI-MMVII Anselm R. Garbe\n&quot;);
+</a> 		else
+<a href="#h1-3-13" id="h1-3-13" class="d">-			eprint(&quot;usage: dmenu [-b] [-fn &lt;font&gt;] [-nb &lt;color&gt;] [-nf &lt;color&gt;] [-p &lt;prompt&gt;]\n&quot;
+</a><a href="#h1-3-14" id="h1-3-14" class="d">-				&quot;             [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-t &lt;seconds&gt;] [-v]\n&quot;, stdout);
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+			usage();
+</a> 	setlocale(LC_CTYPE, &quot;&quot;);
+ 	dpy = XOpenDisplay(0);
+ 	if(!dpy)
+ 		eprint(&quot;dmenu: cannot open display\n&quot;);
+ 	screen = DefaultScreen(dpy);
+ 	root = RootWindow(dpy, screen);
+<a href="#h1-3-22" id="h1-3-22" class="d">-
+</a><a href="#h1-3-23" id="h1-3-23" class="d">-	/* Note, the select() construction allows to grab all keypresses as
+</a><a href="#h1-3-24" id="h1-3-24" class="d">-	 * early as possible, to not loose them. But if there is no standard
+</a><a href="#h1-3-25" id="h1-3-25" class="d">-	 * input supplied, we will make sure to exit after MAX_WAIT_STDIN
+</a><a href="#h1-3-26" id="h1-3-26" class="d">-	 * seconds. This is convenience behavior for rapid typers.
+</a><a href="#h1-3-27" id="h1-3-27" class="d">-	 */ 
+</a> 	while(XGrabKeyboard(dpy, root, True, GrabModeAsync,
+ 			 GrabModeAsync, CurrentTime) != GrabSuccess)
+ 		usleep(1000);
+<a href="#h1-3-31" id="h1-3-31" class="d">-	FD_ZERO(&amp;rd);
+</a><a href="#h1-3-32" id="h1-3-32" class="d">-	FD_SET(STDIN_FILENO, &amp;rd);
+</a><a href="#h1-3-33" id="h1-3-33" class="d">-	if(select(ConnectionNumber(dpy) + 1, &amp;rd, NULL, NULL, &amp;timeout) &lt; 1)
+</a><a href="#h1-3-34" id="h1-3-34" class="d">-		goto UninitializedEnd;
+</a> 	maxname = readstdin();
+ 	/* init modifier map */
+ 	modmap = XGetModifierMapping(dpy);
+ 	for (i = 0; i &lt; 8; i++) {
+ 		for (j = 0; j &lt; modmap-&gt;max_keypermod; j++) {
+<a href="#h1-3-40" id="h1-3-40" class="d">-			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j] == XKeysymToKeycode(dpy, XK_Num_Lock))
+</a><a href="#h1-3-41" id="h1-3-41" class="i">+			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j]
+</a><a href="#h1-3-42" id="h1-3-42" class="i">+			== XKeysymToKeycode(dpy, XK_Num_Lock))
+</a> 				numlockmask = (1 &lt;&lt; i);
+ 		}
+ 	}
+<a href="#h1-4" id="h1-4" class="h">@@ -607,7 +596,6 @@ main(int argc, char *argv[]) {
+</a> 	XFreePixmap(dpy, dc.drawable);
+ 	XFreeGC(dpy, dc.gc);
+ 	XDestroyWindow(dpy, win);
+<a href="#h1-4-3" id="h1-4-3" class="d">-UninitializedEnd:
+</a> 	XUngrabKeyboard(dpy, CurrentTime);
+ 	XCloseDisplay(dpy);
+ 	return ret;
+</pre>
+</div>
+</body>
+</html>

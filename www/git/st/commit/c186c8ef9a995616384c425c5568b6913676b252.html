@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>merged tscroll() with tscrollup(). - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c186c8ef9a995616384c425c5568b6913676b252.html">c186c8ef9a995616384c425c5568b6913676b252</a>
+<b>parent</b> <a href="../commit/6db6980e27bdde6f2d444dd3cdd7a46985fa84fc.html">6db6980e27bdde6f2d444dd3cdd7a46985fa84fc</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 29 Aug 2010 12:27:59 +0200
+
+merged tscroll() with tscrollup().
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">15</td><td><span class="i">+</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 1 insertion(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -149,7 +149,6 @@ static void tputc(char);
+</a> static void tputs(char*, int);
+ static void treset(void);
+ static void tresize(int, int);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void tscroll(void);
+</a> static void tscrollup(int);
+ static void tscrolldown(int);
+ static void tsetattr(int*, int);
+<a href="#h0-1" id="h0-1" class="h">@@ -355,18 +354,6 @@ tnew(int col, int row) {
+</a> 		term.line[row] = calloc(term.col, sizeof(Glyph));
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-/* TODO: Replace with scrollup/scolldown */
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-void
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-tscroll(void) {
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	Line temp = term.line[term.top];
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	int i;
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	for(i = term.top; i &lt; term.bot; i++)
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-		term.line[i] = term.line[i+1];
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-	memset(temp, 0, sizeof(Glyph) * term.col);
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-	term.line[term.bot] = temp;
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-}
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-
+</a> void
+ tscrolldown (int n) {
+ 	int i;
+<a href="#h0-2" id="h0-2" class="h">@@ -404,7 +391,7 @@ void
+</a> tnewline(void) {
+ 	int y = term.c.y + 1;
+ 	if(y &gt; term.bot)
+<a href="#h0-2-3" id="h0-2-3" class="d">-		tscroll(), y = term.bot;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		tscrollup(1), y = term.bot;
+</a> 	tmoveto(0, y);
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

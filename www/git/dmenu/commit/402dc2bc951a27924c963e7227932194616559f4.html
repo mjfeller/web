@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed paste - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/402dc2bc951a27924c963e7227932194616559f4.html">402dc2bc951a27924c963e7227932194616559f4</a>
+<b>parent</b> <a href="../commit/00a60cb7b28b671ae0ba5302e3fb1cbaea6695ec.html">00a60cb7b28b671ae0ba5302e3fb1cbaea6695ec</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Wed, 11 Aug 2010 15:02:03 +0100
+
+fixed paste
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">15</td><td><span class="i">++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -32,7 +32,7 @@ static void grabkeyboard(void);
+</a> static void insert(const char *s, ssize_t n);
+ static void keypress(XKeyEvent *ev);
+ static void match(void);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void paste(void);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void paste(Atom atom);
+</a> static void readstdin(void);
+ static void run(void);
+ static void setup(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -52,7 +52,7 @@ static unsigned int lines = 0;
+</a> static unsigned int promptw;
+ static unsigned long normcol[ColLast];
+ static unsigned long selcol[ColLast];
+<a href="#h0-1-3" id="h0-1-3" class="d">-static Atom utf8;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static Atom clip, utf8;
+</a> static Bool topbar = True;
+ static DC *dc;
+ static Item *items = NULL;
+<a href="#h0-2" id="h0-2" class="h">@@ -228,7 +228,7 @@ keypress(XKeyEvent *ev) {
+</a> 			insert(NULL, 1-n);
+ 			break;
+ 		case XK_y:  /* paste selection */
+<a href="#h0-2-3" id="h0-2-3" class="d">-			XConvertSelection(dc-&gt;dpy, XA_PRIMARY, utf8, None, win, CurrentTime);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			XConvertSelection(dc-&gt;dpy, XA_PRIMARY, utf8, clip, win, CurrentTime);
+</a> 			return;
+ 		}
+ 	}
+<a href="#h0-3" id="h0-3" class="h">@@ -371,13 +371,13 @@ match(void) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="d">-paste(void) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+paste(Atom atom) {
+</a> 	char *p, *q;
+ 	int di;
+ 	unsigned long dl;
+ 	Atom da;
+ 
+<a href="#h0-3-10" id="h0-3-10" class="d">-	XGetWindowProperty(dc-&gt;dpy, win, utf8, 0, sizeof text - cursor, True,
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+	XGetWindowProperty(dc-&gt;dpy, win, atom, 0, sizeof text - cursor, False,
+</a> 	                   utf8, &amp;da, &amp;di, &amp;dl, &amp;dl, (unsigned char **)&amp;p);
+ 	insert(p, (q = strchr(p, &#39;\n&#39;)) ? q-p : strlen(p));
+ 	XFree(p);
+<a href="#h0-4" id="h0-4" class="h">@@ -415,8 +415,8 @@ run(void) {
+</a> 			keypress(&amp;ev.xkey);
+ 			break;
+ 		case SelectionNotify:
+<a href="#h0-4-3" id="h0-4-3" class="d">-			if(ev.xselection.property == utf8)
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-				paste();
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+			if(ev.xselection.property != None)
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+				paste(ev.xselection.property);
+</a> 			break;
+ 		case VisibilityNotify:
+ 			if(ev.xvisibility.state != VisibilityUnobscured)
+<a href="#h0-5" id="h0-5" class="h">@@ -437,6 +437,7 @@ setup(void) {
+</a> 	screen = DefaultScreen(dc-&gt;dpy);
+ 	root = RootWindow(dc-&gt;dpy, screen);
+ 	utf8 = XInternAtom(dc-&gt;dpy, &quot;UTF8_STRING&quot;, False);
+<a href="#h0-5-3" id="h0-5-3" class="i">+	clip = XInternAtom(dc-&gt;dpy, &quot;_DMENU_STRING&quot;, False);
+</a> 
+ 	normcol[ColBG] = getcolor(dc, normbgcolor);
+ 	normcol[ColFG] = getcolor(dc, normfgcolor);
+</pre>
+</div>
+</body>
+</html>

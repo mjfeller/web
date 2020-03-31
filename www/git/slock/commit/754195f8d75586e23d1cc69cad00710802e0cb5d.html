@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>rework setting window color - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/754195f8d75586e23d1cc69cad00710802e0cb5d.html">754195f8d75586e23d1cc69cad00710802e0cb5d</a>
+<b>parent</b> <a href="../commit/10d4e479c5f6d91bf86e15be3a12c6b09c9808be.html">10d4e479c5f6d91bf86e15be3a12c6b09c9808be</a>
+<b>Author:</b> Markus Teich &lt;<a href="mailto:markus.teich@stusta.mhn.de">markus.teich@stusta.mhn.de</a>&gt;
+<b>Date:</b>   Fri,  8 May 2015 17:10:15 +0200
+
+rework setting window color
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++</span><span class="d">----------</span></td></tr>
+</table></pre><pre>1 file changed, 7 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -119,11 +119,12 @@ readpw(Display *dpy, const char *pws)
+</a> {
+ 	char buf[32], passwd[256];
+ 	int num, screen;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	unsigned int len, llen;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	unsigned int len, color;
+</a> 	KeySym ksym;
+ 	XEvent ev;
+<a href="#h0-0-7" id="h0-0-7" class="i">+	static int oldc = INIT;
+</a> 
+<a href="#h0-0-9" id="h0-0-9" class="d">-	len = llen = 0;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	len = 0;
+</a> 	running = True;
+ 
+ 	/* As &quot;slock&quot; stands for &quot;Simple X display locker&quot;, the DPMS settings
+<a href="#h0-1" id="h0-1" class="h">@@ -174,18 +175,14 @@ readpw(Display *dpy, const char *pws)
+</a> 				}
+ 				break;
+ 			}
+<a href="#h0-1-3" id="h0-1-3" class="d">-			if (llen == 0 &amp;&amp; len != 0) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+			color = len ? INPUT : (failure || failonclear ? FAILED : INIT);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			if (oldc != color) {
+</a> 				for (screen = 0; screen &lt; nscreens; screen++) {
+<a href="#h0-1-7" id="h0-1-7" class="d">-					XSetWindowBackground(dpy, locks[screen]-&gt;win, locks[screen]-&gt;colors[INPUT]);
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-					XClearWindow(dpy, locks[screen]-&gt;win);
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-				}
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-			} else if (llen != 0 &amp;&amp; len == 0) {
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-				for (screen = 0; screen &lt; nscreens; screen++) {
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-					XSetWindowBackground(dpy, locks[screen]-&gt;win, locks[screen]-&gt;colors[failure || failonclear ? FAILED : INIT]);
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+					XSetWindowBackground(dpy, locks[screen]-&gt;win, locks[screen]-&gt;colors[color]);
+</a> 					XClearWindow(dpy, locks[screen]-&gt;win);
+ 				}
+<a href="#h0-1-16" id="h0-1-16" class="i">+				oldc = color;
+</a> 			}
+<a href="#h0-1-18" id="h0-1-18" class="d">-			llen = len;
+</a> 		} else if (rr &amp;&amp; ev.type == rrevbase + RRScreenChangeNotify) {
+ 			XRRScreenChangeNotifyEvent *rre = (XRRScreenChangeNotifyEvent*)&amp;ev;
+ 			for (screen = 0; screen &lt; nscreens; screen++) {
+</pre>
+</div>
+</body>
+</html>

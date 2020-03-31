@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Factor out equivalent code from ttyread/ttysend - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/32d3b1d00f66eda4f5446f3b32cabed2c9a77a40.html">32d3b1d00f66eda4f5446f3b32cabed2c9a77a40</a>
+<b>parent</b> <a href="../commit/69e32a61df15787c410a48eaa10a89240c36257d.html">69e32a61df15787c410a48eaa10a89240c36257d</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 15 Oct 2017 20:35:48 -0500
+
+Factor out equivalent code from ttyread/ttysend
+
+The echo-to-terminal portions of ttyread and ttysend were actually doing
+the same thing.  New function twrite() now handles this.  The parameter
+show_ctrl determines whether control characters are shown as &quot;^A&quot;.  This
+was the only difference between tputc and techo, and techo is now unused
+and removed.
+
+(This commit should not change st&#39;s behaviour.)
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">101</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 41 insertions(+), 62 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -161,8 +161,8 @@ static void tsetchar(Rune, Glyph *, int, int);
+</a> static void tsetscroll(int, int);
+ static void tswapscreen(void);
+ static void tsetmode(int, int, int *, int);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static int twrite(const char *, int, int);
+</a> static void tfulldirt(void);
+<a href="#h0-0-5" id="h0-0-5" class="d">-static void techo(Rune);
+</a> static void tcontrolcode(uchar );
+ static void tdectest(char );
+ static void tdefutf8(char);
+<a href="#h0-1" id="h0-1" class="h">@@ -254,7 +254,7 @@ xstrdup(char *s)
+</a> }
+ 
+ size_t
+<a href="#h0-1-3" id="h0-1-3" class="d">-utf8decode(char *c, Rune *u, size_t clen)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+utf8decode(const char *c, Rune *u, size_t clen)
+</a> {
+ 	size_t i, j, len, type;
+ 	Rune udecoded;
+<a href="#h0-2" id="h0-2" class="h">@@ -768,38 +768,19 @@ ttyread(void)
+</a> {
+ 	static char buf[BUFSIZ];
+ 	static int buflen = 0;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	char *ptr;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	int charsize; /* size of utf8 char in bytes */
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	Rune unicodep;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	int written;
+</a> 	int ret;
+ 
+ 	/* append read bytes to unprocessed bytes */
+ 	if ((ret = read(cmdfd, buf+buflen, LEN(buf)-buflen)) &lt; 0)
+ 		die(&quot;Couldn&#39;t read from shell: %s\n&quot;, strerror(errno));
+<a href="#h0-2-12" id="h0-2-12" class="d">-
+</a> 	buflen += ret;
+<a href="#h0-2-14" id="h0-2-14" class="d">-	ptr = buf;
+</a> 
+<a href="#h0-2-16" id="h0-2-16" class="d">-	for (;;) {
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-		if (IS_SET(MODE_UTF8) &amp;&amp; !IS_SET(MODE_SIXEL)) {
+</a><a href="#h0-2-18" id="h0-2-18" class="d">-			/* process a complete utf8 char */
+</a><a href="#h0-2-19" id="h0-2-19" class="d">-			charsize = utf8decode(ptr, &amp;unicodep, buflen);
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-			if (charsize == 0)
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-				break;
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-			tputc(unicodep);
+</a><a href="#h0-2-23" id="h0-2-23" class="d">-			ptr += charsize;
+</a><a href="#h0-2-24" id="h0-2-24" class="d">-			buflen -= charsize;
+</a><a href="#h0-2-25" id="h0-2-25" class="d">-
+</a><a href="#h0-2-26" id="h0-2-26" class="d">-		} else {
+</a><a href="#h0-2-27" id="h0-2-27" class="d">-			if (buflen &lt;= 0)
+</a><a href="#h0-2-28" id="h0-2-28" class="d">-				break;
+</a><a href="#h0-2-29" id="h0-2-29" class="d">-			tputc(*ptr++ &amp; 0xFF);
+</a><a href="#h0-2-30" id="h0-2-30" class="d">-			buflen--;
+</a><a href="#h0-2-31" id="h0-2-31" class="d">-		}
+</a><a href="#h0-2-32" id="h0-2-32" class="d">-	}
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+	written = twrite(buf, buflen, 0);
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+	buflen -= written;
+</a> 	/* keep any uncomplete utf8 char for the next call */
+ 	if (buflen &gt; 0)
+<a href="#h0-2-37" id="h0-2-37" class="d">-		memmove(buf, ptr, buflen);
+</a><a href="#h0-2-38" id="h0-2-38" class="i">+		memmove(buf, buf + written, buflen);
+</a> 
+ 	return ret;
+ }
+<a href="#h0-3" id="h0-3" class="h">@@ -864,27 +845,9 @@ write_error:
+</a> void
+ ttysend(char *s, size_t n)
+ {
+<a href="#h0-3-3" id="h0-3-3" class="d">-	int len;
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	char *t, *lim;
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	Rune u;
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-
+</a> 	ttywrite(s, n);
+<a href="#h0-3-8" id="h0-3-8" class="d">-	if (!IS_SET(MODE_ECHO))
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-		return;
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-	lim = &amp;s[n];
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-	for (t = s; t &lt; lim; t += len) {
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-		if (IS_SET(MODE_UTF8) &amp;&amp; !IS_SET(MODE_SIXEL)) {
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-			len = utf8decode(t, &amp;u, n);
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-		} else {
+</a><a href="#h0-3-16" id="h0-3-16" class="d">-			u = *t &amp; 0xFF;
+</a><a href="#h0-3-17" id="h0-3-17" class="d">-			len = 1;
+</a><a href="#h0-3-18" id="h0-3-18" class="d">-		}
+</a><a href="#h0-3-19" id="h0-3-19" class="d">-		if (len &lt;= 0)
+</a><a href="#h0-3-20" id="h0-3-20" class="d">-			break;
+</a><a href="#h0-3-21" id="h0-3-21" class="d">-		techo(u);
+</a><a href="#h0-3-22" id="h0-3-22" class="d">-		n -= len;
+</a><a href="#h0-3-23" id="h0-3-23" class="d">-	}
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+	if (IS_SET(MODE_ECHO))
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+		twrite(s, n, 1);
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -2032,22 +1995,6 @@ tputtab(int n)
+</a> }
+ 
+ void
+<a href="#h0-4-3" id="h0-4-3" class="d">-techo(Rune u)
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-{
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-	if (ISCONTROL(u)) { /* control code */
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-		if (u &amp; 0x80) {
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-			u &amp;= 0x7f;
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-			tputc(&#39;^&#39;);
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-			tputc(&#39;[&#39;);
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-		} else if (u != &#39;\n&#39; &amp;&amp; u != &#39;\r&#39; &amp;&amp; u != &#39;\t&#39;) {
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-			u ^= 0x40;
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-			tputc(&#39;^&#39;);
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-		}
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-	}
+</a><a href="#h0-4-15" id="h0-4-15" class="d">-	tputc(u);
+</a><a href="#h0-4-16" id="h0-4-16" class="d">-}
+</a><a href="#h0-4-17" id="h0-4-17" class="d">-
+</a><a href="#h0-4-18" id="h0-4-18" class="d">-void
+</a> tdefutf8(char ascii)
+ {
+ 	if (ascii == &#39;G&#39;)
+<a href="#h0-5" id="h0-5" class="h">@@ -2437,6 +2384,38 @@ check_control_code:
+</a> 	}
+ }
+ 
+<a href="#h0-5-3" id="h0-5-3" class="i">+int
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+twrite(const char *buf, int buflen, int show_ctrl)
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+{
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+	int charsize;
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	Rune u;
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+	int n;
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+	for (n = 0; n &lt; buflen; n += charsize) {
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+		if (IS_SET(MODE_UTF8) &amp;&amp; !IS_SET(MODE_SIXEL)) {
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+			/* process a complete utf8 char */
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+			charsize = utf8decode(buf + n, &amp;u, buflen - n);
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+			if (charsize == 0)
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+				break;
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+		} else {
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+			u = buf[n] &amp; 0xFF;
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+			charsize = 1;
+</a><a href="#h0-5-19" id="h0-5-19" class="i">+		}
+</a><a href="#h0-5-20" id="h0-5-20" class="i">+		if (show_ctrl &amp;&amp; ISCONTROL(u)) {
+</a><a href="#h0-5-21" id="h0-5-21" class="i">+			if (u &amp; 0x80) {
+</a><a href="#h0-5-22" id="h0-5-22" class="i">+				u &amp;= 0x7f;
+</a><a href="#h0-5-23" id="h0-5-23" class="i">+				tputc(&#39;^&#39;);
+</a><a href="#h0-5-24" id="h0-5-24" class="i">+				tputc(&#39;[&#39;);
+</a><a href="#h0-5-25" id="h0-5-25" class="i">+			} else if (u != &#39;\n&#39; &amp;&amp; u != &#39;\r&#39; &amp;&amp; u != &#39;\t&#39;) {
+</a><a href="#h0-5-26" id="h0-5-26" class="i">+				u ^= 0x40;
+</a><a href="#h0-5-27" id="h0-5-27" class="i">+				tputc(&#39;^&#39;);
+</a><a href="#h0-5-28" id="h0-5-28" class="i">+			}
+</a><a href="#h0-5-29" id="h0-5-29" class="i">+		}
+</a><a href="#h0-5-30" id="h0-5-30" class="i">+		tputc(u);
+</a><a href="#h0-5-31" id="h0-5-31" class="i">+	}
+</a><a href="#h0-5-32" id="h0-5-32" class="i">+	return n;
+</a><a href="#h0-5-33" id="h0-5-33" class="i">+}
+</a><a href="#h0-5-34" id="h0-5-34" class="i">+
+</a> void
+ tresize(int col, int row)
+ {
+<b>diff --git a/<a id="h1" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -209,7 +209,7 @@ void selnormalize(void);
+</a> int selected(int, int);
+ char *getsel(void);
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-size_t utf8decode(char *, Rune *, size_t);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+size_t utf8decode(const char *, Rune *, size_t);
+</a> size_t utf8encode(Rune, char *);
+ 
+ void *xmalloc(size_t);
+</pre>
+</div>
+</body>
+</html>

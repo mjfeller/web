@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cleaning st.info. fixed cvvis. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c43526153fbe368351f6139f5e672e1798f6d2f1.html">c43526153fbe368351f6139f5e672e1798f6d2f1</a>
+<b>parent</b> <a href="../commit/58083da61f53cdcea2112bfe835f8aeebd44850b.html">58083da61f53cdcea2112bfe835f8aeebd44850b</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Fri,  3 Sep 2010 00:00:41 +0200
+
+cleaning st.info. fixed cvvis.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.info</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 16 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -855,7 +855,9 @@ csihandle(void) {
+</a> 				term.mode |= MODE_WRAP;
+ 				break;
+ 			case 12: /* att610 -- Start blinking cursor (IGNORED) */
+<a href="#h0-0-3" id="h0-0-3" class="d">-				break;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+				 /* fallthrough for xterm cvvis = CSI [ ? 12 ; 25 h */
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+				if(escseq.narg &gt; 1 &amp;&amp; escseq.arg[1] != 25)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+					break;
+</a> 			case 25:
+ 				term.c.state &amp;= ~CURSOR_HIDE;
+ 				break;
+<b>diff --git a/<a id="h1" href="../file/st.info.html">st.info</a> b/<a href="../file/st.info.html">st.info</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,7 +1,11 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+# unsupported xterm caps are (getting) commented. 
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+# as soon as they work, uncomment them.
+</a> st| simpleterm,
+ 	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+ 	am,
+<a href="#h1-0-5" id="h1-0-5" class="i">+#	bce,
+</a> 	bel=^G,
+<a href="#h1-0-7" id="h1-0-7" class="i">+#	blink=\E[5m
+</a> 	bold=\E[1m,
+ 	cbt=\E[Z,
+ 	civis=\E[?25l
+<a href="#h1-1" id="h1-1" class="h">@@ -11,11 +15,14 @@ st| simpleterm,
+</a> 	cols#80,
+ 	cr=^M,
+ 	csr=\E[%i%p1%d;%p2%dr,
+<a href="#h1-1-3" id="h1-1-3" class="d">-	cub1=\E[D,
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	cud1=\E[B,
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	cub1=^H,
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	cud1=^J,
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	cud=\E[%p1%dB,
+</a> 	cuf1=\E[C,
+<a href="#h1-1-9" id="h1-1-9" class="i">+	cuf=\E[%p1%dC,
+</a> 	cup=\E[%i%p1%d;%p2%dH,
+ 	cuu1=\E[A,
+<a href="#h1-1-12" id="h1-1-12" class="i">+	cuu=\E[%p1%dA,
+</a> 	dch1=\E[P,
+ 	dl1=\E[M,
+ 	ed=\E[J,
+<a href="#h1-2" id="h1-2" class="h">@@ -55,13 +62,16 @@ st| simpleterm,
+</a> 	ncv#3,
+ 	op=\E[37;40m,
+ 	pairs#64,
+<a href="#h1-2-3" id="h1-2-3" class="i">+	rc=\E8,
+</a> 	rev=\E[7m,
+ 	rmacs=\E(B,
+ 	rmso=\E[m,
+ 	rmul=\E[m,
+<a href="#h1-2-8" id="h1-2-8" class="i">+	sc=\E7,
+</a> 	setab=\E[4%p1%dm,
+ 	setaf=\E[3%p1%dm,
+ 	sgr0=\E[0m,
+<a href="#h1-2-12" id="h1-2-12" class="i">+	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m,
+</a> 	smacs=\E(0,
+ 	smso=\E[7m,
+ 	smul=\E[4m,
+<a href="#h1-3" id="h1-3" class="h">@@ -70,6 +80,7 @@ st| simpleterm,
+</a> 
+ st-256color| simpleterm with 256 colors,
+ 	colors#256,
+<a href="#h1-3-3" id="h1-3-3" class="i">+	pairs#32767,
+</a> #	Nicked from xterm-256color
+ 	setab=\E[%?%p1%{8}%&lt;%t4%p1%d%e%p1%{16}%&lt;%t10%p1%{8}%-%d%e48;5;%p1%d%;m,
+ 	setaf=\E[%?%p1%{8}%&lt;%t3%p1%d%e%p1%{16}%&lt;%t9%p1%{8}%-%d%e38;5;%p1%d%;m,
+</pre>
+</div>
+</body>
+</html>

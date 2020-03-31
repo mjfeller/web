@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implemented restack behavior (floats are on top in tiled mode) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d4b7a9a3735deeab639f28b5bb2f568e0dc49616.html">d4b7a9a3735deeab639f28b5bb2f568e0dc49616</a>
+<b>parent</b> <a href="../commit/4d67199a4bb68e5377d2fece62a83fde66c92861.html">4d67199a4bb68e5377d2fece62a83fde66c92861</a>
+<b>Author:</b> Anselm R.Garbe &lt;<a href="mailto:arg@10ksloc.org">arg@10ksloc.org</a>&gt;
+<b>Date:</b>   Mon, 14 Aug 2006 10:18:24 +0200
+
+implemented restack behavior (floats are on top in tiled mode)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">26</td><td><span class="i">++++++++</span><span class="d">------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">event.c</a></td><td> | </td><td class="num">9</td><td><span class="i">++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">tag.c</a></td><td> | </td><td class="num">64</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">util.c</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>6 files changed, 81 insertions(+), 34 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -59,8 +59,6 @@ focus(Client *c)
+</a> 		drawtitle(old);
+ 	drawtitle(c);
+ 	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	XSync(dpy, False);
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+</a> }
+ 
+ void
+<a href="#h0-1" id="h0-1" class="h">@@ -77,8 +75,8 @@ focusnext(Arg *arg)
+</a> 	if(!(c = getnext(sel-&gt;next)))
+ 		c = getnext(clients);
+ 	if(c) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-		higher(c);
+</a> 		focus(c);
+<a href="#h0-1-5" id="h0-1-5" class="i">+		restack();
+</a> 	}
+ }
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -98,8 +96,8 @@ focusprev(Arg *arg)
+</a> 		c = getprev(c);
+ 	}
+ 	if(c) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-		higher(c);
+</a> 		focus(c);
+<a href="#h0-2-5" id="h0-2-5" class="i">+		restack();
+</a> 	}
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -181,13 +179,6 @@ gravitate(Client *c, Bool invert)
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="d">-higher(Client *c)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-{
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	XRaiseWindow(dpy, c-&gt;win);
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-	XRaiseWindow(dpy, c-&gt;title);
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-}
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-void
+</a> killclient(Arg *arg)
+ {
+ 	if(!sel)
+<a href="#h0-4" id="h0-4" class="h">@@ -271,13 +262,12 @@ manage(Window w, XWindowAttributes *wa)
+</a> 			|| (c-&gt;maxw &amp;&amp; c-&gt;minw &amp;&amp;
+ 				c-&gt;maxw == c-&gt;minw &amp;&amp; c-&gt;maxh == c-&gt;minh);
+ 	settitle(c);
+<a href="#h0-4-3" id="h0-4-3" class="d">-	arrange(NULL);
+</a> 
+<a href="#h0-4-5" id="h0-4-5" class="d">-	/* mapping the window now prevents flicker */
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-	XMapRaised(dpy, c-&gt;win);
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-	XMapRaised(dpy, c-&gt;title);
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+	XMapWindow(dpy, c-&gt;win);
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+	XMapWindow(dpy, c-&gt;title);
+</a> 	if(isvisible(c))
+ 		focus(c);
+<a href="#h0-4-12" id="h0-4-12" class="i">+	arrange(NULL);
+</a> }
+ 
+ void
+<a href="#h0-5" id="h0-5" class="h">@@ -410,7 +400,7 @@ togglemax(Arg *arg)
+</a> 		sel-&gt;w = sw - 2;
+ 		sel-&gt;h = sh - 2 - bh;
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-		higher(sel);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		restack();
+</a> 		resize(sel, arrange == dofloat, TopLeft);
+ 
+ 		sel-&gt;x = ox;
+<a href="#h0-6" id="h0-6" class="h">@@ -446,9 +436,9 @@ unmanage(Client *c)
+</a> 	XSync(dpy, False);
+ 	XSetErrorHandler(xerror);
+ 	XUngrabServer(dpy);
+<a href="#h0-6-3" id="h0-6-3" class="d">-	arrange(NULL);
+</a> 	if(sel)
+ 		focus(sel);
+<a href="#h0-6-6" id="h0-6-6" class="i">+	arrange(NULL);
+</a> }
+ 
+ void
+<a href="#h0-7" id="h0-7" class="h">@@ -474,6 +464,6 @@ zoom(Arg *arg)
+</a> 	clients-&gt;prev = sel;
+ 	sel-&gt;next = clients;
+ 	clients = sel;
+<a href="#h0-7-3" id="h0-7-3" class="d">-	arrange(NULL);
+</a> 	focus(sel);
+<a href="#h0-7-5" id="h0-7-5" class="i">+	arrange(NULL);
+</a> }
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -36,11 +36,11 @@ prints version information to standard output, then exits.
+</a> .B Standard input
+ is read and displayed in the status text area.
+ .TP
+<a href="#h1-0-3" id="h1-0-3" class="d">-.B Button[1,3]
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+.B Button[1,2]
+</a> click on a tag label focuses that
+ .B tag.
+ .TP
+<a href="#h1-0-8" id="h1-0-8" class="d">-.B Button2
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+.B Button3
+</a> click on a tag label toggles that
+ .B tag.
+ .SS Keyboard commands
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -89,7 +89,6 @@ extern void focusprev(Arg *arg);
+</a> extern Client *getclient(Window w);
+ extern Client *getctitle(Window w);
+ extern void gravitate(Client *c, Bool invert);
+<a href="#h2-0-3" id="h2-0-3" class="d">-extern void higher(Client *c);
+</a> extern void killclient(Arg *arg);
+ extern void manage(Window w, XWindowAttributes *wa);
+ extern void resize(Client *c, Bool sizehints, Corner sticky);
+<a href="#h2-1" id="h2-1" class="h">@@ -125,6 +124,7 @@ extern Bool isvisible(Client *c);
+</a> extern Client *getnext(Client *c);
+ extern Client *getprev(Client *c);
+ extern void replacetag(Arg *arg);
+<a href="#h2-1-3" id="h2-1-3" class="i">+extern void restack();
+</a> extern void settags(Client *c);
+ extern void togglemode(Arg *arg);
+ extern void view(Arg *arg);
+<a href="#h2-2" id="h2-2" class="h">@@ -133,4 +133,5 @@ extern void toggleview(Arg *arg);
+</a> /* util.c */
+ extern void *emallocz(unsigned int size);
+ extern void eprint(const char *errstr, ...);
+<a href="#h2-2-3" id="h2-2-3" class="i">+extern void *erealloc(void *ptr, unsigned int size);
+</a> extern void spawn(Arg *arg);
+<b>diff --git a/<a id="h3" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -118,21 +118,24 @@ buttonpress(XEvent *e)
+</a> 		}
+ 	}
+ 	else if((c = getclient(ev-&gt;window))) {
+<a href="#h3-0-3" id="h3-0-3" class="d">-		higher(c);
+</a> 		focus(c);
+ 		switch(ev-&gt;button) {
+ 		default:
+ 			break;
+ 		case Button1:
+<a href="#h3-0-9" id="h3-0-9" class="d">-			if(!c-&gt;ismax &amp;&amp; (arrange == dofloat || c-&gt;isfloat))
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+			if(!c-&gt;ismax &amp;&amp; (arrange == dofloat || c-&gt;isfloat)) {
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+				restack(c);
+</a> 				movemouse(c);
+<a href="#h3-0-13" id="h3-0-13" class="i">+			}
+</a> 			break;
+ 		case Button2:
+ 			zoom(NULL);
+ 			break;
+ 		case Button3:
+<a href="#h3-0-19" id="h3-0-19" class="d">-			if(!c-&gt;ismax &amp;&amp; (arrange == dofloat || c-&gt;isfloat))
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+			if(!c-&gt;ismax &amp;&amp; (arrange == dofloat || c-&gt;isfloat)) {
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+				restack(c);
+</a> 				resizemouse(c);
+<a href="#h3-0-23" id="h3-0-23" class="i">+			}
+</a> 			break;
+ 		}
+ 	}
+<b>diff --git a/<a id="h4" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -58,18 +58,17 @@ dofloat(Arg *arg)
+</a> 			ban(c);
+ 	}
+ 	if((sel = getnext(clients))) {
+<a href="#h4-0-3" id="h4-0-3" class="d">-		higher(sel);
+</a> 		focus(sel);
+<a href="#h4-0-5" id="h4-0-5" class="i">+		restack();
+</a> 	}
+ 	else
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+<a href="#h4-0-9" id="h4-0-9" class="d">-	drawall();
+</a> }
+ 
+ void
+ dotile(Arg *arg)
+ {
+<a href="#h4-0-15" id="h4-0-15" class="d">-	int n, i, w, h;
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+	int h, i, n, w;
+</a> 	Client *c;
+ 
+ 	w = sw - mw;
+<a href="#h4-1" id="h4-1" class="h">@@ -86,7 +85,6 @@ dotile(Arg *arg)
+</a> 		c-&gt;ismax = False;
+ 		if(isvisible(c)) {
+ 			if(c-&gt;isfloat) {
+<a href="#h4-1-3" id="h4-1-3" class="d">-				higher(c);
+</a> 				resize(c, True, TopLeft);
+ 				continue;
+ 			}
+<a href="#h4-2" id="h4-2" class="h">@@ -123,13 +121,11 @@ dotile(Arg *arg)
+</a> 		else
+ 			ban(c);
+ 	}
+<a href="#h4-2-3" id="h4-2-3" class="d">-	if((sel = getnext(clients))) {
+</a><a href="#h4-2-4" id="h4-2-4" class="d">-		higher(sel);
+</a><a href="#h4-2-5" id="h4-2-5" class="i">+	if((sel = getnext(clients)))
+</a> 		focus(sel);
+<a href="#h4-2-7" id="h4-2-7" class="d">-	}
+</a> 	else
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+<a href="#h4-2-10" id="h4-2-10" class="d">-	drawall();
+</a><a href="#h4-2-11" id="h4-2-11" class="i">+	restack();
+</a> }
+ 
+ Client *
+<a href="#h4-3" id="h4-3" class="h">@@ -200,6 +196,56 @@ replacetag(Arg *arg)
+</a> }
+ 
+ void
+<a href="#h4-3-3" id="h4-3-3" class="i">+restack()
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+{
+</a><a href="#h4-3-5" id="h4-3-5" class="i">+	static unsigned int nwins = 0;
+</a><a href="#h4-3-6" id="h4-3-6" class="i">+	static Window *wins = NULL;
+</a><a href="#h4-3-7" id="h4-3-7" class="i">+	unsigned int f, fi, m, mi, n;
+</a><a href="#h4-3-8" id="h4-3-8" class="i">+	Client *c;
+</a><a href="#h4-3-9" id="h4-3-9" class="i">+	XEvent ev;
+</a><a href="#h4-3-10" id="h4-3-10" class="i">+
+</a><a href="#h4-3-11" id="h4-3-11" class="i">+	for(f = 0, m = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h4-3-12" id="h4-3-12" class="i">+		if(isvisible(c)) {
+</a><a href="#h4-3-13" id="h4-3-13" class="i">+			if(c-&gt;isfloat || arrange == dofloat)
+</a><a href="#h4-3-14" id="h4-3-14" class="i">+				f++;
+</a><a href="#h4-3-15" id="h4-3-15" class="i">+			else
+</a><a href="#h4-3-16" id="h4-3-16" class="i">+				m++;
+</a><a href="#h4-3-17" id="h4-3-17" class="i">+		}
+</a><a href="#h4-3-18" id="h4-3-18" class="i">+
+</a><a href="#h4-3-19" id="h4-3-19" class="i">+	n = 2 * (f + m);
+</a><a href="#h4-3-20" id="h4-3-20" class="i">+	if(nwins &lt; n) {
+</a><a href="#h4-3-21" id="h4-3-21" class="i">+		nwins = n;
+</a><a href="#h4-3-22" id="h4-3-22" class="i">+		wins = erealloc(wins, nwins * sizeof(Window));
+</a><a href="#h4-3-23" id="h4-3-23" class="i">+	}
+</a><a href="#h4-3-24" id="h4-3-24" class="i">+
+</a><a href="#h4-3-25" id="h4-3-25" class="i">+	fi = 0;
+</a><a href="#h4-3-26" id="h4-3-26" class="i">+	mi = 2 * f;
+</a><a href="#h4-3-27" id="h4-3-27" class="i">+	if(sel-&gt;isfloat || arrange == dofloat) {
+</a><a href="#h4-3-28" id="h4-3-28" class="i">+		wins[fi++] = sel-&gt;title;
+</a><a href="#h4-3-29" id="h4-3-29" class="i">+		wins[fi++] = sel-&gt;win;
+</a><a href="#h4-3-30" id="h4-3-30" class="i">+	}
+</a><a href="#h4-3-31" id="h4-3-31" class="i">+	else {
+</a><a href="#h4-3-32" id="h4-3-32" class="i">+		wins[mi++] = sel-&gt;title;
+</a><a href="#h4-3-33" id="h4-3-33" class="i">+		wins[mi++] = sel-&gt;win;
+</a><a href="#h4-3-34" id="h4-3-34" class="i">+	}
+</a><a href="#h4-3-35" id="h4-3-35" class="i">+	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h4-3-36" id="h4-3-36" class="i">+		if(isvisible(c) &amp;&amp; c != sel) {
+</a><a href="#h4-3-37" id="h4-3-37" class="i">+			if(c-&gt;isfloat || arrange == dofloat) {
+</a><a href="#h4-3-38" id="h4-3-38" class="i">+				wins[fi++] = c-&gt;title;
+</a><a href="#h4-3-39" id="h4-3-39" class="i">+				wins[fi++] = c-&gt;win;
+</a><a href="#h4-3-40" id="h4-3-40" class="i">+			}
+</a><a href="#h4-3-41" id="h4-3-41" class="i">+			else {
+</a><a href="#h4-3-42" id="h4-3-42" class="i">+				wins[mi++] = c-&gt;title;
+</a><a href="#h4-3-43" id="h4-3-43" class="i">+				wins[mi++] = c-&gt;win;
+</a><a href="#h4-3-44" id="h4-3-44" class="i">+			}
+</a><a href="#h4-3-45" id="h4-3-45" class="i">+		}
+</a><a href="#h4-3-46" id="h4-3-46" class="i">+	XRestackWindows(dpy, wins, n);
+</a><a href="#h4-3-47" id="h4-3-47" class="i">+	drawall();
+</a><a href="#h4-3-48" id="h4-3-48" class="i">+	XSync(dpy, False);
+</a><a href="#h4-3-49" id="h4-3-49" class="i">+	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+</a><a href="#h4-3-50" id="h4-3-50" class="i">+}
+</a><a href="#h4-3-51" id="h4-3-51" class="i">+
+</a><a href="#h4-3-52" id="h4-3-52" class="i">+void
+</a> settags(Client *c)
+ {
+ 	char classinst[256];
+<a href="#h4-4" id="h4-4" class="h">@@ -248,7 +294,6 @@ view(Arg *arg)
+</a> 		seltag[i] = False;
+ 	seltag[arg-&gt;i] = True;
+ 	arrange(NULL);
+<a href="#h4-4-3" id="h4-4-3" class="d">-	drawall();
+</a> }
+ 
+ void
+<a href="#h4-5" id="h4-5" class="h">@@ -261,5 +306,4 @@ toggleview(Arg *arg)
+</a> 	if(i == ntags)
+ 		seltag[arg-&gt;i] = True; /* cannot toggle last view */
+ 	arrange(NULL);
+<a href="#h4-5-3" id="h4-5-3" class="d">-	drawall();
+</a> }
+<b>diff --git a/<a id="h5" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -40,6 +40,15 @@ eprint(const char *errstr, ...)
+</a> 	exit(EXIT_FAILURE);
+ }
+ 
+<a href="#h5-0-3" id="h5-0-3" class="i">+void *
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+erealloc(void *ptr, unsigned int size)
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+{
+</a><a href="#h5-0-6" id="h5-0-6" class="i">+	void *res = realloc(ptr, size);
+</a><a href="#h5-0-7" id="h5-0-7" class="i">+	if(!res)
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+		bad_malloc(size);
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+	return res;
+</a><a href="#h5-0-10" id="h5-0-10" class="i">+}
+</a><a href="#h5-0-11" id="h5-0-11" class="i">+
+</a> void
+ spawn(Arg *arg)
+ {
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Sanders tiny patches - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/42277b111018c5e83cc867b04156511aa0914bf1.html">42277b111018c5e83cc867b04156511aa0914bf1</a>
+<b>parent</b> <a href="../commit/095f9e143eb1379631f6a0ffc6b923a6f7a687e2.html">095f9e143eb1379631f6a0ffc6b923a6f7a687e2</a>
+<b>Author:</b> Anselm R.Garbe &lt;<a href="mailto:arg@10ksloc.org">arg@10ksloc.org</a>&gt;
+<b>Date:</b>   Tue,  8 Aug 2006 09:30:45 +0200
+
+applied Sanders tiny patches
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.arg.h</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.html</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">main.c</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+</table></pre><pre>4 files changed, 8 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -19,7 +19,7 @@ options:
+</a> 	@echo CC $&lt;
+ 	@${CC} -c ${CFLAGS} $&lt;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-${OBJ}: dwm.h config.h
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+${OBJ}: dwm.h config.h config.mk
+</a> 
+ config.h:
+ 	@echo creating $@ from config.default.h
+<b>diff --git a/<a id="h1" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -28,8 +28,8 @@ static Key key[] = { \
+</a> 	{ MODKEY,		XK_l,		viewnext,	{ 0 } }, \
+ 	{ MODKEY,		XK_m,		togglemax,	{ 0 } }, \
+ 	{ MODKEY,		XK_p,		spawn, \
+<a href="#h1-0-3" id="h1-0-3" class="d">-		{ .cmd = &quot;exec `ls -lL /usr/bin /usr/local/bin 2&gt;/dev/null | \
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-			awk &#39;NF&gt;2 &amp;&amp; $1 ~ /^[^d].*x/ {print $NF}&#39; | sort | uniq | dmenu`&quot; } }, \
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+		{ .cmd = &quot;exec `ls -lL /usr/bin /usr/local/bin 2&gt;/dev/null | &quot; \
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+			&quot;awk &#39;NF&gt;2 &amp;&amp; $1 ~ /^[^d].*x/ {print $NF}&#39; | sort | uniq | dmenu`&quot; } }, \
+</a> 	{ MODKEY,		XK_space,	togglemode,	{ 0 } }, \
+ 	{ MODKEY,		XK_Return,	zoom,		{ 0 } }, \
+ 	{ MODKEY|ControlMask,	XK_1,		appendtag,	{ .i = 0 } }, \
+<a href="#h1-1" id="h1-1" class="h">@@ -41,8 +41,8 @@ static Key key[] = { \
+</a> 	{ MODKEY|ShiftMask,	XK_c,		killclient,	{ 0 } }, \
+ 	{ MODKEY|ShiftMask,	XK_q,		quit,		{ 0 } }, \
+ 	{ MODKEY|ShiftMask,	XK_Return,	spawn, \
+<a href="#h1-1-3" id="h1-1-3" class="d">-		{ .cmd = &quot;exec urxvt -bg &#39;#ffffea&#39; +sb \
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-			-fn &#39;-*-terminus-medium-*-*-*-12-*-*-*-*-*-iso10646-*&#39;&quot; } }, \
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+		{ .cmd = &quot;exec urxvt -bg &#39;#ffffea&#39; +sb &quot; \
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+			&quot;-fn &#39;-*-terminus-medium-*-*-*-12-*-*-*-*-*-iso10646-*&#39;&quot; } }, \
+</a> };
+ 
+ #define RULES \
+<b>diff --git a/<a id="h2" href="../file/dwm.html.html">dwm.html</a> b/<a href="../file/dwm.html.html">dwm.html</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -21,7 +21,7 @@
+</a> 		&lt;p&gt;
+ 		dwm is a dynamic window manager for X11.
+ 		&lt;/p&gt;
+<a href="#h2-0-3" id="h2-0-3" class="d">-		&lt;h4&gt;Philosophy&lt;/h4&gt;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+		&lt;h4&gt;Background&lt;/h4&gt;
+</a> 		&lt;p&gt;
+ 		As founder and main developer of wmii I came to the conclusion that
+ 		wmii is too clunky for my needs. I don&#39;t need so many funky features
+<b>diff --git a/<a id="h3" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -240,6 +240,8 @@ main(int argc, char *argv[])
+</a> 
+ 	dc.drawable = XCreatePixmap(dpy, root, sw, bh, DefaultDepth(dpy, screen));
+ 	dc.gc = XCreateGC(dpy, root, 0, 0);
+<a href="#h3-0-3" id="h3-0-3" class="i">+
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	strcpy(stext, &quot;dwm-&quot;VERSION);
+</a> 	drawstatus();
+ 
+ 	issel = XQueryPointer(dpy, root, &amp;w, &amp;w, &amp;i, &amp;i, &amp;i, &amp;i, &amp;mask);
+<a href="#h3-1" id="h3-1" class="h">@@ -248,7 +250,6 @@ main(int argc, char *argv[])
+</a> 	wa.cursor = cursor[CurNormal];
+ 	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &amp;wa);
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-	strcpy(stext, &quot;dwm-&quot;VERSION);
+</a> 	scan();
+ 
+ 	/* main event loop, also reads status text from stdin */
+</pre>
+</div>
+</body>
+</html>

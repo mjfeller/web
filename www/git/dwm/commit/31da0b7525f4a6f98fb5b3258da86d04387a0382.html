@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Gottox patch - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/31da0b7525f4a6f98fb5b3258da86d04387a0382.html">31da0b7525f4a6f98fb5b3258da86d04387a0382</a>
+<b>parent</b> <a href="../commit/12ea925076c4f1c013502651b0be90c05e0febac.html">12ea925076c4f1c013502651b0be90c05e0febac</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 19 Jun 2008 12:28:56 +0100
+
+applied Gottox patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">46</td><td><span class="i">+++++++++++++++++++++</span><span class="d">-------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 21 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -207,7 +207,7 @@ static void zoom(const Arg *arg);
+</a> static char stext[256];
+ static int screen, sx, sy, sw, sh;
+ static int by, bh, blw, wx, wy, ww, wh;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static uint seltags = 0;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static uint seltags = 0, sellt = 0;
+</a> static int (*xerrorxlib)(Display *, XErrorEvent *);
+ static uint numlockmask = 0;
+ static void (*handler[LASTEvent]) (XEvent *) = {
+<a href="#h0-1" id="h0-1" class="h">@@ -234,7 +234,7 @@ static Client *stack = NULL;
+</a> static Cursor cursor[CurLast];
+ static Display *dpy;
+ static DC dc = {0};
+<a href="#h0-1-3" id="h0-1-3" class="d">-static Layout *lt = NULL;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static Layout *lt[] = { NULL, NULL };
+</a> static Window root, barwin;
+ /* configuration, allows nested code to access above variables */
+ #include &quot;config.h&quot;
+<a href="#h0-2" id="h0-2" class="h">@@ -274,7 +274,7 @@ arrange(void) {
+</a> 
+ 	for(c = clients; c; c = c-&gt;next)
+ 		if(c-&gt;tags &amp; tagset[seltags]) { /* is visible */
+<a href="#h0-2-3" id="h0-2-3" class="d">-			if(!lt-&gt;arrange || c-&gt;isfloating)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			if(!lt[sellt]-&gt;arrange || c-&gt;isfloating)
+</a> 				resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+ 			c-&gt;isbanned = False;
+ 		}
+<a href="#h0-3" id="h0-3" class="h">@@ -284,8 +284,8 @@ arrange(void) {
+</a> 		}
+ 
+ 	focus(NULL);
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(lt-&gt;arrange)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		lt-&gt;arrange();
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if(lt[sellt]-&gt;arrange)
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		lt[sellt]-&gt;arrange();
+</a> 	restack();
+ }
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -355,7 +355,7 @@ cleanup(void) {
+</a> 
+ 	close(STDIN_FILENO);
+ 	view(&amp;a);
+<a href="#h0-4-3" id="h0-4-3" class="d">-	lt = &amp;foo;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	lt[sellt] = &amp;foo;
+</a> 	while(stack)
+ 		unmanage(stack);
+ 	if(dc.font.set)
+<a href="#h0-5" id="h0-5" class="h">@@ -413,7 +413,7 @@ configurerequest(XEvent *e) {
+</a> 	if((c = getclient(ev-&gt;window))) {
+ 		if(ev-&gt;value_mask &amp; CWBorderWidth)
+ 			c-&gt;bw = ev-&gt;border_width;
+<a href="#h0-5-3" id="h0-5-3" class="d">-		else if(c-&gt;isfloating || !lt-&gt;arrange) {
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		else if(c-&gt;isfloating || !lt[sellt]-&gt;arrange) {
+</a> 			if(ev-&gt;value_mask &amp; CWX)
+ 				c-&gt;x = sx + ev-&gt;x;
+ 			if(ev-&gt;value_mask &amp; CWY)
+<a href="#h0-6" id="h0-6" class="h">@@ -500,7 +500,7 @@ drawbar(void) {
+</a> 	}
+ 	if(blw &gt; 0) {
+ 		dc.w = blw;
+<a href="#h0-6-3" id="h0-6-3" class="d">-		drawtext(lt-&gt;symbol, dc.norm, False);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+		drawtext(lt[sellt]-&gt;symbol, dc.norm, False);
+</a> 		x = dc.x + dc.w;
+ 	}
+ 	else
+<a href="#h0-7" id="h0-7" class="h">@@ -1009,10 +1009,10 @@ movemouse(const Arg *arg) {
+</a> 					ny = wy;
+ 				else if(abs((wy + wh) - (ny + c-&gt;h + 2 * c-&gt;bw)) &lt; snap)
+ 					ny = wy + wh - c-&gt;h - 2 * c-&gt;bw;
+<a href="#h0-7-3" id="h0-7-3" class="d">-				if(!c-&gt;isfloating &amp;&amp; lt-&gt;arrange &amp;&amp; (abs(nx - c-&gt;x) &gt; snap || abs(ny - c-&gt;y) &gt; snap))
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+				if(!c-&gt;isfloating &amp;&amp; lt[sellt]-&gt;arrange &amp;&amp; (abs(nx - c-&gt;x) &gt; snap || abs(ny - c-&gt;y) &gt; snap))
+</a> 					togglefloating(NULL);
+ 			}
+<a href="#h0-7-7" id="h0-7-7" class="d">-			if(!lt-&gt;arrange || c-&gt;isfloating)
+</a><a href="#h0-7-8" id="h0-7-8" class="i">+			if(!lt[sellt]-&gt;arrange || c-&gt;isfloating)
+</a> 				resize(c, nx, ny, c-&gt;w, c-&gt;h, False);
+ 			break;
+ 		}
+<a href="#h0-8" id="h0-8" class="h">@@ -1166,11 +1166,11 @@ resizemouse(const Arg *arg) {
+</a> 
+ 			if(snap &amp;&amp; nw &gt;= wx &amp;&amp; nw &lt;= wx + ww
+ 			        &amp;&amp; nh &gt;= wy &amp;&amp; nh &lt;= wy + wh) {
+<a href="#h0-8-3" id="h0-8-3" class="d">-				if(!c-&gt;isfloating &amp;&amp; lt-&gt;arrange
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+				if(!c-&gt;isfloating &amp;&amp; lt[sellt]-&gt;arrange
+</a> 				   &amp;&amp; (abs(nw - c-&gt;w) &gt; snap || abs(nh - c-&gt;h) &gt; snap))
+ 					togglefloating(NULL);
+ 			}
+<a href="#h0-8-8" id="h0-8-8" class="d">-			if(!lt-&gt;arrange || c-&gt;isfloating)
+</a><a href="#h0-8-9" id="h0-8-9" class="i">+			if(!lt[sellt]-&gt;arrange || c-&gt;isfloating)
+</a> 				resize(c, c-&gt;x, c-&gt;y, nw, nh, True);
+ 			break;
+ 		}
+<a href="#h0-9" id="h0-9" class="h">@@ -1186,9 +1186,9 @@ restack(void) {
+</a> 	drawbar();
+ 	if(!sel)
+ 		return;
+<a href="#h0-9-3" id="h0-9-3" class="d">-	if(sel-&gt;isfloating || !lt-&gt;arrange)
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+	if(sel-&gt;isfloating || !lt[sellt]-&gt;arrange)
+</a> 		XRaiseWindow(dpy, sel-&gt;win);
+<a href="#h0-9-6" id="h0-9-6" class="d">-	if(lt-&gt;arrange) {
+</a><a href="#h0-9-7" id="h0-9-7" class="i">+	if(lt[sellt]-&gt;arrange) {
+</a> 		wc.stack_mode = Below;
+ 		wc.sibling = barwin;
+ 		for(c = stack; c; c = c-&gt;snext)
+<a href="#h0-10" id="h0-10" class="h">@@ -1298,14 +1298,9 @@ setclientstate(Client *c, long state) {
+</a> 
+ void
+ setlayout(const Arg *arg) {
+<a href="#h0-10-3" id="h0-10-3" class="d">-	static Layout *prevlt = &amp;layouts[1 % LENGTH(layouts)];
+</a><a href="#h0-10-4" id="h0-10-4" class="d">-
+</a><a href="#h0-10-5" id="h0-10-5" class="d">-	if(!arg || !arg-&gt;v || arg-&gt;v == lt)
+</a><a href="#h0-10-6" id="h0-10-6" class="d">-		lt = prevlt;
+</a><a href="#h0-10-7" id="h0-10-7" class="d">-	else {
+</a><a href="#h0-10-8" id="h0-10-8" class="d">-		prevlt = lt;
+</a><a href="#h0-10-9" id="h0-10-9" class="d">-		lt = (Layout *)arg-&gt;v;
+</a><a href="#h0-10-10" id="h0-10-10" class="d">-	}
+</a><a href="#h0-10-11" id="h0-10-11" class="i">+	sellt ^= 1;
+</a><a href="#h0-10-12" id="h0-10-12" class="i">+	if(arg &amp;&amp; arg-&gt;v &amp;&amp; arg-&gt;v != lt[sellt])
+</a><a href="#h0-10-13" id="h0-10-13" class="i">+		lt[sellt] = (Layout *)arg-&gt;v;
+</a> 	if(sel)
+ 		arrange();
+ 	else
+<a href="#h0-11" id="h0-11" class="h">@@ -1317,7 +1312,7 @@ void
+</a> setmfact(const Arg *arg) {
+ 	float f;
+ 
+<a href="#h0-11-3" id="h0-11-3" class="d">-	if(!arg || !lt-&gt;arrange)
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+	if(!arg || !lt[sellt]-&gt;arrange)
+</a> 		return;
+ 	f = arg-&gt;f &lt; 1.0 ? arg-&gt;f + mfact : arg-&gt;f - 1.0;
+ 	if(f &lt; 0.1 || f &gt; 0.9)
+<a href="#h0-12" id="h0-12" class="h">@@ -1341,7 +1336,8 @@ setup(void) {
+</a> 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+ 	bh = dc.h = dc.font.height + 2;
+<a href="#h0-12-3" id="h0-12-3" class="d">-	lt = layouts;
+</a><a href="#h0-12-4" id="h0-12-4" class="i">+	lt[0] = &amp;layouts[0];
+</a><a href="#h0-12-5" id="h0-12-5" class="i">+	lt[1] = &amp;layouts[1 % LENGTH(layouts)];
+</a> 	updategeom();
+ 
+ 	/* init atoms */
+<a href="#h0-13" id="h0-13" class="h">@@ -1691,7 +1687,7 @@ void
+</a> zoom(const Arg *arg) {
+ 	Client *c = sel;
+ 
+<a href="#h0-13-3" id="h0-13-3" class="d">-	if(!lt-&gt;arrange || lt-&gt;arrange == monocle || (sel &amp;&amp; sel-&gt;isfloating))
+</a><a href="#h0-13-4" id="h0-13-4" class="i">+	if(!lt[sellt]-&gt;arrange || lt[sellt]-&gt;arrange == monocle || (sel &amp;&amp; sel-&gt;isfloating))
+</a> 		return;
+ 	if(c == nexttiled(clients))
+ 		if(!c || !(c = nexttiled(c-&gt;next)))
+</pre>
+</div>
+</body>
+</html>

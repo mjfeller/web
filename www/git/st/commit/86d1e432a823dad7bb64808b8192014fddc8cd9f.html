@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Support XA_STRING in notify request - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/86d1e432a823dad7bb64808b8192014fddc8cd9f.html">86d1e432a823dad7bb64808b8192014fddc8cd9f</a>
+<b>parent</b> <a href="../commit/c7e24e44c8d66cd5b0a6b015d2112da5f1e4e581.html">c7e24e44c8d66cd5b0a6b015d2112da5f1e4e581</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Sun, 15 Mar 2015 18:07:46 +0000
+
+Support XA_STRING in notify request
+
+Some programs can only deal with XA_STRING, and it makes impossible st
+be able of copying to them. This patch makes st answer also to XA_STRING,
+althought it sends utf8 strings. It is not a problem because moderm
+applications must support utf8.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1089,7 +1089,11 @@ selrequest(XEvent *e) {
+</a> 				XA_ATOM, 32, PropModeReplace,
+ 				(uchar *) &amp;string, 1);
+ 		xev.property = xsre-&gt;property;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	} else if(xsre-&gt;target == sel.xtarget) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	} else if(xsre-&gt;target == sel.xtarget || xsre-&gt;target == XA_STRING) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		/*
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		 * xith XA_STRING non ascii characters may be incorrect in the
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		 * requestor. It is not our problem, use utf8.
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		 */
+</a> 		clipboard = XInternAtom(xw.dpy, &quot;CLIPBOARD&quot;, 0);
+ 		if(xsre-&gt;selection == XA_PRIMARY) {
+ 			seltext = sel.primary;
+</pre>
+</div>
+</body>
+</html>

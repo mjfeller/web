@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>backported drawtext() simplifications to dmenu - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cf7e4c15a97fa4e0921985d8e31bf9d6d4414b9a.html">cf7e4c15a97fa4e0921985d8e31bf9d6d4414b9a</a>
+<b>parent</b> <a href="../commit/c43c692a4db35c1527d1beb0edadef671588cb04.html">c43c692a4db35c1527d1beb0edadef671588cb04</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 18 Aug 2008 10:03:28 +0100
+
+backported drawtext() simplifications to dmenu
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.c</a></td><td> | </td><td class="num">31</td><td><span class="i">++++++++++</span><span class="d">---------------------</span></td></tr>
+</table></pre><pre>2 files changed, 11 insertions(+), 22 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,5 +1,5 @@
+</a> # dmenu version
+<a href="#h0-0-1" id="h0-0-1" class="d">-VERSION = 3.8
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+VERSION = 3.9
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h1" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -17,6 +17,7 @@
+</a> /* macros */
+ #define CLEANMASK(mask)         (mask &amp; ~(numlockmask | LockMask))
+ #define INRECT(X,Y,RX,RY,RW,RH) ((X) &gt;= (RX) &amp;&amp; (X) &lt; (RX) + (RW) &amp;&amp; (Y) &gt;= (RY) &amp;&amp; (Y) &lt; (RY) + (RH))
+<a href="#h1-0-3" id="h1-0-3" class="i">+#define MIN(a, b)               ((a) &lt; (b) ? (a) : (b))
+</a> 
+ /* enums */
+ enum { ColFG, ColBG, ColLast };
+<a href="#h1-1" id="h1-1" class="h">@@ -212,37 +213,25 @@ drawmenu(void) {
+</a> 
+ void
+ drawtext(const char *text, unsigned long col[ColLast]) {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	int x, y, w, h;
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	static char buf[256];
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	unsigned int len, olen;
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	int i, x, y, h, len, olen;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	char buf[256];
+</a> 	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+ 
+ 	XSetForeground(dpy, dc.gc, col[ColBG]);
+ 	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+ 	if(!text)
+ 		return;
+<a href="#h1-1-14" id="h1-1-14" class="d">-	w = 0;
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-	olen = len = strlen(text);
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-	if(len &gt;= sizeof buf)
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-		len = sizeof buf - 1;
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-	memcpy(buf, text, len);
+</a><a href="#h1-1-19" id="h1-1-19" class="d">-	buf[len] = 0;
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	olen = strlen(text);
+</a> 	h = dc.font.ascent + dc.font.descent;
+ 	y = dc.y + (dc.h / 2) - (h / 2) + dc.font.ascent;
+ 	x = dc.x + (h / 2);
+ 	/* shorten text if necessary */
+<a href="#h1-1-25" id="h1-1-25" class="d">-	while(len &amp;&amp; (w = textnw(buf, len)) &gt; dc.w - h)
+</a><a href="#h1-1-26" id="h1-1-26" class="d">-		buf[--len] = 0;
+</a><a href="#h1-1-27" id="h1-1-27" class="d">-	if(len &lt; olen) {
+</a><a href="#h1-1-28" id="h1-1-28" class="d">-		if(len &gt; 1)
+</a><a href="#h1-1-29" id="h1-1-29" class="d">-			buf[len - 1] = &#39;.&#39;;
+</a><a href="#h1-1-30" id="h1-1-30" class="d">-		if(len &gt; 2)
+</a><a href="#h1-1-31" id="h1-1-31" class="d">-			buf[len - 2] = &#39;.&#39;;
+</a><a href="#h1-1-32" id="h1-1-32" class="d">-		if(len &gt; 3)
+</a><a href="#h1-1-33" id="h1-1-33" class="d">-			buf[len - 3] = &#39;.&#39;;
+</a><a href="#h1-1-34" id="h1-1-34" class="d">-	}
+</a><a href="#h1-1-35" id="h1-1-35" class="d">-	if(w &gt; dc.w)
+</a><a href="#h1-1-36" id="h1-1-36" class="d">-		return; /* too long */
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+	for(len = MIN(olen, sizeof buf); len &amp;&amp; (i = textnw(buf, len)) &gt; dc.w - h; len--);
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+	if(!len)
+</a><a href="#h1-1-39" id="h1-1-39" class="i">+		return;
+</a><a href="#h1-1-40" id="h1-1-40" class="i">+	memcpy(buf, text, len);
+</a><a href="#h1-1-41" id="h1-1-41" class="i">+	if(len &lt; olen)
+</a><a href="#h1-1-42" id="h1-1-42" class="i">+		for(i = len; i &amp;&amp; i &gt; len - 3; buf[--i] = &#39;.&#39;);
+</a> 	XSetForeground(dpy, dc.gc, col[ColFG]);
+ 	if(dc.font.set)
+ 		XmbDrawString(dpy, dc.drawable, dc.font.set, dc.gc, x, y, buf, len);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Eckehard Berns fix fix, sorry that this took so long - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/51336aa4a38e82cc796edce790a989298e817a5a.html">51336aa4a38e82cc796edce790a989298e817a5a</a>
+<b>parent</b> <a href="../commit/c4b6ac812e09c2dd0bb57ff76e8528b26a6ee9fd.html">c4b6ac812e09c2dd0bb57ff76e8528b26a6ee9fd</a>
+<b>Author:</b> anselm@garbe.us &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Wed,  8 Feb 2012 19:54:05 +0100
+
+applied Eckehard Berns fix fix, sorry that this took so long
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">8</td><td><span class="i">+++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -397,9 +397,10 @@ arrange(Monitor *m) {
+</a> 		showhide(m-&gt;stack);
+ 	else for(m = mons; m; m = m-&gt;next)
+ 		showhide(m-&gt;stack);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if(m)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if(m) {
+</a> 		arrangemon(m);
+<a href="#h0-0-6" id="h0-0-6" class="d">-	else for(m = mons; m; m = m-&gt;next)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		restack(m);
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	} else for(m = mons; m; m = m-&gt;next)
+</a> 		arrangemon(m);
+ }
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -408,7 +409,6 @@ arrangemon(Monitor *m) {
+</a> 	strncpy(m-&gt;ltsymbol, m-&gt;lt[m-&gt;sellt]-&gt;symbol, sizeof m-&gt;ltsymbol);
+ 	if(m-&gt;lt[m-&gt;sellt]-&gt;arrange)
+ 		m-&gt;lt[m-&gt;sellt]-&gt;arrange(m);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	restack(m);
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -1420,6 +1420,8 @@ restack(Monitor *m) {
+</a> 	drawbar(m);
+ 	if(!m-&gt;sel)
+ 		return;
+<a href="#h0-2-3" id="h0-2-3" class="i">+	if(m-&gt;sel-&gt;isfloating || !m-&gt;lt[m-&gt;sellt]-&gt;arrange)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		XRaiseWindow(dpy, m-&gt;sel-&gt;win);
+</a> 	if(m-&gt;lt[m-&gt;sellt]-&gt;arrange) {
+ 		wc.stack_mode = Below;
+ 		wc.sibling = m-&gt;barwin;
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Making tabbed convert the title string to native. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2db44155243b40a56ea675ac526f982441c34c26.html">2db44155243b40a56ea675ac526f982441c34c26</a>
+<b>parent</b> <a href="../commit/66021e959ca27b9be90e1440592812345404a452.html">66021e959ca27b9be90e1440592812345404a452</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Wed, 16 Jan 2013 18:33:50 +0100
+
+Making tabbed convert the title string to native.
+
+Thanks &quot;Markus Wichmann&quot; &lt;nullplan@gmx.net&gt;!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">19</td><td><span class="i">++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 16 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -129,6 +129,7 @@ static void unmanage(int c);
+</a> static void updatenumlockmask(void);
+ static void updatetitle(int c);
+ static int xerror(Display *dpy, XErrorEvent *ee);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void xsettitle(Window w, const char *str);
+</a> 
+ /* variables */
+ static int screen;
+<a href="#h0-1" id="h0-1" class="h">@@ -423,7 +424,7 @@ focus(int c) {
+</a> 		for(i = 0, n = strlen(buf); cmd[i] &amp;&amp; n &lt; sizeof(buf); i++)
+ 			n += snprintf(&amp;buf[n], sizeof(buf) - n, &quot; %s&quot;, cmd[i]);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-		XStoreName(dpy, win, buf);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		xsettitle(win, buf);
+</a> 		XRaiseWindow(dpy, win);
+ 
+ 		return;
+<a href="#h0-2" id="h0-2" class="h">@@ -437,7 +438,7 @@ focus(int c) {
+</a> 	XSetInputFocus(dpy, clients[c]-&gt;win, RevertToParent, CurrentTime);
+ 	sendxembed(c, XEMBED_FOCUS_IN, XEMBED_FOCUS_CURRENT, 0, 0);
+ 	sendxembed(c, XEMBED_WINDOW_ACTIVATE, 0, 0, 0);
+<a href="#h0-2-3" id="h0-2-3" class="d">-	XStoreName(dpy, win, clients[c]-&gt;name);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	xsettitle(win, clients[c]-&gt;name);
+</a> 
+ 	/* If sel is already c, change nothing. */
+ 	if(sel != c) {
+<a href="#h0-3" id="h0-3" class="h">@@ -1051,7 +1052,7 @@ updatetitle(int c) {
+</a> 				clients[c]-&gt;name, sizeof(clients[c]-&gt;name));
+ 	}
+ 	if(sel == c)
+<a href="#h0-3-3" id="h0-3-3" class="d">-		XStoreName(dpy, win, clients[c]-&gt;name);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		xsettitle(win, clients[c]-&gt;name);
+</a> 	drawbar();
+ }
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -1085,6 +1086,18 @@ xerror(Display *dpy, XErrorEvent *ee) {
+</a> 	return xerrorxlib(dpy, ee); /* may call exit */
+ }
+ 
+<a href="#h0-4-3" id="h0-4-3" class="i">+void
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+xsettitle(Window w, const char *str) {
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	XTextProperty xtp;
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+	if(XmbTextListToTextProperty(dpy, (char **)&amp;str, 1, XCompoundTextStyle,
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+				&amp;xtp) == Success) {
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+		XSetTextProperty(dpy, w, &amp;xtp, wmatom[WMName]);
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+		XSetTextProperty(dpy, w, &amp;xtp, XA_WM_NAME);
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+		XFree(xtp.value);
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+	}
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+}
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+
+</a> char *argv0;
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

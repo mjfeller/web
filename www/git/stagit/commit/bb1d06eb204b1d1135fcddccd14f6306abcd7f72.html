@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>pedantic snprintf() improvement - stagit - static site generate for git repositories
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="stagit Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>stagit</h1><span class="desc">static site generate for git repositories
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bb1d06eb204b1d1135fcddccd14f6306abcd7f72.html">bb1d06eb204b1d1135fcddccd14f6306abcd7f72</a>
+<b>parent</b> <a href="../commit/587b01428d6ec2be1ab6b468198663118d483990.html">587b01428d6ec2be1ab6b468198663118d483990</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Sat,  9 Mar 2019 12:39:10 +0100
+
+pedantic snprintf() improvement
+
+POSIX says:
+&quot;If an output error was encountered, these functions shall return a negative
+value and set errno to indicate the error.&quot;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">stagit-index.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">stagit.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 4 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/stagit-index.c.html">stagit-index.c</a> b/<a href="../file/stagit-index.c.html">stagit-index.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -28,7 +28,7 @@ joinpath(char *buf, size_t bufsiz, const char *path, const char *path2)
+</a> 
+ 	r = snprintf(buf, bufsiz, &quot;%s%s%s&quot;,
+ 		path, path[0] &amp;&amp; path[strlen(path) - 1] != &#39;/&#39; ? &quot;/&quot; : &quot;&quot;, path2);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if (r == -1 || (size_t)r &gt;= bufsiz)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if (r &lt; 0 || (size_t)r &gt;= bufsiz)
+</a> 		errx(1, &quot;path truncated: &#39;%s%s%s&#39;&quot;,
+ 			path, path[0] &amp;&amp; path[strlen(path) - 1] != &#39;/&#39; ? &quot;/&quot; : &quot;&quot;, path2);
+ }
+<b>diff --git a/<a id="h1" href="../file/stagit.c.html">stagit.c</a> b/<a href="../file/stagit.c.html">stagit.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -76,7 +76,7 @@ joinpath(char *buf, size_t bufsiz, const char *path, const char *path2)
+</a> 
+ 	r = snprintf(buf, bufsiz, &quot;%s%s%s&quot;,
+ 		path, path[0] &amp;&amp; path[strlen(path) - 1] != &#39;/&#39; ? &quot;/&quot; : &quot;&quot;, path2);
+<a href="#h1-0-3" id="h1-0-3" class="d">-	if (r == -1 || (size_t)r &gt;= bufsiz)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	if (r &lt; 0 || (size_t)r &gt;= bufsiz)
+</a> 		errx(1, &quot;path truncated: &#39;%s%s%s&#39;&quot;,
+ 			path, path[0] &amp;&amp; path[strlen(path) - 1] != &#39;/&#39; ? &quot;/&quot; : &quot;&quot;, path2);
+ }
+<a href="#h1-1" id="h1-1" class="h">@@ -616,7 +616,7 @@ writelog(FILE *fp, const git_oid *oid)
+</a> 
+ 		git_oid_tostr(oidstr, sizeof(oidstr), &amp;id);
+ 		r = snprintf(path, sizeof(path), &quot;commit/%s.html&quot;, oidstr);
+<a href="#h1-1-3" id="h1-1-3" class="d">-		if (r == -1 || (size_t)r &gt;= sizeof(path))
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		if (r &lt; 0 || (size_t)r &gt;= sizeof(path))
+</a> 			errx(1, &quot;path truncated: &#39;commit/%s.html&#39;&quot;, oidstr);
+ 		r = access(path, F_OK);
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -856,7 +856,7 @@ writefilestree(FILE *fp, git_tree *tree, const char *path)
+</a> 
+ 		r = snprintf(filepath, sizeof(filepath), &quot;file/%s.html&quot;,
+ 		         entrypath);
+<a href="#h1-2-3" id="h1-2-3" class="d">-		if (r == -1 || (size_t)r &gt;= sizeof(filepath))
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		if (r &lt; 0 || (size_t)r &gt;= sizeof(filepath))
+</a> 			errx(1, &quot;path truncated: &#39;file/%s.html&#39;&quot;, entrypath);
+ 
+ 		if (!git_tree_entry_to_object(&amp;obj, repo, entry)) {
+</pre>
+</div>
+</body>
+</html>

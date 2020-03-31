@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied nsz&#39;s style.diff patch - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d7cc0f641664a7d5d005d34ccdde50cabf97bd55.html">d7cc0f641664a7d5d005d34ccdde50cabf97bd55</a>
+<b>parent</b> <a href="../commit/6b79f3f3266923292b0ad029c5e240349d9afa39.html">6b79f3f3266923292b0ad029c5e240349d9afa39</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 13 May 2008 14:33:02 +0100
+
+applied nsz&#39;s style.diff patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">27</td><td><span class="i">+++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 13 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -595,7 +595,7 @@ drawtext(const char *text, unsigned long col[ColLast], Bool invert) {
+</a> 	x = dc.x + (h / 2);
+ 	/* shorten text if necessary */
+ 	for(; len &amp;&amp; (w = textnw(buf, len)) &gt; dc.w - h; len--);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if (!len)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if(!len)
+</a> 		return;
+ 	if(len &lt; olen) {
+ 		if(len &gt; 1)
+<a href="#h0-1" id="h0-1" class="h">@@ -782,21 +782,21 @@ grabbuttons(Client *c, Bool focused) {
+</a> 	int i, j;
+ 	unsigned int buttons[]   = { Button1, Button2, Button3 };
+ 	unsigned int modifiers[] = { MODKEY, MODKEY|LockMask, MODKEY|numlockmask,
+<a href="#h0-1-3" id="h0-1-3" class="d">-	                             MODKEY|numlockmask|LockMask} ;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+				MODKEY|numlockmask|LockMask} ;
+</a> 
+ 	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+ 	if(focused)
+ 		for(i = 0; i &lt; LENGTH(buttons); i++)
+ 			for(j = 0; j &lt; LENGTH(modifiers); j++)
+ 				XGrabButton(dpy, buttons[i], modifiers[j], c-&gt;win, False,
+<a href="#h0-1-11" id="h0-1-11" class="d">-				            BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+					BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+</a> 	else
+ 		XGrabButton(dpy, AnyButton, AnyModifier, c-&gt;win, False,
+<a href="#h0-1-15" id="h0-1-15" class="d">-		            BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+			BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+</a> }
+ 
+ void
+<a href="#h0-1-20" id="h0-1-20" class="d">-grabkeys(void)  {
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+grabkeys(void) {
+</a> 	unsigned int i, j;
+ 	KeyCode code;
+ 	XModifierKeymap *modmap;
+<a href="#h0-2" id="h0-2" class="h">@@ -1041,7 +1041,7 @@ monocle(void) {
+</a> 	Client *c;
+ 
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h0-2-3" id="h0-2-3" class="d">-		if((lt-&gt;isfloating || !c-&gt;isfloating) &amp;&amp;  isvisible(c, NULL))
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		if((lt-&gt;isfloating || !c-&gt;isfloating) &amp;&amp; isvisible(c, NULL))
+</a> 			resize(c, wx, wy, ww - 2 * c-&gt;bw, wh - 2 * c-&gt;bw, RESIZEHINTS);
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -1055,7 +1055,7 @@ movemouse(Client *c) {
+</a> 	ocx = nx = c-&gt;x;
+ 	ocy = ny = c-&gt;y;
+ 	if(XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+<a href="#h0-3-3" id="h0-3-3" class="d">-			None, cursor[CurMove], CurrentTime) != GrabSuccess)
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	None, cursor[CurMove], CurrentTime) != GrabSuccess)
+</a> 		return;
+ 	XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x1, &amp;y1, &amp;di, &amp;di, &amp;dui);
+ 	for(;;) {
+<a href="#h0-4" id="h0-4" class="h">@@ -1221,7 +1221,7 @@ resizemouse(Client *c) {
+</a> 	ocx = c-&gt;x;
+ 	ocy = c-&gt;y;
+ 	if(XGrabPointer(dpy, root, False, MOUSEMASK, GrabModeAsync, GrabModeAsync,
+<a href="#h0-4-3" id="h0-4-3" class="d">-			None, cursor[CurResize], CurrentTime) != GrabSuccess)
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	None, cursor[CurResize], CurrentTime) != GrabSuccess)
+</a> 		return;
+ 	XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w + c-&gt;bw - 1, c-&gt;h + c-&gt;bw - 1);
+ 	for(;;) {
+<a href="#h0-5" id="h0-5" class="h">@@ -1351,7 +1351,7 @@ scan(void) {
+</a> 	if(XQueryTree(dpy, root, &amp;d1, &amp;d2, &amp;wins, &amp;num)) {
+ 		for(i = 0; i &lt; num; i++) {
+ 			if(!XGetWindowAttributes(dpy, wins[i], &amp;wa)
+<a href="#h0-5-3" id="h0-5-3" class="d">-					|| wa.override_redirect || XGetTransientForHint(dpy, wins[i], &amp;d1))
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+			|| wa.override_redirect || XGetTransientForHint(dpy, wins[i], &amp;d1))
+</a> 				continue;
+ 			if(wa.map_state == IsViewable || getstate(wins[i]) == IconicState)
+ 				manage(wins[i], &amp;wa);
+<a href="#h0-6" id="h0-6" class="h">@@ -1360,7 +1360,7 @@ scan(void) {
+</a> 			if(!XGetWindowAttributes(dpy, wins[i], &amp;wa))
+ 				continue;
+ 			if(XGetTransientForHint(dpy, wins[i], &amp;d1)
+<a href="#h0-6-3" id="h0-6-3" class="d">-					&amp;&amp; (wa.map_state == IsViewable || getstate(wins[i]) == IconicState))
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+			&amp;&amp; (wa.map_state == IsViewable || getstate(wins[i]) == IconicState))
+</a> 				manage(wins[i], &amp;wa);
+ 		}
+ 	}
+<a href="#h0-7" id="h0-7" class="h">@@ -1479,8 +1479,8 @@ setup(void) {
+</a> 	wa.event_mask = ButtonPressMask|ExposureMask;
+ 
+ 	barwin = XCreateWindow(dpy, root, bx, by, bw, bh, 0, DefaultDepth(dpy, screen),
+<a href="#h0-7-3" id="h0-7-3" class="d">-				CopyFromParent, DefaultVisual(dpy, screen),
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-				CWOverrideRedirect|CWBackPixmap|CWEventMask, &amp;wa);
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+			CopyFromParent, DefaultVisual(dpy, screen),
+</a><a href="#h0-7-6" id="h0-7-6" class="i">+			CWOverrideRedirect|CWBackPixmap|CWEventMask, &amp;wa);
+</a> 	XDefineCursor(dpy, barwin, cursor[CurNormal]);
+ 	XMapRaised(dpy, barwin);
+ 	strcpy(stext, &quot;dwm-&quot;VERSION);
+<a href="#h0-8" id="h0-8" class="h">@@ -1704,7 +1704,6 @@ unmapnotify(XEvent *e) {
+</a> 
+ void
+ updatebar(void) {
+<a href="#h0-8-3" id="h0-8-3" class="d">-
+</a> 	if(dc.drawable != 0)
+ 		XFreePixmap(dpy, dc.drawable);
+ 	dc.drawable = XCreatePixmap(dpy, root, bw, bh, DefaultDepth(dpy, screen));
+<a href="#h0-9" id="h0-9" class="h">@@ -1839,7 +1838,7 @@ xerror(Display *dpy, XErrorEvent *ee) {
+</a> 	|| (ee-&gt;request_code == X_CopyArea &amp;&amp; ee-&gt;error_code == BadDrawable))
+ 		return 0;
+ 	fprintf(stderr, &quot;dwm: fatal error: request code=%d, error code=%d\n&quot;,
+<a href="#h0-9-3" id="h0-9-3" class="d">-		ee-&gt;request_code, ee-&gt;error_code);
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+			ee-&gt;request_code, ee-&gt;error_code);
+</a> 	return xerrorxlib(dpy, ee); /* may call exit */
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

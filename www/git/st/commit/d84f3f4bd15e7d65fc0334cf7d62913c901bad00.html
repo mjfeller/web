@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Rely on ttyresize to set tty size - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d84f3f4bd15e7d65fc0334cf7d62913c901bad00.html">d84f3f4bd15e7d65fc0334cf7d62913c901bad00</a>
+<b>parent</b> <a href="../commit/8b564c1a3f51c08e64c2f589852a02b8595d44ca.html">8b564c1a3f51c08e64c2f589852a02b8595d44ca</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 21 Feb 2018 22:28:41 -0600
+
+Rely on ttyresize to set tty size
+
+This removes ttynew&#39;s dependency on cresize being called first, and then
+allows us to absorb the ttyresize call into cresize (which always
+precedes it).
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">x.c</a></td><td> | </td><td class="num">6</td><td><span class="i">++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 3 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -670,7 +670,6 @@ void
+</a> ttynew(char *line, char *out, char **args)
+ {
+ 	int m, s;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	struct winsize w = {term.row, term.col, 0, 0};
+</a> 
+ 	if (out) {
+ 		term.mode |= MODE_PRINT;
+<a href="#h0-1" id="h0-1" class="h">@@ -691,7 +690,7 @@ ttynew(char *line, char *out, char **args)
+</a> 	}
+ 
+ 	/* seems to work fine on linux, openbsd and freebsd */
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if (openpty(&amp;m, &amp;s, NULL, NULL, &amp;w) &lt; 0)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if (openpty(&amp;m, &amp;s, NULL, NULL, NULL) &lt; 0)
+</a> 		die(&quot;openpty failed: %s\n&quot;, strerror(errno));
+ 
+ 	switch (pid = fork()) {
+<b>diff --git a/<a id="h1" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -276,7 +276,6 @@ zoomabs(const Arg *arg)
+</a> 	xunloadfonts();
+ 	xloadfonts(usedfont, arg-&gt;f);
+ 	cresize(0, 0);
+<a href="#h1-0-3" id="h1-0-3" class="d">-	ttyresize(win.tw, win.th);
+</a> 	redraw();
+ 	xhints();
+ }
+<a href="#h1-1" id="h1-1" class="h">@@ -695,6 +694,7 @@ cresize(int width, int height)
+</a> 
+ 	tresize(col, row);
+ 	xresize(col, row);
+<a href="#h1-1-3" id="h1-1-3" class="i">+	ttyresize(win.tw, win.th);
+</a> }
+ 
+ void
+<a href="#h1-2" id="h1-2" class="h">@@ -1794,7 +1794,6 @@ resize(XEvent *e)
+</a> 		return;
+ 
+ 	cresize(e-&gt;xconfigure.width, e-&gt;xconfigure.height);
+<a href="#h1-2-3" id="h1-2-3" class="d">-	ttyresize(win.tw, win.th);
+</a> }
+ 
+ void
+<a href="#h1-3" id="h1-3" class="h">@@ -1823,9 +1822,8 @@ run(void)
+</a> 		}
+ 	} while (ev.type != MapNotify);
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-	cresize(w, h);
+</a> 	ttynew(opt_line, opt_io, opt_cmd);
+<a href="#h1-3-5" id="h1-3-5" class="d">-	ttyresize(win.tw, win.th);
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+	cresize(w, h);
+</a> 
+ 	clock_gettime(CLOCK_MONOTONIC, &amp;last);
+ 	lastblink = last;
+</pre>
+</div>
+</body>
+</html>

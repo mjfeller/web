@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>simplified dwm - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d5178292edebb0db2cf9f22aaf1a8effe7529aae.html">d5178292edebb0db2cf9f22aaf1a8effe7529aae</a>
+<b>parent</b> <a href="../commit/2bfd3fffbf5c913acfb7f56bdd7a29dc39d6d5d5.html">2bfd3fffbf5c913acfb7f56bdd7a29dc39d6d5d5</a>
+<b>Author:</b> anselm@anselm1 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Tue, 26 Feb 2008 22:51:23 +0000
+
+simplified dwm
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">174</td><td><span class="i">++++++++++++++++++++++++++++</span><span class="d">---------------------------------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 65 insertions(+), 115 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,8 +15,8 @@
+</a> const char tags[][MAXTAGLEN] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;www&quot; };
+ int initags[LENGTH(tags)]    = { [0] = 1 };
+ Rule rules[] = {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	/* class:instance:title regex	tags regex	isfloating */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ &quot;Firefox&quot;,			&quot;www&quot;,		False },
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	/* class:instance:title substr	tags ref	isfloating */
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	{ &quot;Firefox&quot;,			tags[8],	False },
+</a> 	{ &quot;Gimp&quot;,			NULL,		True },
+ 	{ &quot;MPlayer&quot;,			NULL,		True },
+ 	{ &quot;Acroread&quot;,			NULL,		True },
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -17,7 +17,7 @@ LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lXinerama
+</a> # flags
+ CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+ LDFLAGS = -s ${LIBS}
+<a href="#h1-0-3" id="h1-0-3" class="d">-CFLAGS = -g -std=c99 -pedantic -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+CFLAGS = -g -std=c99 -pedantic -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;  -DAIM_XINERAMA
+</a> LDFLAGS = -g ${LIBS}
+ 
+ # Solaris
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -106,15 +106,10 @@ typedef struct {
+</a> 
+ typedef struct {
+ 	const char *prop;
+<a href="#h2-0-3" id="h2-0-3" class="d">-	const char *tags;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	const char *tag;
+</a> 	Bool isfloating;
+ } Rule;
+ 
+<a href="#h2-0-8" id="h2-0-8" class="d">-typedef struct {
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-	regex_t *propregex;
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-	regex_t *tagregex;
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-} Regs;
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-
+</a> struct View {
+ 	int id;
+ 	int x, y, w, h, wax, way, wah, waw;
+<a href="#h2-1" id="h2-1" class="h">@@ -132,7 +127,6 @@ void ban(Client *c);
+</a> void buttonpress(XEvent *e);
+ void checkotherwm(void);
+ void cleanup(void);
+<a href="#h2-1-3" id="h2-1-3" class="d">-void compileregs(void);
+</a> void configure(Client *c);
+ void configurenotify(XEvent *e);
+ void configurerequest(XEvent *e);
+<a href="#h2-2" id="h2-2" class="h">@@ -210,7 +204,7 @@ void zoom(const char *arg);
+</a> void selectview(const char *arg);
+ 
+ /* variables */
+<a href="#h2-2-3" id="h2-2-3" class="d">-char stext[256];
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+char stext[256], buf[256];
+</a> int nviews = 1;
+ View *selview;
+ int screen;
+<a href="#h2-3" id="h2-3" class="h">@@ -246,7 +240,6 @@ Client *stack = NULL;
+</a> Cursor cursor[CurLast];
+ Display *dpy;
+ DC dc = {0};
+<a href="#h2-3-3" id="h2-3-3" class="d">-Regs *regs = NULL;
+</a> View *views;
+ Window root;
+ 
+<a href="#h2-4" id="h2-4" class="h">@@ -256,10 +249,9 @@ Window root;
+</a> /* function implementations */
+ void
+ applyrules(Client *c) {
+<a href="#h2-4-3" id="h2-4-3" class="d">-	static char buf[512];
+</a><a href="#h2-4-4" id="h2-4-4" class="d">-	unsigned int i, j;
+</a><a href="#h2-4-5" id="h2-4-5" class="d">-	regmatch_t tmp;
+</a><a href="#h2-4-6" id="h2-4-6" class="i">+	unsigned int i;
+</a> 	Bool matched_tag = False;
+<a href="#h2-4-8" id="h2-4-8" class="i">+	Rule *r;
+</a> 	XClassHint ch = { 0 };
+ 
+ 	/* rule matching */
+<a href="#h2-5" id="h2-5" class="h">@@ -267,16 +259,19 @@ applyrules(Client *c) {
+</a> 	snprintf(buf, sizeof buf, &quot;%s:%s:%s&quot;,
+ 			ch.res_class ? ch.res_class : &quot;&quot;,
+ 			ch.res_name ? ch.res_name : &quot;&quot;, c-&gt;name);
+<a href="#h2-5-3" id="h2-5-3" class="d">-	for(i = 0; i &lt; LENGTH(rules); i++)
+</a><a href="#h2-5-4" id="h2-5-4" class="d">-		if(regs[i].propregex &amp;&amp; !regexec(regs[i].propregex, buf, 1, &amp;tmp, 0)) {
+</a><a href="#h2-5-5" id="h2-5-5" class="d">-			c-&gt;isfloating = rules[i].isfloating;
+</a><a href="#h2-5-6" id="h2-5-6" class="d">-			for(j = 0; regs[i].tagregex &amp;&amp; j &lt; LENGTH(tags); j++) {
+</a><a href="#h2-5-7" id="h2-5-7" class="d">-				if(!regexec(regs[i].tagregex, tags[j], 1, &amp;tmp, 0)) {
+</a><a href="#h2-5-8" id="h2-5-8" class="d">-					matched_tag = True;
+</a><a href="#h2-5-9" id="h2-5-9" class="d">-					c-&gt;tags[j] = selview-&gt;id;
+</a><a href="#h2-5-10" id="h2-5-10" class="d">-				}
+</a><a href="#h2-5-11" id="h2-5-11" class="i">+	for(i = 0; i &lt; LENGTH(rules); i++) {
+</a><a href="#h2-5-12" id="h2-5-12" class="i">+		r = &amp;rules[i];
+</a><a href="#h2-5-13" id="h2-5-13" class="i">+		if(strstr(c-&gt;name, r-&gt;prop)
+</a><a href="#h2-5-14" id="h2-5-14" class="i">+		|| (ch.res_class &amp;&amp; strstr(ch.res_class, r-&gt;prop))
+</a><a href="#h2-5-15" id="h2-5-15" class="i">+		|| (ch.res_name &amp;&amp; strstr(ch.res_name, r-&gt;prop)))
+</a><a href="#h2-5-16" id="h2-5-16" class="i">+		{
+</a><a href="#h2-5-17" id="h2-5-17" class="i">+			c-&gt;isfloating = r-&gt;isfloating;
+</a><a href="#h2-5-18" id="h2-5-18" class="i">+			if(r-&gt;tag) {
+</a><a href="#h2-5-19" id="h2-5-19" class="i">+				matched_tag = True;
+</a><a href="#h2-5-20" id="h2-5-20" class="i">+				c-&gt;tags[idxoftag(r-&gt;tag)] = selview-&gt;id;
+</a> 			}
+ 		}
+<a href="#h2-5-23" id="h2-5-23" class="i">+	}
+</a> 	if(ch.res_class)
+ 		XFree(ch.res_class);
+ 	if(ch.res_name)
+<a href="#h2-6" id="h2-6" class="h">@@ -421,32 +416,6 @@ cleanup(void) {
+</a> }
+ 
+ void
+<a href="#h2-6-3" id="h2-6-3" class="d">-compileregs(void) {
+</a><a href="#h2-6-4" id="h2-6-4" class="d">-	unsigned int i;
+</a><a href="#h2-6-5" id="h2-6-5" class="d">-	regex_t *reg;
+</a><a href="#h2-6-6" id="h2-6-6" class="d">-
+</a><a href="#h2-6-7" id="h2-6-7" class="d">-	if(regs)
+</a><a href="#h2-6-8" id="h2-6-8" class="d">-		return;
+</a><a href="#h2-6-9" id="h2-6-9" class="d">-	regs = emallocz(LENGTH(rules) * sizeof(Regs));
+</a><a href="#h2-6-10" id="h2-6-10" class="d">-	for(i = 0; i &lt; LENGTH(rules); i++) {
+</a><a href="#h2-6-11" id="h2-6-11" class="d">-		if(rules[i].prop) {
+</a><a href="#h2-6-12" id="h2-6-12" class="d">-			reg = emallocz(sizeof(regex_t));
+</a><a href="#h2-6-13" id="h2-6-13" class="d">-			if(regcomp(reg, rules[i].prop, REG_EXTENDED))
+</a><a href="#h2-6-14" id="h2-6-14" class="d">-				free(reg);
+</a><a href="#h2-6-15" id="h2-6-15" class="d">-			else
+</a><a href="#h2-6-16" id="h2-6-16" class="d">-				regs[i].propregex = reg;
+</a><a href="#h2-6-17" id="h2-6-17" class="d">-		}
+</a><a href="#h2-6-18" id="h2-6-18" class="d">-		if(rules[i].tags) {
+</a><a href="#h2-6-19" id="h2-6-19" class="d">-			reg = emallocz(sizeof(regex_t));
+</a><a href="#h2-6-20" id="h2-6-20" class="d">-			if(regcomp(reg, rules[i].tags, REG_EXTENDED))
+</a><a href="#h2-6-21" id="h2-6-21" class="d">-				free(reg);
+</a><a href="#h2-6-22" id="h2-6-22" class="d">-			else
+</a><a href="#h2-6-23" id="h2-6-23" class="d">-				regs[i].tagregex = reg;
+</a><a href="#h2-6-24" id="h2-6-24" class="d">-		}
+</a><a href="#h2-6-25" id="h2-6-25" class="d">-	}
+</a><a href="#h2-6-26" id="h2-6-26" class="d">-}
+</a><a href="#h2-6-27" id="h2-6-27" class="d">-
+</a><a href="#h2-6-28" id="h2-6-28" class="d">-void
+</a> configure(Client *c) {
+ 	XConfigureEvent ce;
+ 
+<a href="#h2-7" id="h2-7" class="h">@@ -624,7 +593,6 @@ drawsquare(View *v, Bool filled, Bool empty, Bool invert, unsigned long col[ColL
+</a> void
+ drawtext(View *v, const char *text, unsigned long col[ColLast], Bool invert) {
+ 	int x, y, w, h;
+<a href="#h2-7-3" id="h2-7-3" class="d">-	static char buf[256];
+</a> 	unsigned int len, olen;
+ 	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+ 
+<a href="#h2-8" id="h2-8" class="h">@@ -1147,21 +1115,6 @@ maprequest(XEvent *e) {
+</a> 		manage(ev-&gt;window, &amp;wa);
+ }
+ 
+<a href="#h2-8-3" id="h2-8-3" class="d">-View *
+</a><a href="#h2-8-4" id="h2-8-4" class="d">-viewat() {
+</a><a href="#h2-8-5" id="h2-8-5" class="d">-	int i, x, y;
+</a><a href="#h2-8-6" id="h2-8-6" class="d">-	Window win;
+</a><a href="#h2-8-7" id="h2-8-7" class="d">-	unsigned int mask;
+</a><a href="#h2-8-8" id="h2-8-8" class="d">-
+</a><a href="#h2-8-9" id="h2-8-9" class="d">-	XQueryPointer(dpy, root, &amp;win, &amp;win, &amp;x, &amp;y, &amp;i, &amp;i, &amp;mask);
+</a><a href="#h2-8-10" id="h2-8-10" class="d">-	for(i = 0; i &lt; nviews; i++) {
+</a><a href="#h2-8-11" id="h2-8-11" class="d">-		if((x &gt;= views[i].x &amp;&amp; x &lt; views[i].x + views[i].w)
+</a><a href="#h2-8-12" id="h2-8-12" class="d">-		&amp;&amp; (y &gt;= views[i].y &amp;&amp; y &lt; views[i].y + views[i].h))
+</a><a href="#h2-8-13" id="h2-8-13" class="d">-			return &amp;views[i];
+</a><a href="#h2-8-14" id="h2-8-14" class="d">-	}
+</a><a href="#h2-8-15" id="h2-8-15" class="d">-	return NULL;
+</a><a href="#h2-8-16" id="h2-8-16" class="d">-}
+</a><a href="#h2-8-17" id="h2-8-17" class="d">-
+</a> void
+ movemouse(Client *c) {
+ 	int x1, y1, ocx, ocy, di, nx, ny;
+<a href="#h2-9" id="h2-9" class="h">@@ -1406,7 +1359,7 @@ restack(View *v) {
+</a> void
+ run(void) {
+ 	char *p;
+<a href="#h2-9-3" id="h2-9-3" class="d">-	char buf[sizeof stext];
+</a><a href="#h2-9-4" id="h2-9-4" class="i">+	char sbuf[sizeof stext];
+</a> 	fd_set rd;
+ 	int r, xfd;
+ 	unsigned int len, offset;
+<a href="#h2-10" id="h2-10" class="h">@@ -1418,7 +1371,7 @@ run(void) {
+</a> 	readin = True;
+ 	offset = 0;
+ 	len = sizeof stext - 1;
+<a href="#h2-10-3" id="h2-10-3" class="d">-	buf[len] = stext[len] = &#39;\0&#39;; /* 0-terminator is never touched */
+</a><a href="#h2-10-4" id="h2-10-4" class="i">+	sbuf[len] = stext[len] = &#39;\0&#39;; /* 0-terminator is never touched */
+</a> 	while(running) {
+ 		FD_ZERO(&amp;rd);
+ 		if(readin)
+<a href="#h2-11" id="h2-11" class="h">@@ -1430,7 +1383,7 @@ run(void) {
+</a> 			eprint(&quot;select failed\n&quot;);
+ 		}
+ 		if(FD_ISSET(STDIN_FILENO, &amp;rd)) {
+<a href="#h2-11-3" id="h2-11-3" class="d">-			switch((r = read(STDIN_FILENO, buf + offset, len - offset))) {
+</a><a href="#h2-11-4" id="h2-11-4" class="i">+			switch((r = read(STDIN_FILENO, sbuf + offset, len - offset))) {
+</a> 			case -1:
+ 				strncpy(stext, strerror(errno), len);
+ 				readin = False;
+<a href="#h2-12" id="h2-12" class="h">@@ -1440,15 +1393,15 @@ run(void) {
+</a> 				readin = False;
+ 				break;
+ 			default:
+<a href="#h2-12-3" id="h2-12-3" class="d">-				for(p = buf + offset; r &gt; 0; p++, r--, offset++)
+</a><a href="#h2-12-4" id="h2-12-4" class="i">+				for(p = sbuf + offset; r &gt; 0; p++, r--, offset++)
+</a> 					if(*p == &#39;\n&#39; || *p == &#39;\0&#39;) {
+ 						*p = &#39;\0&#39;;
+<a href="#h2-12-7" id="h2-12-7" class="d">-						strncpy(stext, buf, len);
+</a><a href="#h2-12-8" id="h2-12-8" class="d">-						p += r - 1; /* p is buf + offset + r - 1 */
+</a><a href="#h2-12-9" id="h2-12-9" class="i">+						strncpy(stext, sbuf, len);
+</a><a href="#h2-12-10" id="h2-12-10" class="i">+						p += r - 1; /* p is sbuf + offset + r - 1 */
+</a> 						for(r = 0; *(p - r) &amp;&amp; *(p - r) != &#39;\n&#39;; r++);
+ 						offset = r;
+ 						if(r)
+<a href="#h2-12-14" id="h2-12-14" class="d">-							memmove(buf, p - r + 1, r);
+</a><a href="#h2-12-15" id="h2-12-15" class="i">+							memmove(sbuf, p - r + 1, r);
+</a> 						break;
+ 					}
+ 				break;
+<a href="#h2-13" id="h2-13" class="h">@@ -1666,9 +1619,6 @@ v-&gt;h = DisplayHeight(dpy, screen);
+</a> 	/* grab keys */
+ 	grabkeys();
+ 
+<a href="#h2-13-3" id="h2-13-3" class="d">-	/* init tags */
+</a><a href="#h2-13-4" id="h2-13-4" class="d">-	compileregs();
+</a><a href="#h2-13-5" id="h2-13-5" class="d">-
+</a> 	selview = &amp;views[0];
+ }
+ 
+<a href="#h2-14" id="h2-14" class="h">@@ -1950,6 +1900,46 @@ updatewmhints(Client *c) {
+</a> 	}
+ }
+ 
+<a href="#h2-14-3" id="h2-14-3" class="i">+void
+</a><a href="#h2-14-4" id="h2-14-4" class="i">+view(const char *arg) {
+</a><a href="#h2-14-5" id="h2-14-5" class="i">+	unsigned int i;
+</a><a href="#h2-14-6" id="h2-14-6" class="i">+	int tmp[LENGTH(tags)];
+</a><a href="#h2-14-7" id="h2-14-7" class="i">+
+</a><a href="#h2-14-8" id="h2-14-8" class="i">+	for(i = 0; i &lt; LENGTH(tags); i++)
+</a><a href="#h2-14-9" id="h2-14-9" class="i">+		tmp[i] = (NULL == arg) ? selview-&gt;id : 0;
+</a><a href="#h2-14-10" id="h2-14-10" class="i">+	tmp[idxoftag(arg)] = selview-&gt;id;
+</a><a href="#h2-14-11" id="h2-14-11" class="i">+	if(memcmp(seltags, tmp, sizeof initags) != 0) {
+</a><a href="#h2-14-12" id="h2-14-12" class="i">+		memcpy(prevtags, seltags, sizeof initags);
+</a><a href="#h2-14-13" id="h2-14-13" class="i">+		memcpy(seltags, tmp, sizeof initags);
+</a><a href="#h2-14-14" id="h2-14-14" class="i">+		arrange();
+</a><a href="#h2-14-15" id="h2-14-15" class="i">+	}
+</a><a href="#h2-14-16" id="h2-14-16" class="i">+}
+</a><a href="#h2-14-17" id="h2-14-17" class="i">+
+</a><a href="#h2-14-18" id="h2-14-18" class="i">+View *
+</a><a href="#h2-14-19" id="h2-14-19" class="i">+viewat() {
+</a><a href="#h2-14-20" id="h2-14-20" class="i">+	int i, x, y;
+</a><a href="#h2-14-21" id="h2-14-21" class="i">+	Window win;
+</a><a href="#h2-14-22" id="h2-14-22" class="i">+	unsigned int mask;
+</a><a href="#h2-14-23" id="h2-14-23" class="i">+
+</a><a href="#h2-14-24" id="h2-14-24" class="i">+	XQueryPointer(dpy, root, &amp;win, &amp;win, &amp;x, &amp;y, &amp;i, &amp;i, &amp;mask);
+</a><a href="#h2-14-25" id="h2-14-25" class="i">+	for(i = 0; i &lt; nviews; i++) {
+</a><a href="#h2-14-26" id="h2-14-26" class="i">+		if((x &gt;= views[i].x &amp;&amp; x &lt; views[i].x + views[i].w)
+</a><a href="#h2-14-27" id="h2-14-27" class="i">+		&amp;&amp; (y &gt;= views[i].y &amp;&amp; y &lt; views[i].y + views[i].h))
+</a><a href="#h2-14-28" id="h2-14-28" class="i">+			return &amp;views[i];
+</a><a href="#h2-14-29" id="h2-14-29" class="i">+	}
+</a><a href="#h2-14-30" id="h2-14-30" class="i">+	return NULL;
+</a><a href="#h2-14-31" id="h2-14-31" class="i">+}
+</a><a href="#h2-14-32" id="h2-14-32" class="i">+
+</a><a href="#h2-14-33" id="h2-14-33" class="i">+void
+</a><a href="#h2-14-34" id="h2-14-34" class="i">+viewprevtag(const char *arg) {
+</a><a href="#h2-14-35" id="h2-14-35" class="i">+	static Bool tmp[LENGTH(tags)];
+</a><a href="#h2-14-36" id="h2-14-36" class="i">+
+</a><a href="#h2-14-37" id="h2-14-37" class="i">+	memcpy(tmp, seltags, sizeof initags);
+</a><a href="#h2-14-38" id="h2-14-38" class="i">+	memcpy(seltags, prevtags, sizeof initags);
+</a><a href="#h2-14-39" id="h2-14-39" class="i">+	memcpy(prevtags, tmp, sizeof initags);
+</a><a href="#h2-14-40" id="h2-14-40" class="i">+	arrange();
+</a><a href="#h2-14-41" id="h2-14-41" class="i">+}
+</a><a href="#h2-14-42" id="h2-14-42" class="i">+
+</a> /* There&#39;s no way to check accesses to destroyed windows, thus those cases are
+  * ignored (especially on UnmapNotify&#39;s).  Other types of errors call Xlibs
+  * default error handler, which may call exit.  */
+<a href="#h2-15" id="h2-15" class="h">@@ -1983,31 +1973,6 @@ xerrorstart(Display *dpy, XErrorEvent *ee) {
+</a> }
+ 
+ void
+<a href="#h2-15-3" id="h2-15-3" class="d">-view(const char *arg) {
+</a><a href="#h2-15-4" id="h2-15-4" class="d">-	unsigned int i;
+</a><a href="#h2-15-5" id="h2-15-5" class="d">-	int tmp[LENGTH(tags)];
+</a><a href="#h2-15-6" id="h2-15-6" class="d">-
+</a><a href="#h2-15-7" id="h2-15-7" class="d">-	for(i = 0; i &lt; LENGTH(tags); i++)
+</a><a href="#h2-15-8" id="h2-15-8" class="d">-		tmp[i] = (NULL == arg) ? selview-&gt;id : 0;
+</a><a href="#h2-15-9" id="h2-15-9" class="d">-	tmp[idxoftag(arg)] = selview-&gt;id;
+</a><a href="#h2-15-10" id="h2-15-10" class="d">-	if(memcmp(seltags, tmp, sizeof initags) != 0) {
+</a><a href="#h2-15-11" id="h2-15-11" class="d">-		memcpy(prevtags, seltags, sizeof initags);
+</a><a href="#h2-15-12" id="h2-15-12" class="d">-		memcpy(seltags, tmp, sizeof initags);
+</a><a href="#h2-15-13" id="h2-15-13" class="d">-		arrange();
+</a><a href="#h2-15-14" id="h2-15-14" class="d">-	}
+</a><a href="#h2-15-15" id="h2-15-15" class="d">-}
+</a><a href="#h2-15-16" id="h2-15-16" class="d">-
+</a><a href="#h2-15-17" id="h2-15-17" class="d">-void
+</a><a href="#h2-15-18" id="h2-15-18" class="d">-viewprevtag(const char *arg) {
+</a><a href="#h2-15-19" id="h2-15-19" class="d">-	static Bool tmp[LENGTH(tags)];
+</a><a href="#h2-15-20" id="h2-15-20" class="d">-
+</a><a href="#h2-15-21" id="h2-15-21" class="d">-	memcpy(tmp, seltags, sizeof initags);
+</a><a href="#h2-15-22" id="h2-15-22" class="d">-	memcpy(seltags, prevtags, sizeof initags);
+</a><a href="#h2-15-23" id="h2-15-23" class="d">-	memcpy(prevtags, tmp, sizeof initags);
+</a><a href="#h2-15-24" id="h2-15-24" class="d">-	arrange();
+</a><a href="#h2-15-25" id="h2-15-25" class="d">-}
+</a><a href="#h2-15-26" id="h2-15-26" class="d">-
+</a><a href="#h2-15-27" id="h2-15-27" class="d">-void
+</a> zoom(const char *arg) {
+ 	Client *c = sel;
+ 
+<a href="#h2-16" id="h2-16" class="h">@@ -2022,21 +1987,6 @@ zoom(const char *arg) {
+</a> 	arrange();
+ }
+ 
+<a href="#h2-16-3" id="h2-16-3" class="d">-void
+</a><a href="#h2-16-4" id="h2-16-4" class="d">-selectview(const char *arg) {
+</a><a href="#h2-16-5" id="h2-16-5" class="d">-	int i;
+</a><a href="#h2-16-6" id="h2-16-6" class="d">-	View *v;
+</a><a href="#h2-16-7" id="h2-16-7" class="d">-
+</a><a href="#h2-16-8" id="h2-16-8" class="d">-	if(!arg)
+</a><a href="#h2-16-9" id="h2-16-9" class="d">-		return;
+</a><a href="#h2-16-10" id="h2-16-10" class="d">-	if(arg)
+</a><a href="#h2-16-11" id="h2-16-11" class="d">-		i = atoi(arg);
+</a><a href="#h2-16-12" id="h2-16-12" class="d">-	v = &amp;views[i % nviews];
+</a><a href="#h2-16-13" id="h2-16-13" class="d">-	XWarpPointer(dpy, None, root, 0, 0, 0, 0, v-&gt;wax+v-&gt;waw/2, v-&gt;way+v-&gt;wah/2);
+</a><a href="#h2-16-14" id="h2-16-14" class="d">-	focus(NULL);
+</a><a href="#h2-16-15" id="h2-16-15" class="d">-}
+</a><a href="#h2-16-16" id="h2-16-16" class="d">-
+</a><a href="#h2-16-17" id="h2-16-17" class="d">-
+</a> int
+ main(int argc, char *argv[]) {
+ 	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+</pre>
+</div>
+</body>
+</html>

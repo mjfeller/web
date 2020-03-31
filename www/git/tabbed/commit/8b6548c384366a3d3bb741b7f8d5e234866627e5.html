@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>wrap long lines. working on downloads. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8b6548c384366a3d3bb741b7f8d5e234866627e5.html">8b6548c384366a3d3bb741b7f8d5e234866627e5</a>
+<b>parent</b> <a href="../commit/08b45f411a39c07e5e0751c75abf5323c3c888d7.html">08b45f411a39c07e5e0751c75abf5323c3c888d7</a>
+<b>Author:</b> Enno Boland (Gottox) &lt;<a href="mailto:gottox@s01.de">gottox@s01.de</a>&gt;
+<b>Date:</b>   Sun,  7 Jun 2009 12:50:18 +0200
+
+wrap long lines. working on downloads.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -14,6 +14,7 @@
+</a> #include &lt;stdlib.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;webkit/webkit.h&gt;
+<a href="#h0-0-3" id="h0-0-3" class="i">+#include &lt;glib/gstdio.h&gt;
+</a> 
+ #define LENGTH(x) (sizeof x / sizeof x[0])
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -22,6 +23,7 @@ Atom urlprop;
+</a> typedef struct Client {
+ 	GtkWidget *win, *scroll, *vbox, *urlbar, *searchbar;
+ 	WebKitWebView *view;
+<a href="#h0-1-3" id="h0-1-3" class="i">+	WebKitDownload * dl;
+</a> 	gchar *title;
+ 	gint progress;
+ 	struct Client *next;
+<a href="#h0-2" id="h0-2" class="h">@@ -112,8 +114,9 @@ download(WebKitWebView *view, WebKitDownload *o, gpointer d) {
+</a> 	gchar *uri, *filename;
+ 
+ 	home = g_get_home_dir();
+<a href="#h0-2-3" id="h0-2-3" class="d">-	filename = g_build_filename(home, &quot;Desktop&quot;, 
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	filename = g_build_filename(home, &quot;.surf&quot;, &quot;dl&quot;, 
+</a> 			webkit_download_get_suggested_filename(o), NULL);
+<a href="#h0-2-6" id="h0-2-6" class="i">+	g_mkdir(g_path_get_dirname(filename), 0755);
+</a> 	uri = g_strconcat(&quot;file://&quot;, filename, NULL);
+ 	webkit_download_set_destination_uri(o, uri);
+ 	g_free(filename);
+<a href="#h0-3" id="h0-3" class="h">@@ -243,11 +246,13 @@ loadfile(const Client *c, const gchar *f) {
+</a> 	if(strcmp(f, &quot;-&quot;) == 0) {
+ 		chan = g_io_channel_unix_new(STDIN_FILENO);
+ 		if (chan) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-			while(g_io_channel_read_line(chan, &amp;line, NULL, NULL, &amp;e) == G_IO_STATUS_NORMAL) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			while(g_io_channel_read_line(chan, &amp;line, NULL, NULL,
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+						&amp;e) == G_IO_STATUS_NORMAL) {
+</a> 				g_string_append(code, line);
+ 				g_free(line);
+ 			}
+<a href="#h0-3-9" id="h0-3-9" class="d">-			webkit_web_view_load_html_string(c-&gt;view, code-&gt;str, NULL);
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+			webkit_web_view_load_html_string(c-&gt;view, code-&gt;str,
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+					&quot;file://.&quot;);
+</a> 			g_io_channel_shutdown(chan, FALSE, NULL);
+ 		}
+ 	}
+<a href="#h0-4" id="h0-4" class="h">@@ -339,7 +344,6 @@ newclient(void) {
+</a> 
+ WebKitWebView *
+ newwindow(WebKitWebView  *v, WebKitWebFrame *f, gpointer d) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-	/* TODO */
+</a> 	Client *c = newclient();
+ 	return c-&gt;view;
+ }
+</pre>
+</div>
+</body>
+</html>

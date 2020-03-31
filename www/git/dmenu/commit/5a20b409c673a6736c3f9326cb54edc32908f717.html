@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>add sbase-style ecalloc(), calloc: or die - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5a20b409c673a6736c3f9326cb54edc32908f717.html">5a20b409c673a6736c3f9326cb54edc32908f717</a>
+<b>parent</b> <a href="../commit/164986763a29db97abb52b15cbd282b5636d83c0.html">164986763a29db97abb52b15cbd282b5636d83c0</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Tue, 20 Oct 2015 22:51:57 +0200
+
+add sbase-style ecalloc(), calloc: or die
+
+... remove intermediary variables
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">drw.c</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++</span><span class="d">------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">util.c</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">util.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 18 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/drw.c.html">drw.c</a> b/<a href="../file/drw.c.html">drw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -65,8 +65,7 @@ drw_create(Display *dpy, int screen, Window root, unsigned int w, unsigned int h
+</a> {
+ 	Drw *drw;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if (!(drw = calloc(1, sizeof(Drw))))
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		return NULL;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	drw = ecalloc(1, sizeof(Drw));
+</a> 	drw-&gt;dpy = dpy;
+ 	drw-&gt;screen = screen;
+ 	drw-&gt;root = root;
+<a href="#h0-1" id="h0-1" class="h">@@ -189,16 +188,13 @@ Clr *
+</a> drw_clr_create(Drw *drw, const char *clrname)
+ {
+ 	Clr *clr;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	Colormap cmap;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	Visual *vis;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-
+</a> 	if (!drw)
+ 		return NULL;
+<a href="#h0-1-8" id="h0-1-8" class="d">-	if (!(clr = calloc(1, sizeof(Clr))))
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-		return NULL;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	cmap = DefaultColormap(drw-&gt;dpy, drw-&gt;screen);
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-	vis = DefaultVisual(drw-&gt;dpy, drw-&gt;screen);
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-	if (!XftColorAllocName(drw-&gt;dpy, vis, cmap, clrname, &amp;clr-&gt;rgb))
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	clr = ecalloc(1, sizeof(Clr));
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	if (!XftColorAllocName(drw-&gt;dpy, DefaultVisual(drw-&gt;dpy, drw-&gt;screen),
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	                       DefaultColormap(drw-&gt;dpy, drw-&gt;screen),
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	                       clrname, &amp;clr-&gt;rgb))
+</a> 		die(&quot;error, cannot allocate color &#39;%s&#39;\n&quot;, clrname);
+ 	clr-&gt;pix = clr-&gt;rgb.pixel;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -409,8 +405,7 @@ drw_cur_create(Drw *drw, int shape)
+</a> 
+ 	if (!drw)
+ 		return NULL;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if (!(cur = calloc(1, sizeof(Cur))))
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		return NULL;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	cur = ecalloc(1, sizeof(Cur));
+</a> 	cur-&gt;cursor = XCreateFontCursor(drw-&gt;dpy, shape);
+ 
+ 	return cur;
+<b>diff --git a/<a id="h1" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -6,6 +6,16 @@
+</a> 
+ #include &quot;util.h&quot;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+void *
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+ecalloc(size_t nmemb, size_t size)
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+{
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	void *p;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	if (!(p = calloc(nmemb, size)))
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		perror(NULL);
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	return p;
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+}
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+
+</a> void
+ die(const char *fmt, ...) {
+ 	va_list ap;
+<b>diff --git a/<a id="h2" href="../file/util.h.html">util.h</a> b/<a href="../file/util.h.html">util.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,3 +5,4 @@
+</a> #define BETWEEN(X, A, B)        ((A) &lt;= (X) &amp;&amp; (X) &lt;= (B))
+ 
+ void die(const char *errstr, ...);
+<a href="#h2-0-3" id="h2-0-3" class="i">+void *ecalloc(size_t, size_t);
+</a></pre>
+</div>
+</body>
+</html>

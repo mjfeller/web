@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>replaced getproto with a saner function, now old-school artifacts of WM times in the early 90s completely disappeared, no punned pointer warning anymore ;) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/28ffff801bb0137ec3fe4093afc4fb29784b17ec.html">28ffff801bb0137ec3fe4093afc4fb29784b17ec</a>
+<b>parent</b> <a href="../commit/44ef3f5a07753ecaeacc2fb180e90bf4479ab975.html">44ef3f5a07753ecaeacc2fb180e90bf4479ab975</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Wed,  7 Feb 2007 12:37:06 +0100
+
+replaced getproto with a saner function, now old-school artifacts of WM times in the early 90s completely disappeared, no punned pointer warning anymore ;)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i"></span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">main.c</a></td><td> | </td><td class="num">18</td><td><span class="i"></span><span class="d">------------------</span></td></tr>
+</table></pre><pre>5 files changed, 20 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -120,11 +120,26 @@ getclient(Window w) {
+</a> 	return NULL;
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+Bool
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+isprotodel(Client *c) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	int i, n;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	Atom *protocols;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	Bool ret = False;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	if(XGetWMProtocols(dpy, c-&gt;win, &amp;protocols, &amp;n)) {
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+		for(i = 0; !ret &amp;&amp; i &lt; n; i++)
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+			if(protocols[i] == wmatom[WMDelete])
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+				ret = True;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		XFree(protocols);
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	}
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	return ret;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+}
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+
+</a> void
+ killclient(Arg *arg) {
+ 	if(!sel)
+ 		return;
+<a href="#h0-0-22" id="h0-0-22" class="d">-	if(sel-&gt;proto &amp; PROTODELWIN)
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	if(isprotodel(sel))
+</a> 		sendevent(sel-&gt;win, wmatom[WMProtocols], wmatom[WMDelete]);
+ 	else
+ 		XKillClient(dpy, sel-&gt;win);
+<a href="#h0-1" id="h0-1" class="h">@@ -159,7 +174,6 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 			c-&gt;y = way;
+ 	}
+ 	updatesizehints(c);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	c-&gt;proto = getproto(c-&gt;win);
+</a> 	XSelectInput(dpy, c-&gt;win,
+ 		StructureNotifyMask | PropertyChangeMask | EnterWindowMask);
+ 	XGetTransientForHint(dpy, c-&gt;win, &amp;trans);
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -17,8 +17,8 @@ LIBS = -L/usr/lib -lc -L${X11LIB} -lX11
+</a> # flags
+ CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+ LDFLAGS = ${LIBS}
+<a href="#h1-0-3" id="h1-0-3" class="d">-#CFLAGS = -g -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#LDFLAGS = -g ${LIBS}
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+CFLAGS = -g -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+LDFLAGS = -g ${LIBS}
+</a> 
+ # Solaris
+ #CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -36,8 +36,6 @@
+</a> 
+ /* mask shorthands, used in event.c and client.c */
+ #define BUTTONMASK		(ButtonPressMask | ButtonReleaseMask)
+<a href="#h2-0-3" id="h2-0-3" class="d">-/* other stuff used in different places */
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-#define PROTODELWIN		1
+</a> 
+ enum { NetSupported, NetWMName, NetLast };		/* EWMH atoms */
+ enum { WMProtocols, WMDelete, WMState, WMLast };	/* default atoms */
+<a href="#h2-1" id="h2-1" class="h">@@ -69,14 +67,13 @@ typedef struct {
+</a> typedef struct Client Client;
+ struct Client {
+ 	char name[256];
+<a href="#h2-1-3" id="h2-1-3" class="d">-	int proto;
+</a> 	int x, y, w, h;
+ 	int rx, ry, rw, rh; /* revert geometry */
+ 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int minax, minay, maxax, maxay;
+ 	long flags; 
+ 	unsigned int border;
+<a href="#h2-1-10" id="h2-1-10" class="d">-	Bool isfloat, isfixed, ismax;
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+	Bool isfixed, isfloat, ismax;
+</a> 	Bool *tags;
+ 	Client *next;
+ 	Client *prev;
+<a href="#h2-2" id="h2-2" class="h">@@ -105,6 +102,7 @@ extern Window root, barwin;
+</a> extern void configure(Client *c);		/* send synthetic configure event */
+ extern void focus(Client *c);			/* focus c, c may be NULL */
+ extern Client *getclient(Window w);		/* return client of w */
+<a href="#h2-2-3" id="h2-2-3" class="i">+extern Bool isprotodel(Client *c);		/* returns True if c-&gt;win supports wmatom[WMDelete] */
+</a> extern void killclient(Arg *arg);		/* kill c nicely */
+ extern void manage(Window w, XWindowAttributes *wa);	/* manage new client */
+ extern void resize(Client *c, Bool sizehints);	/* resize c*/
+<a href="#h2-3" id="h2-3" class="h">@@ -123,7 +121,6 @@ extern void grabkeys(void);			/* grab all keys defined in config.h */
+</a> extern void procevent(void);			/* process pending X events */
+ 
+ /* main.c */
+<a href="#h2-3-3" id="h2-3-3" class="d">-extern int getproto(Window w);			/* return protocol mask of WMProtocols property of w */
+</a> extern void quit(Arg *arg);			/* quit dwm nicely */
+ extern void sendevent(Window w, Atom a, long value);	/* send synthetic event to w */
+ extern int xerror(Display *dsply, XErrorEvent *ee);	/* dwm&#39;s X error handler */
+<b>diff --git a/<a id="h3" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -308,10 +308,6 @@ propertynotify(XEvent *e) {
+</a> 	if(ev-&gt;state == PropertyDelete)
+ 		return; /* ignore */
+ 	if((c = getclient(ev-&gt;window))) {
+<a href="#h3-0-3" id="h3-0-3" class="d">-		if(ev-&gt;atom == wmatom[WMProtocols]) {
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-			c-&gt;proto = getproto(c-&gt;win);
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-			return;
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-		}
+</a> 		switch (ev-&gt;atom) {
+ 			default: break;
+ 			case XA_WM_TRANSIENT_FOR:
+<b>diff --git a/<a id="h4" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -172,24 +172,6 @@ xerrorstart(Display *dsply, XErrorEvent *ee) {
+</a> 
+ /* extern */
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-int
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-getproto(Window w) {
+</a><a href="#h4-0-5" id="h4-0-5" class="d">-	int i, format, protos, status;
+</a><a href="#h4-0-6" id="h4-0-6" class="d">-	unsigned long extra, res;
+</a><a href="#h4-0-7" id="h4-0-7" class="d">-	Atom *protocols, real;
+</a><a href="#h4-0-8" id="h4-0-8" class="d">-
+</a><a href="#h4-0-9" id="h4-0-9" class="d">-	protos = 0;
+</a><a href="#h4-0-10" id="h4-0-10" class="d">-	status = XGetWindowProperty(dpy, w, wmatom[WMProtocols], 0L, 20L, False,
+</a><a href="#h4-0-11" id="h4-0-11" class="d">-			XA_ATOM, &amp;real, &amp;format, &amp;res, &amp;extra, (unsigned char **)&amp;protocols);
+</a><a href="#h4-0-12" id="h4-0-12" class="d">-	if(status != Success || protocols == 0)
+</a><a href="#h4-0-13" id="h4-0-13" class="d">-		return protos;
+</a><a href="#h4-0-14" id="h4-0-14" class="d">-	for(i = 0; i &lt; res; i++)
+</a><a href="#h4-0-15" id="h4-0-15" class="d">-		if(protocols[i] == wmatom[WMDelete])
+</a><a href="#h4-0-16" id="h4-0-16" class="d">-			protos |= PROTODELWIN;
+</a><a href="#h4-0-17" id="h4-0-17" class="d">-	free(protocols);
+</a><a href="#h4-0-18" id="h4-0-18" class="d">-	return protos;
+</a><a href="#h4-0-19" id="h4-0-19" class="d">-}
+</a><a href="#h4-0-20" id="h4-0-20" class="d">-
+</a> void
+ sendevent(Window w, Atom a, long value) {
+ 	XEvent e;
+</pre>
+</div>
+</body>
+</html>

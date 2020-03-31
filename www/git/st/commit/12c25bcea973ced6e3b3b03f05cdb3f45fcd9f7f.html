@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added support for alternate screen. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/12c25bcea973ced6e3b3b03f05cdb3f45fcd9f7f.html">12c25bcea973ced6e3b3b03f05cdb3f45fcd9f7f</a>
+<b>parent</b> <a href="../commit/326586ba434fb873ebdb81f385ebe838419a98a7.html">326586ba434fb873ebdb81f385ebe838419a98a7</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 30 Aug 2010 16:48:18 +0200
+
+added support for alternate screen.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">70</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 56 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -50,7 +50,7 @@ enum { CURSOR_UP, CURSOR_DOWN, CURSOR_LEFT, CURSOR_RIGHT,
+</a>        CURSOR_SAVE, CURSOR_LOAD };
+ enum { CURSOR_DEFAULT = 0, CURSOR_HIDE = 1, CURSOR_WRAPNEXT = 2 };
+ enum { GLYPH_SET=1, GLYPH_DIRTY=2 };
+<a href="#h0-0-3" id="h0-0-3" class="d">-enum { MODE_WRAP=1, MODE_INSERT=2, MODE_APPKEYPAD=4 };
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+enum { MODE_WRAP=1, MODE_INSERT=2, MODE_APPKEYPAD=4, MODE_ALTSCREEN=8 };
+</a> enum { ESC_START=1, ESC_CSI=2, ESC_OSC=4, ESC_TITLE=8, ESC_ALTCHARSET=16 };
+ enum { SCREEN_UPDATE, SCREEN_REDRAW };
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -86,7 +86,8 @@ typedef struct {
+</a> typedef struct {
+ 	int row;	/* nb row */  
+ 	int col;	/* nb col */
+<a href="#h0-1-3" id="h0-1-3" class="d">-	Line* line; /* screen */
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	Line* line;	/* screen */
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	Line* alt;	/* alternate screen */
+</a> 	TCursor c;	/* cursor */
+ 	int top;	/* top	  scroll limit */
+ 	int bot;	/* bottom scroll limit */
+<a href="#h0-2" id="h0-2" class="h">@@ -156,6 +157,7 @@ static void tscrolldown(int);
+</a> static void tsetattr(int*, int);
+ static void tsetchar(char);
+ static void tsetscroll(int, int);
+<a href="#h0-2-3" id="h0-2-3" class="i">+static void tswapscreen(void);
+</a> 
+ static void ttynew(void);
+ static void ttyread(void);
+<a href="#h0-3" id="h0-3" class="h">@@ -337,13 +339,24 @@ tnew(int col, int row) {
+</a> 	/* set screen size */
+ 	term.row = row, term.col = col;
+ 	term.line = malloc(term.row * sizeof(Line));
+<a href="#h0-3-3" id="h0-3-3" class="d">-	for(row = 0 ; row &lt; term.row; row++)
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	term.alt  = malloc(term.row * sizeof(Line));
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	for(row = 0 ; row &lt; term.row; row++) {
+</a> 		term.line[row] = malloc(term.col * sizeof(Glyph));
+<a href="#h0-3-7" id="h0-3-7" class="i">+		term.alt [row] = malloc(term.col * sizeof(Glyph));
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	}
+</a> 	/* setup screen */
+ 	treset();
+ }
+ 
+ void
+<a href="#h0-3-14" id="h0-3-14" class="i">+tswapscreen(void) {
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+	Line* tmp = term.line;
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+	term.line = term.alt;
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+	term.alt = tmp;
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+	term.mode ^= MODE_ALTSCREEN;
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+}
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+void
+</a> tscrolldown (int n) {
+ 	int i;
+ 	Line temp;
+<a href="#h0-4" id="h0-4" class="h">@@ -712,10 +725,21 @@ csihandle(void) {
+</a> 			case 25:
+ 				term.c.state |= CURSOR_HIDE;
+ 				break;
+<a href="#h0-4-3" id="h0-4-3" class="d">-			case 1048: /* XXX: no alt. screen to erase/save */
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+			case 1047:
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+				if(IS_SET(MODE_ALTSCREEN)) {
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+					tclearregion(0, 0, term.col-1, term.row-1);
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+					tswapscreen();
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+				}
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+				break;
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+			case 1048:
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+				tcursor(CURSOR_LOAD);
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+				break;
+</a> 			case 1049:
+ 				tcursor(CURSOR_LOAD);
+<a href="#h0-4-15" id="h0-4-15" class="d">-				tclearregion(0, 0, term.col-1, term.row-1);
+</a><a href="#h0-4-16" id="h0-4-16" class="i">+				if(IS_SET(MODE_ALTSCREEN)) {
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+					tclearregion(0, 0, term.col-1, term.row-1);
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+					tswapscreen();
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+				}
+</a> 				break;
+ 			default:
+ 				goto unknown;
+<a href="#h0-5" id="h0-5" class="h">@@ -761,10 +785,21 @@ csihandle(void) {
+</a> 			case 25:
+ 				term.c.state &amp;= ~CURSOR_HIDE;
+ 				break;
+<a href="#h0-5-3" id="h0-5-3" class="d">-			case 1048: 
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-			case 1049: /* XXX: no alt. screen to erase/save */
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+			case 1047:
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+				if(IS_SET(MODE_ALTSCREEN))
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+					tclearregion(0, 0, term.col-1, term.row-1);
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+				else
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+					tswapscreen();
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+				break;				
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+			case 1048:
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+				tcursor(CURSOR_SAVE);
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+				break;
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+			case 1049:
+</a> 				tcursor(CURSOR_SAVE);
+<a href="#h0-5-16" id="h0-5-16" class="d">-				tclearregion(0, 0, term.col-1, term.row-1);
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+				if(IS_SET(MODE_ALTSCREEN))
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+					tclearregion(0, 0, term.col-1, term.row-1);
+</a><a href="#h0-5-19" id="h0-5-19" class="i">+				else
+</a><a href="#h0-5-20" id="h0-5-20" class="i">+					tswapscreen();
+</a> 				break;
+ 			default: goto unknown;
+ 			}
+<a href="#h0-6" id="h0-6" class="h">@@ -889,19 +924,19 @@ tputc(char c) {
+</a> 				treset();
+ 				term.esc = 0;
+ 				break;
+<a href="#h0-6-3" id="h0-6-3" class="d">-			case &#39;=&#39;: /* DECPAM */
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+			case &#39;=&#39;: /* DECPAM -- Application keypad */
+</a> 				term.mode |= MODE_APPKEYPAD;
+ 				term.esc = 0;
+ 				break;
+<a href="#h0-6-8" id="h0-6-8" class="d">-			case &#39;&gt;&#39;: /* DECPNM */
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+			case &#39;&gt;&#39;: /* DECPNM -- Normal keypad */
+</a> 				term.mode &amp;= ~MODE_APPKEYPAD;
+ 				term.esc = 0;
+ 				break;
+<a href="#h0-6-13" id="h0-6-13" class="d">-			case &#39;7&#39;:
+</a><a href="#h0-6-14" id="h0-6-14" class="i">+			case &#39;7&#39;: /* DECSC -- Save Cursor*/
+</a> 				tcursor(CURSOR_SAVE);
+ 				term.esc = 0;
+ 				break;
+<a href="#h0-6-18" id="h0-6-18" class="d">-			case &#39;8&#39;:
+</a><a href="#h0-6-19" id="h0-6-19" class="i">+			case &#39;8&#39;: /* DECRC -- Restore Cursor */
+</a> 				tcursor(CURSOR_LOAD);
+ 				term.esc = 0;
+ 				break;
+<a href="#h0-7" id="h0-7" class="h">@@ -961,21 +996,28 @@ tresize(int col, int row) {
+</a> 		return;
+ 
+ 	/* free uneeded rows */
+<a href="#h0-7-3" id="h0-7-3" class="d">-	for(i = row; i &lt; term.row; i++)
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	for(i = row; i &lt; term.row; i++) {
+</a> 		free(term.line[i]);
+<a href="#h0-7-6" id="h0-7-6" class="i">+		free(term.alt[i]);
+</a><a href="#h0-7-7" id="h0-7-7" class="i">+	}
+</a> 
+ 	/* resize to new height */
+ 	term.line = realloc(term.line, row * sizeof(Line));
+<a href="#h0-7-11" id="h0-7-11" class="i">+	term.line = realloc(term.alt,  row * sizeof(Line));
+</a> 
+ 	/* resize each row to new width, zero-pad if needed */
+ 	for(i = 0; i &lt; minrow; i++) {
+ 		term.line[i] = realloc(term.line[i], col * sizeof(Glyph));
+<a href="#h0-7-16" id="h0-7-16" class="i">+		term.alt[i]  = realloc(term.alt[i],  col * sizeof(Glyph));
+</a> 		memset(term.line[i] + mincol, 0, (col - mincol) * sizeof(Glyph));
+<a href="#h0-7-18" id="h0-7-18" class="i">+		memset(term.alt[i]  + mincol, 0, (col - mincol) * sizeof(Glyph));
+</a> 	}
+ 
+ 	/* allocate any new rows */
+<a href="#h0-7-22" id="h0-7-22" class="d">-	for(/* i == minrow */; i &lt; row; i++)
+</a><a href="#h0-7-23" id="h0-7-23" class="i">+	for(/* i == minrow */; i &lt; row; i++) {
+</a> 		term.line[i] = calloc(col, sizeof(Glyph));
+<a href="#h0-7-25" id="h0-7-25" class="i">+		term.alt [i] = calloc(col, sizeof(Glyph));
+</a><a href="#h0-7-26" id="h0-7-26" class="i">+	}
+</a> 	
+ 	/* update terminal size */
+ 	term.col = col, term.row = row;
+</pre>
+</div>
+</body>
+</html>

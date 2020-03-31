@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix target uri handling when leaving window - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/971856a579889de5ee6d427c3f7374969b872cbc.html">971856a579889de5ee6d427c3f7374969b872cbc</a>
+<b>parent</b> <a href="../commit/d0020bad4fc40f3a84e828936c2588232bb687bf.html">d0020bad4fc40f3a84e828936c2588232bb687bf</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sun, 22 Nov 2015 16:45:22 +0100
+
+Fix target uri handling when leaving window
+
+Introduce a new string pointer overtitle in Client to be able to keep
+the targeturi intact while modifying the former for overriding or not
+the window title.
+Connect to GDK_ENTER_NOTIFY to restore overtitle when refocusing on
+window.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">25</td><td><span class="i">++++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 16 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -70,7 +70,7 @@ typedef struct Client {
+</a> 	GTlsCertificateFlags tlsflags;
+ 	Window xid;
+ 	int progress, fullscreen;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	const char *title, *targeturi;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	const char *title, *overtitle, *targeturi;
+</a> 	const char *needle;
+ 	struct Client *next;
+ } Client;
+<a href="#h0-1" id="h0-1" class="h">@@ -433,7 +433,7 @@ void
+</a> updatetitle(Client *c)
+ {
+ 	char *title;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	const char *name = c-&gt;targeturi ? c-&gt;targeturi :
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	const char *name = c-&gt;overtitle ? c-&gt;overtitle :
+</a> 	                   c-&gt;title ? c-&gt;title : &quot;&quot;;
+ 
+ 	if (showindicators) {
+<a href="#h0-2" id="h0-2" class="h">@@ -879,22 +879,25 @@ gboolean
+</a> winevent(GtkWidget *w, GdkEvent *e, Client *c)
+ {
+ 	switch (e-&gt;type) {
+<a href="#h0-2-3" id="h0-2-3" class="i">+	case GDK_ENTER_NOTIFY:
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		c-&gt;overtitle = c-&gt;targeturi;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		updatetitle(c);
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		break;
+</a> 	case GDK_LEAVE_NOTIFY:
+<a href="#h0-2-8" id="h0-2-8" class="d">-		c-&gt;targeturi = NULL;
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+		c-&gt;overtitle = NULL;
+</a> 		updatetitle(c);
+ 		break;
+<a href="#h0-2-12" id="h0-2-12" class="d">-	case GDK_WINDOW_STATE: /* fallthrough */
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+	case GDK_WINDOW_STATE:
+</a> 		if (e-&gt;window_state.changed_mask ==
+<a href="#h0-2-15" id="h0-2-15" class="d">-		    GDK_WINDOW_STATE_FULLSCREEN) {
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+		    GDK_WINDOW_STATE_FULLSCREEN)
+</a> 			c-&gt;fullscreen = e-&gt;window_state.new_window_state &amp;
+ 			                GDK_WINDOW_STATE_FULLSCREEN;
+<a href="#h0-2-19" id="h0-2-19" class="d">-			break;
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-		}
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+		break;
+</a> 	default:
+<a href="#h0-2-23" id="h0-2-23" class="d">-		return FALSE;
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+		break;
+</a> 	}
+ 
+<a href="#h0-2-27" id="h0-2-27" class="d">-	return TRUE;
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+	return FALSE;
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -965,6 +968,8 @@ createwindow(Client *c)
+</a> 
+ 	g_signal_connect(G_OBJECT(w), &quot;destroy&quot;,
+ 	                 G_CALLBACK(destroywin), c);
+<a href="#h0-3-3" id="h0-3-3" class="i">+	g_signal_connect(G_OBJECT(w), &quot;enter-notify-event&quot;,
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	                 G_CALLBACK(winevent), c);
+</a> 	g_signal_connect(G_OBJECT(w), &quot;leave-notify-event&quot;,
+ 	                 G_CALLBACK(winevent), c);
+ 	g_signal_connect(G_OBJECT(w), &quot;window-state-event&quot;,
+<a href="#h0-4" id="h0-4" class="h">@@ -1037,6 +1042,8 @@ mousetargetchanged(WebKitWebView *v, WebKitHitTestResult *h, guint modifiers,
+</a> 		c-&gt;targeturi = webkit_hit_test_result_get_media_uri(h);
+ 	else
+ 		c-&gt;targeturi = NULL;
+<a href="#h0-4-3" id="h0-4-3" class="i">+
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	c-&gt;overtitle = c-&gt;targeturi;
+</a> 	updatetitle(c);
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding scrollwheel support. Thanks Brandon Invergo! - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5d39afc9023bc9a692ba6faf590abf9397a890ae.html">5d39afc9023bc9a692ba6faf590abf9397a890ae</a>
+<b>parent</b> <a href="../commit/9df1e56142527de1b8917434093d25212dd9da1e.html">9df1e56142527de1b8917434093d25212dd9da1e</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Tue,  6 Nov 2012 23:44:37 +0100
+
+Adding scrollwheel support. Thanks Brandon Invergo!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">19</td><td><span class="i">++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -673,6 +673,10 @@ bpress(XEvent *e) {
+</a> 		sel.mode = 1;
+ 		sel.ex = sel.bx = x2col(e-&gt;xbutton.x);
+ 		sel.ey = sel.by = y2row(e-&gt;xbutton.y);
+<a href="#h0-0-3" id="h0-0-3" class="i">+	} else if(e-&gt;xbutton.button == Button4) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		ttywrite(&quot;\031&quot;, 1);
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	} else if(e-&gt;xbutton.button == Button5) {
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+		ttywrite(&quot;\005&quot;, 1);
+</a> 	}
+ }
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -1834,8 +1838,8 @@ tputc(char *c, int len) {
+</a> 		}
+ 	}
+ 	/*
+<a href="#h0-1-3" id="h0-1-3" class="d">-	 * STR sequences must be checked before of anything
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	 * because it can use some control codes as part of the sequence
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	 * STR sequences must be checked before anything else
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	 * because it can use some control codes as part of the sequence.
+</a> 	 */
+ 	if(term.esc &amp; ESC_STR) {
+ 		switch(ascii) {
+<a href="#h0-2" id="h0-2" class="h">@@ -1855,6 +1859,7 @@ tputc(char *c, int len) {
+</a> 		}
+ 		return;
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="i">+
+</a> 	/*
+ 	 * Actions of control codes must be performed as soon they arrive
+ 	 * because they can be embedded inside a control sequence, and
+<a href="#h0-3" id="h0-3" class="h">@@ -1895,11 +1900,11 @@ tputc(char *c, int len) {
+</a> 		case &#39;\030&#39;:	/* CAN */
+ 			csireset();
+ 			return;
+<a href="#h0-3-3" id="h0-3-3" class="d">-		 case &#39;\005&#39;:	/* ENQ (IGNORED) */
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		 case &#39;\000&#39;:	/* NUL (IGNORED) */
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-		 case &#39;\021&#39;:	/* XON (IGNORED) */
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-		 case &#39;\023&#39;:	/* XOFF (IGNORED) */
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-		 case 0177:	/* DEL (IGNORED) */
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+		case &#39;\005&#39;:	/* ENQ (IGNORED) */
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+		case &#39;\000&#39;:	/* NUL (IGNORED) */
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+		case &#39;\021&#39;:	/* XON (IGNORED) */
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+		case &#39;\023&#39;:	/* XOFF (IGNORED) */
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+		case 0177:	/* DEL (IGNORED) */
+</a> 			return;
+ 		}
+ 	} else if(term.esc &amp; ESC_START) {
+</pre>
+</div>
+</body>
+</html>

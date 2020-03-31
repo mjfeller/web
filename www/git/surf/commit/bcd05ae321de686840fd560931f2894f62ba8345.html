@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add config option for microphone and webcam access - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bcd05ae321de686840fd560931f2894f62ba8345.html">bcd05ae321de686840fd560931f2894f62ba8345</a>
+<b>parent</b> <a href="../commit/f5be376ccc1fef96722df610c4783e99ce1e944e.html">f5be376ccc1fef96722df610c4783e99ce1e944e</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Thu, 18 May 2017 11:20:07 +0200
+
+Add config option for microphone and webcam access
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">30</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>2 files changed, 26 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,6 +10,8 @@ static char *cookiefile     = &quot;~/.surf/cookies.txt&quot;;
+</a> /* Webkit default features */
+ static Parameter defconfig[ParameterLast] = {
+ 	SETB(AcceleratedCanvas,  1),
+<a href="#h0-0-3" id="h0-0-3" class="i">+	SETB(AccessMicrophone,   0),
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	SETB(AccessWebcam,       0),
+</a> 	SETB(Certificate,        0),
+ 	SETB(CaretBrowsing,      0),
+ 	SETV(CookiePolicies,     &quot;@Aa&quot;),
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -61,6 +61,8 @@ enum {
+</a> 
+ typedef enum {
+ 	AcceleratedCanvas,
+<a href="#h1-0-3" id="h1-0-3" class="i">+	AccessMicrophone,
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	AccessWebcam,
+</a> 	CaretBrowsing,
+ 	Certificate,
+ 	CookiePolicies,
+<a href="#h1-1" id="h1-1" class="h">@@ -678,6 +680,10 @@ setparameter(Client *c, int refresh, ParamName p, const Arg *a)
+</a> 	case AcceleratedCanvas:
+ 		webkit_settings_set_enable_accelerated_2d_canvas(s, a-&gt;b);
+ 		break;
+<a href="#h1-1-3" id="h1-1-3" class="i">+	case AccessMicrophone:
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+		return; /* do nothing */
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	case AccessWebcam:
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+		return; /* do nothing */
+</a> 	case CaretBrowsing:
+ 		webkit_settings_set_enable_caret_browsing(s, a-&gt;b);
+ 		refresh = 0;
+<a href="#h1-2" id="h1-2" class="h">@@ -1450,15 +1456,27 @@ mousetargetchanged(WebKitWebView *v, WebKitHitTestResult *h, guint modifiers,
+</a> gboolean
+ permissionrequested(WebKitWebView *v, WebKitPermissionRequest *r, Client *c)
+ {
+<a href="#h1-2-3" id="h1-2-3" class="i">+	ParamName param = ParameterLast;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+
+</a> 	if (WEBKIT_IS_GEOLOCATION_PERMISSION_REQUEST(r)) {
+<a href="#h1-2-6" id="h1-2-6" class="d">-		if (curconfig[Geolocation].val.b)
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-			webkit_permission_request_allow(r);
+</a><a href="#h1-2-8" id="h1-2-8" class="d">-		else
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-			webkit_permission_request_deny(r);
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-		return TRUE;
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+		param = Geolocation;
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+	} else if (WEBKIT_IS_USER_MEDIA_PERMISSION_REQUEST(r)) {
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+		if (webkit_user_media_permission_is_for_audio_device(
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+		    WEBKIT_USER_MEDIA_PERMISSION_REQUEST(r)))
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+			param = AccessMicrophone;
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+		else if (webkit_user_media_permission_is_for_video_device(
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+		         WEBKIT_USER_MEDIA_PERMISSION_REQUEST(r)))
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+			param = AccessWebcam;
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+	} else {
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+		return FALSE;
+</a> 	}
+ 
+<a href="#h1-2-23" id="h1-2-23" class="d">-	return FALSE;
+</a><a href="#h1-2-24" id="h1-2-24" class="i">+	if (curconfig[param].val.b)
+</a><a href="#h1-2-25" id="h1-2-25" class="i">+		webkit_permission_request_allow(r);
+</a><a href="#h1-2-26" id="h1-2-26" class="i">+	else
+</a><a href="#h1-2-27" id="h1-2-27" class="i">+		webkit_permission_request_deny(r);
+</a><a href="#h1-2-28" id="h1-2-28" class="i">+
+</a><a href="#h1-2-29" id="h1-2-29" class="i">+	return TRUE;
+</a> }
+ 
+ gboolean
+</pre>
+</div>
+</body>
+</html>

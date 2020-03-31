@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Remove &#39;slide&#39; variable in tresize. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c569e3146e6999f6a02acecd145929c87e15b528.html">c569e3146e6999f6a02acecd145929c87e15b528</a>
+<b>parent</b> <a href="../commit/39ae1a4de5c471c8626c80ef1e961f0c83f5199d.html">39ae1a4de5c471c8626c80ef1e961f0c83f5199d</a>
+<b>Author:</b> noname@inventati.org &lt;<a href="mailto:noname@inventati.org">noname@inventati.org</a>&gt;
+<b>Date:</b>   Sat, 11 Apr 2015 19:30:36 +0200
+
+Remove &#39;slide&#39; variable in tresize.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">9</td><td><span class="i">++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 4 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2769,7 +2769,6 @@ tresize(int col, int row) {
+</a> 	int i;
+ 	int minrow = MIN(row, term.row);
+ 	int mincol = MIN(col, term.col);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	int slide = term.c.y - row + 1;
+</a> 	bool *bp;
+ 	TCursor c;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -2784,13 +2783,13 @@ tresize(int col, int row) {
+</a> 	 * tscrollup would work here, but we can optimize to
+ 	 * memmove because we&#39;re freeing the earlier lines
+ 	 */
+<a href="#h0-1-3" id="h0-1-3" class="d">-	for(i = 0; i &lt; slide; i++) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	for(i = 0; i &lt;= term.c.y - row; i++) {
+</a> 		free(term.line[i]);
+ 		free(term.alt[i]);
+ 	}
+<a href="#h0-1-8" id="h0-1-8" class="d">-	if(slide &gt; 0) {
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-		memmove(term.line, term.line + slide, row * sizeof(Line));
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-		memmove(term.alt, term.alt + slide, row * sizeof(Line));
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	if(i &gt; 0) {
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		memmove(term.line, term.line + i, row * sizeof(Line));
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+		memmove(term.alt, term.alt + i, row * sizeof(Line));
+</a> 	}
+ 	for(i += row; i &lt; term.row; i++) {
+ 		free(term.line[i]);
+</pre>
+</div>
+</body>
+</html>

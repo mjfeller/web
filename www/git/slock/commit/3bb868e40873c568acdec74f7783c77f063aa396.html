@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Refactor main() - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3bb868e40873c568acdec74f7783c77f063aa396.html">3bb868e40873c568acdec74f7783c77f063aa396</a>
+<b>parent</b> <a href="../commit/a7afade1701a809f6a33b53525d59dd29b38d381.html">a7afade1701a809f6a33b53525d59dd29b38d381</a>
+<b>Author:</b> FRIGN &lt;<a href="mailto:dev@frign.de">dev@frign.de</a>&gt;
+<b>Date:</b>   Mon, 22 Aug 2016 00:25:21 +0200
+
+Refactor main()
+
+- Add arg.h and fix usage
+	Given slock is suid we don&#39;t want to have half-measures in place to
+	parse the arguments in case the code is changed in the future with
+	somebody not paying enough attention.
+
+	Also, fix the usage string output to be more consistent across the
+	suckless toolbase and make it reflect the manpage entry.
+
+- Comments
+	Use proper block comments and add/change them where necessary
+	to help in studying the code.
+
+- Error messages
+	Consistently prepend them with &quot;slock:&quot; and fix wording and
+	do a proper cleanup before quitting (XCloseDisplay and free
+	the locks), making the die() semantics consistent with st&#39;s.
+
+- getpwuid() error reporting
+	Properly present an error message if getpwuid() fails.
+
+- fork() error reporting
+	Properly present an error message if fork() fails. If we cannot
+	close the connection within the fork context we abort the
+	operation and report an error.
+
+- execvp() error handling
+	If execvp fails, we cannot call die() afterwards as this implies
+	calling exit(). We must use _exit() to prevent the libc from
+	doing now &quot;illegal&quot; cleanup-work.
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">arg.h</a></td><td> | </td><td class="num">65</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">slock.c</a></td><td> | </td><td class="num">85</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 119 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/arg.h.html">arg.h</a> b/<a href="../file/arg.h.html">arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,65 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+/*
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+ * Copy me if you can.
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+ * by 20h
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+ */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#ifndef ARG_H__
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#define ARG_H__
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+extern char *argv0;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+/* use main(int argc, char *argv[]) */
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+#define ARGBEGIN	for (argv0 = *argv, argv++, argc--;\
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+					argv[0] &amp;&amp; argv[0][0] == &#39;-&#39;\
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+					&amp;&amp; argv[0][1];\
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+					argc--, argv++) {\
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+				char argc_;\
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+				char **argv_;\
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+				int brk_;\
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+				if (argv[0][1] == &#39;-&#39; &amp;&amp; argv[0][2] == &#39;\0&#39;) {\
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+					argv++;\
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+					argc--;\
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+					break;\
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+				}\
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+				for (brk_ = 0, argv[0]++, argv_ = argv;\
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+						argv[0][0] &amp;&amp; !brk_;\
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+						argv[0]++) {\
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+					if (argv_ != argv)\
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+						break;\
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+					argc_ = argv[0][0];\
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+					switch (argc_)
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+/* Handles obsolete -NUM syntax */
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+#define ARGNUM				case &#39;0&#39;:\
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+					case &#39;1&#39;:\
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+					case &#39;2&#39;:\
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+					case &#39;3&#39;:\
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+					case &#39;4&#39;:\
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+					case &#39;5&#39;:\
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+					case &#39;6&#39;:\
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+					case &#39;7&#39;:\
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+					case &#39;8&#39;:\
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+					case &#39;9&#39;
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+#define ARGEND			}\
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+			}
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+#define ARGC()		argc_
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+#define ARGNUMF()	(brk_ = 1, estrtonum(argv[0], 0, INT_MAX))
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+#define EARGF(x)	((argv[0][1] == &#39;\0&#39; &amp;&amp; argv[1] == NULL)?\
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+				((x), abort(), (char *)0) :\
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+				(brk_ = 1, (argv[0][1] != &#39;\0&#39;)?\
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+					(&amp;argv[0][1]) :\
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+					(argc--, argv++, argv[0])))
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+#define ARGF()		((argv[0][1] == &#39;\0&#39; &amp;&amp; argv[1] == NULL)?\
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+				(char *)0 :\
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+				(brk_ = 1, (argv[0][1] != &#39;\0&#39;)?\
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+					(&amp;argv[0][1]) :\
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+					(argc--, argv++, argv[0])))
+</a><a href="#h0-0-61" id="h0-0-61" class="i">+
+</a><a href="#h0-0-62" id="h0-0-62" class="i">+#define LNGARG()	&amp;argv[0][0]
+</a><a href="#h0-0-63" id="h0-0-63" class="i">+
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+#endif
+</a><b>diff --git a/<a id="h1" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -23,8 +23,11 @@
+</a> #include &lt;bsd_auth.h&gt;
+ #endif
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+#include &quot;arg.h&quot;
+</a> #include &quot;util.h&quot;
+ 
+<a href="#h1-0-6" id="h1-0-6" class="i">+char *argv0;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a> enum {
+ 	INIT,
+ 	INPUT,
+<a href="#h1-1" id="h1-1" class="h">@@ -54,7 +57,6 @@ die(const char *errstr, ...)
+</a> {
+ 	va_list ap;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	fputs(&quot;slock: &quot;, stderr);
+</a> 	va_start(ap, errstr);
+ 	vfprintf(stderr, errstr, ap);
+ 	va_end(ap);
+<a href="#h1-2" id="h1-2" class="h">@@ -280,8 +282,7 @@ lockscreen(Display *dpy, int screen)
+</a> static void
+ usage(void)
+ {
+<a href="#h1-2-3" id="h1-2-3" class="d">-	fprintf(stderr, &quot;usage: slock [-v|POST_LOCK_CMD]\n&quot;);
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-	exit(1);
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	die(&quot;usage: slock [-v | cmd [arg ...]]\n&quot;);
+</a> }
+ 
+ int
+<a href="#h1-3" id="h1-3" class="h">@@ -290,64 +291,86 @@ main(int argc, char **argv) {
+</a> 	const char *pws;
+ #endif
+ 	Display *dpy;
+<a href="#h1-3-3" id="h1-3-3" class="d">-	int screen;
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	int s, nlocks;
+</a> 
+<a href="#h1-3-6" id="h1-3-6" class="d">-	if ((argc &gt;= 2) &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+</a><a href="#h1-3-7" id="h1-3-7" class="d">-		die(&quot;version %s, © 2006-2016 slock engineers\n&quot;, VERSION);
+</a><a href="#h1-3-8" id="h1-3-8" class="d">-
+</a><a href="#h1-3-9" id="h1-3-9" class="d">-	/* treat first argument starting with a &#39;-&#39; as option */
+</a><a href="#h1-3-10" id="h1-3-10" class="d">-	if ((argc &gt;= 2) &amp;&amp; argv[1][0] == &#39;-&#39;)
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+	ARGBEGIN {
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+	case &#39;v&#39;:
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+		fprintf(stderr, &quot;slock-&quot;VERSION&quot;\n&quot;);
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+		return 0;
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+	default:
+</a> 		usage();
+<a href="#h1-3-17" id="h1-3-17" class="i">+	} ARGEND
+</a> 
+ #ifdef __linux__
+ 	dontkillme();
+ #endif
+ 
+<a href="#h1-3-23" id="h1-3-23" class="d">-	if (!getpwuid(getuid()))
+</a><a href="#h1-3-24" id="h1-3-24" class="d">-		die(&quot;no passwd entry for you\n&quot;);
+</a><a href="#h1-3-25" id="h1-3-25" class="i">+	/* Check if the current user has a password entry */
+</a><a href="#h1-3-26" id="h1-3-26" class="i">+	errno = 0;
+</a><a href="#h1-3-27" id="h1-3-27" class="i">+	if (!getpwuid(getuid())) {
+</a><a href="#h1-3-28" id="h1-3-28" class="i">+		if (errno == 0)
+</a><a href="#h1-3-29" id="h1-3-29" class="i">+			die(&quot;slock: no password entry for current user\n&quot;);
+</a><a href="#h1-3-30" id="h1-3-30" class="i">+		else
+</a><a href="#h1-3-31" id="h1-3-31" class="i">+			die(&quot;slock: getpwuid: %s\n&quot;, strerror(errno));
+</a><a href="#h1-3-32" id="h1-3-32" class="i">+	}
+</a> 
+ #ifndef HAVE_BSD_AUTH
+ 	pws = getpw();
+ #endif
+ 
+<a href="#h1-3-38" id="h1-3-38" class="d">-	if (!(dpy = XOpenDisplay(0)))
+</a><a href="#h1-3-39" id="h1-3-39" class="d">-		die(&quot;cannot open display\n&quot;);
+</a><a href="#h1-3-40" id="h1-3-40" class="i">+	if (!(dpy = XOpenDisplay(NULL)))
+</a><a href="#h1-3-41" id="h1-3-41" class="i">+		die(&quot;slock: cannot open display\n&quot;);
+</a><a href="#h1-3-42" id="h1-3-42" class="i">+
+</a><a href="#h1-3-43" id="h1-3-43" class="i">+	/* check for Xrandr support */
+</a> 	rr = XRRQueryExtension(dpy, &amp;rrevbase, &amp;rrerrbase);
+<a href="#h1-3-45" id="h1-3-45" class="d">-	/* Get the number of screens in display &quot;dpy&quot; and blank them all. */
+</a><a href="#h1-3-46" id="h1-3-46" class="i">+
+</a><a href="#h1-3-47" id="h1-3-47" class="i">+	/* get number of screens in display &quot;dpy&quot; and blank them */
+</a> 	nscreens = ScreenCount(dpy);
+<a href="#h1-3-49" id="h1-3-49" class="d">-	if (!(locks = malloc(sizeof(Lock*) * nscreens)))
+</a><a href="#h1-3-50" id="h1-3-50" class="d">-		die(&quot;Out of memory.\n&quot;);
+</a><a href="#h1-3-51" id="h1-3-51" class="d">-	int nlocks = 0;
+</a><a href="#h1-3-52" id="h1-3-52" class="d">-	for (screen = 0; screen &lt; nscreens; screen++) {
+</a><a href="#h1-3-53" id="h1-3-53" class="d">-		if ((locks[screen] = lockscreen(dpy, screen)) != NULL)
+</a><a href="#h1-3-54" id="h1-3-54" class="i">+	if (!(locks = malloc(sizeof(Lock *) * nscreens))) {
+</a><a href="#h1-3-55" id="h1-3-55" class="i">+		XCloseDisplay(dpy);
+</a><a href="#h1-3-56" id="h1-3-56" class="i">+		die(&quot;slock: out of memory\n&quot;);
+</a><a href="#h1-3-57" id="h1-3-57" class="i">+	}
+</a><a href="#h1-3-58" id="h1-3-58" class="i">+	for (nlocks = 0, s = 0; s &lt; nscreens; s++) {
+</a><a href="#h1-3-59" id="h1-3-59" class="i">+		if ((locks[s] = lockscreen(dpy, s)) != NULL)
+</a> 			nlocks++;
+ 	}
+<a href="#h1-3-62" id="h1-3-62" class="d">-	XSync(dpy, False);
+</a><a href="#h1-3-63" id="h1-3-63" class="i">+	XSync(dpy, 0);
+</a> 
+<a href="#h1-3-65" id="h1-3-65" class="d">-	/* Did we actually manage to lock something? */
+</a><a href="#h1-3-66" id="h1-3-66" class="d">-	if (nlocks == 0) { /* nothing to protect */
+</a><a href="#h1-3-67" id="h1-3-67" class="i">+	/* did we actually manage to lock anything? */
+</a><a href="#h1-3-68" id="h1-3-68" class="i">+	if (nlocks == 0) {
+</a><a href="#h1-3-69" id="h1-3-69" class="i">+		/* nothing to protect */
+</a> 		free(locks);
+ 		XCloseDisplay(dpy);
+ 		return 1;
+ 	}
+ 
+<a href="#h1-3-75" id="h1-3-75" class="d">-	if (argc &gt;= 2 &amp;&amp; fork() == 0) {
+</a><a href="#h1-3-76" id="h1-3-76" class="d">-		if (dpy)
+</a><a href="#h1-3-77" id="h1-3-77" class="d">-			close(ConnectionNumber(dpy));
+</a><a href="#h1-3-78" id="h1-3-78" class="d">-		execvp(argv[1], argv+1);
+</a><a href="#h1-3-79" id="h1-3-79" class="d">-		die(&quot;execvp %s failed: %s\n&quot;, argv[1], strerror(errno));
+</a><a href="#h1-3-80" id="h1-3-80" class="i">+	/* run post-lock command */
+</a><a href="#h1-3-81" id="h1-3-81" class="i">+	if (argc &gt; 0) {
+</a><a href="#h1-3-82" id="h1-3-82" class="i">+		switch (fork()) {
+</a><a href="#h1-3-83" id="h1-3-83" class="i">+		case -1:
+</a><a href="#h1-3-84" id="h1-3-84" class="i">+			free(locks);
+</a><a href="#h1-3-85" id="h1-3-85" class="i">+			XCloseDisplay(dpy);
+</a><a href="#h1-3-86" id="h1-3-86" class="i">+			die(&quot;slock: fork failed: %s\n&quot;, strerror(errno));
+</a><a href="#h1-3-87" id="h1-3-87" class="i">+		case 0:
+</a><a href="#h1-3-88" id="h1-3-88" class="i">+			if (close(ConnectionNumber(dpy)) &lt; 0)
+</a><a href="#h1-3-89" id="h1-3-89" class="i">+				die(&quot;slock: close: %s\n&quot;, strerror(errno));
+</a><a href="#h1-3-90" id="h1-3-90" class="i">+			execvp(argv[0], argv);
+</a><a href="#h1-3-91" id="h1-3-91" class="i">+			fprintf(stderr, &quot;slock: execvp %s: %s\n&quot;, argv[0],
+</a><a href="#h1-3-92" id="h1-3-92" class="i">+			        strerror(errno));
+</a><a href="#h1-3-93" id="h1-3-93" class="i">+			_exit(1);
+</a><a href="#h1-3-94" id="h1-3-94" class="i">+		}
+</a> 	}
+ 
+<a href="#h1-3-97" id="h1-3-97" class="d">-	/* Everything is now blank. Now wait for the correct password. */
+</a><a href="#h1-3-98" id="h1-3-98" class="i">+	/* everything is now blank. Wait for the correct password */
+</a> #ifdef HAVE_BSD_AUTH
+ 	readpw(dpy);
+ #else
+ 	readpw(dpy, pws);
+ #endif
+ 
+<a href="#h1-3-105" id="h1-3-105" class="d">-	/* Password ok, unlock everything and quit. */
+</a><a href="#h1-3-106" id="h1-3-106" class="d">-	for (screen = 0; screen &lt; nscreens; screen++)
+</a><a href="#h1-3-107" id="h1-3-107" class="d">-		unlockscreen(dpy, locks[screen]);
+</a><a href="#h1-3-108" id="h1-3-108" class="i">+	/* password ok, unlock everything and quit */
+</a><a href="#h1-3-109" id="h1-3-109" class="i">+	for (s = 0; s &lt; nscreens; s++)
+</a><a href="#h1-3-110" id="h1-3-110" class="i">+		unlockscreen(dpy, locks[s]);
+</a> 
+ 	free(locks);
+ 	XCloseDisplay(dpy);
+</pre>
+</div>
+</body>
+</html>

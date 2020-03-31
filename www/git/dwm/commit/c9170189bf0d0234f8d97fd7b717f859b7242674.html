@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implemented setlayout in the way proposed on the ml, split tile() into two functions, a third will follow soon - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c9170189bf0d0234f8d97fd7b717f859b7242674.html">c9170189bf0d0234f8d97fd7b717f859b7242674</a>
+<b>parent</b> <a href="../commit/f7a45ff28bcf1d88f9268e3c1f1000df28f0cd08.html">f7a45ff28bcf1d88f9268e3c1f1000df28f0cd08</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Thu,  6 Mar 2008 18:53:15 +0000
+
+implemented setlayout in the way proposed on the ml, split tile() into two functions, a third will follow soon
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">34</td><td><span class="i">+++++++++++++++++</span><span class="d">-----------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">178</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 109 insertions(+), 103 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -13,31 +13,31 @@
+</a> /* bar position */
+ #define BX sx
+ #define BY sy
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define BW MW
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define BW sw
+</a> 
+ /* window area */
+ #define WX 0
+ #define WY bh
+ #define WW sw
+<a href="#h0-0-10" id="h0-0-10" class="d">-#define WH sh
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+#define WH sh - bh
+</a> 
+ /* master area */
+<a href="#h0-0-14" id="h0-0-14" class="d">-#define MX sx
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-#define MY sy + bh
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+#define MX WX
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+#define MY WY
+</a> #define MW ((int)(((float)sw) * 0.6))
+<a href="#h0-0-19" id="h0-0-19" class="d">-#define MH sh - bh
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+#define MH WH
+</a> 
+ /* tile area, might be on a different screen */
+<a href="#h0-0-23" id="h0-0-23" class="d">-#define TX sx + MW
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-#define TY sy
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-#define TW sw - MW
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-#define TH sh
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+#define TX MX + MW
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+#define TY WY
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+#define TW WW - MW
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+#define TH WH
+</a> 
+ /* monocle area, might be restricted to a specific screen */
+<a href="#h0-0-33" id="h0-0-33" class="d">-#define MOX sx
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-#define MOY MY
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-#define MOW sw
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-#define MOH MH
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+#define MOX WX
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+#define MOY WY
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+#define MOW WW
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+#define MOH WH
+</a> 
+ /* tagging */
+ const char tags[][MAXTAGLEN] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot; };
+<a href="#h0-1" id="h0-1" class="h">@@ -55,10 +55,10 @@ Rule rules[] = {
+</a> #define SNAP			32	/* snap pixel */
+ 
+ Layout layouts[] = {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	/* symbol		function */
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	{ &quot;[]=&quot;,		tile }, /* first entry is default */
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	{ &quot;&gt;&lt;&gt;&quot;,		floating },
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	{ &quot;[M]&quot;,		monocle },
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	/* symbol		function	isfloating */
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	{ &quot;[]=&quot;,		tile,		False }, /* first entry is default */
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	{ &quot;&gt;&lt;&gt;&quot;,		floating	True },
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	{ &quot;[M]&quot;,		monocle		True },
+</a> };
+ 
+ /* key definitions */
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,9 +1,4 @@
+</a> /**
+<a href="#h1-0-1" id="h1-0-1" class="d">- * TODO
+</a><a href="#h1-0-2" id="h1-0-2" class="d">- * - treat monocle as floating layout, actually otherwise certain monocled windows don&#39;t get raised
+</a><a href="#h1-0-3" id="h1-0-3" class="d">- * - use WX, WY, WW, WH for window snapping/resizing/mouse
+</a><a href="#h1-0-4" id="h1-0-4" class="d">- * - MOX, MOY, MOW, MOH should only be used in the case of monocle layout and of n==1 in tiled
+</a><a href="#h1-0-5" id="h1-0-5" class="d">- * - simplify tile()
+</a>  * - allow for vstack
+  */
+ /* See LICENSE file for copyright and license details.
+<a href="#h1-1" id="h1-1" class="h">@@ -67,7 +62,6 @@ typedef struct Client Client;
+</a> struct Client {
+ 	char name[256];
+ 	int x, y, w, h;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	int rx, ry, rw, rh;
+</a> 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int minax, maxax, minay, maxay;
+ 	long flags;
+<a href="#h1-2" id="h1-2" class="h">@@ -105,6 +99,7 @@ typedef struct {
+</a> typedef struct {
+ 	const char *symbol;
+ 	void (*arrange)(void);
+<a href="#h1-2-3" id="h1-2-3" class="i">+	Bool isfloating;
+</a> } Layout;
+ 
+ typedef struct {
+<a href="#h1-3" id="h1-3" class="h">@@ -176,6 +171,8 @@ void tag(const char *arg);
+</a> unsigned int textnw(const char *text, unsigned int len);
+ unsigned int textw(const char *text);
+ void tile(void);
+<a href="#h1-3-3" id="h1-3-3" class="i">+unsigned int tilemaster(void);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+void tilevstack(unsigned int n);
+</a> void togglefloating(const char *arg);
+ void toggletag(const char *arg);
+ void toggleview(const char *arg);
+<a href="#h1-4" id="h1-4" class="h">@@ -213,7 +210,6 @@ void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[UnmapNotify] = unmapnotify
+ };
+ Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h1-4-3" id="h1-4-3" class="d">-Bool dozoom = True;
+</a> Bool otherwm, readin;
+ Bool running = True;
+ Bool *prevtags;
+<a href="#h1-5" id="h1-5" class="h">@@ -297,7 +293,7 @@ void
+</a> ban(Client *c) {
+ 	if(c-&gt;isbanned)
+ 		return;
+<a href="#h1-5-3" id="h1-5-3" class="d">-	XMoveWindow(dpy, c-&gt;win, c-&gt;x + 3 * sw, c-&gt;y);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	XMoveWindow(dpy, c-&gt;win, c-&gt;x + 2 * sw, c-&gt;y);
+</a> 	c-&gt;isbanned = True;
+ }
+ 
+<a href="#h1-6" id="h1-6" class="h">@@ -428,7 +424,7 @@ configurerequest(XEvent *e) {
+</a> 	if((c = getclient(ev-&gt;window))) {
+ 		if(ev-&gt;value_mask &amp; CWBorderWidth)
+ 			c-&gt;border = ev-&gt;border_width;
+<a href="#h1-6-3" id="h1-6-3" class="d">-		if(c-&gt;isfixed || c-&gt;isfloating || (floating == lt-&gt;arrange)) {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+		if(c-&gt;isfixed || c-&gt;isfloating || lt-&gt;isfloating) {
+</a> 			if(ev-&gt;value_mask &amp; CWX)
+ 				c-&gt;x = sx + ev-&gt;x;
+ 			if(ev-&gt;value_mask &amp; CWY)
+<a href="#h1-7" id="h1-7" class="h">@@ -637,7 +633,6 @@ void
+</a> floating(void) { /* default floating layout */
+ 	Client *c;
+ 
+<a href="#h1-7-3" id="h1-7-3" class="d">-	dozoom = False;
+</a> 	for(c = clients; c; c = c-&gt;next)
+ 		if(isvisible(c))
+ 			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+<a href="#h1-8" id="h1-8" class="h">@@ -650,22 +645,11 @@ focus(Client *c) {
+</a> 	if(sel &amp;&amp; sel != c) {
+ 		grabbuttons(sel, False);
+ 		XSetWindowBorder(dpy, sel-&gt;win, dc.norm[ColBorder]);
+<a href="#h1-8-3" id="h1-8-3" class="d">-		if(lt-&gt;arrange == monocle)
+</a><a href="#h1-8-4" id="h1-8-4" class="d">-			resize(sel, sel-&gt;rx, sel-&gt;ry, sel-&gt;rw, sel-&gt;rh, True);
+</a> 	}
+ 	if(c) {
+ 		detachstack(c);
+ 		attachstack(c);
+ 		grabbuttons(c, True);
+<a href="#h1-8-10" id="h1-8-10" class="d">-		if(lt-&gt;arrange == monocle) {
+</a><a href="#h1-8-11" id="h1-8-11" class="d">-			if(sel != c) {
+</a><a href="#h1-8-12" id="h1-8-12" class="d">-				c-&gt;rx = c-&gt;x;
+</a><a href="#h1-8-13" id="h1-8-13" class="d">-				c-&gt;ry = c-&gt;y;
+</a><a href="#h1-8-14" id="h1-8-14" class="d">-				c-&gt;rw = c-&gt;w;
+</a><a href="#h1-8-15" id="h1-8-15" class="d">-				c-&gt;rh = c-&gt;h;
+</a><a href="#h1-8-16" id="h1-8-16" class="d">-			}
+</a><a href="#h1-8-17" id="h1-8-17" class="d">-			resize(c, MOX, MOY, MOW, MOH, RESIZEHINTS);
+</a><a href="#h1-8-18" id="h1-8-18" class="d">-		}
+</a> 	}
+ 	sel = c;
+ 	if(c) {
+<a href="#h1-9" id="h1-9" class="h">@@ -987,28 +971,29 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	c-&gt;tags = emallocz(TAGSZ);
+ 	c-&gt;win = w;
+ 
+<a href="#h1-9-3" id="h1-9-3" class="d">-	c-&gt;x = c-&gt;rx = wa-&gt;x + sx;
+</a><a href="#h1-9-4" id="h1-9-4" class="d">-	c-&gt;y = c-&gt;ry = wa-&gt;y + sy;
+</a><a href="#h1-9-5" id="h1-9-5" class="d">-	c-&gt;w = c-&gt;rw = wa-&gt;width;
+</a><a href="#h1-9-6" id="h1-9-6" class="d">-	c-&gt;h = c-&gt;rh = wa-&gt;height;
+</a><a href="#h1-9-7" id="h1-9-7" class="i">+	/* geometry */
+</a><a href="#h1-9-8" id="h1-9-8" class="i">+	c-&gt;x = wa-&gt;x;
+</a><a href="#h1-9-9" id="h1-9-9" class="i">+	c-&gt;y = wa-&gt;y;
+</a><a href="#h1-9-10" id="h1-9-10" class="i">+	c-&gt;w = wa-&gt;width;
+</a><a href="#h1-9-11" id="h1-9-11" class="i">+	c-&gt;h = wa-&gt;height;
+</a> 	c-&gt;oldborder = wa-&gt;border_width;
+<a href="#h1-9-13" id="h1-9-13" class="d">-
+</a> 	if(c-&gt;w == sw &amp;&amp; c-&gt;h == sh) {
+ 		c-&gt;x = sx;
+ 		c-&gt;y = sy;
+ 		c-&gt;border = wa-&gt;border_width;
+ 	}
+ 	else {
+<a href="#h1-9-20" id="h1-9-20" class="d">-		if(c-&gt;x + c-&gt;w + 2 * c-&gt;border &gt; sx + sw)
+</a><a href="#h1-9-21" id="h1-9-21" class="d">-			c-&gt;x = sx + sw - c-&gt;w - 2 * c-&gt;border;
+</a><a href="#h1-9-22" id="h1-9-22" class="d">-		if(c-&gt;y + c-&gt;h + 2 * c-&gt;border &gt; sy + sh)
+</a><a href="#h1-9-23" id="h1-9-23" class="d">-			c-&gt;y = sy + sh - c-&gt;h - 2 * c-&gt;border;
+</a><a href="#h1-9-24" id="h1-9-24" class="d">-		if(c-&gt;x &lt; sx)
+</a><a href="#h1-9-25" id="h1-9-25" class="d">-			c-&gt;x = sx;
+</a><a href="#h1-9-26" id="h1-9-26" class="d">-		if(c-&gt;y &lt; sy)
+</a><a href="#h1-9-27" id="h1-9-27" class="d">-			c-&gt;y = sy;
+</a><a href="#h1-9-28" id="h1-9-28" class="i">+		if(c-&gt;x + c-&gt;w + 2 * c-&gt;border &gt; WX + WW)
+</a><a href="#h1-9-29" id="h1-9-29" class="i">+			c-&gt;x = WX + WW - c-&gt;w - 2 * c-&gt;border;
+</a><a href="#h1-9-30" id="h1-9-30" class="i">+		if(c-&gt;y + c-&gt;h + 2 * c-&gt;border &gt; WY + WH)
+</a><a href="#h1-9-31" id="h1-9-31" class="i">+			c-&gt;y = WY + WH - c-&gt;h - 2 * c-&gt;border;
+</a><a href="#h1-9-32" id="h1-9-32" class="i">+		if(c-&gt;x &lt; WX)
+</a><a href="#h1-9-33" id="h1-9-33" class="i">+			c-&gt;x = WX;
+</a><a href="#h1-9-34" id="h1-9-34" class="i">+		if(c-&gt;y &lt; WY)
+</a><a href="#h1-9-35" id="h1-9-35" class="i">+			c-&gt;y = WY;
+</a> 		c-&gt;border = BORDERPX;
+ 	}
+<a href="#h1-9-38" id="h1-9-38" class="i">+
+</a> 	wc.border_width = c-&gt;border;
+ 	XConfigureWindow(dpy, w, CWBorderWidth, &amp;wc);
+ 	XSetWindowBorder(dpy, w, dc.norm[ColBorder]);
+<a href="#h1-10" id="h1-10" class="h">@@ -1057,8 +1042,12 @@ maprequest(XEvent *e) {
+</a> }
+ 
+ void
+<a href="#h1-10-3" id="h1-10-3" class="d">-monocle(void) {
+</a><a href="#h1-10-4" id="h1-10-4" class="d">-	dozoom = False;
+</a><a href="#h1-10-5" id="h1-10-5" class="i">+monocle(void) { 
+</a><a href="#h1-10-6" id="h1-10-6" class="i">+	Client *c;
+</a><a href="#h1-10-7" id="h1-10-7" class="i">+
+</a><a href="#h1-10-8" id="h1-10-8" class="i">+	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h1-10-9" id="h1-10-9" class="i">+		if(isvisible(c))
+</a><a href="#h1-10-10" id="h1-10-10" class="i">+			resize(c, MOX, MOY, MOW, MOH, RESIZEHINTS);
+</a> }
+ 
+ void
+<a href="#h1-11" id="h1-11" class="h">@@ -1089,17 +1078,17 @@ movemouse(Client *c) {
+</a> 			XSync(dpy, False);
+ 			nx = ocx + (ev.xmotion.x - x1);
+ 			ny = ocy + (ev.xmotion.y - y1);
+<a href="#h1-11-3" id="h1-11-3" class="d">-			if(abs(sx - nx) &lt; SNAP)
+</a><a href="#h1-11-4" id="h1-11-4" class="d">-				nx = sx;
+</a><a href="#h1-11-5" id="h1-11-5" class="d">-			else if(abs((sx + sw) - (nx + c-&gt;w + 2 * c-&gt;border)) &lt; SNAP)
+</a><a href="#h1-11-6" id="h1-11-6" class="d">-				nx = sx + sw - c-&gt;w - 2 * c-&gt;border;
+</a><a href="#h1-11-7" id="h1-11-7" class="d">-			if(abs(sy - ny) &lt; SNAP)
+</a><a href="#h1-11-8" id="h1-11-8" class="d">-				ny = sy;
+</a><a href="#h1-11-9" id="h1-11-9" class="d">-			else if(abs((sy + sh) - (ny + c-&gt;h + 2 * c-&gt;border)) &lt; SNAP)
+</a><a href="#h1-11-10" id="h1-11-10" class="d">-				ny = sy + sh - c-&gt;h - 2 * c-&gt;border;
+</a><a href="#h1-11-11" id="h1-11-11" class="d">-			if(!c-&gt;isfloating &amp;&amp; (lt-&gt;arrange != floating) &amp;&amp; (abs(nx - c-&gt;x) &gt; SNAP || abs(ny - c-&gt;y) &gt; SNAP))
+</a><a href="#h1-11-12" id="h1-11-12" class="i">+			if(abs(WX - nx) &lt; SNAP)
+</a><a href="#h1-11-13" id="h1-11-13" class="i">+				nx = WX;
+</a><a href="#h1-11-14" id="h1-11-14" class="i">+			else if(abs((WX + WW) - (nx + c-&gt;w + 2 * c-&gt;border)) &lt; SNAP)
+</a><a href="#h1-11-15" id="h1-11-15" class="i">+				nx = WX + WW - c-&gt;w - 2 * c-&gt;border;
+</a><a href="#h1-11-16" id="h1-11-16" class="i">+			if(abs(WY - ny) &lt; SNAP)
+</a><a href="#h1-11-17" id="h1-11-17" class="i">+				ny = WY;
+</a><a href="#h1-11-18" id="h1-11-18" class="i">+			else if(abs((WY + WH) - (ny + c-&gt;h + 2 * c-&gt;border)) &lt; SNAP)
+</a><a href="#h1-11-19" id="h1-11-19" class="i">+				ny = WY + WH - c-&gt;h - 2 * c-&gt;border;
+</a><a href="#h1-11-20" id="h1-11-20" class="i">+			if(!c-&gt;isfloating &amp;&amp; !lt-&gt;isfloating &amp;&amp; (abs(nx - c-&gt;x) &gt; SNAP || abs(ny - c-&gt;y) &gt; SNAP))
+</a> 				togglefloating(NULL);
+<a href="#h1-11-22" id="h1-11-22" class="d">-			if((lt-&gt;arrange == floating) || c-&gt;isfloating)
+</a><a href="#h1-11-23" id="h1-11-23" class="i">+			if((lt-&gt;isfloating) || c-&gt;isfloating)
+</a> 				resize(c, nx, ny, c-&gt;w, c-&gt;h, False);
+ 			break;
+ 		}
+<a href="#h1-12" id="h1-12" class="h">@@ -1258,9 +1247,9 @@ resizemouse(Client *c) {
+</a> 				nw = 1;
+ 			if((nh = ev.xmotion.y - ocy - 2 * c-&gt;border + 1) &lt;= 0)
+ 				nh = 1;
+<a href="#h1-12-3" id="h1-12-3" class="d">-			if(!c-&gt;isfloating &amp;&amp; (lt-&gt;arrange != floating) &amp;&amp; (abs(nw - c-&gt;w) &gt; SNAP || abs(nh - c-&gt;h) &gt; SNAP))
+</a><a href="#h1-12-4" id="h1-12-4" class="i">+			if(!c-&gt;isfloating &amp;&amp; !lt-&gt;isfloating &amp;&amp; (abs(nw - c-&gt;w) &gt; SNAP || abs(nh - c-&gt;h) &gt; SNAP))
+</a> 				togglefloating(NULL);
+<a href="#h1-12-6" id="h1-12-6" class="d">-			if((lt-&gt;arrange == floating) || c-&gt;isfloating)
+</a><a href="#h1-12-7" id="h1-12-7" class="i">+			if((lt-&gt;isfloating) || c-&gt;isfloating)
+</a> 				resize(c, c-&gt;x, c-&gt;y, nw, nh, True);
+ 			break;
+ 		}
+<a href="#h1-13" id="h1-13" class="h">@@ -1276,9 +1265,9 @@ restack(void) {
+</a> 	drawbar();
+ 	if(!sel)
+ 		return;
+<a href="#h1-13-3" id="h1-13-3" class="d">-	if(sel-&gt;isfloating || (lt-&gt;arrange == floating))
+</a><a href="#h1-13-4" id="h1-13-4" class="i">+	if(sel-&gt;isfloating || lt-&gt;isfloating)
+</a> 		XRaiseWindow(dpy, sel-&gt;win);
+<a href="#h1-13-6" id="h1-13-6" class="d">-	if(lt-&gt;arrange != floating) {
+</a><a href="#h1-13-7" id="h1-13-7" class="i">+	if(!lt-&gt;isfloating) {
+</a> 		wc.stack_mode = Below;
+ 		wc.sibling = barwin;
+ 		if(!sel-&gt;isfloating) {
+<a href="#h1-14" id="h1-14" class="h">@@ -1393,6 +1382,7 @@ setclientstate(Client *c, long state) {
+</a> 
+ void
+ setlayout(const char *arg) {
+<a href="#h1-14-3" id="h1-14-3" class="i">+	static Layout *revert = 0;
+</a> 	unsigned int i;
+ 
+ 	if(!arg)
+<a href="#h1-15" id="h1-15" class="h">@@ -1402,7 +1392,12 @@ setlayout(const char *arg) {
+</a> 			break;
+ 	if(i == LENGTH(layouts))
+ 		return;
+<a href="#h1-15-3" id="h1-15-3" class="d">-	lt = &amp;layouts[i];
+</a><a href="#h1-15-4" id="h1-15-4" class="i">+	if(revert &amp;&amp; &amp;layouts[i] == lt)
+</a><a href="#h1-15-5" id="h1-15-5" class="i">+		lt = revert;
+</a><a href="#h1-15-6" id="h1-15-6" class="i">+	else {
+</a><a href="#h1-15-7" id="h1-15-7" class="i">+		revert = lt;
+</a><a href="#h1-15-8" id="h1-15-8" class="i">+		lt = &amp;layouts[i];
+</a><a href="#h1-15-9" id="h1-15-9" class="i">+	}
+</a> 	if(sel)
+ 		arrange();
+ 	else
+<a href="#h1-16" id="h1-16" class="h">@@ -1545,47 +1540,58 @@ textw(const char *text) {
+</a> }
+ 
+ void
+<a href="#h1-16-3" id="h1-16-3" class="d">-tile(void) {
+</a><a href="#h1-16-4" id="h1-16-4" class="d">-	unsigned int i, n, nx, ny, nw, nh, mw, th;
+</a><a href="#h1-16-5" id="h1-16-5" class="i">+tileresize(Client *c, int x, int y, int w, int h) {
+</a><a href="#h1-16-6" id="h1-16-6" class="i">+	resize(c, x, y, w, h, RESIZEHINTS);
+</a><a href="#h1-16-7" id="h1-16-7" class="i">+	if((RESIZEHINTS) &amp;&amp; ((c-&gt;h &lt; bh) || (c-&gt;h &gt; h) || (c-&gt;w &lt; bh) || (c-&gt;w &gt; w)))
+</a><a href="#h1-16-8" id="h1-16-8" class="i">+		/* client doesn&#39;t accept size constraints */
+</a><a href="#h1-16-9" id="h1-16-9" class="i">+		resize(c, x, y, w, h, False);
+</a><a href="#h1-16-10" id="h1-16-10" class="i">+}
+</a><a href="#h1-16-11" id="h1-16-11" class="i">+
+</a><a href="#h1-16-12" id="h1-16-12" class="i">+unsigned int
+</a><a href="#h1-16-13" id="h1-16-13" class="i">+tilemaster(void) {
+</a><a href="#h1-16-14" id="h1-16-14" class="i">+	unsigned int n;
+</a> 	Client *c, *mc;
+ 
+<a href="#h1-16-17" id="h1-16-17" class="d">-	dozoom = True;
+</a><a href="#h1-16-18" id="h1-16-18" class="d">-	nx = MX;
+</a><a href="#h1-16-19" id="h1-16-19" class="d">-	ny = MY;
+</a><a href="#h1-16-20" id="h1-16-20" class="d">-	nw = 0;
+</a><a href="#h1-16-21" id="h1-16-21" class="d">-	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+</a><a href="#h1-16-22" id="h1-16-22" class="i">+	for(n = 0, mc = c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+</a> 		n++;
+<a href="#h1-16-24" id="h1-16-24" class="i">+	if(n == 0)
+</a><a href="#h1-16-25" id="h1-16-25" class="i">+		return 0;
+</a><a href="#h1-16-26" id="h1-16-26" class="i">+	if(n == 1)
+</a><a href="#h1-16-27" id="h1-16-27" class="i">+		tileresize(mc, MOX, MOY, (MOW) - 2 * mc-&gt;border, (MOH) - 2 * mc-&gt;border);
+</a><a href="#h1-16-28" id="h1-16-28" class="i">+	else
+</a><a href="#h1-16-29" id="h1-16-29" class="i">+		tileresize(mc, MX, MY, (MW) - 2 * mc-&gt;border, (MH) - 2 * mc-&gt;border);
+</a><a href="#h1-16-30" id="h1-16-30" class="i">+	return n - 1;
+</a><a href="#h1-16-31" id="h1-16-31" class="i">+}
+</a> 
+<a href="#h1-16-33" id="h1-16-33" class="d">-	/* window geoms */
+</a><a href="#h1-16-34" id="h1-16-34" class="d">-	mw = (n == 1) ? MOW : MW;
+</a><a href="#h1-16-35" id="h1-16-35" class="d">-	th = (n &gt; 1) ? TH / (n - 1) : 0;
+</a><a href="#h1-16-36" id="h1-16-36" class="d">-	if(n &gt; 1 &amp;&amp; th &lt; bh)
+</a><a href="#h1-16-37" id="h1-16-37" class="d">-		th = TH;
+</a><a href="#h1-16-38" id="h1-16-38" class="i">+void
+</a><a href="#h1-16-39" id="h1-16-39" class="i">+tilevstack(unsigned int n) {
+</a><a href="#h1-16-40" id="h1-16-40" class="i">+	int i, y, h;
+</a><a href="#h1-16-41" id="h1-16-41" class="i">+	Client *c;
+</a> 
+<a href="#h1-16-43" id="h1-16-43" class="d">-	for(i = 0, c = mc = nexttiled(clients); c; c = nexttiled(c-&gt;next)) {
+</a><a href="#h1-16-44" id="h1-16-44" class="d">-		if(i == 0) { /* master */
+</a><a href="#h1-16-45" id="h1-16-45" class="d">-			nw = mw - 2 * c-&gt;border;
+</a><a href="#h1-16-46" id="h1-16-46" class="d">-			nh = MH - 2 * c-&gt;border;
+</a><a href="#h1-16-47" id="h1-16-47" class="d">-		}
+</a><a href="#h1-16-48" id="h1-16-48" class="d">-		else {  /* tile window */
+</a><a href="#h1-16-49" id="h1-16-49" class="d">-			if(i == 1) {
+</a><a href="#h1-16-50" id="h1-16-50" class="d">-				ny = TY;
+</a><a href="#h1-16-51" id="h1-16-51" class="d">-				nx = TX;
+</a><a href="#h1-16-52" id="h1-16-52" class="d">-				nw = TW - 2 * c-&gt;border;
+</a><a href="#h1-16-53" id="h1-16-53" class="d">-			}
+</a><a href="#h1-16-54" id="h1-16-54" class="d">-			if(i + 1 == n) /* remainder */
+</a><a href="#h1-16-55" id="h1-16-55" class="d">-				nh = (TY + TH) - ny - 2 * c-&gt;border;
+</a><a href="#h1-16-56" id="h1-16-56" class="i">+	if(n == 0)
+</a><a href="#h1-16-57" id="h1-16-57" class="i">+		return;
+</a><a href="#h1-16-58" id="h1-16-58" class="i">+
+</a><a href="#h1-16-59" id="h1-16-59" class="i">+	y = TY;
+</a><a href="#h1-16-60" id="h1-16-60" class="i">+	h = (TH) / n;
+</a><a href="#h1-16-61" id="h1-16-61" class="i">+	if(h &lt; bh)
+</a><a href="#h1-16-62" id="h1-16-62" class="i">+		h = TH;
+</a><a href="#h1-16-63" id="h1-16-63" class="i">+
+</a><a href="#h1-16-64" id="h1-16-64" class="i">+	for(i = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next), i++)
+</a><a href="#h1-16-65" id="h1-16-65" class="i">+		if(i &gt; 0) {
+</a><a href="#h1-16-66" id="h1-16-66" class="i">+			if(i &gt; 1 &amp;&amp; i == n) /* remainder */
+</a><a href="#h1-16-67" id="h1-16-67" class="i">+				tileresize(c, TX, y, (TW) - 2 * c-&gt;border,
+</a><a href="#h1-16-68" id="h1-16-68" class="i">+				              ((TY) + (TH)) - y - 2 * c-&gt;border);
+</a> 			else
+<a href="#h1-16-70" id="h1-16-70" class="d">-				nh = th - 2 * c-&gt;border;
+</a><a href="#h1-16-71" id="h1-16-71" class="i">+				tileresize(c, TX, y, (TW) - 2 * c-&gt;border,
+</a><a href="#h1-16-72" id="h1-16-72" class="i">+				              h - 2 * c-&gt;border);
+</a><a href="#h1-16-73" id="h1-16-73" class="i">+			if(h != TH)
+</a><a href="#h1-16-74" id="h1-16-74" class="i">+				y = c-&gt;y + c-&gt;h + 2 * c-&gt;border;
+</a> 		}
+<a href="#h1-16-76" id="h1-16-76" class="d">-		resize(c, nx, ny, nw, nh, RESIZEHINTS);
+</a><a href="#h1-16-77" id="h1-16-77" class="d">-		if((RESIZEHINTS) &amp;&amp; ((c-&gt;h &lt; bh) || (c-&gt;h &gt; nh) || (c-&gt;w &lt; bh) || (c-&gt;w &gt; nw)))
+</a><a href="#h1-16-78" id="h1-16-78" class="d">-			/* client doesn&#39;t accept size constraints */
+</a><a href="#h1-16-79" id="h1-16-79" class="d">-			resize(c, nx, ny, nw, nh, False);
+</a><a href="#h1-16-80" id="h1-16-80" class="d">-		if(n &gt; 1 &amp;&amp; th != TH)
+</a><a href="#h1-16-81" id="h1-16-81" class="d">-			ny = c-&gt;y + c-&gt;h + 2 * c-&gt;border;
+</a><a href="#h1-16-82" id="h1-16-82" class="d">-		i++;
+</a><a href="#h1-16-83" id="h1-16-83" class="d">-	}
+</a><a href="#h1-16-84" id="h1-16-84" class="i">+}
+</a><a href="#h1-16-85" id="h1-16-85" class="i">+
+</a><a href="#h1-16-86" id="h1-16-86" class="i">+void
+</a><a href="#h1-16-87" id="h1-16-87" class="i">+tile(void) {
+</a><a href="#h1-16-88" id="h1-16-88" class="i">+	tilevstack(tilemaster());
+</a> }
+ 
+ void
+<a href="#h1-17" id="h1-17" class="h">@@ -1796,7 +1802,7 @@ void
+</a> zoom(const char *arg) {
+ 	Client *c = sel;
+ 
+<a href="#h1-17-3" id="h1-17-3" class="d">-	if(!sel || !dozoom || sel-&gt;isfloating)
+</a><a href="#h1-17-4" id="h1-17-4" class="i">+	if(!sel || lt-&gt;isfloating || sel-&gt;isfloating)
+</a> 		return;
+ 	if(c == nexttiled(clients))
+ 		if(!(c = nexttiled(c-&gt;next)))
+</pre>
+</div>
+</body>
+</html>

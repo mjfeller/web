@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>recent changes, introduced togglebar, changed some defines into variable declarations where possible - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/549726869bd88f70727ecae8a28161700395b20b.html">549726869bd88f70727ecae8a28161700395b20b</a>
+<b>parent</b> <a href="../commit/42cb2bd3be755e8fc358347e085e9609fa54eb57.html">42cb2bd3be755e8fc358347e085e9609fa54eb57</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 19 May 2008 12:34:54 +0100
+
+recent changes, introduced togglebar, changed some defines into variable declarations where possible
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">60</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">tile.c</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>3 files changed, 53 insertions(+), 33 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,7 +1,6 @@
+</a> /* See LICENSE file for copyright and license details. */
+ 
+ /* appearance */
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define BORDERPX        1
+</a> #define FONT            &quot;-*-terminus-medium-r-normal-*-14-*-*-*-*-*-*-*&quot;
+ #define NORMBORDERCOLOR &quot;#cccccc&quot;
+ #define NORMBGCOLOR     &quot;#cccccc&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -9,7 +8,10 @@
+</a> #define SELBORDERCOLOR  &quot;#0066ff&quot;
+ #define SELBGCOLOR      &quot;#0066ff&quot;
+ #define SELFGCOLOR      &quot;#ffffff&quot;
+<a href="#h0-1-3" id="h0-1-3" class="d">-#define SNAP            32    /* snap pixel */
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+unsigned int borderpx  = 1;        /* border pixel of windows */
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+unsigned int snap      = 32;       /* snap pixel */
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+Bool showbar           = True;     /* False means no bar */
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+Bool topbar            = True;     /* False means bottom bar */
+</a> 
+ /* tagging */
+ const char tags[][MAXTAGLEN] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot; };
+<a href="#h0-2" id="h0-2" class="h">@@ -20,9 +22,11 @@ Rule rules[] = {
+</a> };
+ 
+ /* layout(s) */
+<a href="#h0-2-3" id="h0-2-3" class="d">-#define RESIZEHINTS True  /* False - respect size hints in tiled resizals */
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-#define MFACT       0.55  /* master factor [0.1 .. 0.9] */
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+double mfact           = 0.55;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+Bool resizehints       = True;     /* False means respect size hints in tiled resizals */
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+
+</a> #include &quot;tile.c&quot;
+<a href="#h0-2-9" id="h0-2-9" class="i">+
+</a> Layout layouts[] = {
+ 	/* symbol     arrange  geom */
+ 	{ &quot;[]=&quot;,      tile,    updatetilegeom }, /* first entry is default */
+<a href="#h0-3" id="h0-3" class="h">@@ -35,6 +39,7 @@ Key keys[] = {
+</a> 	/* modifier                     key        function        argument */
+ 	{ MODKEY,                       XK_p,      spawn,          &quot;exec dmenu_run -fn &#39;&quot;FONT&quot;&#39; -nb &#39;&quot;NORMBGCOLOR&quot;&#39; -nf &#39;&quot;NORMFGCOLOR&quot;&#39; -sb &#39;&quot;SELBGCOLOR&quot;&#39; -sf &#39;&quot;SELFGCOLOR&quot;&#39;&quot; },
+ 	{ MODKEY|ShiftMask,             XK_Return, spawn,          &quot;exec uxterm&quot; },
+<a href="#h0-3-3" id="h0-3-3" class="i">+	{ MODKEY,                       XK_b,      togglebar,      NULL },
+</a> 	{ MODKEY,                       XK_j,      focusnext,      NULL },
+ 	{ MODKEY,                       XK_k,      focusprev,      NULL },
+ 	{ MODKEY,                       XK_h,      setmfact,       &quot;-0.05&quot; },
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -41,18 +41,19 @@
+</a> #include &lt;X11/Xutil.h&gt;
+ 
+ /* macros */
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define MAX(a, b)	((a) &gt; (b) ? (a) : (b))
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#define MIN(a, b)	((a) &lt; (b) ? (a) : (b))
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-#define BUTTONMASK	(ButtonPressMask|ButtonReleaseMask)
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-#define CLEANMASK(mask)	(mask &amp; ~(numlockmask|LockMask))
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-#define LENGTH(x)	(sizeof x / sizeof x[0])
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-#define MAXTAGLEN	16
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-#define MOUSEMASK	(BUTTONMASK|PointerMotionMask)
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+#define MAX(a, b)       ((a) &gt; (b) ? (a) : (b))
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+#define MIN(a, b)       ((a) &lt; (b) ? (a) : (b))
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+#define BUTTONMASK      (ButtonPressMask|ButtonReleaseMask)
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+#define CLEANMASK(mask) (mask &amp; ~(numlockmask|LockMask))
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+#define LENGTH(x)       (sizeof x / sizeof x[0])
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+#define MAXTAGLEN       16
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+#define MOUSEMASK       (BUTTONMASK|PointerMotionMask)
+</a> 
+ /* enums */
+<a href="#h1-0-19" id="h1-0-19" class="d">-enum { CurNormal, CurResize, CurMove, CurLast };	/* cursor */
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-enum { ColBorder, ColFG, ColBG, ColLast };		/* color */
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-enum { NetSupported, NetWMName, NetLast };		/* EWMH atoms */
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+enum { BarTop, BarBot, BarOff, BarLast };               /* bar appearance */
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+enum { NetSupported, NetWMName, NetLast };              /* EWMH atoms */
+</a> enum { WMProtocols, WMDelete, WMName, WMState, WMLast };/* default atoms */
+ 
+ /* typedefs */
+<a href="#h1-1" id="h1-1" class="h">@@ -166,6 +167,7 @@ void spawn(const char *arg);
+</a> void tag(const char *arg);
+ unsigned int textnw(const char *text, unsigned int len);
+ unsigned int textw(const char *text);
+<a href="#h1-1-3" id="h1-1-3" class="i">+void togglebar(const char *arg);
+</a> void togglefloating(const char *arg);
+ void togglelayout(const char *arg);
+ void toggletag(const char *arg);
+<a href="#h1-2" id="h1-2" class="h">@@ -179,7 +181,7 @@ void updatesizehints(Client *c);
+</a> void updatetitle(Client *c);
+ void updatewmhints(Client *c);
+ void view(const char *arg);
+<a href="#h1-2-3" id="h1-2-3" class="d">-void viewprevtag(const char *arg);	/* views previous selected tags */
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+void viewprevtag(const char *arg);
+</a> int xerror(Display *dpy, XErrorEvent *ee);
+ int xerrordummy(Display *dpy, XErrorEvent *ee);
+ int xerrorstart(Display *dpy, XErrorEvent *ee);
+<a href="#h1-3" id="h1-3" class="h">@@ -188,9 +190,9 @@ void zoom(const char *arg);
+</a> /* variables */
+ char stext[256];
+ int screen, sx, sy, sw, sh;
+<a href="#h1-3-3" id="h1-3-3" class="d">-int (*xerrorxlib)(Display *, XErrorEvent *);
+</a> int bx, by, bw, bh, blw, wx, wy, ww, wh;
+ int seltags = 0;
+<a href="#h1-3-6" id="h1-3-6" class="i">+int (*xerrorxlib)(Display *, XErrorEvent *);
+</a> unsigned int numlockmask = 0;
+ void (*handler[LASTEvent]) (XEvent *) = {
+ 	[ButtonPress] = buttonpress,
+<a href="#h1-4" id="h1-4" class="h">@@ -959,7 +961,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 			c-&gt;y = wy + wh - c-&gt;h - 2 * c-&gt;bw;
+ 		c-&gt;x = MAX(c-&gt;x, wx);
+ 		c-&gt;y = MAX(c-&gt;y, wy);
+<a href="#h1-4-3" id="h1-4-3" class="d">-		c-&gt;bw = BORDERPX;
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		c-&gt;bw = borderpx;
+</a> 	}
+ 
+ 	wc.border_width = c-&gt;bw;
+<a href="#h1-5" id="h1-5" class="h">@@ -1037,15 +1039,15 @@ movemouse(Client *c) {
+</a> 			XSync(dpy, False);
+ 			nx = ocx + (ev.xmotion.x - x1);
+ 			ny = ocy + (ev.xmotion.y - y1);
+<a href="#h1-5-3" id="h1-5-3" class="d">-			if(abs(wx - nx) &lt; SNAP)
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+			if(abs(wx - nx) &lt; snap)
+</a> 				nx = wx;
+<a href="#h1-5-6" id="h1-5-6" class="d">-			else if(abs((wx + ww) - (nx + c-&gt;w + 2 * c-&gt;bw)) &lt; SNAP)
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+			else if(abs((wx + ww) - (nx + c-&gt;w + 2 * c-&gt;bw)) &lt; snap)
+</a> 				nx = wx + ww - c-&gt;w - 2 * c-&gt;bw;
+<a href="#h1-5-9" id="h1-5-9" class="d">-			if(abs(wy - ny) &lt; SNAP)
+</a><a href="#h1-5-10" id="h1-5-10" class="i">+			if(abs(wy - ny) &lt; snap)
+</a> 				ny = wy;
+<a href="#h1-5-12" id="h1-5-12" class="d">-			else if(abs((wy + wh) - (ny + c-&gt;h + 2 * c-&gt;bw)) &lt; SNAP)
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+			else if(abs((wy + wh) - (ny + c-&gt;h + 2 * c-&gt;bw)) &lt; snap)
+</a> 				ny = wy + wh - c-&gt;h - 2 * c-&gt;bw;
+<a href="#h1-5-15" id="h1-5-15" class="d">-			if(!c-&gt;isfloating &amp;&amp; lt-&gt;arrange &amp;&amp; (abs(nx - c-&gt;x) &gt; SNAP || abs(ny - c-&gt;y) &gt; SNAP))
+</a><a href="#h1-5-16" id="h1-5-16" class="i">+			if(!c-&gt;isfloating &amp;&amp; lt-&gt;arrange &amp;&amp; (abs(nx - c-&gt;x) &gt; snap || abs(ny - c-&gt;y) &gt; snap))
+</a> 				togglefloating(NULL);
+ 			if(!lt-&gt;arrange || c-&gt;isfloating)
+ 				resize(c, nx, ny, c-&gt;w, c-&gt;h, False);
+<a href="#h1-6" id="h1-6" class="h">@@ -1191,7 +1193,7 @@ resizemouse(Client *c) {
+</a> 			XSync(dpy, False);
+ 			nw = MAX(ev.xmotion.x - ocx - 2 * c-&gt;bw + 1, 1);
+ 			nh = MAX(ev.xmotion.y - ocy - 2 * c-&gt;bw + 1, 1);
+<a href="#h1-6-3" id="h1-6-3" class="d">-			if(!c-&gt;isfloating &amp;&amp; lt-&gt;arrange &amp;&amp; (abs(nw - c-&gt;w) &gt; SNAP || abs(nh - c-&gt;h) &gt; SNAP)) {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+			if(!c-&gt;isfloating &amp;&amp; lt-&gt;arrange &amp;&amp; (abs(nw - c-&gt;w) &gt; snap || abs(nh - c-&gt;h) &gt; snap)) {
+</a> 				togglefloating(NULL);
+ 			}
+ 			if(!lt-&gt;arrange || c-&gt;isfloating)
+<a href="#h1-7" id="h1-7" class="h">@@ -1455,6 +1457,14 @@ textw(const char *text) {
+</a> }
+ 
+ void
+<a href="#h1-7-3" id="h1-7-3" class="i">+togglebar(const char *arg) {
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	showbar = !showbar;
+</a><a href="#h1-7-5" id="h1-7-5" class="i">+	updategeom();
+</a><a href="#h1-7-6" id="h1-7-6" class="i">+	updatebar();
+</a><a href="#h1-7-7" id="h1-7-7" class="i">+	arrange();
+</a><a href="#h1-7-8" id="h1-7-8" class="i">+}
+</a><a href="#h1-7-9" id="h1-7-9" class="i">+
+</a><a href="#h1-7-10" id="h1-7-10" class="i">+void
+</a> togglefloating(const char *arg) {
+ 	if(!sel)
+ 		return;
+<a href="#h1-8" id="h1-8" class="h">@@ -1564,16 +1574,20 @@ void
+</a> updategeom(void) {
+ 	unsigned int i;
+ 
+<a href="#h1-8-3" id="h1-8-3" class="d">-	/* bar geometry */
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+#ifdef DEFGEOM /* define your own if you are Xinerama user */
+</a><a href="#h1-8-5" id="h1-8-5" class="i">+	DEFGEOM
+</a><a href="#h1-8-6" id="h1-8-6" class="i">+#else
+</a><a href="#h1-8-7" id="h1-8-7" class="i">+	/* bar geometry*/
+</a> 	bx = 0;
+<a href="#h1-8-9" id="h1-8-9" class="d">-	by = 0;
+</a><a href="#h1-8-10" id="h1-8-10" class="i">+	by = showbar ? (topbar ? 0 : sh - bh) : -bh;
+</a> 	bw = sw;
+ 
+ 	/* window area geometry */
+ 	wx = sx;
+<a href="#h1-8-15" id="h1-8-15" class="d">-	wy = sy + bh;
+</a><a href="#h1-8-16" id="h1-8-16" class="i">+	wy = showbar &amp;&amp; topbar ? sy + bh : sy;
+</a> 	ww = sw;
+<a href="#h1-8-18" id="h1-8-18" class="d">-	wh = sh - bh;
+</a><a href="#h1-8-19" id="h1-8-19" class="i">+	wh = showbar ? sh - bh : sh;
+</a><a href="#h1-8-20" id="h1-8-20" class="i">+#endif
+</a> 
+ 	/* update layout geometries */
+ 	for(i = 0; i &lt; LENGTH(layouts); i++)
+<b>diff --git a/<a id="h2" href="../file/tile.c.html">tile.c</a> b/<a href="../file/tile.c.html">tile.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,5 +1,4 @@
+</a> /* See LICENSE file for copyright and license details. */
+<a href="#h2-0-1" id="h2-0-1" class="d">-double mfact = MFACT;
+</a> int bx, by, bw, bh, blw, mx, my, mw, mh, tx, ty, tw, th, wx, wy, ww, wh;
+ 
+ void setmfact(const char *arg);
+<a href="#h2-1" id="h2-1" class="h">@@ -11,10 +10,8 @@ void
+</a> setmfact(const char *arg) {
+ 	double d;
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-	if(lt-&gt;arrange != tile)
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	if(!arg || lt-&gt;arrange != tile)
+</a> 		return;
+<a href="#h2-1-6" id="h2-1-6" class="d">-	if(!arg)
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-		mfact = MFACT;
+</a> 	else {
+ 		d = strtod(arg, NULL);
+ 		if(arg[0] == &#39;-&#39; || arg[0] == &#39;+&#39;)
+<a href="#h2-2" id="h2-2" class="h">@@ -66,8 +63,8 @@ tile(void) {
+</a> 
+ void
+ tileresize(Client *c, int x, int y, int w, int h) {
+<a href="#h2-2-3" id="h2-2-3" class="d">-	resize(c, x, y, w, h, RESIZEHINTS);
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-	if((RESIZEHINTS) &amp;&amp; ((c-&gt;h &lt; bh) || (c-&gt;h &gt; h) || (c-&gt;w &lt; bh) || (c-&gt;w &gt; w)))
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+	resize(c, x, y, w, h, resizehints);
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+	if(resizehints &amp;&amp; ((c-&gt;h &lt; bh) || (c-&gt;h &gt; h) || (c-&gt;w &lt; bh) || (c-&gt;w &gt; w)))
+</a> 		/* client doesn&#39;t accept size constraints */
+ 		resize(c, x, y, w, h, False);
+ }
+<a href="#h2-3" id="h2-3" class="h">@@ -89,6 +86,9 @@ zoom(const char *arg) {
+</a> 
+ void
+ updatetilegeom(void) {
+<a href="#h2-3-3" id="h2-3-3" class="i">+#ifdef TILEGEOM /* define your own if you are Xinerama user */
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+	TILEGEOM
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+#else
+</a> 	/* master area geometry */
+ 	mx = wx;
+ 	my = wy;
+<a href="#h2-4" id="h2-4" class="h">@@ -100,4 +100,5 @@ updatetilegeom(void) {
+</a> 	ty = wy;
+ 	tw = ww - mw;
+ 	th = wh;
+<a href="#h2-4-3" id="h2-4-3" class="i">+#endif
+</a> }
+</pre>
+</div>
+</body>
+</html>

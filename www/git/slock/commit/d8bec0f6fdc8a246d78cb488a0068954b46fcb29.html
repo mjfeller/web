@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fix CVE-2016-6866 - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d8bec0f6fdc8a246d78cb488a0068954b46fcb29.html">d8bec0f6fdc8a246d78cb488a0068954b46fcb29</a>
+<b>parent</b> <a href="../commit/b87bfa234378bcfc1b13273c5089f07902de1725.html">b87bfa234378bcfc1b13273c5089f07902de1725</a>
+<b>Author:</b> Markus Teich &lt;<a href="mailto:markus.teich@stusta.mhn.de">markus.teich@stusta.mhn.de</a>&gt;
+<b>Date:</b>   Wed, 31 Aug 2016 00:59:06 +0200
+
+fix CVE-2016-6866
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -123,7 +123,7 @@ readpw(Display *dpy)
+</a> readpw(Display *dpy, const char *pws)
+ #endif
+ {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	char buf[32], passwd[256];
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	char buf[32], passwd[256], *encrypted;
+</a> 	int num, screen;
+ 	unsigned int len, color;
+ 	KeySym ksym;
+<a href="#h0-1" id="h0-1" class="h">@@ -159,7 +159,11 @@ readpw(Display *dpy, const char *pws)
+</a> #ifdef HAVE_BSD_AUTH
+ 				running = !auth_userokay(getlogin(), NULL, &quot;auth-slock&quot;, passwd);
+ #else
+<a href="#h0-1-3" id="h0-1-3" class="d">-				running = !!strcmp(crypt(passwd, pws), pws);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+				errno = 0;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+				if (!(encrypted = crypt(passwd, pws)))
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+					fprintf(stderr, &quot;slock: crypt: %s\n&quot;, strerror(errno));
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+				else
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+					running = !!strcmp(encrypted, pws);
+</a> #endif
+ 				if (running) {
+ 					XBell(dpy, 100);
+<a href="#h0-2" id="h0-2" class="h">@@ -312,6 +316,8 @@ main(int argc, char **argv) {
+</a> 
+ #ifndef HAVE_BSD_AUTH
+ 	pws = getpw();
+<a href="#h0-2-3" id="h0-2-3" class="i">+	if (strlen(pws) &lt; 2)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		die(&quot;slock: failed to get user password hash.\n&quot;);
+</a> #endif
+ 
+ 	if (!(dpy = XOpenDisplay(NULL)))
+</pre>
+</div>
+</body>
+</html>

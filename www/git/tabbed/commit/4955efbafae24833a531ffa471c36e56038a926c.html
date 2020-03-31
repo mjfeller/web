@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>XKill if windows won&#39;t close, cleanups. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4955efbafae24833a531ffa471c36e56038a926c.html">4955efbafae24833a531ffa471c36e56038a926c</a>
+<b>parent</b> <a href="../commit/8b63e1219b7130f978f1dc2ef72f9e68720bbf5a.html">8b63e1219b7130f978f1dc2ef72f9e68720bbf5a</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue, 25 May 2010 00:44:20 +0200
+
+XKill if windows won&#39;t close, cleanups.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 3 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -84,6 +84,7 @@ typedef struct Client {
+</a> 	Window win;
+ 	int tabx;
+ 	Bool mapped;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	Bool closed;
+</a> } Client;
+ 
+ /* function declarations */
+<a href="#h0-1" id="h0-1" class="h">@@ -548,7 +549,7 @@ killclient(const Arg *arg) {
+</a> 
+ 	if(!sel)
+ 		return;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(isprotodel(sel)) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if(isprotodel(sel) &amp;&amp; !sel-&gt;closed) {
+</a> 		ev.type = ClientMessage;
+ 		ev.xclient.window = sel-&gt;win;
+ 		ev.xclient.message_type = wmatom[WMProtocols];
+<a href="#h0-2" id="h0-2" class="h">@@ -556,6 +557,7 @@ killclient(const Arg *arg) {
+</a> 		ev.xclient.data.l[0] = wmatom[WMDelete];
+ 		ev.xclient.data.l[1] = CurrentTime;
+ 		XSendEvent(dpy, sel-&gt;win, False, NoEventMask, &amp;ev);
+<a href="#h0-2-3" id="h0-2-3" class="i">+		sel-&gt;closed = True;
+</a> 	}
+ 	else
+ 		XKillClient(dpy, sel-&gt;win);
+<a href="#h0-3" id="h0-3" class="h">@@ -757,7 +759,6 @@ sigchld(int unused) {
+</a> 
+ void
+ spawn(const Arg *arg) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-	puts(&quot;aaaa&quot;);
+</a> 	if(fork() == 0) {
+ 		if(dpy)
+ 			close(ConnectionNumber(dpy));
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>s/growcol/resizetile/g - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/40bd21ce631073e7badd3d9617c273f44711c059.html">40bd21ce631073e7badd3d9617c273f44711c059</a>
+<b>parent</b> <a href="../commit/4633fbec616d2f130dfd5d8677e103cf47d26c15.html">4633fbec616d2f130dfd5d8677e103cf47d26c15</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Tue,  5 Sep 2006 13:25:42 +0200
+
+s/growcol/resizetile/g
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">view.c</a></td><td> | </td><td class="num">24</td><td><span class="i">++++++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>4 files changed, 15 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -34,7 +34,7 @@ static Key key[] = { \
+</a> 	{ MODKEY,			XK_k,		focusprev,	{ 0 } }, \
+ 	{ MODKEY,			XK_Return,	zoom,		{ 0 } }, \
+ 	{ MODKEY,			XK_m,		togglemax,	{ 0 } }, \
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ MODKEY,			XK_g,		growcol,	{ .i = 20 } }, \
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	{ MODKEY,			XK_g,		resizetile,	{ .i = 20 } }, \
+</a> 	{ MODKEY|ShiftMask,		XK_1,		tag,		{ .i = 0 } }, \
+ 	{ MODKEY|ShiftMask,		XK_2,		tag,		{ .i = 1 } }, \
+ 	{ MODKEY|ShiftMask,		XK_3,		tag,		{ .i = 2 } }, \
+<b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -29,7 +29,7 @@ static Key key[] = { \
+</a> 	{ MODKEY|ShiftMask,		XK_Tab,		focusprev,	{ 0 } }, \
+ 	{ MODKEY,			XK_Return,	zoom,		{ 0 } }, \
+ 	{ MODKEY,			XK_m,		togglemax,	{ 0 } }, \
+<a href="#h1-0-3" id="h1-0-3" class="d">-	{ MODKEY,			XK_g,		growcol,	{ .i = 20 } }, \
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	{ MODKEY,			XK_g,		resizetile,	{ .i = 20 } }, \
+</a> 	{ MODKEY|ShiftMask,		XK_1,		tag,		{ .i = 0 } }, \
+ 	{ MODKEY|ShiftMask,		XK_2,		tag,		{ .i = 1 } }, \
+ 	{ MODKEY|ShiftMask,		XK_3,		tag,		{ .i = 2 } }, \
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -131,8 +131,8 @@ extern void dofloat(Arg *arg);
+</a> extern void dotile(Arg *arg);
+ extern void focusnext(Arg *arg);
+ extern void focusprev(Arg *arg);
+<a href="#h2-0-3" id="h2-0-3" class="d">-extern void growcol(Arg *arg);
+</a> extern Bool isvisible(Client *c);
+<a href="#h2-0-5" id="h2-0-5" class="i">+extern void resizetile(Arg *arg);
+</a> extern void restack();
+ extern void togglemode(Arg *arg);
+ extern void toggleview(Arg *arg);
+<b>diff --git a/<a id="h3" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -169,8 +169,19 @@ focusprev(Arg *arg)
+</a> 	}
+ }
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+Bool
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+isvisible(Client *c)
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+{
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+	unsigned int i;
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	for(i = 0; i &lt; ntags; i++)
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+		if(c-&gt;tags[i] &amp;&amp; seltag[i])
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+			return True;
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+	return False;
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+}
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+
+</a> void
+<a href="#h3-0-15" id="h3-0-15" class="d">-growcol(Arg *arg)
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+resizetile(Arg *arg)
+</a> {
+ 	Client *c = getnext(clients);
+ 
+<a href="#h3-1" id="h3-1" class="h">@@ -189,17 +200,6 @@ growcol(Arg *arg)
+</a> 	arrange(NULL);
+ }
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-Bool
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-isvisible(Client *c)
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-{
+</a><a href="#h3-1-6" id="h3-1-6" class="d">-	unsigned int i;
+</a><a href="#h3-1-7" id="h3-1-7" class="d">-
+</a><a href="#h3-1-8" id="h3-1-8" class="d">-	for(i = 0; i &lt; ntags; i++)
+</a><a href="#h3-1-9" id="h3-1-9" class="d">-		if(c-&gt;tags[i] &amp;&amp; seltag[i])
+</a><a href="#h3-1-10" id="h3-1-10" class="d">-			return True;
+</a><a href="#h3-1-11" id="h3-1-11" class="d">-	return False;
+</a><a href="#h3-1-12" id="h3-1-12" class="d">-}
+</a><a href="#h3-1-13" id="h3-1-13" class="d">-
+</a> void
+ restack()
+ {
+</pre>
+</div>
+</body>
+</html>

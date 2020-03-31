@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed string cutting - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/28a52197c43136945defebe1e8be82812a0e53cf.html">28a52197c43136945defebe1e8be82812a0e53cf</a>
+<b>parent</b> <a href="../commit/2c0d1cc87bf084ed3f1cdb4be881fb4f64f5773a.html">2c0d1cc87bf084ed3f1cdb4be881fb4f64f5773a</a>
+<b>Author:</b> Anselm R.Garbe &lt;<a href="mailto:arg@10ksloc.org">arg@10ksloc.org</a>&gt;
+<b>Date:</b>   Mon, 14 Aug 2006 10:58:03 +0200
+
+fixed string cutting
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">draw.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 6 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -65,12 +65,12 @@ drawtext(const char *text, Bool invert)
+</a> 	while(len &amp;&amp; (w = textnw(buf, len)) &gt; dc.w - h)
+ 		buf[--len] = 0;
+ 	if(len &lt; olen) {
+<a href="#h0-0-3" id="h0-0-3" class="i">+		if(len &gt; 1)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			buf[len - 1] = &#39;.&#39;;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		if(len &gt; 2)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			buf[len - 2] = &#39;.&#39;;
+</a> 		if(len &gt; 3)
+<a href="#h0-0-8" id="h0-0-8" class="d">-			memcpy(buf + len - 4, &quot;...\0&quot;, 4);
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-		else if(len &gt; 2)
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-			memcpy(buf + len - 3, &quot;..\0&quot;, 3);
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-		else if(len &gt; 1)
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-			memcpy(buf + len - 2, &quot;.\0&quot;, 2);
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+			buf[len - 3] = &#39;.&#39;;
+</a> 	}
+ 
+ 	if(w &gt; dc.w)
+<a href="#h0-1" id="h0-1" class="h">@@ -160,7 +160,7 @@ drawtitle(Client *c)
+</a> 		}
+ 	}
+ 	dc.x += dc.w;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	dc.w = textw(c-&gt;name);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	dc.w = c-&gt;tw - dc.x;
+</a> 	drawtext(c-&gt;name, !istile);
+ 	XCopyArea(dpy, dc.drawable, c-&gt;title, dc.gc, 0, 0, c-&gt;tw, c-&gt;th, 0, 0);
+ 	XSync(dpy, False);
+</pre>
+</div>
+</body>
+</html>

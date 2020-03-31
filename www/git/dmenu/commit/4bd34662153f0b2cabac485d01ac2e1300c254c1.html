@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>ordered switch branches in kpress alphabetically, applied Sanders patch for PgUp/Dn and Home/End scrolling - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4bd34662153f0b2cabac485d01ac2e1300c254c1.html">4bd34662153f0b2cabac485d01ac2e1300c254c1</a>
+<b>parent</b> <a href="../commit/e19e42adbba5ea74778bcd10c6e8720d0755f812.html">e19e42adbba5ea74778bcd10c6e8720d0755f812</a>
+<b>Author:</b> arg@mig29 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Tue, 12 Dec 2006 09:57:42 +0100
+
+ordered switch branches in kpress alphabetically, applied Sanders patch for PgUp/Dn and Home/End scrolling
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.1</a></td><td> | </td><td class="num">8</td><td><span class="i">+++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">main.c</a></td><td> | </td><td class="num">89</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 64 insertions(+), 33 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.1.html">dmenu.1</a> b/<a href="../file/dmenu.1.html">dmenu.1</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -40,7 +40,7 @@ defines the seconds to wait for standard input, before exiting (default is 3).
+</a> prints version information to standard output, then exits.
+ .SH USAGE
+ dmenu reads a list of newline-separated items from standard input and creates a
+<a href="#h0-0-3" id="h0-0-3" class="d">-menu.  When the user selects an item or enters any text and presses Return, his
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+menu.  When the user selects an item or enters any text and presses Return, his/her
+</a> choice is printed to standard output and dmenu terminates.
+ .P
+ dmenu is completely controlled by the keyboard. The following keys are recognized:
+<a href="#h0-1" id="h0-1" class="h">@@ -52,6 +52,12 @@ only items containing this text will be displayed.
+</a> .B Left/Right
+ Select the previous/next item.
+ .TP
+<a href="#h0-1-3" id="h0-1-3" class="i">+.B PageUp/PageDown
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+Select the first item of the previous/next &#39;page&#39; of items.
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+.TP
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+.B Home/End
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+Select the first/last item.
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+.TP
+</a> .B Tab
+ Copy the selected item to the input field.
+ .TP
+<b>diff --git a/<a id="h1" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -170,6 +170,42 @@ kpress(XKeyEvent * e) {
+</a> 		}
+ 	}
+ 	switch(ksym) {
+<a href="#h1-0-3" id="h1-0-3" class="i">+	default:
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		if(num &amp;&amp; !iscntrl((int) buf[0])) {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+			buf[num] = 0;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+			if(len &gt; 0)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+				strncat(text, buf, sizeof text);
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+			else
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+				strncpy(text, buf, sizeof text);
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+			match(text);
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+		}
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+		break;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	case XK_BackSpace:
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+		if((i = len)) {
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+			prev_nitem = nitem;
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+			do {
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+				text[--i] = 0;
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+				match(text);
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+			} while(i &amp;&amp; nitem &amp;&amp; prev_nitem == nitem);
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+			match(text);
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+		}
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+		break;
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+	case XK_End:
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+		while(next) {
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+			sel = curr = next;
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+			calcoffsets();
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+		}
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+		while(sel-&gt;right)
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+			sel = sel-&gt;right;
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+		break;
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+	case XK_Escape:
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+		ret = 1;
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+		running = False;
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+		break;
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	case XK_Home:
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+		sel = curr = item;
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+		calcoffsets();
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+		break;
+</a> 	case XK_Left:
+ 		if(!(sel &amp;&amp; sel-&gt;left))
+ 			return;
+<a href="#h1-1" id="h1-1" class="h">@@ -179,18 +215,15 @@ kpress(XKeyEvent * e) {
+</a> 			calcoffsets();
+ 		}
+ 		break;
+<a href="#h1-1-3" id="h1-1-3" class="d">-	case XK_Tab:
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-		if(!sel)
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-			return;
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-		strncpy(text, sel-&gt;text, sizeof text);
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-		match(text);
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	case XK_Next:
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+		if(next) {
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+			sel = curr = next;
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+			calcoffsets();
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		}
+</a> 		break;
+<a href="#h1-1-14" id="h1-1-14" class="d">-	case XK_Right:
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-		if(!(sel &amp;&amp; sel-&gt;right))
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-			return;
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-		sel=sel-&gt;right;
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-		if(sel == next) {
+</a><a href="#h1-1-19" id="h1-1-19" class="d">-			curr = next;
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	case XK_Prior:
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+		if(prev) {
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+			sel = curr = prev;
+</a> 			calcoffsets();
+ 		}
+ 		break;
+<a href="#h1-2" id="h1-2" class="h">@@ -204,29 +237,21 @@ kpress(XKeyEvent * e) {
+</a> 		fflush(stdout);
+ 		running = False;
+ 		break;
+<a href="#h1-2-3" id="h1-2-3" class="d">-	case XK_Escape:
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-		ret = 1;
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-		running = False;
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-		break;
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-	case XK_BackSpace:
+</a><a href="#h1-2-8" id="h1-2-8" class="d">-		if((i = len)) {
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-			prev_nitem = nitem;
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-			do {
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-				text[--i] = 0;
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-				match(text);
+</a><a href="#h1-2-13" id="h1-2-13" class="d">-			} while(i &amp;&amp; nitem &amp;&amp; prev_nitem == nitem);
+</a><a href="#h1-2-14" id="h1-2-14" class="d">-			match(text);
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+	case XK_Right:
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+		if(!(sel &amp;&amp; sel-&gt;right))
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+			return;
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+		sel=sel-&gt;right;
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+		if(sel == next) {
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+			curr = next;
+</a><a href="#h1-2-21" id="h1-2-21" class="i">+			calcoffsets();
+</a> 		}
+ 		break;
+<a href="#h1-2-24" id="h1-2-24" class="d">-	default:
+</a><a href="#h1-2-25" id="h1-2-25" class="d">-		if(num &amp;&amp; !iscntrl((int) buf[0])) {
+</a><a href="#h1-2-26" id="h1-2-26" class="d">-			buf[num] = 0;
+</a><a href="#h1-2-27" id="h1-2-27" class="d">-			if(len &gt; 0)
+</a><a href="#h1-2-28" id="h1-2-28" class="d">-				strncat(text, buf, sizeof text);
+</a><a href="#h1-2-29" id="h1-2-29" class="d">-			else
+</a><a href="#h1-2-30" id="h1-2-30" class="d">-				strncpy(text, buf, sizeof text);
+</a><a href="#h1-2-31" id="h1-2-31" class="d">-			match(text);
+</a><a href="#h1-2-32" id="h1-2-32" class="d">-		}
+</a><a href="#h1-2-33" id="h1-2-33" class="i">+	case XK_Tab:
+</a><a href="#h1-2-34" id="h1-2-34" class="i">+		if(!sel)
+</a><a href="#h1-2-35" id="h1-2-35" class="i">+			return;
+</a><a href="#h1-2-36" id="h1-2-36" class="i">+		strncpy(text, sel-&gt;text, sizeof text);
+</a><a href="#h1-2-37" id="h1-2-37" class="i">+		match(text);
+</a><a href="#h1-2-38" id="h1-2-38" class="i">+		break;
+</a> 	}
+ 	drawmenu();
+ }
+</pre>
+</div>
+</body>
+</html>

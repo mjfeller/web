@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adapt newwindow() - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/adc650f3999aeb9a781efad10b91b74ae5371f11.html">adc650f3999aeb9a781efad10b91b74ae5371f11</a>
+<b>parent</b> <a href="../commit/5bca2223399bb18bada2a48db7411d181e3186e6.html">5bca2223399bb18bada2a48db7411d181e3186e6</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Fri, 20 Nov 2015 17:39:45 +0100
+
+Adapt newwindow()
+
+Reorder cmdline options alphabetically and try to keep settings as they
+have been toggled in this surf client.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">61</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 36 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1052,45 +1052,56 @@ showview(WebKitWebView *v, Client *c)
+</a> }
+ 
+ void
+<a href="#h0-0-3" id="h0-0-3" class="d">-newwindow(Client *c, const Arg *arg, gboolean noembed)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+newwindow(Client *c, const Arg *a, int noembed)
+</a> {
+<a href="#h0-0-6" id="h0-0-6" class="d">-	guint i = 0;
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	const char *cmd[18], *uri;
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	const Arg a = { .v = (void *)cmd };
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	int i = 0;
+</a> 	char tmp[64];
+<a href="#h0-0-11" id="h0-0-11" class="i">+	const char *cmd[26], *uri;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	const Arg arg = { .v = cmd };
+</a> 
+ 	cmd[i++] = argv0;
+ 	cmd[i++] = &quot;-a&quot;;
+ 	cmd[i++] = cookiepolicies;
+<a href="#h0-0-17" id="h0-0-17" class="d">-	if (!enablescrollbars)
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-		cmd[i++] = &quot;-b&quot;;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	cmd[i++] = enablescrollbars ? &quot;-B&quot; : &quot;-b&quot;;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	if (cookiefile &amp;&amp; g_strcmp0(cookiefile, &quot;&quot;)) {
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+		cmd[i++] = &quot;-c&quot;;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		cmd[i++] = cookiefile;
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	}
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	cmd[i++] = enablecache ? &quot;-D&quot; : &quot;-d&quot;;
+</a> 	if (embed &amp;&amp; !noembed) {
+ 		cmd[i++] = &quot;-e&quot;;
+<a href="#h0-0-27" id="h0-0-27" class="d">-		snprintf(tmp, LENGTH(tmp), &quot;%u&quot;, (int)embed);
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		snprintf(tmp, LENGTH(tmp), &quot;%lu&quot;, embed);
+</a> 		cmd[i++] = tmp;
+ 	}
+<a href="#h0-0-31" id="h0-0-31" class="d">-	if (!allowgeolocation)
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-		cmd[i++] = &quot;-g&quot;;
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-	if (!loadimages)
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-		cmd[i++] = &quot;-i&quot;;
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-	if (kioskmode)
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-		cmd[i++] = &quot;-k&quot;;
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-	if (!enableplugins)
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-		cmd[i++] = &quot;-p&quot;;
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-	if (!enablescripts)
+</a><a href="#h0-0-40" id="h0-0-40" class="d">-		cmd[i++] = &quot;-s&quot;;
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	cmd[i++] = runinfullscreen ? &quot;-F&quot; : &quot;-f&quot;;
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	cmd[i++] = allowgeolocation ? &quot;-G&quot; : &quot;-g&quot;;
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+	cmd[i++] = loadimages ? &quot;-I&quot; : &quot;-i&quot;;
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+	cmd[i++] = kioskmode ? &quot;-K&quot; : &quot;-k&quot;;
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+	cmd[i++] = enablestyle ? &quot;-M&quot; : &quot;-m&quot;;
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+	cmd[i++] = enableinspector ? &quot;-N&quot; : &quot;-n&quot;;
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+	cmd[i++] = enableplugins ? &quot;-P&quot; : &quot;-p&quot;;
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+	if (scriptfile &amp;&amp; g_strcmp0(scriptfile, &quot;&quot;)) {
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+		cmd[i++] = &quot;-r&quot;;
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+		cmd[i++] = scriptfile;
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+	}
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+	cmd[i++] = enablescripts ? &quot;-S&quot; : &quot;-s&quot;;
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+	if (stylefile &amp;&amp; g_strcmp0(stylefile, &quot;&quot;)) {
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+		cmd[i++] = &quot;-t&quot;;
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+		cmd[i++] = stylefile;
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+	}
+</a><a href="#h0-0-57" id="h0-0-57" class="i">+	if (fulluseragent &amp;&amp; g_strcmp0(fulluseragent, &quot;&quot;)) {
+</a><a href="#h0-0-58" id="h0-0-58" class="i">+		cmd[i++] = &quot;-u&quot;;
+</a><a href="#h0-0-59" id="h0-0-59" class="i">+		cmd[i++] = fulluseragent;
+</a><a href="#h0-0-60" id="h0-0-60" class="i">+	}
+</a> 	if (showxid)
+ 		cmd[i++] = &quot;-x&quot;;
+<a href="#h0-0-63" id="h0-0-63" class="d">-	if (enablecache)
+</a><a href="#h0-0-64" id="h0-0-64" class="d">-		cmd[i++] = &quot;-D&quot;;
+</a><a href="#h0-0-65" id="h0-0-65" class="d">-	cmd[i++] = &quot;-c&quot;;
+</a><a href="#h0-0-66" id="h0-0-66" class="d">-	cmd[i++] = cookiefile;
+</a><a href="#h0-0-67" id="h0-0-67" class="i">+	/* do not keep zoom level */
+</a> 	cmd[i++] = &quot;--&quot;;
+<a href="#h0-0-69" id="h0-0-69" class="d">-	uri = arg-&gt;v ? (char *)arg-&gt;v : c-&gt;linkhover;
+</a><a href="#h0-0-70" id="h0-0-70" class="d">-	if (uri)
+</a><a href="#h0-0-71" id="h0-0-71" class="i">+	if ((uri = a-&gt;v))
+</a> 		cmd[i++] = uri;
+<a href="#h0-0-73" id="h0-0-73" class="d">-	cmd[i++] = NULL;
+</a><a href="#h0-0-74" id="h0-0-74" class="d">-	spawn(NULL, &amp;a);
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+	cmd[i] = NULL;
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+	spawn(c, &amp;arg);
+</a> }
+ 
+ GtkWidget *
+</pre>
+</div>
+</body>
+</html>

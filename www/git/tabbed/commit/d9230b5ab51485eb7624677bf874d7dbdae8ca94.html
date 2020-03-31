@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>start implementing xembed. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d9230b5ab51485eb7624677bf874d7dbdae8ca94.html">d9230b5ab51485eb7624677bf874d7dbdae8ca94</a>
+<b>parent</b> <a href="../commit/814d7166cca93d77eb399b90ed1e831b53eca77b.html">814d7166cca93d77eb399b90ed1e831b53eca77b</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Sun, 13 Sep 2009 12:13:10 +0200
+
+start implementing xembed.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">69</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>1 file changed, 58 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -21,15 +21,25 @@
+</a> #include &lt;errno.h&gt;
+ 
+ /* macros */
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define MAX(a, b)       ((a) &gt; (b) ? (a) : (b))
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-#define MIN(a, b)       ((a) &lt; (b) ? (a) : (b))
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-#define LENGTH(x)       (sizeof x / sizeof x[0])
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-#define CLEANMASK(mask) (mask &amp; ~(numlockmask|LockMask))
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-#define TEXTW(x)        (textnw(x, strlen(x)) + dc.font.height)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+#define MAX(a, b)                ((a) &gt; (b) ? (a) : (b))
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+#define MIN(a, b)                ((a) &lt; (b) ? (a) : (b))
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+#define LENGTH(x)                (sizeof x / sizeof x[0])
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+#define CLEANMASK(mask)          (mask &amp; ~(numlockmask|LockMask))
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+#define TEXTW(x)                 (textnw(x, strlen(x)) + dc.font.height)
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+#define XEMBED_EMBEDDED_NOTIFY   0
+</a> 
+ enum { ColFG, ColBG, ColLast };                         /* color */
+ enum { NetSupported, NetWMName, NetLast };              /* EWMH atoms */
+ enum { WMProtocols, WMDelete, WMState, WMLast };        /* default atoms */
+<a href="#h0-0-18" id="h0-0-18" class="i">+ /* XEMBED messages */
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+enum { XembNotify, XembWinAct, XembWinDeact, XembReqFoc,
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	XembFocIn, XembFocOut, XembFocNext, XembFoxPrev,
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+XEMBED_MODALITY_ON = 10,
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+XEMBED_MODALITY_OFF = 11,
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+XEMBED_REGISTER_ACCELERATOR = 12,
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+XEMBED_UNREGISTER_ACCELERATOR = 13,
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+XEMBED_ACTIVATE_ACCELERATOR = 14, 
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+};
+</a> 
+ typedef union {
+ 	int i;
+<a href="#h0-1" id="h0-1" class="h">@@ -70,6 +80,7 @@ typedef struct Client {
+</a> /* function declarations */
+ static void buttonpress(XEvent *e);
+ static void cleanup(void);
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void clientmessage(XEvent *e);
+</a> static void configurenotify(XEvent *e);
+ static void destroynotify(XEvent *e);
+ static void die(const char *errstr, ...);
+<a href="#h0-2" id="h0-2" class="h">@@ -112,10 +123,11 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[ButtonPress] = buttonpress,
+ 	[KeyPress] = keypress,
+ 	[Expose] = expose,
+<a href="#h0-2-3" id="h0-2-3" class="i">+	[ClientMessage] = clientmessage,
+</a> };
+ static Display *dpy;
+ static DC dc;
+<a href="#h0-2-7" id="h0-2-7" class="d">-static Atom wmatom[WMLast], netatom[NetLast];
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+static Atom wmatom[WMLast], netatom[NetLast], xembedatom;
+</a> static Window root, win;
+ static Bool running = True;
+ static unsigned int numlockmask = 0;
+<a href="#h0-3" id="h0-3" class="h">@@ -149,6 +161,7 @@ cleanup(void) {
+</a> 		XFreeFontSet(dpy, dc.font.set);
+ 	else
+ 		XFreeFont(dpy, dc.font.xfont);
+<a href="#h0-3-3" id="h0-3-3" class="i">+	puts(&quot;aaa&quot;);
+</a> 	XFreePixmap(dpy, dc.drawable);
+ 	XFreeGC(dpy, dc.gc);
+ 	XDestroyWindow(dpy, win);
+<a href="#h0-4" id="h0-4" class="h">@@ -156,6 +169,16 @@ cleanup(void) {
+</a> }
+ 
+ void
+<a href="#h0-4-3" id="h0-4-3" class="i">+clientmessage(XEvent *e) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	XClientMessageEvent *ev = &amp;e-&gt;xclient;
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+	if(ev-&gt;message_type == xembedatom) {
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+		puts(&quot;message!&quot;);
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+		printf(&quot;%ld %ld&quot;, ev-&gt;data.l[0], ev-&gt;data.l[1]);
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+		puts(&quot;&quot;);
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+	}
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+}
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+void
+</a> configurenotify(XEvent *e) {
+ 	XConfigureEvent *ev = &amp;e-&gt;xconfigure;
+ 	Client *c;
+<a href="#h0-5" id="h0-5" class="h">@@ -477,7 +500,7 @@ spawn(const Arg *arg) {
+</a> 			close(ConnectionNumber(dpy));
+ 		setsid();
+ 		execvp(((char **)arg-&gt;v)[0], (char **)arg-&gt;v);
+<a href="#h0-5-3" id="h0-5-3" class="d">-		fprintf(stderr, &quot;dwm: execvp %s&quot;, ((char **)arg-&gt;v)[0]);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		fprintf(stderr, &quot;tabbed: execvp %s&quot;, ((char **)arg-&gt;v)[0]);
+</a> 		perror(&quot; failed&quot;);
+ 		exit(0);
+ 	}
+<a href="#h0-6" id="h0-6" class="h">@@ -491,9 +514,12 @@ manage(Window w) {
+</a> 		unsigned int modifiers[] = { 0, LockMask, numlockmask, numlockmask|LockMask };
+ 		KeyCode code;
+ 		Client *c;
+<a href="#h0-6-3" id="h0-6-3" class="i">+		XEvent e;
+</a> 
+<a href="#h0-6-5" id="h0-6-5" class="d">-		XSync(dpy, False);
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+		XSelectInput(dpy, w, StructureNotifyMask | PropertyChangeMask);
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+		XWithdrawWindow(dpy, w, 0);
+</a> 		XReparentWindow(dpy, w, win, 0, bh);
+<a href="#h0-6-9" id="h0-6-9" class="i">+		XSync(dpy, False);
+</a> 		if(badwindow) {
+ 			badwindow = False;
+ 			return;
+<a href="#h0-7" id="h0-7" class="h">@@ -512,6 +538,17 @@ manage(Window w) {
+</a> 		updatetitle(c);
+ 		resize(c, ww, wh - bh);
+ 		drawbar();
+<a href="#h0-7-3" id="h0-7-3" class="i">+		XMapRaised(dpy, w);
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+		e.xclient.window = w;
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+		e.xclient.type = ClientMessage;
+</a><a href="#h0-7-6" id="h0-7-6" class="i">+		e.xclient.message_type = xembedatom;
+</a><a href="#h0-7-7" id="h0-7-7" class="i">+		e.xclient.format = 32;
+</a><a href="#h0-7-8" id="h0-7-8" class="i">+		e.xclient.data.l[0] = CurrentTime;
+</a><a href="#h0-7-9" id="h0-7-9" class="i">+		e.xclient.data.l[1] = XEMBED_EMBEDDED_NOTIFY;
+</a><a href="#h0-7-10" id="h0-7-10" class="i">+		e.xclient.data.l[2] = 0;
+</a><a href="#h0-7-11" id="h0-7-11" class="i">+		e.xclient.data.l[3] = win;
+</a><a href="#h0-7-12" id="h0-7-12" class="i">+		e.xclient.data.l[4] = 0;
+</a><a href="#h0-7-13" id="h0-7-13" class="i">+		XSendEvent(dpy, root, False, NoEventMask, &amp;e);
+</a> 	}
+ }
+ 
+<a href="#h0-8" id="h0-8" class="h">@@ -603,6 +640,7 @@ setup(void) {
+</a> 	wmatom[WMState] = XInternAtom(dpy, &quot;WM_STATE&quot;, False);
+ 	netatom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+ 	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+<a href="#h0-8-3" id="h0-8-3" class="i">+	xembedatom = XInternAtom(dpy, &quot;_XEMBED&quot;, False);
+</a> 	/* init appearance */
+ 	wx = 0;
+ 	wy = 0;
+<a href="#h0-9" id="h0-9" class="h">@@ -620,7 +658,7 @@ setup(void) {
+</a> 	win = XCreateSimpleWindow(dpy, root, wx, wy, ww, wh, 0, dc.norm[ColFG], dc.norm[ColBG]);
+ 	XSelectInput(dpy, win, StructureNotifyMask|PointerMotionMask|
+ 			ButtonPressMask|ExposureMask|KeyPressMask|
+<a href="#h0-9-3" id="h0-9-3" class="d">-			LeaveWindowMask);
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+			LeaveWindowMask|SubstructureRedirectMask);
+</a> 	XMapRaised(dpy, win);
+ 	xerrorxlib = XSetErrorHandler(xerror);
+ 	XClassHint class_hint;
+<a href="#h0-10" id="h0-10" class="h">@@ -710,10 +748,14 @@ xerror(Display *dpy, XErrorEvent *ee) {
+</a> 
+ int
+ main(int argc, char *argv[]) {
+<a href="#h0-10-3" id="h0-10-3" class="i">+	int detach = 0;
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+
+</a> 	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+ 		die(&quot;tabbed-&quot;VERSION&quot;, © 2006-2008 surf engineers, see LICENSE for details\n&quot;);
+<a href="#h0-10-7" id="h0-10-7" class="i">+	else if(argc == 2 &amp;&amp; strcmp(&quot;-d&quot;, argv[1]))
+</a><a href="#h0-10-8" id="h0-10-8" class="i">+		detach = 1;
+</a> 	else if(argc != 1)
+<a href="#h0-10-10" id="h0-10-10" class="d">-		die(&quot;usage: tabbed [-v]\n&quot;);
+</a><a href="#h0-10-11" id="h0-10-11" class="i">+		die(&quot;usage: tabbed [-d] [-v]\n&quot;);
+</a> 	if(!setlocale(LC_CTYPE, &quot;&quot;) || !XSupportsLocale())
+ 		fprintf(stderr, &quot;warning: no locale support\n&quot;);
+ 	if(!(dpy = XOpenDisplay(0)))
+<a href="#h0-11" id="h0-11" class="h">@@ -721,8 +763,13 @@ main(int argc, char *argv[]) {
+</a> 	setup();
+ 	printf(&quot;%i\n&quot;, (int)win);
+ 	fflush(NULL);
+<a href="#h0-11-3" id="h0-11-3" class="i">+	if(detach &amp;&amp; fork() != 0) {
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+		if(dpy)
+</a><a href="#h0-11-5" id="h0-11-5" class="i">+			close(ConnectionNumber(dpy));
+</a><a href="#h0-11-6" id="h0-11-6" class="i">+		return EXIT_SUCCESS;
+</a><a href="#h0-11-7" id="h0-11-7" class="i">+	}
+</a> 	run();
+ 	cleanup();
+ 	XCloseDisplay(dpy);
+<a href="#h0-11-11" id="h0-11-11" class="d">-	return 0;
+</a><a href="#h0-11-12" id="h0-11-12" class="i">+	return EXIT_SUCCESS;
+</a> }
+</pre>
+</div>
+</body>
+</html>

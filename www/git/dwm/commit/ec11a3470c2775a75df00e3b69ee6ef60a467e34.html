@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>introduced NOBORDER macro to hide the nasty - 2 * c-&gt;bw in various calculations, moved tagset to config.def.h - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ec11a3470c2775a75df00e3b69ee6ef60a467e34.html">ec11a3470c2775a75df00e3b69ee6ef60a467e34</a>
+<b>parent</b> <a href="../commit/288cf78b180db846ef2481124f3e7a8fe66c01f2.html">288cf78b180db846ef2481124f3e7a8fe66c01f2</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 27 Aug 2008 12:52:44 +0100
+
+introduced NOBORDER macro to hide the nasty - 2 * c-&gt;bw in various calculations, moved tagset to config.def.h
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>2 files changed, 14 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -16,6 +16,7 @@ static Bool readin                  = True;     /* False means do not read stdin
+</a> 
+ /* tagging */
+ static const char tags[][MAXTAGLEN] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot; };
+<a href="#h0-0-3" id="h0-0-3" class="i">+static unsigned int tagset[] = {1, 1}; /* after start, first tag is selected */
+</a> 
+ static Rule rules[] = {
+ 	/* class      instance    title       tags mask     isfloating */
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -53,6 +53,7 @@
+</a> #define MIN(a, b)               ((a) &lt; (b) ? (a) : (b))
+ #define MAXTAGLEN               16
+ #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
+<a href="#h1-0-3" id="h1-0-3" class="i">+#define NOBORDER(x)             ((x) - 2 * c-&gt;bw)
+</a> #define TAGMASK                 ((int)((1LL &lt;&lt; LENGTH(tags)) - 1))
+ #define TEXTW(x)                (textnw(x, strlen(x)) + dc.font.height)
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -227,7 +228,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> static Atom wmatom[WMLast], netatom[NetLast];
+ static Bool otherwm;
+ static Bool running = True;
+<a href="#h1-1-3" id="h1-1-3" class="d">-static unsigned int tagset[] = {1, 1}; /* after start, first tag is selected */
+</a> static Client *clients = NULL;
+ static Client *sel = NULL;
+ static Client *stack = NULL;
+<a href="#h1-2" id="h1-2" class="h">@@ -880,9 +880,9 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	}
+ 	else {
+ 		if(c-&gt;x + c-&gt;w + 2 * c-&gt;bw &gt; sx + sw)
+<a href="#h1-2-3" id="h1-2-3" class="d">-			c-&gt;x = sx + sw - c-&gt;w - 2 * c-&gt;bw;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+			c-&gt;x = sx + sw - NOBORDER(c-&gt;w);
+</a> 		if(c-&gt;y + c-&gt;h + 2 * c-&gt;bw &gt; sy + sh)
+<a href="#h1-2-6" id="h1-2-6" class="d">-			c-&gt;y = sy + sh - c-&gt;h - 2 * c-&gt;bw;
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+			c-&gt;y = sy + sh - NOBORDER(c-&gt;h);
+</a> 		c-&gt;x = MAX(c-&gt;x, sx);
+ 		/* only fix client y-offset, if the client center might cover the bar */
+ 		c-&gt;y = MAX(c-&gt;y, ((by == 0) &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &gt;= wx) &amp;&amp; (c-&gt;x + (c-&gt;w / 2) &lt; wx + ww)) ? bh : sy);
+<a href="#h1-3" id="h1-3" class="h">@@ -942,7 +942,7 @@ monocle(void) {
+</a> 	Client *c;
+ 
+ 	for(c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+<a href="#h1-3-3" id="h1-3-3" class="d">-		resize(c, wx, wy, ww - 2 * c-&gt;bw, wh - 2 * c-&gt;bw, resizehints);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		resize(c, wx, wy, NOBORDER(ww), NOBORDER(wh), resizehints);
+</a> }
+ 
+ void
+<a href="#h1-4" id="h1-4" class="h">@@ -979,11 +979,11 @@ movemouse(const Arg *arg) {
+</a> 				if(abs(wx - nx) &lt; snap)
+ 					nx = wx;
+ 				else if(abs((wx + ww) - (nx + c-&gt;w + 2 * c-&gt;bw)) &lt; snap)
+<a href="#h1-4-3" id="h1-4-3" class="d">-					nx = wx + ww - c-&gt;w - 2 * c-&gt;bw;
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+					nx = wx + ww - NOBORDER(c-&gt;w);
+</a> 				if(abs(wy - ny) &lt; snap)
+ 					ny = wy;
+ 				else if(abs((wy + wh) - (ny + c-&gt;h + 2 * c-&gt;bw)) &lt; snap)
+<a href="#h1-4-8" id="h1-4-8" class="d">-					ny = wy + wh - c-&gt;h - 2 * c-&gt;bw;
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+					ny = wy + wh - NOBORDER(c-&gt;h);
+</a> 				if(!c-&gt;isfloating &amp;&amp; lt[sellt]-&gt;arrange &amp;&amp; (abs(nx - c-&gt;x) &gt; snap || abs(ny - c-&gt;y) &gt; snap))
+ 					togglefloating(NULL);
+ 			}
+<a href="#h1-5" id="h1-5" class="h">@@ -1091,9 +1091,9 @@ resize(Client *c, int x, int y, int w, int h, Bool sizehints) {
+</a> 	if(w &lt;= 0 || h &lt;= 0)
+ 		return;
+ 	if(x &gt; sx + sw)
+<a href="#h1-5-3" id="h1-5-3" class="d">-		x = sw - w - 2 * c-&gt;bw;
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		x = sw - NOBORDER(w);
+</a> 	if(y &gt; sy + sh)
+<a href="#h1-5-6" id="h1-5-6" class="d">-		y = sh - h - 2 * c-&gt;bw;
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+		y = sh - NOBORDER(h);
+</a> 	if(x + w + 2 * c-&gt;bw &lt; sx)
+ 		x = sx;
+ 	if(y + h + 2 * c-&gt;bw &lt; sy)
+<a href="#h1-6" id="h1-6" class="h">@@ -1141,8 +1141,8 @@ resizemouse(const Arg *arg) {
+</a> 			break;
+ 		case MotionNotify:
+ 			XSync(dpy, False);
+<a href="#h1-6-3" id="h1-6-3" class="d">-			nw = MAX(ev.xmotion.x - ocx - 2 * c-&gt;bw + 1, 1);
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-			nh = MAX(ev.xmotion.y - ocy - 2 * c-&gt;bw + 1, 1);
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+			nw = MAX(ev.xmotion.x - NOBORDER(ocx) + 1, 1);
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+			nh = MAX(ev.xmotion.y - NOBORDER(ocy) + 1, 1);
+</a> 
+ 			if(snap &amp;&amp; nw &gt;= wx &amp;&amp; nw &lt;= wx + ww
+ 			        &amp;&amp; nh &gt;= wy &amp;&amp; nh &lt;= wy + wh) {
+<a href="#h1-7" id="h1-7" class="h">@@ -1430,7 +1430,7 @@ tile(void) {
+</a> 	/* master */
+ 	c = nexttiled(clients);
+ 	mw = mfact * ww;
+<a href="#h1-7-3" id="h1-7-3" class="d">-	resize(c, wx, wy, (n == 1 ? ww : mw) - 2 * c-&gt;bw, wh - 2 * c-&gt;bw, resizehints);
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	resize(c, wx, wy, NOBORDER(n == 1 ? ww : mw), NOBORDER(wh), resizehints);
+</a> 
+ 	if(--n == 0)
+ 		return;
+<a href="#h1-8" id="h1-8" class="h">@@ -1444,8 +1444,8 @@ tile(void) {
+</a> 		h = wh;
+ 
+ 	for(i = 0, c = nexttiled(c-&gt;next); c; c = nexttiled(c-&gt;next), i++) {
+<a href="#h1-8-3" id="h1-8-3" class="d">-		resize(c, x, y, w - 2 * c-&gt;bw, /* remainder */ ((i + 1 == n)
+</a><a href="#h1-8-4" id="h1-8-4" class="d">-		       ? (wy + wh) - y : h) - 2 * c-&gt;bw, resizehints);
+</a><a href="#h1-8-5" id="h1-8-5" class="i">+		resize(c, x, y, NOBORDER(w), /* remainder */ ((i + 1 == n)
+</a><a href="#h1-8-6" id="h1-8-6" class="i">+		       ? NOBORDER(wy + wh) - y : h), resizehints);
+</a> 		if(h != wh)
+ 			y = c-&gt;y + c-&gt;h + 2 * c-&gt;bw;
+ 	}
+</pre>
+</div>
+</body>
+</html>

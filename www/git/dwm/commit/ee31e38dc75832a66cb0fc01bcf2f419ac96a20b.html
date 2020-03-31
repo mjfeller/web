@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed NUMLOCKMASK, added dynamically calculated numlockmask instead - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ee31e38dc75832a66cb0fc01bcf2f419ac96a20b.html">ee31e38dc75832a66cb0fc01bcf2f419ac96a20b</a>
+<b>parent</b> <a href="../commit/442334641e4124d8c32387287d431a83761ff916.html">442334641e4124d8c32387287d431a83761ff916</a>
+<b>Author:</b> Anselm R.Garbe &lt;<a href="mailto:arg@10ksloc.org">arg@10ksloc.org</a>&gt;
+<b>Date:</b>   Mon, 14 Aug 2006 19:18:02 +0200
+
+removed NUMLOCKMASK, added dynamically calculated numlockmask instead
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.arg.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">config.default.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dwm.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">event.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">main.c</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>6 files changed, 29 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -228,27 +228,27 @@ manage(Window w, XWindowAttributes *wa)
+</a> 			GrabModeAsync, GrabModeSync, None, None);
+ 	XGrabButton(dpy, Button1, MODKEY | LockMask, c-&gt;win, False, BUTTONMASK,
+ 			GrabModeAsync, GrabModeSync, None, None);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	XGrabButton(dpy, Button1, MODKEY | NUMLOCKMASK, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	XGrabButton(dpy, Button1, MODKEY | numlockmask, c-&gt;win, False, BUTTONMASK,
+</a> 			GrabModeAsync, GrabModeSync, None, None);
+<a href="#h0-0-6" id="h0-0-6" class="d">-	XGrabButton(dpy, Button1, MODKEY | NUMLOCKMASK | LockMask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	XGrabButton(dpy, Button1, MODKEY | numlockmask | LockMask, c-&gt;win, False, BUTTONMASK,
+</a> 			GrabModeAsync, GrabModeSync, None, None);
+ 
+ 	XGrabButton(dpy, Button2, MODKEY, c-&gt;win, False, BUTTONMASK,
+ 			GrabModeAsync, GrabModeSync, None, None);
+ 	XGrabButton(dpy, Button2, MODKEY | LockMask, c-&gt;win, False, BUTTONMASK,
+ 			GrabModeAsync, GrabModeSync, None, None);
+<a href="#h0-0-14" id="h0-0-14" class="d">-	XGrabButton(dpy, Button2, MODKEY | NUMLOCKMASK, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	XGrabButton(dpy, Button2, MODKEY | numlockmask, c-&gt;win, False, BUTTONMASK,
+</a> 			GrabModeAsync, GrabModeSync, None, None);
+<a href="#h0-0-17" id="h0-0-17" class="d">-	XGrabButton(dpy, Button2, MODKEY | NUMLOCKMASK | LockMask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	XGrabButton(dpy, Button2, MODKEY | numlockmask | LockMask, c-&gt;win, False, BUTTONMASK,
+</a> 			GrabModeAsync, GrabModeSync, None, None);
+ 
+ 	XGrabButton(dpy, Button3, MODKEY, c-&gt;win, False, BUTTONMASK,
+ 			GrabModeAsync, GrabModeSync, None, None);
+ 	XGrabButton(dpy, Button3, MODKEY | LockMask, c-&gt;win, False, BUTTONMASK,
+ 			GrabModeAsync, GrabModeSync, None, None);
+<a href="#h0-0-25" id="h0-0-25" class="d">-	XGrabButton(dpy, Button3, MODKEY | NUMLOCKMASK, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	XGrabButton(dpy, Button3, MODKEY | numlockmask, c-&gt;win, False, BUTTONMASK,
+</a> 			GrabModeAsync, GrabModeSync, None, None);
+<a href="#h0-0-28" id="h0-0-28" class="d">-	XGrabButton(dpy, Button3, MODKEY | NUMLOCKMASK | LockMask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+	XGrabButton(dpy, Button3, MODKEY | numlockmask | LockMask, c-&gt;win, False, BUTTONMASK,
+</a> 			GrabModeAsync, GrabModeSync, None, None);
+ 
+ 	settags(c);
+<b>diff --git a/<a id="h1" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -13,7 +13,6 @@ const char *tags[] = { &quot;work&quot;, &quot;net&quot;, &quot;fnord&quot;, NULL };
+</a> #define FGCOLOR			&quot;#eeeeee&quot;
+ #define BORDERCOLOR		&quot;#3f484d&quot;
+ #define MODKEY			Mod1Mask
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define NUMLOCKMASK		Mod2Mask
+</a> #define MASTERW			60 /* percent */
+ 
+ #define KEYS \
+<b>diff --git a/<a id="h2" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -13,7 +13,6 @@ const char *tags[] = { &quot;0&quot;, &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, NULL };
+</a> #define FGCOLOR			&quot;#eeeeee&quot;
+ #define BORDERCOLOR		&quot;#9999CC&quot;
+ #define MODKEY			Mod1Mask
+<a href="#h2-0-3" id="h2-0-3" class="d">-#define NUMLOCKMASK		Mod2Mask
+</a> #define MASTERW			60 /* percent */
+ 
+ #define KEYS \
+<b>diff --git a/<a id="h3" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -70,7 +70,7 @@ struct Client {
+</a> extern const char *tags[];
+ extern char stext[1024];
+ extern int screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+<a href="#h3-0-3" id="h3-0-3" class="d">-extern unsigned int ntags;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+extern unsigned int ntags, numlockmask;
+</a> extern void (*handler[LASTEvent])(XEvent *);
+ extern void (*arrange)(Arg *);
+ extern Atom wmatom[WMLast], netatom[NetLast];
+<b>diff --git a/<a id="h4" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -18,7 +18,7 @@ typedef struct {
+</a> 
+ KEYS
+ 
+<a href="#h4-0-3" id="h4-0-3" class="d">-#define CLEANMASK(mask) (mask &amp; ~(NUMLOCKMASK | LockMask))
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+#define CLEANMASK(mask) (mask &amp; ~(numlockmask | LockMask))
+</a> 
+ static void
+ movemouse(Client *c)
+<a href="#h4-1" id="h4-1" class="h">@@ -378,9 +378,9 @@ grabkeys()
+</a> 				GrabModeAsync, GrabModeAsync);
+ 		XGrabKey(dpy, code, key[i].mod | LockMask, root, True,
+ 				GrabModeAsync, GrabModeAsync);
+<a href="#h4-1-3" id="h4-1-3" class="d">-		XGrabKey(dpy, code, key[i].mod | NUMLOCKMASK, root, True,
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+		XGrabKey(dpy, code, key[i].mod | numlockmask, root, True,
+</a> 				GrabModeAsync, GrabModeAsync);
+<a href="#h4-1-6" id="h4-1-6" class="d">-		XGrabKey(dpy, code, key[i].mod | NUMLOCKMASK | LockMask, root, True,
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+		XGrabKey(dpy, code, key[i].mod | numlockmask | LockMask, root, True,
+</a> 				GrabModeAsync, GrabModeAsync);
+ 	}
+ }
+<b>diff --git a/<a id="h5" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -11,6 +11,7 @@
+</a> #include &lt;unistd.h&gt;
+ #include &lt;sys/select.h&gt;
+ #include &lt;X11/cursorfont.h&gt;
+<a href="#h5-0-3" id="h5-0-3" class="i">+#include &lt;X11/keysym.h&gt;
+</a> #include &lt;X11/Xatom.h&gt;
+ #include &lt;X11/Xproto.h&gt;
+ 
+<a href="#h5-1" id="h5-1" class="h">@@ -85,7 +86,7 @@ xerrorstart(Display *dsply, XErrorEvent *ee)
+</a> char stext[1024];
+ Bool *seltag;
+ int screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+<a href="#h5-1-3" id="h5-1-3" class="d">-unsigned int ntags;
+</a><a href="#h5-1-4" id="h5-1-4" class="i">+unsigned int ntags, numlockmask;
+</a> Atom wmatom[WMLast], netatom[NetLast];
+ Bool running = True;
+ Bool issel = True;
+<a href="#h5-2" id="h5-2" class="h">@@ -162,12 +163,13 @@ xerror(Display *dpy, XErrorEvent *ee)
+</a> int
+ main(int argc, char *argv[])
+ {
+<a href="#h5-2-3" id="h5-2-3" class="d">-	int i, xfd;
+</a><a href="#h5-2-4" id="h5-2-4" class="i">+	int i, j, xfd;
+</a> 	unsigned int mask;
+ 	fd_set rd;
+ 	Bool readin = True;
+ 	Window w;
+ 	XEvent ev;
+<a href="#h5-2-10" id="h5-2-10" class="i">+	XModifierKeymap *modmap;
+</a> 	XSetWindowAttributes wa;
+ 
+ 	if(argc == 2 &amp;&amp; !strncmp(&quot;-v&quot;, argv[1], 3)) {
+<a href="#h5-3" id="h5-3" class="h">@@ -211,7 +213,16 @@ main(int argc, char *argv[])
+</a> 	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
+ 	cursor[CurMove] = XCreateFontCursor(dpy, XC_fleur);
+ 
+<a href="#h5-3-3" id="h5-3-3" class="d">-	wa.event_mask = SubstructureRedirectMask | EnterWindowMask | LeaveWindowMask;
+</a><a href="#h5-3-4" id="h5-3-4" class="i">+	modmap = XGetModifierMapping(dpy);
+</a><a href="#h5-3-5" id="h5-3-5" class="i">+	for (i = 0; i &lt; 8; i++) {
+</a><a href="#h5-3-6" id="h5-3-6" class="i">+		for (j = 0; j &lt; modmap-&gt;max_keypermod; j++) {
+</a><a href="#h5-3-7" id="h5-3-7" class="i">+			if(modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j] == XKeysymToKeycode(dpy, XK_Num_Lock))
+</a><a href="#h5-3-8" id="h5-3-8" class="i">+				numlockmask = (1 &lt;&lt; i);
+</a><a href="#h5-3-9" id="h5-3-9" class="i">+		}
+</a><a href="#h5-3-10" id="h5-3-10" class="i">+	}
+</a><a href="#h5-3-11" id="h5-3-11" class="i">+	XFree(modmap);
+</a><a href="#h5-3-12" id="h5-3-12" class="i">+
+</a><a href="#h5-3-13" id="h5-3-13" class="i">+	wa.event_mask = SubstructureRedirectMask | SubstructureNotifyMask | EnterWindowMask | LeaveWindowMask;
+</a> 	wa.cursor = cursor[CurNormal];
+ 	XChangeWindowAttributes(dpy, root, CWEventMask | CWCursor, &amp;wa);
+ 
+<a href="#h5-4" id="h5-4" class="h">@@ -233,13 +244,12 @@ main(int argc, char *argv[])
+</a> 	sh = DisplayHeight(dpy, screen);
+ 	mw = (sw * MASTERW) / 100;
+ 
+<a href="#h5-4-3" id="h5-4-3" class="d">-	wa.override_redirect = 1;
+</a><a href="#h5-4-4" id="h5-4-4" class="d">-	wa.background_pixmap = ParentRelative;
+</a><a href="#h5-4-5" id="h5-4-5" class="d">-	wa.event_mask = ButtonPressMask | ExposureMask;
+</a><a href="#h5-4-6" id="h5-4-6" class="d">-
+</a> 	bx = by = 0;
+ 	bw = sw;
+ 	dc.h = bh = dc.font.height + 4;
+<a href="#h5-4-10" id="h5-4-10" class="i">+	wa.override_redirect = 1;
+</a><a href="#h5-4-11" id="h5-4-11" class="i">+	wa.background_pixmap = ParentRelative;
+</a><a href="#h5-4-12" id="h5-4-12" class="i">+	wa.event_mask = ButtonPressMask | ExposureMask;
+</a> 	barwin = XCreateWindow(dpy, root, bx, by, bw, bh, 0, DefaultDepth(dpy, screen),
+ 			CopyFromParent, DefaultVisual(dpy, screen),
+ 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+<a href="#h5-5" id="h5-5" class="h">@@ -258,6 +268,7 @@ main(int argc, char *argv[])
+</a> 
+ 	/* main event loop, also reads status text from stdin */
+ 	XSync(dpy, False);
+<a href="#h5-5-3" id="h5-5-3" class="i">+	goto XLoop;
+</a> 	while(running) {
+ 		FD_ZERO(&amp;rd);
+ 		if(readin)
+<a href="#h5-6" id="h5-6" class="h">@@ -278,6 +289,7 @@ main(int argc, char *argv[])
+</a> 				drawstatus();
+ 			}
+ 			if(FD_ISSET(xfd, &amp;rd)) {
+<a href="#h5-6-3" id="h5-6-3" class="i">+XLoop:
+</a> 				while(XPending(dpy)) {
+ 					XNextEvent(dpy, &amp;ev);
+ 					if(handler[ev.type])
+</pre>
+</div>
+</body>
+</html>

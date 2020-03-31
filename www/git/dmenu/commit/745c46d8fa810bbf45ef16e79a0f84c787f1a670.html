@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed match() to prefer prefix-matches to strstr-matches in the match list, extended the -y handling, next version is 3.6 - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/745c46d8fa810bbf45ef16e79a0f84c787f1a670.html">745c46d8fa810bbf45ef16e79a0f84c787f1a670</a>
+<b>parent</b> <a href="../commit/d058e835708d530d74f7e82d643f48d4ad62e3a4.html">d058e835708d530d74f7e82d643f48d4ad62e3a4</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 18 Mar 2008 16:52:51 +0000
+
+fixed match() to prefer prefix-matches to strstr-matches in the match list, extended the -y handling, next version is 3.6
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.1</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dmenu.c</a></td><td> | </td><td class="num">70</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 46 insertions(+), 30 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,5 +1,5 @@
+</a> # dmenu version
+<a href="#h0-0-1" id="h0-0-1" class="d">-VERSION = 3.5
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+VERSION = 3.6
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h1" href="../file/dmenu.1.html">dmenu.1</a> b/<a href="../file/dmenu.1.html">dmenu.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -26,7 +26,9 @@ efficiently.
+</a> defines the x coordinate dmenu appears at (0 by default).
+ .TP
+ .B \-y
+<a href="#h1-0-3" id="h1-0-3" class="d">-defines the y coordinate dmenu appears at (0 by default).
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+defines the y coordinate dmenu appears at (0 by default). If it is negative,
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+dmenu will appear with the bottom at the given positive coordinate. It it is
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+-0, dmenu appears at the screen bottom.
+</a> .TP
+ .B \-w
+ defines the width of the dmenu window (screen width by default).
+<b>diff --git a/<a id="h2" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -34,14 +34,16 @@ typedef struct {
+</a> 
+ typedef struct Item Item;
+ struct Item {
+<a href="#h2-0-3" id="h2-0-3" class="i">+	char *text;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	Bool matched;
+</a> 	Item *next;		/* traverses all items */
+ 	Item *left, *right;	/* traverses items matching current search pattern */
+<a href="#h2-0-7" id="h2-0-7" class="d">-	char *text;
+</a> };
+ 
+ /* forward declarations */
+ Item *appenditem(Item *i, Item *last);
+ void calcoffsets(void);
+<a href="#h2-0-13" id="h2-0-13" class="i">+char *cistrstr(const char *s, const char *sub);
+</a> void cleanup(void);
+ void drawmenu(void);
+ void drawtext(const char *text, unsigned long col[ColLast]);
+<a href="#h2-1" id="h2-1" class="h">@@ -56,7 +58,6 @@ void match(char *pattern);
+</a> void readstdin(void);
+ void run(void);
+ void setup(int x, int y, int w);
+<a href="#h2-1-3" id="h2-1-3" class="d">-char *cistrstr(const char *s, const char *sub);
+</a> unsigned int textnw(const char *text, unsigned int len);
+ unsigned int textw(const char *text);
+ 
+<a href="#h2-2" id="h2-2" class="h">@@ -130,6 +131,29 @@ calcoffsets(void) {
+</a> 	}
+ }
+ 
+<a href="#h2-2-3" id="h2-2-3" class="i">+char *
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+cistrstr(const char *s, const char *sub) {
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+	int c, csub;
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+	unsigned int len;
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+	if(!sub)
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+		return (char *)s;
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+	if((c = *sub++) != 0) {
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+		c = tolower(c);
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+		len = strlen(sub);
+</a><a href="#h2-2-13" id="h2-2-13" class="i">+		do {
+</a><a href="#h2-2-14" id="h2-2-14" class="i">+			do {
+</a><a href="#h2-2-15" id="h2-2-15" class="i">+				if((csub = *s++) == 0)
+</a><a href="#h2-2-16" id="h2-2-16" class="i">+					return (NULL);
+</a><a href="#h2-2-17" id="h2-2-17" class="i">+			}
+</a><a href="#h2-2-18" id="h2-2-18" class="i">+			while(tolower(csub) != c);
+</a><a href="#h2-2-19" id="h2-2-19" class="i">+		}
+</a><a href="#h2-2-20" id="h2-2-20" class="i">+		while(strncasecmp(s, sub, len) != 0);
+</a><a href="#h2-2-21" id="h2-2-21" class="i">+		s--;
+</a><a href="#h2-2-22" id="h2-2-22" class="i">+	}
+</a><a href="#h2-2-23" id="h2-2-23" class="i">+	return (char *)s;
+</a><a href="#h2-2-24" id="h2-2-24" class="i">+}
+</a><a href="#h2-2-25" id="h2-2-25" class="i">+
+</a> void
+ cleanup(void) {
+ 	Item *itm;
+<a href="#h2-3" id="h2-3" class="h">@@ -505,8 +529,10 @@ match(char *pattern) {
+</a> 	item = j = NULL;
+ 	nitem = 0;
+ 	for(i = allitems; i; i = i-&gt;next)
+<a href="#h2-3-3" id="h2-3-3" class="d">-		if(!fstrncmp(pattern, i-&gt;text, plen)
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-				|| fstrstr(i-&gt;text, pattern))
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+		if((i-&gt;matched = !fstrncmp(pattern, i-&gt;text, plen)))
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+			j = appenditem(i, j);
+</a><a href="#h2-3-7" id="h2-3-7" class="i">+	for(i = allitems; i; i = i-&gt;next)
+</a><a href="#h2-3-8" id="h2-3-8" class="i">+		if(!i-&gt;matched &amp;&amp; fstrstr(i-&gt;text, pattern))
+</a> 			j = appenditem(i, j);
+ 	curr = prev = next = sel = item;
+ 	calcoffsets();
+<a href="#h2-4" id="h2-4" class="h">@@ -587,6 +613,12 @@ setup(int x, int y, int w) {
+</a> 	wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask;
+ 	mw = w ? w : DisplayWidth(dpy, screen);
+ 	mh = dc.font.height + 2;
+<a href="#h2-4-3" id="h2-4-3" class="i">+	if(y &lt; 0) {
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+		if(y == (int)(unsigned int)-1)
+</a><a href="#h2-4-5" id="h2-4-5" class="i">+			y = DisplayHeight(dpy, screen) - mh;
+</a><a href="#h2-4-6" id="h2-4-6" class="i">+		else
+</a><a href="#h2-4-7" id="h2-4-7" class="i">+			y = (-1 * y) - mh;
+</a><a href="#h2-4-8" id="h2-4-8" class="i">+	}
+</a> 	win = XCreateWindow(dpy, root, x, y, mw, mh, 0,
+ 			DefaultDepth(dpy, screen), CopyFromParent,
+ 			DefaultVisual(dpy, screen),
+<a href="#h2-5" id="h2-5" class="h">@@ -611,29 +643,6 @@ setup(int x, int y, int w) {
+</a> 	XMapRaised(dpy, win);
+ }
+ 
+<a href="#h2-5-3" id="h2-5-3" class="d">-char *
+</a><a href="#h2-5-4" id="h2-5-4" class="d">-cistrstr(const char *s, const char *sub) {
+</a><a href="#h2-5-5" id="h2-5-5" class="d">-	int c, csub;
+</a><a href="#h2-5-6" id="h2-5-6" class="d">-	unsigned int len;
+</a><a href="#h2-5-7" id="h2-5-7" class="d">-
+</a><a href="#h2-5-8" id="h2-5-8" class="d">-	if(!sub)
+</a><a href="#h2-5-9" id="h2-5-9" class="d">-		return (char *)s;
+</a><a href="#h2-5-10" id="h2-5-10" class="d">-	if((c = *sub++) != 0) {
+</a><a href="#h2-5-11" id="h2-5-11" class="d">-		c = tolower(c);
+</a><a href="#h2-5-12" id="h2-5-12" class="d">-		len = strlen(sub);
+</a><a href="#h2-5-13" id="h2-5-13" class="d">-		do {
+</a><a href="#h2-5-14" id="h2-5-14" class="d">-			do {
+</a><a href="#h2-5-15" id="h2-5-15" class="d">-				if((csub = *s++) == 0)
+</a><a href="#h2-5-16" id="h2-5-16" class="d">-					return (NULL);
+</a><a href="#h2-5-17" id="h2-5-17" class="d">-			}
+</a><a href="#h2-5-18" id="h2-5-18" class="d">-			while(tolower(csub) != c);
+</a><a href="#h2-5-19" id="h2-5-19" class="d">-		}
+</a><a href="#h2-5-20" id="h2-5-20" class="d">-		while(strncasecmp(s, sub, len) != 0);
+</a><a href="#h2-5-21" id="h2-5-21" class="d">-		s--;
+</a><a href="#h2-5-22" id="h2-5-22" class="d">-	}
+</a><a href="#h2-5-23" id="h2-5-23" class="d">-	return (char *)s;
+</a><a href="#h2-5-24" id="h2-5-24" class="d">-}
+</a><a href="#h2-5-25" id="h2-5-25" class="d">-
+</a> unsigned int
+ textnw(const char *text, unsigned int len) {
+ 	XRectangle r;
+<a href="#h2-6" id="h2-6" class="h">@@ -683,7 +692,12 @@ main(int argc, char *argv[]) {
+</a> 			if(++i &lt; argc) x = atoi(argv[i]);
+ 		}
+ 		else if(!strcmp(argv[i], &quot;-y&quot;)) {
+<a href="#h2-6-3" id="h2-6-3" class="d">-			if(++i &lt; argc) y = atoi(argv[i]);
+</a><a href="#h2-6-4" id="h2-6-4" class="i">+			if(++i &lt; argc) {
+</a><a href="#h2-6-5" id="h2-6-5" class="i">+				if(!strcmp(argv[i], &quot;-0&quot;))
+</a><a href="#h2-6-6" id="h2-6-6" class="i">+					y = (int)(unsigned int)-1;
+</a><a href="#h2-6-7" id="h2-6-7" class="i">+				else
+</a><a href="#h2-6-8" id="h2-6-8" class="i">+					y = atoi(argv[i]);
+</a><a href="#h2-6-9" id="h2-6-9" class="i">+			}
+</a> 		}
+ 		else if(!strcmp(argv[i], &quot;-w&quot;)) {
+ 			if(++i &lt; argc) w = atoi(argv[i]);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>New ttysend() function calls ttywrite() and techo(). Honor MODE_ECHO when pasting in selnotify(). - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8e577322a3a55abf2f8226218ec87a7eec7fc3b1.html">8e577322a3a55abf2f8226218ec87a7eec7fc3b1</a>
+<b>parent</b> <a href="../commit/939e149544e4da958c333f3b6d00991d459c2e34.html">939e149544e4da958c333f3b6d00991d459c2e34</a>
+<b>Author:</b> Mark Edgar &lt;<a href="mailto:medgar123@gmail.com">medgar123@gmail.com</a>&gt;
+<b>Date:</b>   Sat,  5 Oct 2013 11:49:35 +0200
+
+New ttysend() function calls ttywrite() and techo(). Honor MODE_ECHO when pasting in selnotify().
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">23</td><td><span class="i">++++++++++++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -386,6 +386,7 @@ static inline bool match(uint, uint);
+</a> static void ttynew(void);
+ static void ttyread(void);
+ static void ttyresize(void);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void ttysend(char *, size_t);
+</a> static void ttywrite(const char *, size_t);
+ 
+ static void xdraws(char *, Glyph, int, int, int, int);
+<a href="#h0-1" id="h0-1" class="h">@@ -893,9 +894,7 @@ bpress(XEvent *e) {
+</a> 	for(mk = mshortcuts; mk &lt; mshortcuts + LEN(mshortcuts); mk++) {
+ 		if(e-&gt;xbutton.button == mk-&gt;b
+ 				&amp;&amp; match(mk-&gt;mask, e-&gt;xbutton.state)) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-			ttywrite(mk-&gt;s, strlen(mk-&gt;s));
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			if(IS_SET(MODE_ECHO))
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-				techo(mk-&gt;s, strlen(mk-&gt;s));
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			ttysend(mk-&gt;s, strlen(mk-&gt;s));
+</a> 			return;
+ 		}
+ 	}
+<a href="#h0-2" id="h0-2" class="h">@@ -1031,7 +1030,7 @@ selnotify(XEvent *e) {
+</a> 
+ 		if(IS_SET(MODE_BRCKTPASTE))
+ 			ttywrite(&quot;\033[200~&quot;, 6);
+<a href="#h0-2-3" id="h0-2-3" class="d">-		ttywrite((const char *)data, nitems * format / 8);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		ttysend((char *)data, nitems * format / 8);
+</a> 		if(IS_SET(MODE_BRCKTPASTE))
+ 			ttywrite(&quot;\033[201~&quot;, 6);
+ 		XFree(data);
+<a href="#h0-3" id="h0-3" class="h">@@ -1300,6 +1299,13 @@ ttywrite(const char *s, size_t n) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="i">+ttysend(char *s, size_t n) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	ttywrite(s, n);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if(IS_SET(MODE_ECHO))
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		techo(s, n);
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+}
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+void
+</a> ttyresize(void) {
+ 	struct winsize w;
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -3584,10 +3590,7 @@ kpress(XEvent *ev) {
+</a> 
+ 	/* 2. custom keys from config.h */
+ 	if((customkey = kmap(ksym, e-&gt;state))) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-		len = strlen(customkey);
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		ttywrite(customkey, len);
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-		if(IS_SET(MODE_ECHO))
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-			techo(customkey, len);
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+		ttysend(customkey, strlen(customkey));
+</a> 		return;
+ 	}
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -3606,9 +3609,7 @@ kpress(XEvent *ev) {
+</a> 			len = 2;
+ 		}
+ 	}
+<a href="#h0-5-3" id="h0-5-3" class="d">-	ttywrite(buf, len);
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	if(IS_SET(MODE_ECHO))
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-		techo(buf, len);
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+	ttysend(buf, len);
+</a> }
+ 
+ 
+</pre>
+</div>
+</body>
+</html>

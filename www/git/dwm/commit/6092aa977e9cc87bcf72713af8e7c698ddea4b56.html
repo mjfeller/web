@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixing the settags issue, preparing 1.7.1 - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6092aa977e9cc87bcf72713af8e7c698ddea4b56.html">6092aa977e9cc87bcf72713af8e7c698ddea4b56</a>
+<b>parent</b> <a href="../commit/c9cc2b385aade3ce7db1404f4b5f8cd6e41e6bae.html">c9cc2b385aade3ce7db1404f4b5f8cd6e41e6bae</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Wed, 27 Sep 2006 17:18:46 +0200
+
+fixing the settags issue, preparing 1.7.1
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++++++</span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">event.c</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 18 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -54,19 +54,6 @@ grabbuttons(Client *c, Bool focused) {
+</a> 				GrabModeAsync, GrabModeSync, None, None);
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-resizetitle(Client *c) {
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	c-&gt;tw = textw(c-&gt;name);
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	if(c-&gt;tw &gt; c-&gt;w)
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-		c-&gt;tw = c-&gt;w + 2;
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	c-&gt;tx = c-&gt;x + c-&gt;w - c-&gt;tw + 2;
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	c-&gt;ty = c-&gt;y;
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	if(isvisible(c))
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-		XMoveResizeWindow(dpy, c-&gt;twin, c-&gt;tx, c-&gt;ty, c-&gt;tw, c-&gt;th);
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	else
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-		XMoveResizeWindow(dpy, c-&gt;twin, c-&gt;tx + 2 * sw, c-&gt;ty, c-&gt;tw, c-&gt;th);
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-}
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-
+</a> static int
+ xerrordummy(Display *dsply, XErrorEvent *ee) {
+ 	return 0;
+<a href="#h0-1" id="h0-1" class="h">@@ -250,11 +237,13 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;twa);
+ 
+ 	grabbuttons(c, False);
+<a href="#h0-1-3" id="h0-1-3" class="i">+	updatetitle(c);
+</a> 	settags(c, getclient(trans));
+ 	if(!c-&gt;isfloat)
+ 		c-&gt;isfloat = trans
+ 			|| (c-&gt;maxw &amp;&amp; c-&gt;minw &amp;&amp;
+ 				c-&gt;maxw == c-&gt;minw &amp;&amp; c-&gt;maxh == c-&gt;minh);
+<a href="#h0-1-9" id="h0-1-9" class="i">+	resizetitle(c);
+</a> 
+ 	if(clients)
+ 		clients-&gt;prev = c;
+<a href="#h0-2" id="h0-2" class="h">@@ -262,7 +251,6 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	c-&gt;snext = stack;
+ 	stack = clients = c;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-	updatetitle(c);
+</a> 	ban(c);
+ 	XMapWindow(dpy, c-&gt;win);
+ 	XMapWindow(dpy, c-&gt;twin);
+<a href="#h0-3" id="h0-3" class="h">@@ -321,6 +309,19 @@ resize(Client *c, Bool sizehints, Corner sticky) {
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="i">+resizetitle(Client *c) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	c-&gt;tw = textw(c-&gt;name);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if(c-&gt;tw &gt; c-&gt;w)
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		c-&gt;tw = c-&gt;w + 2;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	c-&gt;tx = c-&gt;x + c-&gt;w - c-&gt;tw + 2;
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	c-&gt;ty = c-&gt;y;
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+	if(isvisible(c))
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+		XMoveResizeWindow(dpy, c-&gt;twin, c-&gt;tx, c-&gt;ty, c-&gt;tw, c-&gt;th);
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+	else
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+		XMoveResizeWindow(dpy, c-&gt;twin, c-&gt;tx + 2 * sw, c-&gt;ty, c-&gt;tw, c-&gt;th);
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+}
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+void
+</a> updatesize(Client *c) {
+ 	long msize;
+ 	XSizeHints size;
+<a href="#h0-4" id="h0-4" class="h">@@ -382,7 +383,6 @@ updatetitle(Client *c) {
+</a> 		}
+ 	}
+ 	XFree(name.value);
+<a href="#h0-4-3" id="h0-4-3" class="d">-	resizetitle(c);
+</a> }
+ 
+ void
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,5 +1,5 @@
+</a> # dwm version
+<a href="#h1-0-1" id="h1-0-1" class="d">-VERSION = 1.7
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+VERSION = 1.7.1
+</a> 
+ # Customize below to fit your system
+ 
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -117,6 +117,7 @@ extern void gravitate(Client *c, Bool invert);	/* gravitate c */
+</a> extern void killclient(Arg *arg);		/* kill c nicely */
+ extern void manage(Window w, XWindowAttributes *wa);	/* manage new client */
+ extern void resize(Client *c, Bool sizehints, Corner sticky); /* resize c*/
+<a href="#h2-0-3" id="h2-0-3" class="i">+extern void resizetitle(Client *c);		/* resizes c-&gt;twin correctly */
+</a> extern void updatesize(Client *c);			/* update the size structs of c */
+ extern void updatetitle(Client *c);		/* update the name of c */
+ extern void unmanage(Client *c);		/* destroy c */
+<b>diff --git a/<a id="h3" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -316,6 +316,7 @@ propertynotify(XEvent *e) {
+</a> 		}
+ 		if(ev-&gt;atom == XA_WM_NAME || ev-&gt;atom == netatom[NetWMName]) {
+ 			updatetitle(c);
+<a href="#h3-0-3" id="h3-0-3" class="i">+			resizetitle(c);
+</a> 			drawtitle(c);
+ 		}
+ 	}
+</pre>
+</div>
+</body>
+</html>

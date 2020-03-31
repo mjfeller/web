@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>add macos packages - rice - config file
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="rice Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>rice</h1><span class="desc">config file
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8ae285891b58aed922d89da52979f5c16de95996.html">8ae285891b58aed922d89da52979f5c16de95996</a>
+<b>parent</b> <a href="../commit/4404a772295e80ef7b3114b2b9f6e0f5fa35a1bb.html">4404a772295e80ef7b3114b2b9f6e0f5fa35a1bb</a>
+<b>Author:</b> Mark Feller &lt;<a href="mailto:mfeller@recurly.com">mfeller@recurly.com</a>&gt;
+<b>Date:</b>   Thu, 19 Dec 2019 15:27:48 -0700
+
+add macos packages
+
+Signed-off-by: Mark Feller &lt;mfeller@recurly.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">pkgs/macos/install</a></td><td> | </td><td class="num">30</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">pkgs/macos/packages</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 46 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkgs/macos/install.html">pkgs/macos/install</a> b/<a href="../file/pkgs/macos/install.html">pkgs/macos/install</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,30 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+#!/bin/sh
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+set -e
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+dotsrepo=${dotfilesrepo:-&quot;https://gitlab.com/mark.feller/rice.git&quot;}
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+pkgfile=${pkgfile:-&quot;https://gitlab.com/mark.feller/rice/raw/master/pkgs/macos/packages&quot;}
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+log() {
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+    printf &#39;\033[1;33m%s \033[m%s\033[m %s\n&#39; \
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+           &quot;-&gt;&quot; &quot;${2:+[1;36m}$1${2:+[m}&quot; &quot;$2&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+}
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+install_packages() {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+    # Copy a real file to our temp progsfile or attempt to curl the progsfile
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+    ([ -f &quot;$pkgfile&quot; ] &amp;&amp; cp &quot;$pkgfile&quot; /tmp/pkgs) || curl -Ls &quot;$pkgfile&quot; &gt; /tmp/pkgs
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+    packages=$(sed &#39;/^$/d&#39; /tmp/pkgs | sed &#39;/^#/d&#39;)
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+    while IFS=&#39; &#39; read -r program comment; do
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+        brew install $program
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+    done &lt;&lt;EOF
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+$packages
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+EOF
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+}
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+install_dots() {
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+    git clone &quot;$dotsrepo&quot; ~/.config/rice
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+    (cd ~/.config/rice &amp;&amp; ./install)
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+}
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+install_packages
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+install_dots
+</a><b>diff --git a/<a id="h1" href="../file/pkgs/macos/packages.html">pkgs/macos/packages</a> b/<a href="../file/pkgs/macos/packages.html">pkgs/macos/packages</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,16 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+# Tooling
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+git             is a version control system
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+stow            is a tool for managing symlinks for dot files
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+emacs           is the best editor
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+lf              is an extensive terminal file manager
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+fzf             is a fuzzy finder tool
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+htop            provides system usage information and displays processes
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+zsh             is a shell that is compatible with bash.
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+go              is the go toolchain
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+# Audio and Video
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+ffmpeg          can record and splice video and audio on the command line
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+mpd             is a lightweight music daemon
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+mpc             is a terminal interface for mpd
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+ncmpcpp         is an ncurses interface for music with multiple formats and a powerful tag editor
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+youtube-dl      can download any YouTube video when given the link
+</a></pre>
+</div>
+</body>
+</html>

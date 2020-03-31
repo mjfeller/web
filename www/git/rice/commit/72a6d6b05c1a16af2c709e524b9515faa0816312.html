@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>more testing - rice - config file
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="rice Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>rice</h1><span class="desc">config file
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/72a6d6b05c1a16af2c709e524b9515faa0816312.html">72a6d6b05c1a16af2c709e524b9515faa0816312</a>
+<b>parent</b> <a href="../commit/d596445804aa70b162f4353fc59aa0166639ec69.html">d596445804aa70b162f4353fc59aa0166639ec69</a>
+<b>Author:</b> Mark Feller &lt;<a href="mailto:mfeller@recurly.com">mfeller@recurly.com</a>&gt;
+<b>Date:</b>   Thu, 19 Dec 2019 14:59:57 -0700
+
+more testing
+
+Signed-off-by: Mark Feller &lt;mfeller@recurly.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">pkgs/fedora/install</a></td><td> | </td><td class="num">8</td><td><span class="i">+++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pkgs/fedora/packages</a></td><td> | </td><td class="num">54</td><td><span class="i">+++++++++++++++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 30 insertions(+), 32 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/pkgs/fedora/install.html">pkgs/fedora/install</a> b/<a href="../file/pkgs/fedora/install.html">pkgs/fedora/install</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,9 +1,7 @@
+</a> #!/bin/sh
+<a href="#h0-0-1" id="h0-0-1" class="d">-cd &quot;$(dirname &quot;$0&quot;)&quot; || exit 1
+</a> set -e
+ 
+ pkgfile=${pkgfile:-&quot;https://gitlab.com/mark.feller/rice/raw/master/pkgs/fedora/packages&quot;}
+<a href="#h0-0-5" id="h0-0-5" class="d">-tmpfile=/tmp/pkgs
+</a> 
+ log() {
+     printf &#39;\033[1;33m%s \033[m%s\033[m %s\n&#39; \
+<a href="#h0-1" id="h0-1" class="h">@@ -11,10 +9,10 @@ log() {
+</a> }
+ 
+ # Copy a real file to our temp progsfile or attempt to curl the progsfile
+<a href="#h0-1-3" id="h0-1-3" class="d">-([ -f &quot;$pkgfile&quot; ] &amp;&amp; cp &quot;$pkgfile&quot; &quot;$tmpfile&quot;) || curl -Ls &quot;$pkgfile&quot; &gt; &quot;$tmpfile&quot;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+([ -f &quot;$pkgfile&quot; ] &amp;&amp; cp &quot;$pkgfile&quot; /tmp/pkgs) || curl -Ls &quot;$pkgfile&quot; &gt; /tmp/pkgs
+</a> 
+<a href="#h0-1-6" id="h0-1-6" class="d">-packages=$(sed &#39;/^$/d&#39; /tmp/progs | sed &#39;/^#/d&#39;)
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-while IFS=&#39;	&#39; read -r program comment; do
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+packages=$(sed &#39;/^$/d&#39; /tmp/pkgs | sed &#39;/^#/d&#39;)
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+while IFS=&#39; &#39; read -r program comment; do
+</a>     log &quot;Installing $program $comment&quot;
+     dnf install -y $program
+ done &lt;&lt;EOF
+<b>diff --git a/<a id="h1" href="../file/pkgs/fedora/packages.html">pkgs/fedora/packages</a> b/<a href="../file/pkgs/fedora/packages.html">pkgs/fedora/packages</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,36 +1,36 @@
+</a> # Editor
+<a href="#h1-0-1" id="h1-0-1" class="d">-emacs			is the best editor
+</a><a href="#h1-0-2" id="h1-0-2" class="d">-vim				is another editor
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+emacs          is the best editor
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+vim            is another editor
+</a> 
+ # Desktop Environment and System Utilities
+<a href="#h1-0-7" id="h1-0-7" class="d">-xorg-minimal	is a grapgical server
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-xorg-fonts		is a font package
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-compton			is an xorg composition manager
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-i3-gaps			is the i3 tilling window manager but with gaps.
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-xclip			allows for copying and pasting from the command line.
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-xsetroot		sets status bar and other x properties
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-htop			provides system usage information and displays processes
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-dbus			facilities inter-process communication
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-zsh				is a shell that is compatible with bash.
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-rust			is the rust toolchain
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-go				is the go toolchain
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+xorg-minimal   is a grapgical server
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+xorg-fonts     is a font package
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+compton        is an xorg composition manager
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+i3-gaps        is the i3 tilling window manager but with gaps.
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+xclip          allows for copying and pasting from the command line.
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+xsetroot       sets status bar and other x properties
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+htop           provides system usage information and displays processes
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+dbus           facilities inter-process communication
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+zsh            is a shell that is compatible with bash.
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+rust           is the rust toolchain
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+go             is the go toolchain
+</a> 
+ # File Management
+<a href="#h1-0-31" id="h1-0-31" class="d">-w3m				is a terminal browser which can also view images
+</a><a href="#h1-0-32" id="h1-0-32" class="d">-lf				is an extensive terminal file manager
+</a><a href="#h1-0-33" id="h1-0-33" class="d">-fzf				is a fuzzy finder tool
+</a><a href="#h1-0-34" id="h1-0-34" class="d">-unrar			extracts rars
+</a><a href="#h1-0-35" id="h1-0-35" class="d">-unzip			unzips zips
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+w3m            is a terminal browser which can also view images
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+lf             is an extensive terminal file manager
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+fzf            is a fuzzy finder tool
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+unrar          extracts rars
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+unzip          unzips zips
+</a> 
+ # Audio and Video
+<a href="#h1-0-43" id="h1-0-43" class="d">-pulseaudio		is an audio router
+</a><a href="#h1-0-44" id="h1-0-44" class="d">-ffmpeg			can record and splice video and audio on the command line
+</a><a href="#h1-0-45" id="h1-0-45" class="d">-mpd				is a lightweight music daemon
+</a><a href="#h1-0-46" id="h1-0-46" class="d">-mpc				is a terminal interface for mpd
+</a><a href="#h1-0-47" id="h1-0-47" class="d">-ncmpcpp			is an ncurses interface for music with multiple formats and a powerful tag editor
+</a><a href="#h1-0-48" id="h1-0-48" class="d">-mpv				is a video player
+</a><a href="#h1-0-49" id="h1-0-49" class="d">-youtube-dl		can download any YouTube video when given the link
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+pulseaudio     is an audio router
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+ffmpeg         can record and splice video and audio on the command line
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+mpd            is a lightweight music daemon
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+mpc            is a terminal interface for mpd
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+ncmpcpp        is an ncurses interface for music with multiple formats and a powerful tag editor
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+mpv            is a video player
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+youtube-dl     can download any YouTube video when given the link
+</a> 
+ # Notications
+<a href="#h1-0-59" id="h1-0-59" class="d">-libnotify		allows desktop notificatio
+</a><a href="#h1-0-60" id="h1-0-60" class="d">-dunst			is a suckless notification system
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+libnotify      allows desktop notificatio
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+dunst          is a suckless notification system
+</a></pre>
+</div>
+</body>
+</html>

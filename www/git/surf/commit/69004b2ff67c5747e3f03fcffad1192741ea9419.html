@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Style inquisition. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/69004b2ff67c5747e3f03fcffad1192741ea9419.html">69004b2ff67c5747e3f03fcffad1192741ea9419</a>
+<b>parent</b> <a href="../commit/bd5bbb7fc352a4f1f5c54731e6c8ef01ff91d002.html">bd5bbb7fc352a4f1f5c54731e6c8ef01ff91d002</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sun, 17 Feb 2013 00:37:43 +0100
+
+Style inquisition.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">56</td><td><span class="i">++++++++++++++++++++++++++++++++++</span><span class="d">----------------------</span></td></tr>
+</table></pre><pre>1 file changed, 34 insertions(+), 22 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -169,6 +169,7 @@ beforerequest(WebKitWebView *w, WebKitWebFrame *f, WebKitWebResource *r,
+</a> 		WebKitNetworkRequest *req, WebKitNetworkResponse *resp,
+ 		gpointer d) {
+ 	const gchar *uri = webkit_network_request_get_uri(req);
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a> 	if(g_str_has_suffix(uri, &quot;/favicon.ico&quot;))
+ 		webkit_network_request_set_uri(req, &quot;about:blank&quot;);
+ }
+<a href="#h0-1" id="h0-1" class="h">@@ -291,7 +292,8 @@ evalscript(JSContextRef js, char *script, char* scriptname) {
+</a> 
+ 	jsscript = JSStringCreateWithUTF8CString(script);
+ 	jsscriptname = JSStringCreateWithUTF8CString(scriptname);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	JSEvaluateScript(js, jsscript, JSContextGetGlobalObject(js), jsscriptname, 0, &amp;exception);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	JSEvaluateScript(js, jsscript, JSContextGetGlobalObject(js),
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			jsscriptname, 0, &amp;exception);
+</a> 	JSStringRelease(jsscript);
+ 	JSStringRelease(jsscriptname);
+ }
+<a href="#h0-2" id="h0-2" class="h">@@ -302,7 +304,8 @@ runscript(WebKitWebFrame *frame) {
+</a> 	GError *error;
+ 
+ 	if(g_file_get_contents(scriptfile, &amp;script, NULL, &amp;error)) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-		evalscript(webkit_web_frame_get_global_context(frame), script, scriptfile);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		evalscript(webkit_web_frame_get_global_context(frame),
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+				script, scriptfile);
+</a> 	}
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -310,10 +313,15 @@ static void
+</a> clipboard(Client *c, const Arg *arg) {
+ 	gboolean paste = *(gboolean *)arg;
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(paste)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		gtk_clipboard_request_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY), pasteuri, c);
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	else
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-		gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY), c-&gt;linkhover ? c-&gt;linkhover : geturi(c), -1);
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	if(paste) {
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+		gtk_clipboard_request_text(
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+				gtk_clipboard_get(GDK_SELECTION_PRIMARY),
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+				pasteuri, c);
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+	} else {
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+		gtk_clipboard_set_text(
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+				gtk_clipboard_get(GDK_SELECTION_PRIMARY),
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+				c-&gt;linkhover ? c-&gt;linkhover : geturi(c), -1);
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+	}
+</a> }
+ 
+ static char *
+<a href="#h0-4" id="h0-4" class="h">@@ -426,11 +434,13 @@ getatom(Client *c, int a) {
+</a> 	XGetWindowProperty(dpy, GDK_WINDOW_XID(GTK_WIDGET(c-&gt;win)-&gt;window),
+ 			atoms[a], 0L, BUFSIZ, False, XA_STRING,
+ 			&amp;adummy, &amp;idummy, &amp;ldummy, &amp;ldummy, &amp;p);
+<a href="#h0-4-3" id="h0-4-3" class="d">-	if(p)
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	if(p) {
+</a> 		strncpy(buf, (char *)p, LENGTH(buf)-1);
+<a href="#h0-4-6" id="h0-4-6" class="d">-	else
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+	} else {
+</a> 		buf[0] = &#39;\0&#39;;
+<a href="#h0-4-9" id="h0-4-9" class="i">+	}
+</a> 	XFree(p);
+<a href="#h0-4-11" id="h0-4-11" class="i">+
+</a> 	return buf;
+ }
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -878,10 +888,11 @@ progresschange(WebKitWebView *view, GParamSpec *pspec, Client *c) {
+</a> static void
+ reload(Client *c, const Arg *arg) {
+ 	gboolean nocache = *(gboolean *)arg;
+<a href="#h0-5-3" id="h0-5-3" class="d">-	if(nocache)
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	if(nocache) {
+</a> 		 webkit_web_view_reload_bypass_cache(c-&gt;view);
+<a href="#h0-5-6" id="h0-5-6" class="d">-	else
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+	} else {
+</a> 		 webkit_web_view_reload(c-&gt;view);
+<a href="#h0-5-9" id="h0-5-9" class="i">+	}
+</a> }
+ 
+ static void
+<a href="#h0-6" id="h0-6" class="h">@@ -1037,6 +1048,19 @@ toggle(Client *c, const Arg *arg) {
+</a> }
+ 
+ static void
+<a href="#h0-6-3" id="h0-6-3" class="i">+togglestyle(Client *c, const Arg *arg) {
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	WebKitWebSettings *settings;
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+	char *uri;
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+	settings = webkit_web_view_get_settings(c-&gt;view);
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+	g_object_get(G_OBJECT(settings), &quot;user-stylesheet-uri&quot;, &amp;uri, NULL);
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+	uri = uri[0] ? g_strdup(&quot;&quot;) : g_strconcat(&quot;file://&quot;, stylefile, NULL);
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+	g_object_set(G_OBJECT(settings), &quot;user-stylesheet-uri&quot;, uri, NULL);
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+	update(c);
+</a><a href="#h0-6-13" id="h0-6-13" class="i">+}
+</a><a href="#h0-6-14" id="h0-6-14" class="i">+
+</a><a href="#h0-6-15" id="h0-6-15" class="i">+static void
+</a> gettogglestat(Client *c){
+ 	gboolean value;
+ 	char *uri;
+<a href="#h0-7" id="h0-7" class="h">@@ -1188,15 +1212,3 @@ main(int argc, char *argv[]) {
+</a> 	return EXIT_SUCCESS;
+ }
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-static void
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-togglestyle(Client *c, const Arg *arg) {
+</a><a href="#h0-7-5" id="h0-7-5" class="d">-	WebKitWebSettings *settings;
+</a><a href="#h0-7-6" id="h0-7-6" class="d">-	char *uri;
+</a><a href="#h0-7-7" id="h0-7-7" class="d">-
+</a><a href="#h0-7-8" id="h0-7-8" class="d">-	settings = webkit_web_view_get_settings(c-&gt;view);
+</a><a href="#h0-7-9" id="h0-7-9" class="d">-	g_object_get(G_OBJECT(settings), &quot;user-stylesheet-uri&quot;, &amp;uri, NULL);
+</a><a href="#h0-7-10" id="h0-7-10" class="d">-	uri = uri[0] ? g_strdup(&quot;&quot;) : g_strconcat(&quot;file://&quot;, stylefile, NULL);
+</a><a href="#h0-7-11" id="h0-7-11" class="d">-	g_object_set(G_OBJECT(settings), &quot;user-stylesheet-uri&quot;, uri, NULL);
+</a><a href="#h0-7-12" id="h0-7-12" class="d">-
+</a><a href="#h0-7-13" id="h0-7-13" class="d">-	update(c);
+</a><a href="#h0-7-14" id="h0-7-14" class="d">-}
+</a></pre>
+</div>
+</body>
+</html>

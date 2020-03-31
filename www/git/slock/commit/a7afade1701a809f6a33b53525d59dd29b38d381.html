@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>clear passwords with explicit_bzero - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a7afade1701a809f6a33b53525d59dd29b38d381.html">a7afade1701a809f6a33b53525d59dd29b38d381</a>
+<b>parent</b> <a href="../commit/65b8d5278882310eed758e6fbfd6ab9676db883c.html">65b8d5278882310eed758e6fbfd6ab9676db883c</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Sun, 31 Jul 2016 13:43:00 +0200
+
+clear passwords with explicit_bzero
+
+Make sure to explicitly clear memory that is used for password input. memset
+is often optimized out by the compiler.
+
+Brought to attention by the OpenBSD community, see:
+https://marc.info/?t=146989502600003&amp;r=1&amp;w=2
+Thread subject: x11/slock: clear passwords with explicit_bzero
+
+Changes:
+
+- explicit_bzero.c import from libressl-portable.
+- Makefile: add COMPATSRC for compatibility src.
+- config.mk: add separate *BSD section in config.mk to simply uncomment it on
+  these platforms.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">explicit_bzero.c</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">slock.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++</span><span class="d">--</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">util.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 34 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = slock.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+SRC = slock.c ${COMPATSRC}
+</a> OBJ = ${SRC:.c=.o}
+ 
+ all: options slock
+<a href="#h0-1" id="h0-1" class="h">@@ -35,8 +35,8 @@ clean:
+</a> dist: clean
+ 	@echo creating dist tarball
+ 	@mkdir -p slock-${VERSION}
+<a href="#h0-1-3" id="h0-1-3" class="d">-	@cp -R LICENSE Makefile README config.def.h config.mk ${SRC} slock.1 \
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		slock-${VERSION}
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	@cp -R LICENSE Makefile README config.def.h config.mk ${SRC} \
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+		explicit_bzero.c slock.1 slock-${VERSION}
+</a> 	@tar -cf slock-${VERSION}.tar slock-${VERSION}
+ 	@gzip slock-${VERSION}.tar
+ 	@rm -rf slock-${VERSION}
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -18,9 +18,13 @@ LIBS = -L/usr/lib -lc -lcrypt -L${X11LIB} -lX11 -lXext -lXrandr
+</a> CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; -DHAVE_SHADOW_H
+ CFLAGS = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+ LDFLAGS = -s ${LIBS}
+<a href="#h1-0-3" id="h1-0-3" class="i">+COMPATSRC = explicit_bzero.c
+</a> 
+ # On *BSD remove -DHAVE_SHADOW_H from CPPFLAGS and add -DHAVE_BSD_AUTH
+ # On OpenBSD and Darwin remove -lcrypt from LIBS
+<a href="#h1-0-7" id="h1-0-7" class="i">+#LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lXext -lXrandr
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; -DHAVE_BSD_AUTH -D_BSD_SOURCE
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+#COMPATSRC =
+</a> 
+ # compiler and linker
+ CC = cc
+<b>diff --git a/<a id="h2" href="../file/explicit_bzero.c.html">explicit_bzero.c</a> b/<a href="../file/explicit_bzero.c.html">explicit_bzero.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,19 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+/*	$OpenBSD: explicit_bzero.c,v 1.3 2014/06/21 02:34:26 matthew Exp $ */
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+/*
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+ * Public domain.
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+ * Written by Matthew Dempsky.
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+ */
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+#include &lt;string.h&gt;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+__attribute__((weak)) void
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+__explicit_bzero_hook(void *buf, size_t len)
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+{
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+}
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+void
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+explicit_bzero(void *buf, size_t len)
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+{
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	memset(buf, 0, len);
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+	__explicit_bzero_hook(buf, len);
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+}
+</a><b>diff --git a/<a id="h3" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -23,6 +23,8 @@
+</a> #include &lt;bsd_auth.h&gt;
+ #endif
+ 
+<a href="#h3-0-3" id="h3-0-3" class="i">+#include &quot;util.h&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+
+</a> enum {
+ 	INIT,
+ 	INPUT,
+<a href="#h3-1" id="h3-1" class="h">@@ -135,7 +137,7 @@ readpw(Display *dpy, const char *pws)
+</a> 	 * timeout. */
+ 	while (running &amp;&amp; !XNextEvent(dpy, &amp;ev)) {
+ 		if (ev.type == KeyPress) {
+<a href="#h3-1-3" id="h3-1-3" class="d">-			buf[0] = 0;
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+			explicit_bzero(&amp;buf, sizeof(buf));
+</a> 			num = XLookupString(&amp;ev.xkey, buf, sizeof(buf), &amp;ksym, 0);
+ 			if (IsKeypadKey(ksym)) {
+ 				if (ksym == XK_KP_Enter)
+<a href="#h3-2" id="h3-2" class="h">@@ -161,14 +163,16 @@ readpw(Display *dpy, const char *pws)
+</a> 					XBell(dpy, 100);
+ 					failure = True;
+ 				}
+<a href="#h3-2-3" id="h3-2-3" class="i">+				explicit_bzero(&amp;passwd, sizeof(passwd));
+</a> 				len = 0;
+ 				break;
+ 			case XK_Escape:
+<a href="#h3-2-7" id="h3-2-7" class="i">+				explicit_bzero(&amp;passwd, sizeof(passwd));
+</a> 				len = 0;
+ 				break;
+ 			case XK_BackSpace:
+ 				if (len)
+<a href="#h3-2-12" id="h3-2-12" class="d">-					--len;
+</a><a href="#h3-2-13" id="h3-2-13" class="i">+					passwd[len--] = 0;
+</a> 				break;
+ 			default:
+ 				if (num &amp;&amp; !iscntrl((int)buf[0]) &amp;&amp; (len + num &lt; sizeof(passwd))) {
+<b>diff --git a/<a id="h4" href="../file/util.h.html">util.h</a> b/<a href="../file/util.h.html">util.h</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,2 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+#undef explicit_bzero
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+void explicit_bzero(void *, size_t);
+</a></pre>
+</div>
+</body>
+</html>

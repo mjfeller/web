@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>small change to achieve Jukka&#39;s last proposal - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/346bdea946887d83f857a8944a0189bca51a3e47.html">346bdea946887d83f857a8944a0189bca51a3e47</a>
+<b>parent</b> <a href="../commit/05c10c5776738fdfe73c1e66e14c869e2e5e338d.html">05c10c5776738fdfe73c1e66e14c869e2e5e338d</a>
+<b>Author:</b> arg@mmvi &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Fri, 22 Sep 2006 13:53:28 +0200
+
+small change to achieve Jukka&#39;s last proposal
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.h</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">view.c</a></td><td> | </td><td class="num">45</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>2 files changed, 34 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -77,12 +77,13 @@ struct Client {
+</a> 	char name[256];
+ 	int proto;
+ 	int x, y, w, h;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	int rx, ry, rw, rh; /* revert geometry */
+</a> 	int tx, ty, tw, th; /* title window geometry */
+ 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int grav;
+ 	long flags; 
+ 	unsigned int border, weight;
+<a href="#h0-0-9" id="h0-0-9" class="d">-	Bool isfloat;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	Bool isfloat, ismax;
+</a> 	Bool *tags;
+ 	Client *next;
+ 	Client *prev;
+<b>diff --git a/<a id="h1" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -18,6 +18,12 @@ minclient() {
+</a> 	return min;
+ }
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+static Client *
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+nexttiled(Client *c) {
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	for(c = getnext(c); c &amp;&amp; c-&gt;isfloat; c = getnext(c-&gt;next));
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	return c;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+}
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+
+</a> static void
+ reorder() {
+ 	Client *c, *newclients, *tail;
+<a href="#h1-1" id="h1-1" class="h">@@ -36,10 +42,23 @@ reorder() {
+</a> 	clients = newclients;
+ }
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-static Client *
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-nexttiled(Client *c) {
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	for(c = getnext(c); c &amp;&amp; c-&gt;isfloat; c = getnext(c-&gt;next));
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	return c;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+static void
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+togglemax(Client *c)
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+{
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+	if((c-&gt;ismax = !c-&gt;ismax)) {
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+		c-&gt;rx = c-&gt;x; c-&gt;x = sx;
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		c-&gt;ry = c-&gt;y; c-&gt;y = bh;
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+		c-&gt;rw = c-&gt;w; c-&gt;w = sw;
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+		c-&gt;rh = c-&gt;h; c-&gt;h = sh;
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+	}
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+	else {
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+		c-&gt;x = c-&gt;rx;
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+		c-&gt;y = c-&gt;ry;
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+		c-&gt;w = c-&gt;w;
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+		c-&gt;h = c-&gt;h;
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+	}
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+	resize(c, True, TopLeft);
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+</a> }
+ 
+ /* extern */
+<a href="#h1-2" id="h1-2" class="h">@@ -82,8 +101,14 @@ dotile(Arg *arg) {
+</a> 
+ 	w = sw - mw;
+ 	for(n = 0, c = clients; c; c = c-&gt;next)
+<a href="#h1-2-3" id="h1-2-3" class="d">-		if(isvisible(c) &amp;&amp; !c-&gt;isfloat)
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-			n++;
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		if(isvisible(c)) {
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+			if(c-&gt;isfloat) {
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+				if(c-&gt;ismax)
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+					togglemax(c);
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+			}
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+			else
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+				n++;
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+		}
+</a> 
+ 	if(n &gt; 1)
+ 		h = (sh - bh) / (n - 1);
+<a href="#h1-3" id="h1-3" class="h">@@ -269,7 +294,6 @@ viewall(Arg *arg) {
+</a> 
+ void
+ zoom(Arg *arg) {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	int tmp;
+</a> 	unsigned int n;
+ 	Client *c;
+ 	XEvent ev;
+<a href="#h1-4" id="h1-4" class="h">@@ -278,12 +302,7 @@ zoom(Arg *arg) {
+</a> 		return;
+ 
+ 	if(sel-&gt;isfloat || (arrange == dofloat)) {
+<a href="#h1-4-3" id="h1-4-3" class="d">-		sel-&gt;x = sx;
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-		sel-&gt;y = bh;
+</a><a href="#h1-4-5" id="h1-4-5" class="d">-		sel-&gt;w = sw;
+</a><a href="#h1-4-6" id="h1-4-6" class="d">-		sel-&gt;h = sh - bh;
+</a><a href="#h1-4-7" id="h1-4-7" class="d">-		resize(sel, True, TopLeft);
+</a><a href="#h1-4-8" id="h1-4-8" class="d">-		while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+		togglemax(sel);
+</a> 		return;
+ 	}
+ 
+</pre>
+</div>
+</body>
+</html>

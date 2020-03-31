@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>final fixes and cleanups - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6fdf8be2044145c11f7e1eb165613f791c514520.html">6fdf8be2044145c11f7e1eb165613f791c514520</a>
+<b>parent</b> <a href="../commit/1fd4e7b23e872c16902d222b6c870116c948903c.html">1fd4e7b23e872c16902d222b6c870116c948903c</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 24 Nov 2007 21:17:32 +0100
+
+final fixes and cleanups
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">README</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">slock.c</a></td><td> | </td><td class="num">35</td><td><span class="i">+++++++++++++++++++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>3 files changed, 20 insertions(+), 18 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/README.html">README</a> b/<a href="../file/README.html">README</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -21,4 +21,4 @@ necessary as root):
+</a> 
+ Running slock
+ -------------
+<a href="#h0-0-3" id="h0-0-3" class="d">-Simply invoke the &#39;slock&#39; command.
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+Simply invoke the &#39;slock&#39; command. To get out of it, enter your password.
+</a><b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -5,7 +5,6 @@ VERSION = 0.7
+</a> 
+ # paths
+ PREFIX = /usr/local
+<a href="#h1-0-3" id="h1-0-3" class="d">-MANPREFIX = ${PREFIX}/share/man
+</a> 
+ X11INC = /usr/X11R6/include
+ X11LIB = /usr/X11R6/lib
+<b>diff --git a/<a id="h2" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -7,6 +7,7 @@
+</a> 
+ #include &lt;ctype.h&gt;
+ #include &lt;pwd.h&gt;
+<a href="#h2-0-3" id="h2-0-3" class="i">+#include &lt;stdarg.h&gt;
+</a> #include &lt;stdlib.h&gt;
+ #include &lt;stdio.h&gt;
+ #include &lt;string.h&gt;
+<a href="#h2-1" id="h2-1" class="h">@@ -16,15 +17,23 @@
+</a> #include &lt;X11/Xlib.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+ 
+<a href="#h2-1-3" id="h2-1-3" class="i">+void
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+eprint(const char *errstr, ...) {
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+	va_list ap;
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+	va_start(ap, errstr);
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+	vfprintf(stderr, errstr, ap);
+</a><a href="#h2-1-9" id="h2-1-9" class="i">+	va_end(ap);
+</a><a href="#h2-1-10" id="h2-1-10" class="i">+	exit(EXIT_FAILURE);
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+}
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+
+</a> const char *
+ get_password() { /* only run as root */
+ 	const char *rval;
+ 	struct passwd *pw;
+ 
+<a href="#h2-1-18" id="h2-1-18" class="d">-	if(geteuid() != 0) {
+</a><a href="#h2-1-19" id="h2-1-19" class="d">-		fputs(&quot;slock: cannot retrieve password entry (make sure to suid slock)\n&quot;, stderr);
+</a><a href="#h2-1-20" id="h2-1-20" class="d">-		exit(EXIT_FAILURE);
+</a><a href="#h2-1-21" id="h2-1-21" class="d">-	}
+</a><a href="#h2-1-22" id="h2-1-22" class="i">+	if(geteuid() != 0)
+</a><a href="#h2-1-23" id="h2-1-23" class="i">+		eprint(&quot;slock: cannot retrieve password entry (make sure to suid slock)\n&quot;);
+</a> 	pw = getpwuid(getuid());
+ 	endpwent();
+ 	rval =  pw-&gt;pw_passwd;
+<a href="#h2-2" id="h2-2" class="h">@@ -38,10 +47,8 @@ get_password() { /* only run as root */
+</a> 	}
+ #endif
+ 	/* drop privileges */
+<a href="#h2-2-3" id="h2-2-3" class="d">-	if(setgid(pw-&gt;pw_gid) &lt; 0 || setuid(pw-&gt;pw_uid) &lt; 0) {
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-		fputs(&quot;slock: cannot drop privileges\n&quot;,stdout);
+</a><a href="#h2-2-5" id="h2-2-5" class="d">-		exit(EXIT_FAILURE);
+</a><a href="#h2-2-6" id="h2-2-6" class="d">-	}
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+	if(setgid(pw-&gt;pw_gid) &lt; 0 || setuid(pw-&gt;pw_uid) &lt; 0)
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+		eprint(&quot;slock: cannot drop privileges\n&quot;);
+</a> 	return rval;
+ }
+ 
+<a href="#h2-3" id="h2-3" class="h">@@ -62,15 +69,11 @@ main(int argc, char **argv) {
+</a> 	XEvent ev;
+ 	XSetWindowAttributes wa;
+ 
+<a href="#h2-3-3" id="h2-3-3" class="d">-	if((argc &gt; 1) &amp;&amp; !strncmp(argv[1], &quot;-v&quot;, 3)) {
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-		fputs(&quot;slock-&quot;VERSION&quot;, © 2006-2007 Anselm R. Garbe\n&quot;, stdout);
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-		exit(EXIT_SUCCESS);
+</a><a href="#h2-3-6" id="h2-3-6" class="d">-	}
+</a><a href="#h2-3-7" id="h2-3-7" class="i">+	if((argc &gt; 1) &amp;&amp; !strncmp(argv[1], &quot;-v&quot;, 3))
+</a><a href="#h2-3-8" id="h2-3-8" class="i">+		eprint(&quot;slock-&quot;VERSION&quot;, © 2006-2007 Anselm R. Garbe, Sander van Dijk\n&quot;);
+</a> 	pws = get_password();
+<a href="#h2-3-10" id="h2-3-10" class="d">-	if(!(dpy = XOpenDisplay(0))) {
+</a><a href="#h2-3-11" id="h2-3-11" class="d">-		fputs(&quot;slock: cannot open display\n&quot;, stderr);
+</a><a href="#h2-3-12" id="h2-3-12" class="d">-		exit(EXIT_FAILURE);
+</a><a href="#h2-3-13" id="h2-3-13" class="d">-	}
+</a><a href="#h2-3-14" id="h2-3-14" class="i">+	if(!(dpy = XOpenDisplay(0)))
+</a><a href="#h2-3-15" id="h2-3-15" class="i">+		eprint(&quot;slock: cannot open display\n&quot;);
+</a> 	screen = DefaultScreen(dpy);
+ 	root = RootWindow(dpy, screen);
+ 
+</pre>
+</div>
+</body>
+</html>

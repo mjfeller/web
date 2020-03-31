@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added a similiar patch to Daves solution to indicate if there are clients with a specific tag - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/78f4b51757430dcbd807063794cd86f81fc686a5.html">78f4b51757430dcbd807063794cd86f81fc686a5</a>
+<b>parent</b> <a href="../commit/7d168a262153dc6f3926804abcf19589a07e0899.html">7d168a262153dc6f3926804abcf19589a07e0899</a>
+<b>Author:</b> arg@mig29 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Wed, 22 Nov 2006 14:57:09 +0100
+
+added a similiar patch to Daves solution to indicate if there are clients with a specific tag
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">draw.c</a></td><td> | </td><td class="num">32</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 24 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,6 +8,16 @@
+</a> 
+ /* static */
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+static Bool
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+isoccupied(unsigned int t)
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+{
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	Client *c;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		if(c-&gt;tags[t])
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+			return True;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	return False;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+}
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a> static unsigned int
+ textnw(const char *text, unsigned int len) {
+ 	XRectangle r;
+<a href="#h0-1" id="h0-1" class="h">@@ -20,7 +30,7 @@ textnw(const char *text, unsigned int len) {
+</a> }
+ 
+ static void
+<a href="#h0-1-3" id="h0-1-3" class="d">-drawtext(const char *text, unsigned long col[ColLast], Bool highlight) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+drawtext(const char *text, unsigned long col[ColLast], Bool ldot, Bool rdot) {
+</a> 	int x, y, w, h;
+ 	static char buf[256];
+ 	unsigned int len, olen;
+<a href="#h0-2" id="h0-2" class="h">@@ -63,12 +73,18 @@ drawtext(const char *text, unsigned long col[ColLast], Bool highlight) {
+</a> 		XChangeGC(dpy, dc.gc, GCForeground | GCFont, &amp;gcv);
+ 		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(highlight) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	if(ldot) {
+</a> 		r.x = dc.x + 2;
+ 		r.y = dc.y + 2;
+ 		r.width = r.height = (h + 2) / 4;
+ 		XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+ 	}
+<a href="#h0-2-10" id="h0-2-10" class="i">+	if(rdot) {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+		r.width = r.height = (h + 2) / 4;
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+		r.x = dc.x + dc.w - r.width - 2;
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		r.y = dc.y + dc.h - r.height - 2;
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+		XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+	}
+</a> }
+ 
+ /* extern */
+<a href="#h0-3" id="h0-3" class="h">@@ -90,13 +106,13 @@ drawstatus(void) {
+</a> 	for(i = 0; i &lt; ntags; i++) {
+ 		dc.w = textw(tags[i]);
+ 		if(seltag[i])
+<a href="#h0-3-3" id="h0-3-3" class="d">-			drawtext(tags[i], dc.sel, sel &amp;&amp; sel-&gt;tags[i]);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			drawtext(tags[i], dc.sel, sel &amp;&amp; sel-&gt;tags[i], isoccupied(i));
+</a> 		else
+<a href="#h0-3-6" id="h0-3-6" class="d">-			drawtext(tags[i], dc.norm, sel &amp;&amp; sel-&gt;tags[i]);
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+			drawtext(tags[i], dc.norm, sel &amp;&amp; sel-&gt;tags[i], isoccupied(i));
+</a> 		dc.x += dc.w;
+ 	}
+ 	dc.w = bmw;
+<a href="#h0-3-11" id="h0-3-11" class="d">-	drawtext(arrange == dofloat ?  FLOATSYMBOL : TILESYMBOL, dc.status, False);
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+	drawtext(arrange == dofloat ?  FLOATSYMBOL : TILESYMBOL, dc.status, False, False);
+</a> 	x = dc.x + dc.w;
+ 	dc.w = textw(stext);
+ 	dc.x = bw - dc.w;
+<a href="#h0-4" id="h0-4" class="h">@@ -104,10 +120,10 @@ drawstatus(void) {
+</a> 		dc.x = x;
+ 		dc.w = bw - x;
+ 	}
+<a href="#h0-4-3" id="h0-4-3" class="d">-	drawtext(stext, dc.status, False);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	drawtext(stext, dc.status, False, False);
+</a> 	if((dc.w = dc.x - x) &gt; bh) {
+ 		dc.x = x;
+<a href="#h0-4-7" id="h0-4-7" class="d">-		drawtext(sel ? sel-&gt;name : NULL, sel ? dc.sel : dc.norm, False);
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+		drawtext(sel ? sel-&gt;name : NULL, sel ? dc.sel : dc.norm, False, False);
+</a> 	}
+ 	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, bw, bh, 0, 0);
+ 	XSync(dpy, False);
+<a href="#h0-5" id="h0-5" class="h">@@ -125,7 +141,7 @@ drawtitle(Client *c) {
+</a> 	XMapWindow(dpy, c-&gt;twin);
+ 	dc.x = dc.y = 0;
+ 	dc.w = c-&gt;tw;
+<a href="#h0-5-3" id="h0-5-3" class="d">-	drawtext(c-&gt;name, dc.norm, False);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	drawtext(c-&gt;name, dc.norm, False,False);
+</a> 	XCopyArea(dpy, dc.drawable, c-&gt;twin, dc.gc, 0, 0, c-&gt;tw, c-&gt;th, 0, 0);
+ 	XSync(dpy, False);
+ }
+</pre>
+</div>
+</body>
+</html>

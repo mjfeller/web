@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>module-org.el - rice - config file
+</title>
+<link rel="icon" type="image/png" href="../../../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="rice Atom Feed" href="../../../../../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>rice</h1><span class="desc">config file
+</span></td></tr><tr><td></td><td>
+<a href="../../../../../log.html">Log</a> | <a href="../../../../../files.html">Files</a> | <a href="../../../../../refs.html">Refs</a> | <a href="../../../../../file/README.html">README</a> | <a href="../../../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> module-org.el (4153B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> ;;; module-org.el
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> ;; Author: Mark Feller &lt;mark.feller@member.fsf.org&gt;
+<a href="#l4" class="line" id="l4">      4</a> 
+<a href="#l5" class="line" id="l5">      5</a> ;; This file is not part of GNU Emacs.
+<a href="#l6" class="line" id="l6">      6</a> 
+<a href="#l7" class="line" id="l7">      7</a> ;; This file is free software; you can redistribute it and/or modify
+<a href="#l8" class="line" id="l8">      8</a> ;; it under the terms of the GNU General Public License as published by
+<a href="#l9" class="line" id="l9">      9</a> ;; the Free Software Foundation; either version 3, or (at your option)
+<a href="#l10" class="line" id="l10">     10</a> ;; any later version.
+<a href="#l11" class="line" id="l11">     11</a> 
+<a href="#l12" class="line" id="l12">     12</a> ;; This file is distributed in the hope that it will be useful,
+<a href="#l13" class="line" id="l13">     13</a> ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+<a href="#l14" class="line" id="l14">     14</a> ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<a href="#l15" class="line" id="l15">     15</a> ;; GNU General Public License for more details.
+<a href="#l16" class="line" id="l16">     16</a> 
+<a href="#l17" class="line" id="l17">     17</a> ;; You should have received a copy of the GNU General Public License
+<a href="#l18" class="line" id="l18">     18</a> ;; along with this file.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+<a href="#l19" class="line" id="l19">     19</a> 
+<a href="#l20" class="line" id="l20">     20</a> ;;; Commentary:
+<a href="#l21" class="line" id="l21">     21</a> 
+<a href="#l22" class="line" id="l22">     22</a> ;;; Code:
+<a href="#l23" class="line" id="l23">     23</a> 
+<a href="#l24" class="line" id="l24">     24</a> (use-package org
+<a href="#l25" class="line" id="l25">     25</a>   :bind ((&quot;C-c l&quot; . org-store-link)
+<a href="#l26" class="line" id="l26">     26</a>          (&quot;C-c a&quot; . org-agenda)
+<a href="#l27" class="line" id="l27">     27</a>          (&quot;C-c c&quot; . org-capture)
+<a href="#l28" class="line" id="l28">     28</a>          :map org-src-mode-map
+<a href="#l29" class="line" id="l29">     29</a>          (&quot;C-x C-s&quot; . org-edit-src-exit))
+<a href="#l30" class="line" id="l30">     30</a>   :delight (org-indent-mode nil t)
+<a href="#l31" class="line" id="l31">     31</a>   :config
+<a href="#l32" class="line" id="l32">     32</a>   (progn (require &#39;org-indent)
+<a href="#l33" class="line" id="l33">     33</a>          (require &#39;org-src)
+<a href="#l34" class="line" id="l34">     34</a>          (require &#39;ob-shell)
+<a href="#l35" class="line" id="l35">     35</a> 
+<a href="#l36" class="line" id="l36">     36</a>          (setq org-startup-indented t)
+<a href="#l37" class="line" id="l37">     37</a>          (setq org-src-tab-acts-natively t)
+<a href="#l38" class="line" id="l38">     38</a>          (setq org-src-fontify-natively t)
+<a href="#l39" class="line" id="l39">     39</a>          (setq org-hide-emphasis-markers t)
+<a href="#l40" class="line" id="l40">     40</a> 
+<a href="#l41" class="line" id="l41">     41</a>          (defun org-summary-todo (n-done n-not-done)
+<a href="#l42" class="line" id="l42">     42</a>            &quot;Switch entry to DONE when all subentries are done, to TODO otherwise.&quot;
+<a href="#l43" class="line" id="l43">     43</a>            (let (org-log-done org-log-states)   ; turn off logging
+<a href="#l44" class="line" id="l44">     44</a>              (org-todo (if (= n-not-done 0) &quot;DONE&quot; &quot;TODO&quot;))))
+<a href="#l45" class="line" id="l45">     45</a>          (add-hook &#39;org-after-todo-statistics-hook &#39;org-summary-todo)
+<a href="#l46" class="line" id="l46">     46</a> 
+<a href="#l47" class="line" id="l47">     47</a>          ;; disable line numbers in org mode
+<a href="#l48" class="line" id="l48">     48</a>          (add-hook &#39;org-mode-hook (lambda () (org-bullets-mode 1)))
+<a href="#l49" class="line" id="l49">     49</a> 
+<a href="#l50" class="line" id="l50">     50</a>          ;; where I keep all my org files
+<a href="#l51" class="line" id="l51">     51</a>          (setq org-agenda-files
+<a href="#l52" class="line" id="l52">     52</a>                &#39;(&quot;~/org/work.org&quot;
+<a href="#l53" class="line" id="l53">     53</a>                  &quot;~/org/life.org&quot;))
+<a href="#l54" class="line" id="l54">     54</a> 
+<a href="#l55" class="line" id="l55">     55</a>          ;; personal capture templates
+<a href="#l56" class="line" id="l56">     56</a>          (setq org-capture-templates
+<a href="#l57" class="line" id="l57">     57</a>                &#39;(
+<a href="#l58" class="line" id="l58">     58</a>                  ;; unfiled work items
+<a href="#l59" class="line" id="l59">     59</a>                  (&quot;w&quot; &quot;Work&quot; entry (file+headline &quot;~/org/work.org&quot; &quot;Unread&quot;)
+<a href="#l60" class="line" id="l60">     60</a>                   &quot;* TODO %?\n  %i\n&quot;)
+<a href="#l61" class="line" id="l61">     61</a> 
+<a href="#l62" class="line" id="l62">     62</a>                  ;; random thoughts I&#39;d like to capture
+<a href="#l63" class="line" id="l63">     63</a>                  (&quot;t&quot; &quot;Thought&quot; entry (file+headline &quot;~/org/work.org&quot; &quot;Thoughts&quot;)
+<a href="#l64" class="line" id="l64">     64</a>                   &quot;* %?\n  %i\n&quot;)
+<a href="#l65" class="line" id="l65">     65</a> 
+<a href="#l66" class="line" id="l66">     66</a>                  ;; unfiled work items in my life
+<a href="#l67" class="line" id="l67">     67</a>                  (&quot;l&quot; &quot;Life&quot; entry (file+headline &quot;~/org/life.org&quot; &quot;Inbox&quot;)
+<a href="#l68" class="line" id="l68">     68</a>                   &quot;* TODO %?\n  %i\n&quot;)
+<a href="#l69" class="line" id="l69">     69</a> 
+<a href="#l70" class="line" id="l70">     70</a>                  (&quot;j&quot; &quot;Journal&quot; entry (file+datetree &quot;~/org/life.org&quot;)
+<a href="#l71" class="line" id="l71">     71</a>                   &quot;* TODO %?\n&quot;)))
+<a href="#l72" class="line" id="l72">     72</a> 
+<a href="#l73" class="line" id="l73">     73</a>          ;; when refiling an org header don&#39;t search more than 3 levels deep
+<a href="#l74" class="line" id="l74">     74</a>          (setq org-refile-targets
+<a href="#l75" class="line" id="l75">     75</a>                &#39;((nil :maxlevel . 3)
+<a href="#l76" class="line" id="l76">     76</a>                  (org-agenda-files :maxlevel . 3)))
+<a href="#l77" class="line" id="l77">     77</a> 
+<a href="#l78" class="line" id="l78">     78</a>          (setq org-todo-keywords
+<a href="#l79" class="line" id="l79">     79</a>                &#39;((sequence &quot;TODO(t)&quot; &quot;BLOCKED(b)&quot; &quot;|&quot; &quot;DONE(d)&quot; &quot;CANCELLED(c)&quot;)
+<a href="#l80" class="line" id="l80">     80</a>                  (sequence &quot;RECURRING(r)&quot; &quot;|&quot; &quot;DONE(d)&quot;)))
+<a href="#l81" class="line" id="l81">     81</a> 
+<a href="#l82" class="line" id="l82">     82</a>          ;; don&#39;t make the title big, I don&#39;t like that. Also remove those ugly
+<a href="#l83" class="line" id="l83">     83</a>          ;; checkboxes
+<a href="#l84" class="line" id="l84">     84</a>          (set-face-attribute &#39;org-document-title nil :height 1)
+<a href="#l85" class="line" id="l85">     85</a>          (set-face-attribute &#39;org-checkbox nil :box nil)))
+<a href="#l86" class="line" id="l86">     86</a> 
+<a href="#l87" class="line" id="l87">     87</a> (use-package org-bullets
+<a href="#l88" class="line" id="l88">     88</a>   :config
+<a href="#l89" class="line" id="l89">     89</a>   (progn (setq org-bullets-bullet-list &#39;(&quot;●&quot; &quot;○&quot; &quot;◉&quot; &quot;•&quot;))
+<a href="#l90" class="line" id="l90">     90</a> 
+<a href="#l91" class="line" id="l91">     91</a>          ;; bullets on lists
+<a href="#l92" class="line" id="l92">     92</a>          (font-lock-add-keywords
+<a href="#l93" class="line" id="l93">     93</a>           &#39;org-mode
+<a href="#l94" class="line" id="l94">     94</a>           &#39;((&quot;^ +\\([-*]\\) &quot;
+<a href="#l95" class="line" id="l95">     95</a>              (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) &quot;•&quot;))))))))
+<a href="#l96" class="line" id="l96">     96</a> 
+<a href="#l97" class="line" id="l97">     97</a> (use-package org-fancy-priorities
+<a href="#l98" class="line" id="l98">     98</a>   :ensure t
+<a href="#l99" class="line" id="l99">     99</a>   :delight (org-fancy-priorities-mode)
+<a href="#l100" class="line" id="l100">    100</a>   :hook (org-mode . org-fancy-priorities-mode)
+<a href="#l101" class="line" id="l101">    101</a>   :config
+<a href="#l102" class="line" id="l102">    102</a>   (progn (setq org-fancy-priorities-list &#39;(&quot;⬆&quot; &quot;➡&quot; &quot;⬇&quot; &quot;☕&quot;))
+<a href="#l103" class="line" id="l103">    103</a> 
+<a href="#l104" class="line" id="l104">    104</a>           ;; solarized theme on priorities
+<a href="#l105" class="line" id="l105">    105</a>           (setq org-priority-faces &#39;((65 . &quot;#dc322f&quot;)
+<a href="#l106" class="line" id="l106">    106</a>                                      (66 . &quot;#cb4b16&quot;)
+<a href="#l107" class="line" id="l107">    107</a>                                      (67 . &quot;#859900&quot;)))))
+<a href="#l108" class="line" id="l108">    108</a> 
+<a href="#l109" class="line" id="l109">    109</a> (use-package deft
+<a href="#l110" class="line" id="l110">    110</a>   :disabled
+<a href="#l111" class="line" id="l111">    111</a>   :config
+<a href="#l112" class="line" id="l112">    112</a>   (progn (setq deft-directory &quot;~/org&quot;
+<a href="#l113" class="line" id="l113">    113</a>                deft-extensions &#39;(&quot;md&quot; &quot;org&quot;)
+<a href="#l114" class="line" id="l114">    114</a>                deft-recursive t)
+<a href="#l115" class="line" id="l115">    115</a> 
+<a href="#l116" class="line" id="l116">    116</a>          (add-hook &#39;deft-mode-hook (lambda () (evil-emacs-state)))))
+<a href="#l117" class="line" id="l117">    117</a> 
+<a href="#l118" class="line" id="l118">    118</a> (provide &#39;module-org)
+<a href="#l119" class="line" id="l119">    119</a> 
+<a href="#l120" class="line" id="l120">    120</a> ;;; module-org.el ends here
+</pre>
+</div>
+</body>
+</html>

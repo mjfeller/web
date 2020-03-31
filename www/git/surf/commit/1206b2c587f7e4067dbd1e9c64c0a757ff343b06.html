@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix inspector toggling - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1206b2c587f7e4067dbd1e9c64c0a757ff343b06.html">1206b2c587f7e4067dbd1e9c64c0a757ff343b06</a>
+<b>parent</b> <a href="../commit/c8fdd4d5839cac08daf5fcbae9a83db60793486a.html">c8fdd4d5839cac08daf5fcbae9a83db60793486a</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sat,  9 Jan 2016 13:42:50 +0100
+
+Fix inspector toggling
+
+Always get the inspector object, and let the user eventually close it
+even if it&#39;s disabled for the current page.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1084,8 +1084,7 @@ showview(WebKitWebView *v, Client *c)
+</a> 	GdkWindow *gwin;
+ 
+ 	c-&gt;finder = webkit_web_view_get_find_controller(c-&gt;view);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if (curconfig[Inspector].val.b)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		c-&gt;inspector = webkit_web_view_get_inspector(c-&gt;view);
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	c-&gt;inspector = webkit_web_view_get_inspector(c-&gt;view);
+</a> 
+ 	c-&gt;win = createwindow(c);
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -1535,12 +1534,10 @@ togglecookiepolicy(Client *c, const Arg *a)
+</a> void
+ toggleinspector(Client *c, const Arg *a)
+ {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if (curconfig[Inspector].val.b) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		if (webkit_web_inspector_is_attached(c-&gt;inspector))
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-			webkit_web_inspector_close(c-&gt;inspector);
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-		else
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-			webkit_web_inspector_show(c-&gt;inspector);
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	}
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	if (webkit_web_inspector_is_attached(c-&gt;inspector))
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		webkit_web_inspector_close(c-&gt;inspector);
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	else if (curconfig[Inspector].val.b)
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		webkit_web_inspector_show(c-&gt;inspector);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

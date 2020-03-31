@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>urlbar and searchbar are working. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/58322c0b11dc9eccc71d70c260ac1005e19674bb.html">58322c0b11dc9eccc71d70c260ac1005e19674bb</a>
+<b>parent</b> <a href="../commit/37deb47b84ba1382fe8b217f6c08935e6c59a7cb.html">37deb47b84ba1382fe8b217f6c08935e6c59a7cb</a>
+<b>Author:</b> Enno Boland (Gottox) &lt;<a href="mailto:gottox@s01.de">gottox@s01.de</a>&gt;
+<b>Date:</b>   Sat,  6 Jun 2009 17:12:16 +0200
+
+urlbar and searchbar are working.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">39</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 31 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -154,6 +154,7 @@ loadcommit(WebKitWebView *view, WebKitWebFrame *f, gpointer d) {
+</a> 	XChangeProperty(dpy, GDK_WINDOW_XID(GTK_WIDGET(c-&gt;win)-&gt;window), urlprop,
+ 			XA_STRING, 8, PropModeReplace, (unsigned char *)uri,
+ 			strlen(uri) + 1);
+<a href="#h0-0-3" id="h0-0-3" class="i">+	gtk_entry_set_text(GTK_ENTRY(c-&gt;urlbar), uri);
+</a> }
+ 
+ void
+<a href="#h0-1" id="h0-1" class="h">@@ -215,8 +216,9 @@ gboolean
+</a> keypress(GtkWidget* w, GdkEventKey *ev, gpointer d) {
+ 	Client *c = (Client *)d;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(ev-&gt;type == GDK_KEY_PRESS &amp;&amp; (ev-&gt;state == GDK_CONTROL_MASK
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			|| ev-&gt;state == (GDK_CONTROL_MASK | GDK_SHIFT_MASK))) {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	if(ev-&gt;type != GDK_KEY_PRESS)
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+		return FALSE;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	if(ev-&gt;state == GDK_CONTROL_MASK || ev-&gt;state == (GDK_CONTROL_MASK | GDK_SHIFT_MASK)) {
+</a> 		switch(ev-&gt;keyval) {
+ 		case GDK_r:
+ 		case GDK_R:
+<a href="#h0-2" id="h0-2" class="h">@@ -230,10 +232,12 @@ keypress(GtkWidget* w, GdkEventKey *ev, gpointer d) {
+</a> 		case GDK_g:
+ 			gtk_widget_hide(c-&gt;searchbar);
+ 			gtk_widget_show(c-&gt;urlbar);
+<a href="#h0-2-3" id="h0-2-3" class="i">+			gtk_widget_grab_focus(c-&gt;urlbar);
+</a> 			return TRUE;
+ 		case GDK_slash:
+ 			gtk_widget_hide(c-&gt;urlbar);
+ 			gtk_widget_show(c-&gt;searchbar);
+<a href="#h0-2-8" id="h0-2-8" class="i">+			gtk_widget_grab_focus(c-&gt;searchbar);
+</a> 			return TRUE;
+ 		case GDK_Left:
+ 			webkit_web_view_go_back(c-&gt;view);
+<a href="#h0-3" id="h0-3" class="h">@@ -243,10 +247,30 @@ keypress(GtkWidget* w, GdkEventKey *ev, gpointer d) {
+</a> 			return TRUE;
+ 		}
+ 	}
+<a href="#h0-3-3" id="h0-3-3" class="d">-	else if(ev-&gt;type == GDK_KEY_PRESS &amp;&amp; ev-&gt;keyval == GDK_Escape) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		gtk_widget_hide(c-&gt;urlbar);
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-		gtk_widget_hide(c-&gt;searchbar);
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-		return TRUE;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	else {
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+		switch(ev-&gt;keyval) {
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+		case GDK_Escape:
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+			if(!GTK_WIDGET_HAS_FOCUS(c-&gt;searchbar) &amp;&amp; !GTK_WIDGET_HAS_FOCUS(c-&gt;urlbar))
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+				return FALSE;
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+			gtk_widget_hide(c-&gt;urlbar);
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+			gtk_widget_hide(c-&gt;searchbar);
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+			gtk_widget_grab_focus(GTK_WIDGET(c-&gt;view));
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+			return TRUE;
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+		case GDK_Return:
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+			if(GTK_WIDGET_HAS_FOCUS(c-&gt;urlbar)) {
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+				loaduri(c, gtk_entry_get_text(GTK_ENTRY(c-&gt;urlbar)));
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+				gtk_widget_hide(c-&gt;urlbar);
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+				gtk_widget_grab_focus(GTK_WIDGET(c-&gt;view));
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+				return TRUE;
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+			}
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+			else if(GTK_WIDGET_HAS_FOCUS(c-&gt;searchbar)) {
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+				webkit_web_view_search_text(c-&gt;view,
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+						gtk_entry_get_text(GTK_ENTRY(c-&gt;searchbar)),
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+						FALSE,
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+						!(ev-&gt;state &amp; GDK_SHIFT_MASK),
+</a><a href="#h0-3-28" id="h0-3-28" class="i">+						TRUE);
+</a><a href="#h0-3-29" id="h0-3-29" class="i">+			}
+</a><a href="#h0-3-30" id="h0-3-30" class="i">+		}
+</a> 	}
+ 	return FALSE;
+ }
+<a href="#h0-4" id="h0-4" class="h">@@ -288,7 +312,6 @@ newclient(void) {
+</a> 
+ 	/* webview */
+ 	c-&gt;view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+<a href="#h0-4-3" id="h0-4-3" class="d">-
+</a> 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;title-changed&quot;, G_CALLBACK(titlechange), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;load-progress-changed&quot;, G_CALLBACK(progresschange), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;load-committed&quot;, G_CALLBACK(loadcommit), c);
+<a href="#h0-5" id="h0-5" class="h">@@ -306,8 +329,8 @@ newclient(void) {
+</a> 
+ 	/* Arranging */
+ 	gtk_container_add(GTK_CONTAINER(c-&gt;scroll), GTK_WIDGET(c-&gt;view));
+<a href="#h0-5-3" id="h0-5-3" class="d">-	gtk_container_add(GTK_CONTAINER(c-&gt;vbox), c-&gt;scroll);
+</a> 	gtk_container_add(GTK_CONTAINER(c-&gt;win), c-&gt;vbox);
+<a href="#h0-5-5" id="h0-5-5" class="i">+	gtk_container_add(GTK_CONTAINER(c-&gt;vbox), c-&gt;scroll);
+</a> 	gtk_container_add(GTK_CONTAINER(c-&gt;vbox), c-&gt;searchbar);
+ 	gtk_container_add(GTK_CONTAINER(c-&gt;vbox), c-&gt;urlbar);
+ 
+</pre>
+</div>
+</body>
+</html>

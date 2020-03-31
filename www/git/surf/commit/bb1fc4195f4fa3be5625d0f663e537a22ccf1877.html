@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add createwindow() for GtkWindow creation - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bb1fc4195f4fa3be5625d0f663e537a22ccf1877.html">bb1fc4195f4fa3be5625d0f663e537a22ccf1877</a>
+<b>parent</b> <a href="../commit/2e1fb873613b3917b97c954f0c085ea05016bdce.html">2e1fb873613b3917b97c954f0c085ea05016bdce</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Thu, 19 Nov 2015 14:38:23 +0100
+
+Add createwindow() for GtkWindow creation
+
+Move there window creation from showview().
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">64</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 37 insertions(+), 27 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -161,6 +161,7 @@ static Client *newclient(Client *c);
+</a> static WebKitWebView *newview(Client *c, WebKitWebView *rv);
+ static void showview(WebKitWebView *v, Client *c);
+ static void newwindow(Client *c, const Arg *arg, gboolean noembed);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static GtkWidget *createwindow(Client *c);
+</a> static void pasteuri(GtkClipboard *clipboard, const char *text, gpointer d);
+ static void print(Client *c, const Arg *arg);
+ static GdkFilterReturn processx(GdkXEvent *xevent, GdkEvent *event,
+<a href="#h0-1" id="h0-1" class="h">@@ -1017,33 +1018,7 @@ showview(WebKitWebView *v, Client *c)
+</a> 	GdkRGBA bgcolor = { 0 };
+ 	GdkWindow *gwin;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	/* Window */
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	if (embed) {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		c-&gt;win = gtk_plug_new(embed);
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	} else {
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		c-&gt;win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-		/* TA:  20091214:  Despite what the GNOME docs say, the ICCCM
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-		 * is always correct, so we should still call this function.
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-		 * But when doing so, we *must* differentiate between a
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-		 * WM_CLASS and a resource on the window.  By convention, the
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-		 * window class (WM_CLASS) is capped, while the resource is in
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-		 * lowercase.   Both these values come as a pair.
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-		 */
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-		gtk_window_set_wmclass(GTK_WINDOW(c-&gt;win), &quot;surf&quot;, &quot;Surf&quot;);
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-		/* TA:  20091214:  And set the role here as well -- so that
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-		 * sessions can pick this up.
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-		 */
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-		gtk_window_set_role(GTK_WINDOW(c-&gt;win), &quot;Surf&quot;);
+</a><a href="#h0-1-22" id="h0-1-22" class="d">-	}
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-	gtk_window_set_default_size(GTK_WINDOW(c-&gt;win), 800, 600);
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-	g_signal_connect(G_OBJECT(c-&gt;win),
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-	                 &quot;destroy&quot;,
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-			 G_CALLBACK(destroywin), c);
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-	g_signal_connect(G_OBJECT(c-&gt;win),
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-	                 &quot;leave_notify_event&quot;,
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-			 G_CALLBACK(titlechangeleave), c);
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+	c-&gt;win = createwindow(c);
+</a> 
+ 	if (!kioskmode)
+ 		addaccelgroup(c);
+<a href="#h0-2" id="h0-2" class="h">@@ -1128,6 +1103,41 @@ newwindow(Client *c, const Arg *arg, gboolean noembed)
+</a> 	spawn(NULL, &amp;a);
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+GtkWidget *
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+createwindow(Client *c)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+{
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	GtkWidget *w;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	if (embed) {
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+		w = gtk_plug_new(embed);
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	} else {
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+		w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		/* TA:  20091214:  Despite what the GNOME docs say, the ICCCM
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+		 * is always correct, so we should still call this function.
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+		 * But when doing so, we *must* differentiate between a
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+		 * WM_CLASS and a resource on the window.  By convention, the
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+		 * window class (WM_CLASS) is capped, while the resource is in
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+		 * lowercase.   Both these values come as a pair.
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+		 */
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+		gtk_window_set_wmclass(GTK_WINDOW(w), &quot;surf&quot;, &quot;Surf&quot;);
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+		/* TA:  20091214:  And set the role here as well -- so that
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+		 * sessions can pick this up.
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+		 */
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+		gtk_window_set_role(GTK_WINDOW(w), &quot;Surf&quot;);
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+		gtk_window_set_default_size(GTK_WINDOW(w), 800, 600);
+</a><a href="#h0-2-28" id="h0-2-28" class="i">+	}
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+
+</a><a href="#h0-2-30" id="h0-2-30" class="i">+	g_signal_connect(G_OBJECT(w), &quot;destroy&quot;,
+</a><a href="#h0-2-31" id="h0-2-31" class="i">+	    G_CALLBACK(destroywin), c);
+</a><a href="#h0-2-32" id="h0-2-32" class="i">+	g_signal_connect(G_OBJECT(w), &quot;leave_notify_event&quot;,
+</a><a href="#h0-2-33" id="h0-2-33" class="i">+	    G_CALLBACK(titlechangeleave), c);
+</a><a href="#h0-2-34" id="h0-2-34" class="i">+
+</a><a href="#h0-2-35" id="h0-2-35" class="i">+	return w;
+</a><a href="#h0-2-36" id="h0-2-36" class="i">+}
+</a><a href="#h0-2-37" id="h0-2-37" class="i">+
+</a> void
+ pasteuri(GtkClipboard *clipboard, const char *text, gpointer d)
+ {
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implementing spawntab(), rewriting run() - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/92571a0887b28bb17f40d3352a6b8f2526575298.html">92571a0887b28bb17f40d3352a6b8f2526575298</a>
+<b>parent</b> <a href="../commit/ef13e9be81e52c845314a49b2ac77690b8a35429.html">ef13e9be81e52c845314a49b2ac77690b8a35429</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue,  8 Sep 2009 00:06:46 +0200
+
+implementing spawntab(), rewriting run()
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.c</a></td><td> | </td><td class="num">113</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>2 files changed, 98 insertions(+), 21 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,13 +3,13 @@ static const char normbgcolor[]     = &quot;#202020&quot;;
+</a> static const char normfgcolor[]     = &quot;#c0c0c0&quot;;
+ static const char selbgcolor[]      = &quot;#884400&quot;;
+ static const char selfgcolor[]      = &quot;#f0f0f0&quot;;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static const char *surfexec[]       = { &quot;surf&quot;, &quot;-x&quot; };
+</a> 
+<a href="#h0-0-5" id="h0-0-5" class="i">+#define SURF &quot;surf&quot;, &quot;-x&quot;
+</a> #define MODKEY ControlMask
+ Key keys[] = { \
+ 	/* modifier                     key        function        argument */
+<a href="#h0-0-9" id="h0-0-9" class="d">-	{ MODKEY|ShiftMask,             XK_Return, newtab,         { 0 } },
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	{ MODKEY,                       XK_t,      newtab,         { 0 } },
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	{ MODKEY|ShiftMask,             XK_Return, spawntab,       { .v = (char*[]){ SURF, NULL} } },
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	{ MODKEY|ShiftMask,             XK_t,      spawntab,       { .v = (char*[]){ SURF, NULL} } },
+</a> 	{ MODKEY|ShiftMask,             XK_l,      rotate,         { .i = +1 } },
+ 	{ MODKEY|ShiftMask,             XK_h,      rotate,         { .i = -1 } },
+ 	{ MODKEY,                       XK_1,      move,           { .i = 1 } },
+<b>diff --git a/<a id="h1" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2,22 +2,26 @@
+</a>  *
+  * To understand tabbed, start reading main().
+  */
+<a href="#h1-0-3" id="h1-0-3" class="i">+#include &lt;sys/select.h&gt;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#include &lt;sys/types.h&gt;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+#include &lt;sys/wait.h&gt;
+</a> #include &lt;locale.h&gt;
+ #include &lt;stdarg.h&gt;
+<a href="#h1-0-8" id="h1-0-8" class="i">+#include &lt;unistd.h&gt;
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+#include &lt;signal.h&gt;
+</a> #include &lt;stdio.h&gt;
+ #include &lt;string.h&gt;
+ #include &lt;stdlib.h&gt;
+ #include &lt;X11/keysym.h&gt;
+ #include &lt;X11/Xatom.h&gt;
+ #include &lt;X11/Xlib.h&gt;
+<a href="#h1-0-16" id="h1-0-16" class="d">-#include &lt;X11/Xutil.h&gt;
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-#include &lt;X11/Xproto.h&gt;
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-#include &lt;X11/extensions/XTest.h&gt;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+#include &lt;errno.h&gt;
+</a> 
+ /* macros */
+ #define MAX(a, b)       ((a) &gt; (b) ? (a) : (b))
+ #define LENGTH(x)       (sizeof x / sizeof x[0])
+ #define CLEANMASK(mask) (mask &amp; ~(numlockmask|LockMask))
+<a href="#h1-0-25" id="h1-0-25" class="i">+#define TEXTW(x)        (textnw(x, strlen(x)) + dc.font.height)
+</a> 
+ enum { ColFG, ColBG, ColLast };              /* color */
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -72,7 +76,7 @@ static void initfont(const char *fontstr);
+</a> static void keypress(XEvent *e);
+ static void killclient(const Arg *arg);
+ static void move(const Arg *arg);
+<a href="#h1-1-3" id="h1-1-3" class="d">-static void newtab(const Arg *arg);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+static void spawntab(const Arg *arg);
+</a> static void rotate(const Arg *arg);
+ static void run(void);
+ static void setup(void);
+<a href="#h1-2" id="h1-2" class="h">@@ -93,15 +97,12 @@ static DC dc;
+</a> static Window root, win;
+ static Bool running = True;
+ static unsigned int numlockmask = 0;
+<a href="#h1-2-3" id="h1-2-3" class="i">+Client *clients, *sel;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+Listener *listeners;
+</a> /* configuration, allows nested code to access above variables */
+ #include &quot;config.h&quot;
+ 
+ void
+<a href="#h1-2-9" id="h1-2-9" class="d">-buttonrelease(XEvent *e) {
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-	//XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-}
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-
+</a><a href="#h1-2-13" id="h1-2-13" class="d">-void
+</a> cleanup(void) {
+ 	if(dc.font.set)
+ 		XFreeFontSet(dpy, dc.font.set);
+<a href="#h1-3" id="h1-3" class="h">@@ -136,9 +137,13 @@ die(const char *errstr, ...) {
+</a> 	exit(EXIT_FAILURE);
+ }
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-void
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-unmapnotify(XEvent *e) {
+</a><a href="#h1-3-5" id="h1-3-5" class="d">-	running = False;
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+void *
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+emallocz(size_t size) {
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+	void *p;
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+
+</a><a href="#h1-3-10" id="h1-3-10" class="i">+	if(!(p = calloc(1, size)))
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+		die(0, &quot;Cannot Malloc&quot;);
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+	return p;
+</a> }
+ 
+ void
+<a href="#h1-4" id="h1-4" class="h">@@ -222,8 +227,36 @@ move(const Arg *arg) {
+</a> }
+ 
+ void
+<a href="#h1-4-3" id="h1-4-3" class="d">-newtab(const Arg *arg) {
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-	puts(&quot;opening new tab&quot;);
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+sigchld(int signal) {
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+	while(0 &lt; waitpid(-1, NULL, WNOHANG));
+</a><a href="#h1-4-7" id="h1-4-7" class="i">+}
+</a><a href="#h1-4-8" id="h1-4-8" class="i">+
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+void
+</a><a href="#h1-4-10" id="h1-4-10" class="i">+spawntab(const Arg *arg) {
+</a><a href="#h1-4-11" id="h1-4-11" class="i">+	int fd[2];
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+	Listener *l;
+</a><a href="#h1-4-13" id="h1-4-13" class="i">+
+</a><a href="#h1-4-14" id="h1-4-14" class="i">+	if(pipe(fd)) {
+</a><a href="#h1-4-15" id="h1-4-15" class="i">+		perror(&quot;tabbed: pipe failed&quot;);
+</a><a href="#h1-4-16" id="h1-4-16" class="i">+		return;
+</a><a href="#h1-4-17" id="h1-4-17" class="i">+	}
+</a><a href="#h1-4-18" id="h1-4-18" class="i">+	l = emallocz(sizeof(Listener));
+</a><a href="#h1-4-19" id="h1-4-19" class="i">+	l-&gt;fd = fd[0];
+</a><a href="#h1-4-20" id="h1-4-20" class="i">+	l-&gt;next = listeners;
+</a><a href="#h1-4-21" id="h1-4-21" class="i">+	listeners = l;
+</a><a href="#h1-4-22" id="h1-4-22" class="i">+	signal(SIGCHLD, sigchld);
+</a><a href="#h1-4-23" id="h1-4-23" class="i">+	if(fork() == 0) {
+</a><a href="#h1-4-24" id="h1-4-24" class="i">+		if(dpy)
+</a><a href="#h1-4-25" id="h1-4-25" class="i">+			close(ConnectionNumber(dpy));
+</a><a href="#h1-4-26" id="h1-4-26" class="i">+		setsid();
+</a><a href="#h1-4-27" id="h1-4-27" class="i">+		dup2(fd[1], STDOUT_FILENO);
+</a><a href="#h1-4-28" id="h1-4-28" class="i">+		close(fd[0]);
+</a><a href="#h1-4-29" id="h1-4-29" class="i">+		execvp(((char **)arg-&gt;v)[0], (char **)arg-&gt;v);
+</a><a href="#h1-4-30" id="h1-4-30" class="i">+		fprintf(stderr, &quot;tabbed: execvp %s&quot;, ((char **)arg-&gt;v)[0]);
+</a><a href="#h1-4-31" id="h1-4-31" class="i">+		perror(&quot; failed&quot;);
+</a><a href="#h1-4-32" id="h1-4-32" class="i">+		exit(0);
+</a><a href="#h1-4-33" id="h1-4-33" class="i">+	}
+</a><a href="#h1-4-34" id="h1-4-34" class="i">+	close(fd[1]);
+</a> }
+ 
+ void
+<a href="#h1-5" id="h1-5" class="h">@@ -233,13 +266,52 @@ rotate(const Arg *arg) {
+</a> 
+ void
+ run(void) {
+<a href="#h1-5-3" id="h1-5-3" class="i">+	char buf[32], *p;
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	fd_set rd;
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+	int r, xfd;
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+	unsigned int offset;
+</a> 	XEvent ev;
+<a href="#h1-5-8" id="h1-5-8" class="i">+	Listener *l;
+</a> 
+<a href="#h1-5-10" id="h1-5-10" class="i">+	/* main event loop, also reads status text from stdin */
+</a> 	XSync(dpy, False);
+<a href="#h1-5-12" id="h1-5-12" class="i">+	xfd = ConnectionNumber(dpy);
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+	buf[LENGTH(buf) - 1] = &#39;\0&#39;; /* 0-terminator is never touched */
+</a> 	while(running) {
+<a href="#h1-5-15" id="h1-5-15" class="d">-		XNextEvent(dpy, &amp;ev);
+</a><a href="#h1-5-16" id="h1-5-16" class="d">-		if(handler[ev.type])
+</a><a href="#h1-5-17" id="h1-5-17" class="d">-			(handler[ev.type])(&amp;ev); /* call handler */
+</a><a href="#h1-5-18" id="h1-5-18" class="i">+		FD_ZERO(&amp;rd);
+</a><a href="#h1-5-19" id="h1-5-19" class="i">+		for(l = listeners; l; l = l-&gt;next) {
+</a><a href="#h1-5-20" id="h1-5-20" class="i">+			printf(&quot;setting %i\n&quot;, l-&gt;fd);
+</a><a href="#h1-5-21" id="h1-5-21" class="i">+			FD_SET(l-&gt;fd, &amp;rd);
+</a><a href="#h1-5-22" id="h1-5-22" class="i">+		}
+</a><a href="#h1-5-23" id="h1-5-23" class="i">+		FD_SET(xfd, &amp;rd);
+</a><a href="#h1-5-24" id="h1-5-24" class="i">+		if(select(xfd + 1, &amp;rd, NULL, NULL, NULL) == -1) {
+</a><a href="#h1-5-25" id="h1-5-25" class="i">+			if(errno == EINTR)
+</a><a href="#h1-5-26" id="h1-5-26" class="i">+				continue;
+</a><a href="#h1-5-27" id="h1-5-27" class="i">+			die(&quot;select failed\n&quot;);
+</a><a href="#h1-5-28" id="h1-5-28" class="i">+		}
+</a><a href="#h1-5-29" id="h1-5-29" class="i">+		for(l = listeners; l; l = l-&gt;next) {
+</a><a href="#h1-5-30" id="h1-5-30" class="i">+			printf(&quot;testing %i\n&quot;, l-&gt;fd);
+</a><a href="#h1-5-31" id="h1-5-31" class="i">+			if(!FD_ISSET(l-&gt;fd, &amp;rd))
+</a><a href="#h1-5-32" id="h1-5-32" class="i">+				continue;
+</a><a href="#h1-5-33" id="h1-5-33" class="i">+			switch((r = read(l-&gt;fd, buf + offset, LENGTH(buf) - 1 - offset))) {
+</a><a href="#h1-5-34" id="h1-5-34" class="i">+			case -1:
+</a><a href="#h1-5-35" id="h1-5-35" class="i">+			case 0:
+</a><a href="#h1-5-36" id="h1-5-36" class="i">+				break;
+</a><a href="#h1-5-37" id="h1-5-37" class="i">+			default:
+</a><a href="#h1-5-38" id="h1-5-38" class="i">+				for(p = buf + offset; r &gt; 0; p++, r--, offset++)
+</a><a href="#h1-5-39" id="h1-5-39" class="i">+					if(*p == &#39;\n&#39; || *p == &#39;\0&#39;) {
+</a><a href="#h1-5-40" id="h1-5-40" class="i">+						*p = &#39;\0&#39;;
+</a><a href="#h1-5-41" id="h1-5-41" class="i">+						printf(&quot;Got somthing: %s\n&quot;, buf);
+</a><a href="#h1-5-42" id="h1-5-42" class="i">+						break;
+</a><a href="#h1-5-43" id="h1-5-43" class="i">+					}
+</a><a href="#h1-5-44" id="h1-5-44" class="i">+				break;
+</a><a href="#h1-5-45" id="h1-5-45" class="i">+			}
+</a><a href="#h1-5-46" id="h1-5-46" class="i">+		}
+</a><a href="#h1-5-47" id="h1-5-47" class="i">+		while(XPending(dpy)) {
+</a><a href="#h1-5-48" id="h1-5-48" class="i">+			XNextEvent(dpy, &amp;ev);
+</a><a href="#h1-5-49" id="h1-5-49" class="i">+			if(handler[ev.type])
+</a><a href="#h1-5-50" id="h1-5-50" class="i">+				(handler[ev.type])(&amp;ev); /* call handler */
+</a><a href="#h1-5-51" id="h1-5-51" class="i">+		}
+</a> 	}
+ }
+ 
+<a href="#h1-6" id="h1-6" class="h">@@ -283,6 +355,11 @@ textnw(const char *text, unsigned int len) {
+</a> }
+ 
+ void
+<a href="#h1-6-3" id="h1-6-3" class="i">+unmapnotify(XEvent *e) {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+	running = False;
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+}
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+void
+</a> updatenumlockmask(void) {
+ 	unsigned int i, j;
+ 	XModifierKeymap *modmap;
+<a href="#h1-7" id="h1-7" class="h">@@ -313,6 +390,6 @@ main(int argc, char *argv[]) {
+</a> 	cleanup();
+ 	XCloseDisplay(dpy);
+ 	return 0;
+<a href="#h1-7-3" id="h1-7-3" class="d">-	textnw(surfexec[0], strlen(surfexec[0]));
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	textnw(&quot; &quot;, 1);
+</a> 	updatenumlockmask();
+ }
+</pre>
+</div>
+</body>
+</html>

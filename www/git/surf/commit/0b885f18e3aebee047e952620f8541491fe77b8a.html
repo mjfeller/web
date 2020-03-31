@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add different progress colors when using proxy. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0b885f18e3aebee047e952620f8541491fe77b8a.html">0b885f18e3aebee047e952620f8541491fe77b8a</a>
+<b>parent</b> <a href="../commit/25ba840e4d24735118949f38216628792f22d7f5.html">25ba840e4d24735118949f38216628792f22d7f5</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Wed, 31 Oct 2012 20:46:38 +0100
+
+Add different progress colors when using proxy.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 21 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,8 +1,11 @@
+</a> /* modifier 0 means no modifier */
+ static char *useragent      = &quot;Surf/&quot;VERSION&quot; (X11; U; Unix; en-US) AppleWebKit/531.2+ Compatible (Safari)&quot;;
+<a href="#h0-0-2" id="h0-0-2" class="d">-static char *progress       = &quot;#0066FF&quot;;
+</a><a href="#h0-0-3" id="h0-0-3" class="d">-static char *progress_untrust = &quot;#FF6600&quot;;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static char *progress       = &quot;#0000FF&quot;;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static char *progress_untrust = &quot;#FF0000&quot;;
+</a> static char *progress_trust = &quot;#00FF00&quot;;
+<a href="#h0-0-7" id="h0-0-7" class="i">+static char *progress_proxy = &quot;#FFFF00&quot;;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+static char *progress_proxy_trust = &quot;#66FF00&quot;;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+static char *progress_proxy_untrust = &quot;#FF6600&quot;;
+</a> static char *stylefile      = &quot;.surf/style.css&quot;;
+ static char *scriptfile     = &quot;.surf/script.js&quot;;
+ static char *cookiefile     = &quot;.surf/cookies.txt&quot;;
+<a href="#h0-1" id="h0-1" class="h">@@ -50,3 +53,4 @@ static Key keys[] = {
+</a>     { MODKEY,               GDK_n,      find,       { .b = TRUE } },
+     { MODKEY|GDK_SHIFT_MASK,GDK_n,      find,       { .b = FALSE } },
+ };
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -75,7 +75,7 @@ static GdkNativeWindow embed = 0;
+</a> static gboolean showxid = FALSE;
+ static char winid[64];
+ static char *progname;
+<a href="#h1-0-3" id="h1-0-3" class="d">-static gboolean loadimage = 1, plugin = 1, script = 1;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+static gboolean loadimage = 1, plugin = 1, script = 1, using_proxy = 0;
+</a> 
+ static char *buildpath(const char *path);
+ static gboolean buttonrelease(WebKitWebView *web, GdkEventButton *e, GList *gl);
+<a href="#h1-1" id="h1-1" class="h">@@ -333,6 +333,7 @@ void
+</a> drawindicator(Client *c) {
+ 	gint width;
+ 	const char *uri;
+<a href="#h1-1-3" id="h1-1-3" class="i">+	char *colorname;
+</a> 	GtkWidget *w;
+ 	GdkGC *gc;
+ 	GdkColor fg;
+<a href="#h1-2" id="h1-2" class="h">@@ -342,11 +343,20 @@ drawindicator(Client *c) {
+</a> 	width = c-&gt;progress * w-&gt;allocation.width / 100;
+ 	gc = gdk_gc_new(w-&gt;window);
+ 	if(strstr(uri, &quot;https://&quot;) == uri) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-		gdk_color_parse(c-&gt;sslfailed ?
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-		                progress_untrust : progress_trust, &amp;fg);
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		if(using_proxy) {
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+			colorname = c-&gt;sslfailed? progress_proxy_untrust : progress_proxy_trust;
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+		} else {
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+			colorname = c-&gt;sslfailed? progress_untrust : progress_trust;
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+		}
+</a> 	} else {
+<a href="#h1-2-11" id="h1-2-11" class="d">-		gdk_color_parse(progress, &amp;fg);
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+		if(using_proxy) {
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+			colorname = progress_proxy;
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+		} else {
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+			colorname = progress;
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+		}
+</a> 	}
+<a href="#h1-2-18" id="h1-2-18" class="i">+
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+	gdk_color_parse(colorname, &amp;fg);
+</a> 	gdk_gc_set_rgb_fg_color(gc, &amp;fg);
+ 	gdk_draw_rectangle(w-&gt;window,
+ 			w-&gt;style-&gt;bg_gc[GTK_WIDGET_STATE(w)],
+<a href="#h1-3" id="h1-3" class="h">@@ -816,6 +826,7 @@ setup(void) {
+</a> 		g_object_set(G_OBJECT(s), &quot;proxy-uri&quot;, puri, NULL);
+ 		soup_uri_free(puri);
+ 		g_free(new_proxy);
+<a href="#h1-3-3" id="h1-3-3" class="i">+		using_proxy = 1;
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

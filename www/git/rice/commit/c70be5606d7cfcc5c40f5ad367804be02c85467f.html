@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>shellcheck scripts - rice - config file
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="rice Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>rice</h1><span class="desc">config file
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c70be5606d7cfcc5c40f5ad367804be02c85467f.html">c70be5606d7cfcc5c40f5ad367804be02c85467f</a>
+<b>parent</b> <a href="../commit/16d066432a2652130464d17db6434c1e4e4aea2d.html">16d066432a2652130464d17db6434c1e4e4aea2d</a>
+<b>Author:</b> Mark Feller &lt;<a href="mailto:mfeller@recurly.com">mfeller@recurly.com</a>&gt;
+<b>Date:</b>   Wed, 18 Dec 2019 14:00:14 -0700
+
+shellcheck scripts
+
+Signed-off-by: Mark Feller &lt;mfeller@recurly.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dots/.local/bin/notify-date</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dots/.local/bin/notify-mpd</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dots/.local/bin/power-status</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dots/.local/bin/volume-change</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>4 files changed, 30 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dots/.local/bin/notify-date.html">dots/.local/bin/notify-date</a> b/<a href="../file/dots/.local/bin/notify-date.html">dots/.local/bin/notify-date</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2,4 +2,7 @@
+</a> # Display the date using notify-send
+ # A nice alternative to displaying the time on a bar.
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-notify-send -t 5000 &quot;$(date +&quot;%A, %-d %b %-I:%M&quot;)&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+# Arbitrary but unique message id
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+msgId=&quot;661049&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+dunstify -r $msgId -t 5000 &quot;$(date +&quot;%A, %-d %b %-I:%M&quot;)&quot;
+</a><b>diff --git a/<a id="h1" href="../file/dots/.local/bin/notify-mpd.html">dots/.local/bin/notify-mpd</a> b/<a href="../file/dots/.local/bin/notify-mpd.html">dots/.local/bin/notify-mpd</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,13 +1,16 @@
+</a> #!/bin/sh
+ # Send notifications when mpd song changes
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+# Arbitrary but unique message id
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+msgId=&quot;661050&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a> tmp=&quot;/tmp/cover.jpg&quot;
+ form=&quot;Artist: %artist%\nAlbum: %album%\nTitle: %title%&quot;
+ 
+ rm -f $tmp
+ 
+ # create the notification text
+<a href="#h1-0-12" id="h1-0-12" class="d">-toprint=&quot;`mpc status -f \&quot;$form\&quot; | head -n3 | sed \&quot;s:&amp;:&amp;amp;:g\&quot;`&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+toprint=&quot;$(mpc status -f &quot;$form&quot; | head -n3 | sed \&quot;s:&amp;:&amp;amp;:g\&quot;)&quot;
+</a> artpath=&quot;/home/mjf/Music/$(dirname &quot;$(mpc status -f &#39;%file%&#39; | head -n1)&quot;)/cover.jpg&quot;
+ 
+ # generate the cover icon if we find one
+<a href="#h1-1" id="h1-1" class="h">@@ -16,4 +19,4 @@ if [ -f &quot;$artpath&quot; ]; then
+</a> fi
+ 
+ # send out the notication with the cover icon and song information
+<a href="#h1-1-3" id="h1-1-3" class="d">-notify-send -i &quot;$tmp&quot; &quot;$toprint&quot;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+dunstify -r $msgId -i &quot;$tmp&quot; &quot;$toprint&quot;
+</a><b>diff --git a/<a id="h2" href="../file/dots/.local/bin/power-status.html">dots/.local/bin/power-status</a> b/<a href="../file/dots/.local/bin/power-status.html">dots/.local/bin/power-status</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,5 +1,8 @@
+</a> #!/bin/sh
+ 
+<a href="#h2-0-2" id="h2-0-2" class="d">-status=`upower -i $(upower -e | grep BAT) | grep --color=never -E &quot;state|to\ full|to\ empty|percentage&quot;  | sed &quot;s/: */: /&quot; | sed &quot;s/^ *//&quot;`
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+# Arbitrary but unique message id
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+msgId=&quot;661051&quot;
+</a> 
+<a href="#h2-0-6" id="h2-0-6" class="d">-notify-send &quot;Power&quot; &quot;$status&quot;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+status=$(upower -i &quot;$(upower -e | grep BAT)&quot; | grep --color=never -E &quot;state|to\ full|to\ empty|percentage&quot;  | sed &quot;s/: */: /&quot; | sed &quot;s/^ *//&quot;)
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+dunstify -r $msgId &quot;Power&quot; &quot;$status&quot;
+</a><b>diff --git a/<a id="h3" href="../file/dots/.local/bin/volume-change.html">dots/.local/bin/volume-change</a> b/<a href="../file/dots/.local/bin/volume-change.html">dots/.local/bin/volume-change</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,9 +1,21 @@
+</a> #!/bin/sh
+ 
+<a href="#h3-0-2" id="h3-0-2" class="d">-SINK=$( pactl list short sinks | sed -e &#39;s,^\([0-9][0-9]*\)[^0-9].*,\1,&#39; | head -n 1 )
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+# Arbitrary but unique message id
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+msgId=&quot;661051&quot;
+</a> 
+<a href="#h3-0-6" id="h3-0-6" class="d">-pactl -- set-sink-volume $SINK $1
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+# Get the current sink
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+SINK=$(pactl list short sinks \
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+           | sed -e &#39;s,^\([0-9][0-9]*\)[^0-9].*,\1,&#39; \
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+           | head -n 1)
+</a> 
+<a href="#h3-0-12" id="h3-0-12" class="d">-NOW=$( pactl list sinks | grep &#39;^[[:space:]]Volume:&#39; | head -n $(( $SINK + 1 )) | tail -n 1 | sed -e &#39;s,.* \([0-9][0-9]*\)%.*,\1,&#39; )
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+# Update the volume
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+pactl -- set-sink-volume &quot;$SINK&quot; &quot;$1&quot;
+</a> 
+<a href="#h3-0-16" id="h3-0-16" class="d">-notify-send &quot;&lt;b&gt;Volume&lt;/b&gt; ${NOW}%&quot;
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+# Get the current volume percentage
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+NOW=$(pactl list sinks \
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+          | grep &#39;^[[:space:]]Volume:&#39; \
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+          | head -n $(( &quot;$SINK&quot; + 1 )) \
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+          | tail -n 1 \
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+          | sed -e &#39;s,.* \([0-9][0-9]*\)%.*,\1,&#39;)
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+dunstify -r $msgId &quot;&lt;b&gt;Volume&lt;/b&gt; ${NOW}%&quot;
+</a></pre>
+</div>
+</body>
+</html>

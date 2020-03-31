@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>working on reparenting. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5e6ca4f2fcea8a7549138d27da651a5e885f4215.html">5e6ca4f2fcea8a7549138d27da651a5e885f4215</a>
+<b>parent</b> <a href="../commit/aa1c1698e2ab4ff1d58ae4233cef68d4fdca18e0.html">aa1c1698e2ab4ff1d58ae4233cef68d4fdca18e0</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue, 22 Sep 2009 20:17:20 +0200
+
+working on reparenting.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">34</td><td><span class="i">++++++++++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 20 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -80,6 +80,7 @@ static void buttonpress(XEvent *e);
+</a> static void cleanup(void);
+ static void clientmessage(XEvent *e);
+ static void configurenotify(XEvent *e);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void createnotify(XEvent *e);
+</a> static void destroynotify(XEvent *e);
+ static void die(const char *errstr, ...);
+ static void drawbar();
+<a href="#h0-1" id="h0-1" class="h">@@ -99,6 +100,7 @@ static void spawn(const Arg *arg);
+</a> static void manage(Window win);
+ static void maprequest(XEvent *e);
+ static void propertynotify(XEvent *e);
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void reparentnotify(XEvent *e);
+</a> static void resize(Client *c, int w, int h);
+ static void rotate(const Arg *arg);
+ static void run(void);
+<a href="#h0-2" id="h0-2" class="h">@@ -122,6 +124,8 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[KeyPress] = keypress,
+ 	[Expose] = expose,
+ 	[ClientMessage] = clientmessage,
+<a href="#h0-2-3" id="h0-2-3" class="i">+	[CreateNotify] = createnotify,
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	[ReparentNotify] = reparentnotify,
+</a> };
+ static Display *dpy;
+ static DC dc;
+<a href="#h0-3" id="h0-3" class="h">@@ -159,7 +163,6 @@ cleanup(void) {
+</a> 		XFreeFontSet(dpy, dc.font.set);
+ 	else
+ 		XFreeFont(dpy, dc.font.xfont);
+<a href="#h0-3-3" id="h0-3-3" class="d">-	puts(&quot;aaa&quot;);
+</a> 	XFreePixmap(dpy, dc.drawable);
+ 	XFreeGC(dpy, dc.gc);
+ 	XDestroyWindow(dpy, win);
+<a href="#h0-4" id="h0-4" class="h">@@ -171,9 +174,7 @@ clientmessage(XEvent *e) {
+</a> 	XClientMessageEvent *ev = &amp;e-&gt;xclient;
+ 
+ 	if(ev-&gt;message_type == xembedatom) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-		puts(&quot;message!&quot;);
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		printf(&quot;%ld %ld&quot;, ev-&gt;data.l[0], ev-&gt;data.l[1]);
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-		puts(&quot;&quot;);
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		printf(&quot;%ld %ld %ld %ld %ld\n&quot;, ev-&gt;data.l[0], ev-&gt;data.l[1], ev-&gt;data.l[2], ev-&gt;data.l[3], ev-&gt;data.l[4]);
+</a> 	}
+ }
+ void
+<a href="#h0-5" id="h0-5" class="h">@@ -193,6 +194,14 @@ configurenotify(XEvent *e) {
+</a> }
+ 
+ void
+<a href="#h0-5-3" id="h0-5-3" class="i">+createnotify(XEvent *e) {
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	XCreateWindowEvent *ev = &amp;e-&gt;xcreatewindow;
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+	if(!getclient(ev-&gt;window))
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+		manage(ev-&gt;window);
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+}
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+void
+</a> destroynotify(XEvent *e) {
+ 	Client *c;
+ 	XDestroyWindowEvent *ev = &amp;e-&gt;xdestroywindow;
+<a href="#h0-6" id="h0-6" class="h">@@ -514,7 +523,7 @@ manage(Window w) {
+</a> 		Client *c;
+ 		XEvent e;
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-		XSelectInput(dpy, w, StructureNotifyMask | PropertyChangeMask);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+		XSelectInput(dpy, w, StructureNotifyMask|PropertyChangeMask);
+</a> 		XWithdrawWindow(dpy, w, 0);
+ 		XReparentWindow(dpy, w, win, 0, bh);
+ 		XSync(dpy, False);
+<a href="#h0-7" id="h0-7" class="h">@@ -551,13 +560,8 @@ manage(Window w) {
+</a> }
+ 
+ void maprequest(XEvent *e) {
+<a href="#h0-7-3" id="h0-7-3" class="d">-	static XWindowAttributes wa;
+</a> 	XMapRequestEvent *ev = &amp;e-&gt;xmaprequest;
+ 
+<a href="#h0-7-6" id="h0-7-6" class="d">-	if(!XGetWindowAttributes(dpy, ev-&gt;window, &amp;wa))
+</a><a href="#h0-7-7" id="h0-7-7" class="d">-		return;
+</a><a href="#h0-7-8" id="h0-7-8" class="d">-	if(wa.override_redirect)
+</a><a href="#h0-7-9" id="h0-7-9" class="d">-		return;
+</a> 	if(!getclient(ev-&gt;window))
+ 		manage(ev-&gt;window);
+ }
+<a href="#h0-8" id="h0-8" class="h">@@ -573,6 +577,9 @@ propertynotify(XEvent *e) {
+</a> 	}
+ }
+ 
+<a href="#h0-8-3" id="h0-8-3" class="i">+void reparentnotify(XEvent *e) {
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+}
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+
+</a> void
+ resize(Client *c, int w, int h) {
+ 	XConfigureEvent ce;
+<a href="#h0-9" id="h0-9" class="h">@@ -654,7 +661,7 @@ setup(void) {
+</a> 		XSetFont(dpy, dc.gc, dc.font.xfont-&gt;fid);
+ 
+ 	win = XCreateSimpleWindow(dpy, root, wx, wy, ww, wh, 0, dc.norm[ColFG], dc.norm[ColBG]);
+<a href="#h0-9-3" id="h0-9-3" class="d">-	XSelectInput(dpy, win, StructureNotifyMask|PointerMotionMask|
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+	XSelectInput(dpy, win, PointerMotionMask|SubstructureNotifyMask|
+</a> 			ButtonPressMask|ExposureMask|KeyPressMask|
+ 			LeaveWindowMask|SubstructureRedirectMask);
+ 	XMapRaised(dpy, win);
+<a href="#h0-10" id="h0-10" class="h">@@ -735,7 +742,6 @@ int
+</a> xerror(Display *dpy, XErrorEvent *ee) {
+ 	if(ee-&gt;error_code == BadWindow) {
+ 		badwindow = True;
+<a href="#h0-10-3" id="h0-10-3" class="d">-		puts(&quot;badwindow&quot;);
+</a> 		return 0;
+ 	}
+ 	fprintf(stderr, &quot;tabbed: fatal error: request code=%d, error code=%d\n&quot;,
+<a href="#h0-11" id="h0-11" class="h">@@ -749,8 +755,8 @@ main(int argc, char *argv[]) {
+</a> 	int detach = 0;
+ 
+ 	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+<a href="#h0-11-3" id="h0-11-3" class="d">-		die(&quot;tabbed-&quot;VERSION&quot;, © 2006-2008 surf engineers, see LICENSE for details\n&quot;);
+</a><a href="#h0-11-4" id="h0-11-4" class="d">-	else if(argc == 2 &amp;&amp; strcmp(&quot;-d&quot;, argv[1]))
+</a><a href="#h0-11-5" id="h0-11-5" class="i">+		die(&quot;tabbed-&quot;VERSION&quot;, © 2006-2008 tabbed engineers, see LICENSE for details\n&quot;);
+</a><a href="#h0-11-6" id="h0-11-6" class="i">+	else if(argc == 2 &amp;&amp; strcmp(&quot;-d&quot;, argv[1]) == 0)
+</a> 		detach = 1;
+ 	else if(argc != 1)
+ 		die(&quot;usage: tabbed [-d] [-v]\n&quot;);
+</pre>
+</div>
+</body>
+</html>

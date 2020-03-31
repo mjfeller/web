@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed unneeded event listeners and reworked file opener. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bc5d280efefa23ebe0425a5f3de781194c2f94fc.html">bc5d280efefa23ebe0425a5f3de781194c2f94fc</a>
+<b>parent</b> <a href="../commit/da509312df9de31a0de5e90387884cbfc4ef42e7.html">da509312df9de31a0de5e90387884cbfc4ef42e7</a>
+<b>Author:</b> Enno Boland (Gottox) &lt;<a href="mailto:gottox@s01.de">gottox@s01.de</a>&gt;
+<b>Date:</b>   Fri,  5 Jun 2009 18:00:45 +0200
+
+removed unneeded event listeners and reworked file opener.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">33</td><td><span class="i">+++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>1 file changed, 13 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -87,20 +87,24 @@ loadfile(gchar *f) {
+</a> 	GIOChannel *c = NULL;
+ 	GError *e = NULL;
+ 	GString *code = g_string_new(&quot;&quot;);
+<a href="#h0-0-3" id="h0-0-3" class="i">+	GString *uri = g_string_new(f);
+</a> 	gchar *line;
+ 
+ 	/* cannot use fileno in c99 - workaround*/
+<a href="#h0-0-7" id="h0-0-7" class="d">-	if(strcmp(f, &quot;-&quot;) == 0)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	if(strcmp(f, &quot;-&quot;) == 0) {
+</a> 		c = g_io_channel_unix_new(STDIN_FILENO);
+<a href="#h0-0-10" id="h0-0-10" class="d">-	else
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-		c = g_io_channel_new_file(f, &quot;r&quot;, NULL);
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	if (c) {
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-		while(g_io_channel_read_line(c, &amp;line, NULL, NULL, &amp;e) == G_IO_STATUS_NORMAL) {
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-			g_string_append(code, line);
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-			g_free(line);
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		if (c) {
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+			while(g_io_channel_read_line(c, &amp;line, NULL, NULL, &amp;e) == G_IO_STATUS_NORMAL) {
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+				g_string_append(code, line);
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+				g_free(line);
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+			}
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+			webkit_web_view_load_html_string(view, code-&gt;str, NULL);
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+			g_io_channel_shutdown(c, FALSE, NULL);
+</a> 		}
+<a href="#h0-0-24" id="h0-0-24" class="d">-		webkit_web_view_load_html_string(view, code-&gt;str, NULL);
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-		g_io_channel_shutdown(c, FALSE, NULL);
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+	}
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+	else {
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+		g_string_prepend(uri, &quot;file://&quot;);
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+		loaduri(uri-&gt;str);
+</a> 	}
+ 	
+ }
+<a href="#h0-1" id="h0-1" class="h">@@ -132,10 +136,6 @@ linkhover(WebKitWebView* page, const gchar* t, const gchar* l, gpointer d) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="d">-loadstart(WebKitWebView *view, WebKitWebFrame *f, gpointer d) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-}
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-void
+</a> loadcommit(WebKitWebView *view, WebKitWebFrame *f, gpointer d) {
+ 	gchar *uri;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -148,11 +148,6 @@ loadcommit(WebKitWebView *view, WebKitWebFrame *f, gpointer d) {
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="d">-loadfinish(WebKitWebView *view, WebKitWebFrame *f, gpointer d) {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	/* ??? TODO */
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-}
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-void
+</a> progresschange(WebKitWebView* view, gint p, gpointer d) {
+ 	progress = p;
+ 	updatetitle();
+<a href="#h0-3" id="h0-3" class="h">@@ -208,8 +203,6 @@ void setup(void) {
+</a> 	g_signal_connect(G_OBJECT(view), &quot;title-changed&quot;, G_CALLBACK(titlechange), view);
+ 	g_signal_connect(G_OBJECT(view), &quot;load-progress-changed&quot;, G_CALLBACK(progresschange), view);
+ 	g_signal_connect(G_OBJECT(view), &quot;load-committed&quot;, G_CALLBACK(loadcommit), view);
+<a href="#h0-3-3" id="h0-3-3" class="d">-	g_signal_connect(G_OBJECT(view), &quot;load-started&quot;, G_CALLBACK(loadstart), view);
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	g_signal_connect(G_OBJECT(view), &quot;load-finished&quot;, G_CALLBACK(loadfinish), view);
+</a> 	g_signal_connect(G_OBJECT(view), &quot;hovering-over-link&quot;, G_CALLBACK(linkhover), view);
+ 	g_signal_connect(G_OBJECT(view), &quot;new-window-policy-decision-requested&quot;, G_CALLBACK(newwindow), view);
+ 	g_signal_connect(G_OBJECT(view), &quot;download-requested&quot;, G_CALLBACK(download), view);
+</pre>
+</div>
+</body>
+</html>

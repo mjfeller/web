@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fixed a bug in pagestat - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/053a8f1a73b8a3fe4e090dd12fe05e28f4594ab3.html">053a8f1a73b8a3fe4e090dd12fe05e28f4594ab3</a>
+<b>parent</b> <a href="../commit/ba634ea8e3b884c4610c89d4491e70729d53bc43.html">ba634ea8e3b884c4610c89d4491e70729d53bc43</a>
+<b>Author:</b> Jens Nyberg &lt;<a href="mailto:jens.nyberg@gmail.com">jens.nyberg@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 15 Feb 2013 00:57:36 +0100
+
+Fixed a bug in pagestat
+
+Forgot to add a null character at the end.
+
+Signed-off-by: Christoph Lohmann &lt;20h@r-36.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">9</td><td><span class="i">++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 6 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -84,7 +84,7 @@ static gboolean showxid = FALSE;
+</a> static char winid[64];
+ static gboolean usingproxy = 0;
+ static char togglestat[5];
+<a href="#h0-0-3" id="h0-0-3" class="d">-static char pagestat[2];
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static char pagestat[3];
+</a> 
+ static void beforerequest(WebKitWebView *w, WebKitWebFrame *f,
+ 		WebKitWebResource *r, WebKitNetworkRequest *req,
+<a href="#h0-1" id="h0-1" class="h">@@ -1066,12 +1066,15 @@ static void
+</a> getpagestat(Client *c) {
+ 	const char *uri = geturi(c);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if(strstr(uri, &quot;https://&quot;) == uri)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if(strstr(uri, &quot;https://&quot;) == uri) {
+</a> 		pagestat[0] = c-&gt;sslfailed ? &#39;U&#39; : &#39;T&#39;;
+<a href="#h0-1-6" id="h0-1-6" class="d">-	else
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	} else {
+</a> 		pagestat[0] = &#39;-&#39;;
+<a href="#h0-1-9" id="h0-1-9" class="i">+	}
+</a> 
+ 	pagestat[1] = usingproxy ? &#39;P&#39; : &#39;-&#39;;
+<a href="#h0-1-12" id="h0-1-12" class="i">+	pagestat[2] = &#39;\0&#39;;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+
+</a> }
+ 
+ static void
+</pre>
+</div>
+</body>
+</html>

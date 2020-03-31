@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added Xinerama support to dmenu, reverted -b behavior, removed -x, -y, -w - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1f6af5e78f74c80fcb9853dcc2fc7940538808b0.html">1f6af5e78f74c80fcb9853dcc2fc7940538808b0</a>
+<b>parent</b> <a href="../commit/f3617bd7caf83a6e184cbdfeeebed0be88f158fa.html">f3617bd7caf83a6e184cbdfeeebed0be88f158fa</a>
+<b>Author:</b> anselm@anselm1 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Mon, 19 May 2008 20:29:32 +0100
+
+added Xinerama support to dmenu, reverted -b behavior, removed -x, -y, -w
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dmenu.1</a></td><td> | </td><td class="num">18</td><td><span class="i">++++</span><span class="d">--------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dmenu.c</a></td><td> | </td><td class="num">60</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">----------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 43 insertions(+), 44 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,12 +10,17 @@ MANPREFIX = ${PREFIX}/share/man
+</a> X11INC = /usr/X11R6/include
+ X11LIB = /usr/X11R6/lib
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+# Xinerama, comment if you don&#39;t want it
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+XINERAMALIBS = -L${X11LIB} -lXinerama
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+XINERAMAFLAGS = -DXINERAMA
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a> # includes and libs
+ INCS = -I. -I/usr/include -I${X11INC}
+<a href="#h0-0-9" id="h0-0-9" class="d">-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 ${XINERAMALIBS}
+</a> 
+ # flags
+<a href="#h0-0-13" id="h0-0-13" class="d">-CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; ${XINERAMAFLAGS}
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+CFLAGS = -Os ${INCS} ${CPPFLAGS}
+</a> LDFLAGS = -s ${LIBS}
+ #CFLAGS = -g -std=c99 -pedantic -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+ #LDFLAGS = -g ${LIBS}
+<b>diff --git a/<a id="h1" href="../file/dmenu.1.html">dmenu.1</a> b/<a href="../file/dmenu.1.html">dmenu.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -4,9 +4,7 @@ dmenu \- dynamic menu
+</a> .SH SYNOPSIS
+ .B dmenu
+ .RB [ \-i ]
+<a href="#h1-0-3" id="h1-0-3" class="d">-.RB [ \-x &quot; &lt;x&gt;&quot;]
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-.RB [ \-y &quot; &lt;y&gt;&quot;]
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-.RB [ \-w &quot; &lt;width&gt;&quot;]
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+.RB [ \-b ]
+</a> .RB [ \-fn &quot; &lt;font&gt;&quot;]
+ .RB [ \-nb &quot; &lt;color&gt;&quot;]
+ .RB [ \-nf &quot; &lt;color&gt;&quot;]
+<a href="#h1-1" id="h1-1" class="h">@@ -22,20 +20,12 @@ It manages huge amounts (up to 10.000 and more) of user defined menu items
+</a> efficiently.
+ .SS Options
+ .TP
+<a href="#h1-1-3" id="h1-1-3" class="d">-.B \-x
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-defines the x coordinate dmenu appears at (0 by default).
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-.TP
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-.B \-y
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-defines the y coordinate dmenu appears at (0 by default). If it is negative,
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-dmenu will appear with the bottom at the given positive coordinate. If it is
+</a><a href="#h1-1-9" id="h1-1-9" class="d">--0, dmenu appears at the screen bottom.
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-.TP
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-.B \-w
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-defines the width of the dmenu window (screen width by default).
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-.TP
+</a> .B \-i
+ makes dmenu match menu entries case insensitively.
+ .TP
+<a href="#h1-1-17" id="h1-1-17" class="i">+.B \-b
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+defines that dmenu appears at the bottom.
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+.TP
+</a> .B \-fn &lt;font&gt;
+ defines the font.
+ .TP
+<b>diff --git a/<a id="h2" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,6 +1,5 @@
+</a> /* See LICENSE file for copyright and license details. */
+ #include &lt;ctype.h&gt;
+<a href="#h2-0-2" id="h2-0-2" class="d">-#include &lt;limits.h&gt;
+</a> #include &lt;locale.h&gt;
+ #include &lt;stdarg.h&gt;
+ #include &lt;stdlib.h&gt;
+<a href="#h2-1" id="h2-1" class="h">@@ -10,6 +9,9 @@
+</a> #include &lt;X11/Xlib.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+ #include &lt;X11/keysym.h&gt;
+<a href="#h2-1-3" id="h2-1-3" class="i">+#ifdef XINERAMA
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+#include &lt;X11/extensions/Xinerama.h&gt;
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+#endif
+</a> 
+ /* macros */
+ #define CLEANMASK(mask) (mask &amp; ~(numlockmask | LockMask))
+<a href="#h2-2" id="h2-2" class="h">@@ -57,7 +59,7 @@ void kpress(XKeyEvent * e);
+</a> void match(char *pattern);
+ void readstdin(void);
+ void run(void);
+<a href="#h2-2-3" id="h2-2-3" class="d">-void setup(int x, int y, int w);
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+void setup(Bool topbar);
+</a> unsigned int textnw(const char *text, unsigned int len);
+ unsigned int textw(const char *text);
+ 
+<a href="#h2-3" id="h2-3" class="h">@@ -601,10 +603,13 @@ run(void) {
+</a> }
+ 
+ void
+<a href="#h2-3-3" id="h2-3-3" class="d">-setup(int x, int y, int w) {
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-	unsigned int i, j;
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+setup(Bool topbar) {
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+	int i, j, x, y;
+</a> 	XModifierKeymap *modmap;
+ 	XSetWindowAttributes wa;
+<a href="#h2-3-9" id="h2-3-9" class="i">+#if XINERAMA
+</a><a href="#h2-3-10" id="h2-3-10" class="i">+	XineramaScreenInfo *info = NULL;
+</a><a href="#h2-3-11" id="h2-3-11" class="i">+#endif
+</a> 
+ 	/* init modifier map */
+ 	modmap = XGetModifierMapping(dpy);
+<a href="#h2-4" id="h2-4" class="h">@@ -627,14 +632,25 @@ setup(int x, int y, int w) {
+</a> 	wa.override_redirect = 1;
+ 	wa.background_pixmap = ParentRelative;
+ 	wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask;
+<a href="#h2-4-3" id="h2-4-3" class="d">-	mw = w ? w : DisplayWidth(dpy, screen);
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+
+</a><a href="#h2-4-5" id="h2-4-5" class="i">+	/* menu window geometry */
+</a> 	mh = dc.font.height + 2;
+<a href="#h2-4-7" id="h2-4-7" class="d">-	if(y &lt; 0) {
+</a><a href="#h2-4-8" id="h2-4-8" class="d">-		if(y == INT_MIN)
+</a><a href="#h2-4-9" id="h2-4-9" class="d">-			y = DisplayHeight(dpy, screen) - mh;
+</a><a href="#h2-4-10" id="h2-4-10" class="d">-		else
+</a><a href="#h2-4-11" id="h2-4-11" class="d">-			y = (-1 * y) - mh;
+</a><a href="#h2-4-12" id="h2-4-12" class="i">+#if XINERAMA
+</a><a href="#h2-4-13" id="h2-4-13" class="i">+	if(XineramaIsActive(dpy)) {
+</a><a href="#h2-4-14" id="h2-4-14" class="i">+		info = XineramaQueryScreens(dpy, &amp;i);
+</a><a href="#h2-4-15" id="h2-4-15" class="i">+		x = info[0].x_org;
+</a><a href="#h2-4-16" id="h2-4-16" class="i">+		y = topbar ? info[0].y_org : info[0].y_org + info[0].height - mh;
+</a><a href="#h2-4-17" id="h2-4-17" class="i">+		mw = info[0].width;
+</a><a href="#h2-4-18" id="h2-4-18" class="i">+		XFree(info);
+</a><a href="#h2-4-19" id="h2-4-19" class="i">+	}
+</a><a href="#h2-4-20" id="h2-4-20" class="i">+	else
+</a><a href="#h2-4-21" id="h2-4-21" class="i">+#endif
+</a><a href="#h2-4-22" id="h2-4-22" class="i">+	{
+</a><a href="#h2-4-23" id="h2-4-23" class="i">+		x = 0;
+</a><a href="#h2-4-24" id="h2-4-24" class="i">+		y = topbar ? 0 : DisplayHeight(dpy, screen) - mh;
+</a><a href="#h2-4-25" id="h2-4-25" class="i">+		mw = DisplayWidth(dpy, screen);
+</a> 	}
+<a href="#h2-4-27" id="h2-4-27" class="i">+
+</a> 	win = XCreateWindow(dpy, root, x, y, mw, mh, 0,
+ 			DefaultDepth(dpy, screen), CopyFromParent,
+ 			DefaultVisual(dpy, screen),
+<a href="#h2-5" id="h2-5" class="h">@@ -677,8 +693,8 @@ textw(const char *text) {
+</a> 
+ int
+ main(int argc, char *argv[]) {
+<a href="#h2-5-3" id="h2-5-3" class="d">-	int x = 0, y = 0, w = 0;
+</a> 	unsigned int i;
+<a href="#h2-5-5" id="h2-5-5" class="i">+	Bool topbar = True;
+</a> 
+ 	/* command line args */
+ 	for(i = 1; i &lt; argc; i++)
+<a href="#h2-6" id="h2-6" class="h">@@ -686,6 +702,8 @@ main(int argc, char *argv[]) {
+</a> 			fstrncmp = strncasecmp;
+ 			fstrstr = cistrstr;
+ 		}
+<a href="#h2-6-3" id="h2-6-3" class="i">+		else if(!strcmp(argv[i], &quot;-b&quot;))
+</a><a href="#h2-6-4" id="h2-6-4" class="i">+			topbar = False;
+</a> 		else if(!strcmp(argv[i], &quot;-fn&quot;)) {
+ 			if(++i &lt; argc) font = argv[i];
+ 		}
+<a href="#h2-7" id="h2-7" class="h">@@ -704,25 +722,11 @@ main(int argc, char *argv[]) {
+</a> 		else if(!strcmp(argv[i], &quot;-sf&quot;)) {
+ 			if(++i &lt; argc) selfg = argv[i];
+ 		}
+<a href="#h2-7-3" id="h2-7-3" class="d">-		else if(!strcmp(argv[i], &quot;-x&quot;)) {
+</a><a href="#h2-7-4" id="h2-7-4" class="d">-			if(++i &lt; argc) x = atoi(argv[i]);
+</a><a href="#h2-7-5" id="h2-7-5" class="d">-		}
+</a><a href="#h2-7-6" id="h2-7-6" class="d">-		else if(!strcmp(argv[i], &quot;-y&quot;)) {
+</a><a href="#h2-7-7" id="h2-7-7" class="d">-			if(++i &lt; argc)
+</a><a href="#h2-7-8" id="h2-7-8" class="d">-				if(!strcmp(argv[i], &quot;-0&quot;))
+</a><a href="#h2-7-9" id="h2-7-9" class="d">-					y = INT_MIN;
+</a><a href="#h2-7-10" id="h2-7-10" class="d">-				else
+</a><a href="#h2-7-11" id="h2-7-11" class="d">-					y = atoi(argv[i]);
+</a><a href="#h2-7-12" id="h2-7-12" class="d">-		}
+</a><a href="#h2-7-13" id="h2-7-13" class="d">-		else if(!strcmp(argv[i], &quot;-w&quot;)) {
+</a><a href="#h2-7-14" id="h2-7-14" class="d">-			if(++i &lt; argc) w = atoi(argv[i]);
+</a><a href="#h2-7-15" id="h2-7-15" class="d">-		}
+</a> 		else if(!strcmp(argv[i], &quot;-v&quot;))
+ 			eprint(&quot;dmenu-&quot;VERSION&quot;, © 2006-2008 dmenu engineers, see LICENSE for details\n&quot;);
+ 		else
+<a href="#h2-7-19" id="h2-7-19" class="d">-			eprint(&quot;usage: dmenu [-i] [-fn &lt;font&gt;] [-nb &lt;color&gt;] [-nf &lt;color&gt;]\n&quot;
+</a><a href="#h2-7-20" id="h2-7-20" class="d">-			       &quot;             [-p &lt;prompt&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;]\n&quot;
+</a><a href="#h2-7-21" id="h2-7-21" class="d">-			       &quot;             [-x &lt;x&gt;] [-y &lt;y&gt;] [-w &lt;w&gt;] [-v]\n&quot;);
+</a><a href="#h2-7-22" id="h2-7-22" class="i">+			eprint(&quot;usage: dmenu [-i] [-b] [-fn &lt;font&gt;] [-nb &lt;color&gt;] [-nf &lt;color&gt;]\n&quot;
+</a><a href="#h2-7-23" id="h2-7-23" class="i">+			       &quot;             [-p &lt;prompt&gt;] [-sb &lt;color&gt;] [-sf &lt;color&gt;] [-v]\n&quot;);
+</a> 	setlocale(LC_CTYPE, &quot;&quot;);
+ 	dpy = XOpenDisplay(0);
+ 	if(!dpy)
+<a href="#h2-8" id="h2-8" class="h">@@ -739,7 +743,7 @@ main(int argc, char *argv[]) {
+</a> 		readstdin();
+ 	}
+ 
+<a href="#h2-8-3" id="h2-8-3" class="d">-	setup(x, y, w);
+</a><a href="#h2-8-4" id="h2-8-4" class="i">+	setup(topbar);
+</a> 	drawmenu();
+ 	XSync(dpy, False);
+ 	run();
+</pre>
+</div>
+</body>
+</html>

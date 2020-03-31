@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add TBC sequence - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c084c06b402de4fe995734a2c89cae26ff7c9064.html">c084c06b402de4fe995734a2c89cae26ff7c9064</a>
+<b>parent</b> <a href="../commit/93901ca4fee8a1ab71cb8b918f3d65404460f9ce.html">93901ca4fee8a1ab71cb8b918f3d65404460f9ce</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Wed, 29 Aug 2012 19:59:47 +0200
+
+Add TBC sequence
+
+This sequence clears tab stops in the terminal. If the argument is not present
+or is zero, then removes the tab stop of the current horizontal position. If
+the argument is 3 then removes all the tab stops of the terminal. It was
+necessary modify the terminfo entry tbc, because it has \E[2g instead of the
+correct \E[3g.
+
+Signed-off-by: Roberto E. Vargas Caballero &lt;k0ga@shike2.com&gt;
+---
+ st.c    |   12 ++++++++++++
+ st.info |    2 +-
+ 2 files changed, 13 insertions(+), 1 deletion(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.info</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 13 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1203,6 +1203,18 @@ csihandle(void) {
+</a> 		DEFAULT(escseq.arg[0], 1);
+ 		tmoveto(0, term.c.y-escseq.arg[0]);
+ 		break;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	case &#39;g&#39;: /* TBC -- Tabulation clear */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		switch (escseq.arg[0]) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		case 0: /* clear current tab stop */
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			term.tabs[term.c.x] = 0;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+			break;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		case 3: /* clear all the tabs */
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+			memset(term.tabs, 0, term.col * sizeof(*term.tabs));
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+			break;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+		default:
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+			goto unknown;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		}
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+		break;
+</a> 	case &#39;G&#39;: /* CHA -- Move to &lt;col&gt; */
+ 	case &#39;`&#39;: /* XXX: HPA -- same? */
+ 		DEFAULT(escseq.arg[0], 1);
+<b>diff --git a/<a id="h1" href="../file/st.info.html">st.info</a> b/<a href="../file/st.info.html">st.info</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -97,7 +97,7 @@ st| simpleterm,
+</a> 	smcup=\E[?1049h,
+ 	smso=\E[7m,
+ 	smul=\E[4m,
+<a href="#h1-0-3" id="h1-0-3" class="d">-	tbc=\E[2g,
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	tbc=\E[3g,
+</a> 	tsl=\E]0;,
+ 	ul,
+ 	xenl,
+</pre>
+</div>
+</body>
+</html>

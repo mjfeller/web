@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>rearranging, adding initial keyboard support. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6848b92342058d083a2ba3717914738cbf1bb6d6.html">6848b92342058d083a2ba3717914738cbf1bb6d6</a>
+<b>parent</b> <a href="../commit/ad005db13f571dabb72fce448eb0d93f79acf97d.html">ad005db13f571dabb72fce448eb0d93f79acf97d</a>
+<b>Author:</b> Enno Boland (Gottox) &lt;<a href="mailto:gottox@s01.de">gottox@s01.de</a>&gt;
+<b>Date:</b>   Sat,  6 Jun 2009 09:35:50 +0200
+
+rearranging, adding initial keyboard support.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">8</td><td><span class="i">+++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">78</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------</span></td></tr>
+</table></pre><pre>2 files changed, 59 insertions(+), 27 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,10 +3,10 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = surf.c tabbed.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+SRC = surf.c
+</a> OBJ = ${SRC:.c=.o}
+ 
+<a href="#h0-0-7" id="h0-0-7" class="d">-all: options surf tabbed
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+all: options surf
+</a> 
+ options:
+ 	@echo surf build options:
+<a href="#h0-1" id="h0-1" class="h">@@ -20,12 +20,10 @@ options:
+</a> 
+ ${OBJ}: config.mk
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-surf: surf.o
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+surf: ${OBJ}
+</a> 	@echo CC -o $@
+ 	@${CC} -o $@ surf.o ${LDFLAGS}
+ 
+<a href="#h0-1-8" id="h0-1-8" class="d">-tabbed: tabbed.o
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-
+</a> clean:
+ 	@echo cleaning
+ 	@rm -f surf ${OBJ} surf-${VERSION}.tar.gz
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -7,6 +7,7 @@
+</a> #include &lt;gtk/gtk.h&gt;
+ #include &lt;gdk/gdkx.h&gt;
+ #include &lt;gdk/gdk.h&gt;
+<a href="#h1-0-3" id="h1-0-3" class="i">+#include &lt;gdk/gdkkeysyms.h&gt;
+</a> #include &lt;string.h&gt;
+ #include &lt;unistd.h&gt;
+ #include &lt;stdlib.h&gt;
+<a href="#h1-1" id="h1-1" class="h">@@ -46,8 +47,8 @@ static void die(char *str);
+</a> static void setup(void);
+ static void cleanup(void);
+ static void updatetitle(Client *c);
+<a href="#h1-1-3" id="h1-1-3" class="d">-static void windestroy(GtkWidget* w, gpointer d);
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-static gboolean keypress(GtkWidget* w, GdkEventKey *ev);
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+static void destroywin(GtkWidget* w, gpointer d);
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+static gboolean keypress(GtkWidget* w, GdkEventKey *ev, gpointer d);
+</a> static void titlechange(WebKitWebView* view, WebKitWebFrame* frame, const gchar* title, gpointer d);
+ static void progresschange(WebKitWebView *view, gint p, gpointer d);
+ static void loadcommit(WebKitWebView *view, WebKitWebFrame *f, gpointer d);
+<a href="#h1-2" id="h1-2" class="h">@@ -63,7 +64,8 @@ GdkFilterReturn processx(GdkXEvent *xevent, GdkEvent *event, gpointer data);
+</a> 
+ void
+ cleanup(void) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	while(clients)
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		destroyclient(clients);
+</a> }
+ 
+ GdkFilterReturn
+<a href="#h1-3" id="h1-3" class="h">@@ -132,13 +134,19 @@ gboolean
+</a> newwindow(WebKitWebView *view, WebKitWebFrame *f,
+ 		WebKitNetworkRequest *r, WebKitWebNavigationAction *n,
+ 		WebKitWebPolicyDecision *p, gpointer d) {
+<a href="#h1-3-3" id="h1-3-3" class="i">+	puts(&quot;new&quot;);
+</a> 	Client *c = newclient();
+ 	webkit_web_view_load_request(c-&gt;view, r);
+ 	return TRUE;
+ }
+ void
+ linkhover(WebKitWebView* page, const gchar* t, const gchar* l, gpointer d) {
+<a href="#h1-3-10" id="h1-3-10" class="d">-	/* TODO */
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+	Client *c = (Client *)d;
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+	if(l)
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+		gtk_window_set_title(GTK_WINDOW(c-&gt;win), l);
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+	else
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+		updatetitle(c);
+</a> }
+ 
+ void
+<a href="#h1-4" id="h1-4" class="h">@@ -183,7 +191,7 @@ titlechange(WebKitWebView *v, WebKitWebFrame *f, const gchar *t, gpointer d) {
+</a> }
+ 
+ void
+<a href="#h1-4-3" id="h1-4-3" class="d">-windestroy(GtkWidget* w, gpointer d) {
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+destroywin(GtkWidget* w, gpointer d) {
+</a> 	Client *c = (Client *)d;
+ 
+ 	destroyclient(c);
+<a href="#h1-5" id="h1-5" class="h">@@ -204,8 +212,33 @@ destroyclient(Client *c) {
+</a> }
+ 
+ gboolean
+<a href="#h1-5-3" id="h1-5-3" class="d">-keypress(GtkWidget* w, GdkEventKey *ev) {
+</a><a href="#h1-5-4" id="h1-5-4" class="d">-	/* TODO */
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+keypress(GtkWidget* w, GdkEventKey *ev, gpointer d) {
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+	Client *c = (Client *)d;
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+
+</a><a href="#h1-5-8" id="h1-5-8" class="i">+	if(ev-&gt;type == GDK_KEY_PRESS &amp;&amp; (ev-&gt;state == GDK_CONTROL_MASK
+</a><a href="#h1-5-9" id="h1-5-9" class="i">+			|| ev-&gt;state == (GDK_CONTROL_MASK | GDK_SHIFT_MASK))) {
+</a><a href="#h1-5-10" id="h1-5-10" class="i">+		switch(ev-&gt;keyval) {
+</a><a href="#h1-5-11" id="h1-5-11" class="i">+		case GDK_r:
+</a><a href="#h1-5-12" id="h1-5-12" class="i">+		case GDK_R:
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+			if((ev-&gt;state &amp; GDK_SHIFT_MASK))
+</a><a href="#h1-5-14" id="h1-5-14" class="i">+				 webkit_web_view_reload_bypass_cache(c-&gt;view);
+</a><a href="#h1-5-15" id="h1-5-15" class="i">+			else
+</a><a href="#h1-5-16" id="h1-5-16" class="i">+				 webkit_web_view_reload(c-&gt;view);
+</a><a href="#h1-5-17" id="h1-5-17" class="i">+			return TRUE;
+</a><a href="#h1-5-18" id="h1-5-18" class="i">+		case GDK_go:
+</a><a href="#h1-5-19" id="h1-5-19" class="i">+			/* TODO */
+</a><a href="#h1-5-20" id="h1-5-20" class="i">+			return TRUE;
+</a><a href="#h1-5-21" id="h1-5-21" class="i">+		case GDK_slash:
+</a><a href="#h1-5-22" id="h1-5-22" class="i">+			/* TODO */
+</a><a href="#h1-5-23" id="h1-5-23" class="i">+			return TRUE;
+</a><a href="#h1-5-24" id="h1-5-24" class="i">+		case GDK_Left:
+</a><a href="#h1-5-25" id="h1-5-25" class="i">+			webkit_web_view_go_back(c-&gt;view);
+</a><a href="#h1-5-26" id="h1-5-26" class="i">+			return TRUE;
+</a><a href="#h1-5-27" id="h1-5-27" class="i">+		case GDK_Right:
+</a><a href="#h1-5-28" id="h1-5-28" class="i">+			webkit_web_view_go_forward(c-&gt;view);
+</a><a href="#h1-5-29" id="h1-5-29" class="i">+			return TRUE;
+</a><a href="#h1-5-30" id="h1-5-30" class="i">+		}
+</a><a href="#h1-5-31" id="h1-5-31" class="i">+	}
+</a> 	return FALSE;
+ }
+ 
+<a href="#h1-6" id="h1-6" class="h">@@ -233,8 +266,8 @@ newclient(void) {
+</a> 	}
+ 	gtk_window_set_default_size(GTK_WINDOW(c-&gt;win), 800, 600);
+ 	c-&gt;browser = gtk_scrolled_window_new(NULL, NULL);
+<a href="#h1-6-3" id="h1-6-3" class="d">-	g_signal_connect (G_OBJECT(c-&gt;win), &quot;destroy&quot;, G_CALLBACK(windestroy), c);
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-	g_signal_connect (G_OBJECT(c-&gt;win), &quot;key-press-event&quot;, G_CALLBACK(keypress), NULL);
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+	g_signal_connect (G_OBJECT(c-&gt;win), &quot;destroy&quot;, G_CALLBACK(destroywin), c);
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+	g_signal_connect (G_OBJECT(c-&gt;win), &quot;key-press-event&quot;, G_CALLBACK(keypress), c);
+</a> 
+ 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(c-&gt;browser),
+ 			GTK_POLICY_NEVER, GTK_POLICY_NEVER);
+<a href="#h1-7" id="h1-7" class="h">@@ -245,9 +278,8 @@ newclient(void) {
+</a> 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;load-progress-changed&quot;, G_CALLBACK(progresschange), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;load-committed&quot;, G_CALLBACK(loadcommit), c);
+ 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;hovering-over-link&quot;, G_CALLBACK(linkhover), c);
+<a href="#h1-7-3" id="h1-7-3" class="d">-	g_signal_connect(G_OBJECT(c-&gt;view), &quot;new-window-policy-decision-requested&quot;, G_CALLBACK(newwindow), c);
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	g_signal_connect(G_OBJECT(c-&gt;view), &quot;new-window&quot;, G_CALLBACK(newwindow), c);
+</a> 	g_signal_connect(G_OBJECT(c-&gt;view), &quot;download-requested&quot;, G_CALLBACK(download), c);
+<a href="#h1-7-6" id="h1-7-6" class="d">-	/* g_signal_connect(G_OBJECT(c-&gt;view), &quot;create-web-view&quot;, G_CALLBACK(createwebview), c); */
+</a> 
+ 	gtk_container_add(GTK_CONTAINER(c-&gt;win), c-&gt;browser);
+ 	gtk_widget_grab_focus(GTK_WIDGET(c-&gt;view));
+<a href="#h1-8" id="h1-8" class="h">@@ -265,6 +297,10 @@ int main(int argc, char *argv[]) {
+</a> 	gchar *uri = NULL, *file = NULL;
+ 	Client *c;
+ 
+<a href="#h1-8-3" id="h1-8-3" class="i">+	gtk_init(NULL, NULL);
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	if (!g_thread_supported())
+</a><a href="#h1-8-5" id="h1-8-5" class="i">+		g_thread_init(NULL);
+</a><a href="#h1-8-6" id="h1-8-6" class="i">+	setup();
+</a> 	ARG {
+ 	case &#39;x&#39;:
+ 		showxid = TRUE;
+<a href="#h1-9" id="h1-9" class="h">@@ -276,29 +312,27 @@ int main(int argc, char *argv[]) {
+</a> 	case &#39;u&#39;:
+ 		if(!(uri = ARGVAL()))
+ 			goto argerr;
+<a href="#h1-9-3" id="h1-9-3" class="i">+		c = newclient();
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+		loaduri(c, uri);
+</a><a href="#h1-9-5" id="h1-9-5" class="i">+		updatetitle(c);
+</a> 		break;
+ 	case &#39;f&#39;:
+ 		if(!(file = ARGVAL()))
+ 			goto argerr;
+<a href="#h1-9-10" id="h1-9-10" class="i">+		c = newclient();
+</a><a href="#h1-9-11" id="h1-9-11" class="i">+		loadfile(c, file);
+</a><a href="#h1-9-12" id="h1-9-12" class="i">+		updatetitle(c);
+</a> 		break;
+ 	argerr:
+ 	default:
+ 		puts(&quot;surf - simple browser&quot;);
+<a href="#h1-9-17" id="h1-9-17" class="d">-		printf(&quot;usage: %s [-e] [-u uri] [-f file]&quot;, argv[0]);
+</a><a href="#h1-9-18" id="h1-9-18" class="i">+		printf(&quot;usage: %s [-e] [-x] [-u uri] [-f file]\n&quot;, argv[0]);
+</a> 		return EXIT_FAILURE;
+ 	}
+ 	if(argc != ARGC())
+ 		goto argerr;
+<a href="#h1-9-23" id="h1-9-23" class="d">-	gtk_init(NULL, NULL);
+</a><a href="#h1-9-24" id="h1-9-24" class="d">-	if (!g_thread_supported())
+</a><a href="#h1-9-25" id="h1-9-25" class="d">-		g_thread_init(NULL);
+</a><a href="#h1-9-26" id="h1-9-26" class="d">-	setup();
+</a><a href="#h1-9-27" id="h1-9-27" class="d">-	c = newclient();
+</a><a href="#h1-9-28" id="h1-9-28" class="d">-	if(uri)
+</a><a href="#h1-9-29" id="h1-9-29" class="d">-		loaduri(c, uri);
+</a><a href="#h1-9-30" id="h1-9-30" class="d">-	else if(file)
+</a><a href="#h1-9-31" id="h1-9-31" class="d">-		loadfile(c, file);
+</a><a href="#h1-9-32" id="h1-9-32" class="d">-	updatetitle(c);
+</a><a href="#h1-9-33" id="h1-9-33" class="i">+	if(!clients)
+</a><a href="#h1-9-34" id="h1-9-34" class="i">+		newclient();
+</a> 	gtk_main();
+ 	cleanup();
+ 	return EXIT_SUCCESS;
+</pre>
+</div>
+</body>
+</html>

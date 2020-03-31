@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>this algorithm seems to keep order for any scenario - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/016c54196e682ae8658854febb746b0437a010dc.html">016c54196e682ae8658854febb746b0437a010dc</a>
+<b>parent</b> <a href="../commit/5056bb952ddd9d667d2897ab09324ef7ce1596ea.html">5056bb952ddd9d667d2897ab09324ef7ce1596ea</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Tue, 29 Aug 2006 09:57:57 +0200
+
+this algorithm seems to keep order for any scenario
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">view.c</a></td><td> | </td><td class="num">55</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 41 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/view.c.html">view.c</a> b/<a href="../file/view.c.html">view.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,6 +4,31 @@
+</a>  */
+ #include &quot;dwm.h&quot;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+/* static */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static Client *
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+getslot(Client *c)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+{
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	unsigned int i, tic;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	Client *p;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	for(tic = 0; tic &lt; ntags &amp;&amp; !c-&gt;tags[tic]; tic++);
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	for(p = clients; p; p = p-&gt;next) {
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		for(i = 0; i &lt; ntags &amp;&amp; !p-&gt;tags[i]; i++);
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+		if(tic &lt; i)
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+			return p;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	}
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	return p;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+}
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+static Client *
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+tail()
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+{
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	Client *c;
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+	for(c = clients; c &amp;&amp; c-&gt;next; c = c-&gt;next);
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	return c;
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+}
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+
+</a> /* extern */
+ 
+ void (*arrange)(Arg *) = DEFMODE;
+<a href="#h0-1" id="h0-1" class="h">@@ -11,27 +36,29 @@ void (*arrange)(Arg *) = DEFMODE;
+</a> void
+ attach(Client *c)
+ {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	Client *first = getnext(clients);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	Client *p;
+</a> 
+<a href="#h0-1-6" id="h0-1-6" class="d">-	if(!first) {
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		if(clients) {
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-			for(first = clients; first-&gt;next; first = first-&gt;next);
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-			first-&gt;next = c;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-			c-&gt;prev = first;
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-		}
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-		else
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-			clients = c;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	if(!clients) {
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+		clients = c;
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+		return;
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	}
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	if(!(p = getnext(clients)) &amp;&amp; !(p = getslot(c))) {
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+		p = tail();
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+		c-&gt;prev = p;
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+		p-&gt;next = c;
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+		return;
+</a> 	}
+<a href="#h0-1-24" id="h0-1-24" class="d">-	else if(first == clients) {
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+	if(p == clients) {
+</a> 		c-&gt;next = clients;
+ 		clients-&gt;prev = c;
+ 		clients = c;
+ 	}
+ 	else {
+<a href="#h0-1-32" id="h0-1-32" class="d">-		first-&gt;prev-&gt;next = c;
+</a><a href="#h0-1-33" id="h0-1-33" class="d">-		c-&gt;prev = first-&gt;prev;
+</a><a href="#h0-1-34" id="h0-1-34" class="d">-		first-&gt;prev = c;
+</a><a href="#h0-1-35" id="h0-1-35" class="d">-		c-&gt;next = first;
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+		p-&gt;prev-&gt;next = c;
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+		c-&gt;prev = p-&gt;prev;
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+		p-&gt;prev = c;
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+		c-&gt;next = p;
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

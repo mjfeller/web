@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied Peter Hartlich&#39;s simplification patch of setmfact and his revival of MFACT, appliead Janness Hofmann&#39;s simplification of grabbuttons() -- thanks guys! - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c982bb1389c37262cbcc6ffcc343ec78528c4a81.html">c982bb1389c37262cbcc6ffcc343ec78528c4a81</a>
+<b>parent</b> <a href="../commit/6cf73e706ac8748e2e1734faad532ca3918e56c2.html">6cf73e706ac8748e2e1734faad532ca3918e56c2</a>
+<b>Author:</b> anselm@anselm1 &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Wed,  2 Apr 2008 22:10:55 +0100
+
+applied Peter Hartlich&#39;s simplification patch of setmfact and his revival of MFACT, appliead Janness Hofmann&#39;s simplification of grabbuttons() -- thanks guys!
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">64</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">-----------------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 24 insertions(+), 42 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -20,7 +20,7 @@ Rule rules[] = {
+</a> 
+ /* geometries, s{x,y,w,h} and bh are already initualized here */
+ /*   func name  bx  by  bw  wx  wy  ww     wh  mx  my       mw  mh     tx  ty     tw  th  mox moy mow moh */
+<a href="#h0-0-3" id="h0-0-3" class="d">-double mfact = 0.55;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define MFACT			0.55	/* master width factor [0.1 .. 0.9] */
+</a> DEFGEOM(single,  0,  0, sw,  0, bh, sw, sh-bh, wx, wy, mfact*sw, wh, mx+mw, wy, ww-mw, wh,  wx, wy, ww, wh)
+ DEFGEOM(dual,    0,  0,1280, 0, bh, ww, wh-bh, wx, wy, 1280,800-bh,  1280,  0, ww-mw, sh,  mx, my, mw, mh)
+ 
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -212,6 +212,7 @@ char stext[256], buf[256];
+</a> int screen, sx, sy, sw, sh;
+ int (*xerrorxlib)(Display *, XErrorEvent *);
+ int bx, by, bw, bh, blw, bgw, mx, my, mw, mh, mox, moy, mow, moh, tx, ty, tw, th, wx, wy, ww, wh;
+<a href="#h1-0-3" id="h1-0-3" class="i">+double mfact;
+</a> unsigned int numlockmask = 0;
+ void (*handler[LASTEvent]) (XEvent *) = {
+ 	[ButtonPress] = buttonpress,
+<a href="#h1-1" id="h1-1" class="h">@@ -805,39 +806,20 @@ gettextprop(Window w, Atom atom, char *text, unsigned int size) {
+</a> 
+ void
+ grabbuttons(Client *c, Bool focused) {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	int i, j;
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+	unsigned int buttons[]   = { Button1, Button2, Button3 };
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	unsigned int modifiers[] = { MODKEY, MODKEY|LockMask, MODKEY|numlockmask,
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	                             MODKEY|numlockmask|LockMask} ;
+</a> 
+<a href="#h1-1-9" id="h1-1-9" class="d">-	if(focused) {
+</a><a href="#h1-1-10" id="h1-1-10" class="d">-		XGrabButton(dpy, Button1, MODKEY, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-11" id="h1-1-11" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-12" id="h1-1-12" class="d">-		XGrabButton(dpy, Button1, MODKEY|LockMask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-13" id="h1-1-13" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-14" id="h1-1-14" class="d">-		XGrabButton(dpy, Button1, MODKEY|numlockmask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-15" id="h1-1-15" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-		XGrabButton(dpy, Button1, MODKEY|numlockmask|LockMask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-
+</a><a href="#h1-1-19" id="h1-1-19" class="d">-		XGrabButton(dpy, Button2, MODKEY, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-20" id="h1-1-20" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-21" id="h1-1-21" class="d">-		XGrabButton(dpy, Button2, MODKEY|LockMask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-22" id="h1-1-22" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-23" id="h1-1-23" class="d">-		XGrabButton(dpy, Button2, MODKEY|numlockmask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-24" id="h1-1-24" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-25" id="h1-1-25" class="d">-		XGrabButton(dpy, Button2, MODKEY|numlockmask|LockMask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-26" id="h1-1-26" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-27" id="h1-1-27" class="d">-
+</a><a href="#h1-1-28" id="h1-1-28" class="d">-		XGrabButton(dpy, Button3, MODKEY, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-29" id="h1-1-29" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-30" id="h1-1-30" class="d">-		XGrabButton(dpy, Button3, MODKEY|LockMask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-31" id="h1-1-31" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-32" id="h1-1-32" class="d">-		XGrabButton(dpy, Button3, MODKEY|numlockmask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-33" id="h1-1-33" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-34" id="h1-1-34" class="d">-		XGrabButton(dpy, Button3, MODKEY|numlockmask|LockMask, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-35" id="h1-1-35" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-36" id="h1-1-36" class="d">-	}
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+	XUngrabButton(dpy, AnyButton, AnyModifier, c-&gt;win);
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+	if(focused)
+</a><a href="#h1-1-39" id="h1-1-39" class="i">+		for(i = 0; i &lt; LENGTH(buttons); i++)
+</a><a href="#h1-1-40" id="h1-1-40" class="i">+			for(j = 0; j &lt; LENGTH(modifiers); j++)
+</a><a href="#h1-1-41" id="h1-1-41" class="i">+				XGrabButton(dpy, buttons[i], modifiers[j], c-&gt;win, False,
+</a><a href="#h1-1-42" id="h1-1-42" class="i">+				            BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+</a> 	else
+<a href="#h1-1-44" id="h1-1-44" class="d">-		XGrabButton(dpy, AnyButton, AnyModifier, c-&gt;win, False, BUTTONMASK,
+</a><a href="#h1-1-45" id="h1-1-45" class="d">-				GrabModeAsync, GrabModeSync, None, None);
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+		XGrabButton(dpy, AnyButton, AnyModifier, c-&gt;win, False,
+</a><a href="#h1-1-47" id="h1-1-47" class="i">+		            BUTTONMASK, GrabModeAsync, GrabModeSync, None, None);
+</a> }
+ 
+ void
+<a href="#h1-2" id="h1-2" class="h">@@ -1467,20 +1449,19 @@ setlayout(const char *arg) {
+</a> 
+ void
+ setmfact(const char *arg) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-	double delta;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	double d;
+</a> 
+<a href="#h1-2-6" id="h1-2-6" class="d">-	if(!arg || lt-&gt;isfloating)
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+	if(lt-&gt;isfloating)
+</a> 		return;
+<a href="#h1-2-9" id="h1-2-9" class="d">-	delta = strtod(arg, NULL);
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-	if(arg[0] == &#39;-&#39; || arg[0] == &#39;+&#39;) {
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-		if(mfact + delta &lt; 0.1 || mfact + delta &gt; 0.9)
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-			return;
+</a><a href="#h1-2-13" id="h1-2-13" class="d">-		mfact += delta;
+</a><a href="#h1-2-14" id="h1-2-14" class="d">-	}
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+	if(!arg)
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+		mfact = MFACT;
+</a> 	else {
+<a href="#h1-2-18" id="h1-2-18" class="d">-		if(delta &lt; 0.1 || delta &gt; 0.9)
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+		d = strtod(arg, NULL);
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+		if(arg[0] == &#39;-&#39; || arg[0] == &#39;+&#39;)
+</a><a href="#h1-2-21" id="h1-2-21" class="i">+			d += mfact;
+</a><a href="#h1-2-22" id="h1-2-22" class="i">+		if(d &lt; 0.1 || d &gt; 0.9)
+</a> 			return;
+<a href="#h1-2-24" id="h1-2-24" class="d">-		mfact = delta;
+</a><a href="#h1-2-25" id="h1-2-25" class="i">+		mfact = d;
+</a> 	}
+ 	setgeom(geom-&gt;symbol);
+ }
+<a href="#h1-3" id="h1-3" class="h">@@ -1501,6 +1482,7 @@ setup(void) {
+</a> 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+ 	bh = dc.font.height + 2;
+<a href="#h1-3-3" id="h1-3-3" class="i">+	mfact = MFACT;
+</a> 	geom = &amp;geoms[0];
+ 	geom-&gt;apply();
+ 
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Speeding up the drawing, then all characters are known. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/addc84834506e24387c1fb70b5d33b3f2ba55b66.html">addc84834506e24387c1fb70b5d33b3f2ba55b66</a>
+<b>parent</b> <a href="../commit/9c44229c626ea7351a7809540435f40cffb624bc.html">9c44229c626ea7351a7809540435f40cffb624bc</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sat, 29 Dec 2012 15:03:03 +0100
+
+Speeding up the drawing, then all characters are known.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">176</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 99 insertions(+), 77 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -437,7 +437,7 @@ typedef struct {
+</a>  */
+ 
+ static Fontcache frc[256];
+<a href="#h0-0-3" id="h0-0-3" class="d">-static int frccur = 0, frclen = 0;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static int frccur = -1, frclen = 0;
+</a> 
+ ssize_t
+ xwrite(int fd, char *s, size_t len) {
+<a href="#h0-1" id="h0-1" class="h">@@ -2410,7 +2410,7 @@ xunloadfonts(void)
+</a> 			ip = LEN(frc) - 1;
+ 		XftFontClose(xw.dpy, frc[ip].font);
+ 	}
+<a href="#h0-1-3" id="h0-1-3" class="d">-	frccur = 0;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	frccur = -1;
+</a> 	frclen = 0;
+ 
+ 	XftFontClose(xw.dpy, dc.font.match);
+<a href="#h0-2" id="h0-2" class="h">@@ -2532,11 +2532,12 @@ xinit(void) {
+</a> void
+ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+ 	int winx = borderpx + x * xw.cw, winy = borderpx + y * xw.ch,
+<a href="#h0-2-3" id="h0-2-3" class="d">-	    width = charlen * xw.cw, u8clen, xp, i, frp, frcflags;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	    width = charlen * xw.cw, xp, i;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	int frp, frcflags;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	int u8fl, u8fblen, u8cblen, doesexist;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	char *u8c, *u8fs;
+</a> 	long u8char;
+<a href="#h0-2-9" id="h0-2-9" class="d">-	char *u8c;
+</a> 	Font *font = &amp;dc.font;
+<a href="#h0-2-11" id="h0-2-11" class="d">-	XftFont *sfont;
+</a> 	FcResult fcres;
+ 	FcPattern *fcpattern, *fontpattern;
+ 	FcFontSet *fcsets[] = { NULL };
+<a href="#h0-3" id="h0-3" class="h">@@ -2608,11 +2609,6 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 		bg = temp;
+ 	}
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	/* Width of the whole string that should be printed. */
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	XftTextExtentsUtf8(xw.dpy, font-&gt;match, (FcChar8 *)s, bytelen,
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-			&amp;extents);
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-	width = extents.xOff;
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-
+</a> 	/* Intelligent cleaning up of the borders. */
+ 	if(x == 0) {
+ 		xclear(0, (y == 0)? 0 : winy, borderpx,
+<a href="#h0-4" id="h0-4" class="h">@@ -2630,85 +2626,111 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 	/* Clean up the region we want to draw to. */
+ 	XftDrawRect(xw.draw, bg, winx, winy, width, xw.ch);
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-	/*
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	 * Step through all UTF-8 characters one by one and search in the font
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-	 * cache ring buffer, whether there was some font found to display the
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-	 * unicode value of that UTF-8 character.
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-	 */
+</a> 	fcsets[0] = font-&gt;set;
+<a href="#h0-4-9" id="h0-4-9" class="d">-	for (xp = winx; bytelen &gt; 0; ) {
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-		u8c = s;
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-		u8clen = utf8decode(s, &amp;u8char);
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-		s += u8clen;
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-		bytelen -= u8clen;
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-
+</a><a href="#h0-4-15" id="h0-4-15" class="d">-		sfont = font-&gt;match;
+</a><a href="#h0-4-16" id="h0-4-16" class="i">+	for (xp = winx; bytelen &gt; 0;) {
+</a> 		/*
+<a href="#h0-4-18" id="h0-4-18" class="d">-		 * Only check the font cache or load new fonts, if the
+</a><a href="#h0-4-19" id="h0-4-19" class="d">-		 * characters is not represented in main font.
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+		 * Search for the range in the to be printed string of glyphs
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+		 * that are in the main font. Then print that range. If
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+		 * some glyph is found that is not in the font, do the
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+		 * fallback dance.
+</a> 		 */
+<a href="#h0-4-25" id="h0-4-25" class="d">-		if (!XftCharExists(xw.dpy, font-&gt;match, u8char)) {
+</a><a href="#h0-4-26" id="h0-4-26" class="d">-			frp = frccur;
+</a><a href="#h0-4-27" id="h0-4-27" class="d">-			/* Search the font cache. */
+</a><a href="#h0-4-28" id="h0-4-28" class="d">-			for (i = 0; i &lt; frclen; i++, frp--) {
+</a><a href="#h0-4-29" id="h0-4-29" class="d">-				if (frp &lt;= 0)
+</a><a href="#h0-4-30" id="h0-4-30" class="d">-					frp = LEN(frc) - 1;
+</a><a href="#h0-4-31" id="h0-4-31" class="i">+		u8fs = s;
+</a><a href="#h0-4-32" id="h0-4-32" class="i">+		u8fblen = 0;
+</a><a href="#h0-4-33" id="h0-4-33" class="i">+		u8fl = 0;
+</a><a href="#h0-4-34" id="h0-4-34" class="i">+		for (;;) {
+</a><a href="#h0-4-35" id="h0-4-35" class="i">+			u8c = s;
+</a><a href="#h0-4-36" id="h0-4-36" class="i">+			u8cblen = utf8decode(s, &amp;u8char);
+</a><a href="#h0-4-37" id="h0-4-37" class="i">+			s += u8cblen;
+</a><a href="#h0-4-38" id="h0-4-38" class="i">+			bytelen -= u8cblen;
+</a><a href="#h0-4-39" id="h0-4-39" class="i">+
+</a><a href="#h0-4-40" id="h0-4-40" class="i">+			doesexist = XftCharIndex(xw.dpy, font-&gt;match, u8char);
+</a><a href="#h0-4-41" id="h0-4-41" class="i">+			if (!doesexist || bytelen &lt;= 0) {
+</a><a href="#h0-4-42" id="h0-4-42" class="i">+				if (bytelen &lt;= 0) {
+</a><a href="#h0-4-43" id="h0-4-43" class="i">+					if (doesexist) {
+</a><a href="#h0-4-44" id="h0-4-44" class="i">+						u8fl++;
+</a><a href="#h0-4-45" id="h0-4-45" class="i">+						u8fblen += u8cblen;
+</a><a href="#h0-4-46" id="h0-4-46" class="i">+					}
+</a><a href="#h0-4-47" id="h0-4-47" class="i">+				}
+</a> 
+<a href="#h0-4-49" id="h0-4-49" class="d">-				if (frc[frp].c == u8char
+</a><a href="#h0-4-50" id="h0-4-50" class="d">-					&amp;&amp; frc[frp].flags == frcflags) {
+</a><a href="#h0-4-51" id="h0-4-51" class="d">-					break;
+</a><a href="#h0-4-52" id="h0-4-52" class="i">+				if (u8fl &gt; 0) {
+</a><a href="#h0-4-53" id="h0-4-53" class="i">+					XftDrawStringUtf8(xw.draw, fg,
+</a><a href="#h0-4-54" id="h0-4-54" class="i">+							font-&gt;match, xp,
+</a><a href="#h0-4-55" id="h0-4-55" class="i">+							winy + font-&gt;ascent,
+</a><a href="#h0-4-56" id="h0-4-56" class="i">+							(FcChar8 *)u8fs,
+</a><a href="#h0-4-57" id="h0-4-57" class="i">+							u8fblen);
+</a><a href="#h0-4-58" id="h0-4-58" class="i">+					xp += font-&gt;width * u8fl;
+</a> 				}
+<a href="#h0-4-60" id="h0-4-60" class="i">+				break;
+</a> 			}
+<a href="#h0-4-62" id="h0-4-62" class="d">-			if (i &gt;= frclen) {
+</a><a href="#h0-4-63" id="h0-4-63" class="d">-				/*
+</a><a href="#h0-4-64" id="h0-4-64" class="d">-				 * Nothing was found in the cache. Now use
+</a><a href="#h0-4-65" id="h0-4-65" class="d">-				 * some dozen of Fontconfig calls to get the
+</a><a href="#h0-4-66" id="h0-4-66" class="d">-				 * font for one single character.
+</a><a href="#h0-4-67" id="h0-4-67" class="d">-				 */
+</a><a href="#h0-4-68" id="h0-4-68" class="d">-				fcpattern = FcPatternDuplicate(font-&gt;pattern);
+</a><a href="#h0-4-69" id="h0-4-69" class="d">-				fccharset = FcCharSetCreate();
+</a><a href="#h0-4-70" id="h0-4-70" class="d">-
+</a><a href="#h0-4-71" id="h0-4-71" class="d">-				FcCharSetAddChar(fccharset, u8char);
+</a><a href="#h0-4-72" id="h0-4-72" class="d">-				FcPatternAddCharSet(fcpattern, FC_CHARSET,
+</a><a href="#h0-4-73" id="h0-4-73" class="d">-						fccharset);
+</a><a href="#h0-4-74" id="h0-4-74" class="d">-				FcPatternAddBool(fcpattern, FC_SCALABLE,
+</a><a href="#h0-4-75" id="h0-4-75" class="d">-						FcTrue);
+</a><a href="#h0-4-76" id="h0-4-76" class="d">-
+</a><a href="#h0-4-77" id="h0-4-77" class="d">-				FcConfigSubstitute(0, fcpattern,
+</a><a href="#h0-4-78" id="h0-4-78" class="d">-						FcMatchPattern);
+</a><a href="#h0-4-79" id="h0-4-79" class="d">-				FcDefaultSubstitute(fcpattern);
+</a><a href="#h0-4-80" id="h0-4-80" class="d">-
+</a><a href="#h0-4-81" id="h0-4-81" class="d">-				fontpattern = FcFontSetMatch(0, fcsets,
+</a><a href="#h0-4-82" id="h0-4-82" class="d">-						FcTrue, fcpattern, &amp;fcres);
+</a><a href="#h0-4-83" id="h0-4-83" class="d">-
+</a><a href="#h0-4-84" id="h0-4-84" class="d">-				frccur++;
+</a><a href="#h0-4-85" id="h0-4-85" class="d">-				frclen++;
+</a><a href="#h0-4-86" id="h0-4-86" class="d">-				if (frccur &gt;= LEN(frc))
+</a><a href="#h0-4-87" id="h0-4-87" class="d">-					frccur = 0;
+</a><a href="#h0-4-88" id="h0-4-88" class="d">-				if (frclen &gt;= LEN(frc)) {
+</a><a href="#h0-4-89" id="h0-4-89" class="d">-					frclen = LEN(frc);
+</a><a href="#h0-4-90" id="h0-4-90" class="d">-					XftFontClose(xw.dpy, frc[frccur].font);
+</a><a href="#h0-4-91" id="h0-4-91" class="d">-				}
+</a> 
+<a href="#h0-4-93" id="h0-4-93" class="d">-				/*
+</a><a href="#h0-4-94" id="h0-4-94" class="d">-				 * Overwrite or create the new cache entry
+</a><a href="#h0-4-95" id="h0-4-95" class="d">-				 * entry.
+</a><a href="#h0-4-96" id="h0-4-96" class="d">-				 */
+</a><a href="#h0-4-97" id="h0-4-97" class="d">-				frc[frccur].font = XftFontOpenPattern(xw.dpy,
+</a><a href="#h0-4-98" id="h0-4-98" class="d">-						fontpattern);
+</a><a href="#h0-4-99" id="h0-4-99" class="d">-				frc[frccur].c = u8char;
+</a><a href="#h0-4-100" id="h0-4-100" class="d">-				frc[frccur].flags = frcflags;
+</a><a href="#h0-4-101" id="h0-4-101" class="i">+			u8fl++;
+</a><a href="#h0-4-102" id="h0-4-102" class="i">+			u8fblen += u8cblen;
+</a><a href="#h0-4-103" id="h0-4-103" class="i">+		}
+</a><a href="#h0-4-104" id="h0-4-104" class="i">+		if (doesexist)
+</a><a href="#h0-4-105" id="h0-4-105" class="i">+			break;
+</a> 
+<a href="#h0-4-107" id="h0-4-107" class="d">-				FcPatternDestroy(fcpattern);
+</a><a href="#h0-4-108" id="h0-4-108" class="d">-				FcCharSetDestroy(fccharset);
+</a><a href="#h0-4-109" id="h0-4-109" class="i">+		frp = frccur;
+</a><a href="#h0-4-110" id="h0-4-110" class="i">+		/* Search the font cache. */
+</a><a href="#h0-4-111" id="h0-4-111" class="i">+		for (i = 0; i &lt; frclen; i++, frp--) {
+</a><a href="#h0-4-112" id="h0-4-112" class="i">+			if (frp &lt;= 0)
+</a><a href="#h0-4-113" id="h0-4-113" class="i">+				frp = LEN(frc) - 1;
+</a> 
+<a href="#h0-4-115" id="h0-4-115" class="d">-				frp = frccur;
+</a><a href="#h0-4-116" id="h0-4-116" class="i">+			if (frc[frp].c == u8char
+</a><a href="#h0-4-117" id="h0-4-117" class="i">+					&amp;&amp; frc[frp].flags == frcflags) {
+</a><a href="#h0-4-118" id="h0-4-118" class="i">+				break;
+</a> 			}
+<a href="#h0-4-120" id="h0-4-120" class="d">-			sfont = frc[frp].font;
+</a> 		}
+ 
+<a href="#h0-4-123" id="h0-4-123" class="d">-		XftDrawStringUtf8(xw.draw, fg, sfont, xp, winy + sfont-&gt;ascent,
+</a><a href="#h0-4-124" id="h0-4-124" class="d">-				(FcChar8 *)u8c, u8clen);
+</a><a href="#h0-4-125" id="h0-4-125" class="i">+		/* Nothing was found. */
+</a><a href="#h0-4-126" id="h0-4-126" class="i">+		if (i &gt;= frclen) {
+</a><a href="#h0-4-127" id="h0-4-127" class="i">+			/*
+</a><a href="#h0-4-128" id="h0-4-128" class="i">+			 * Nothing was found in the cache. Now use
+</a><a href="#h0-4-129" id="h0-4-129" class="i">+			 * some dozen of Fontconfig calls to get the
+</a><a href="#h0-4-130" id="h0-4-130" class="i">+			 * font for one single character.
+</a><a href="#h0-4-131" id="h0-4-131" class="i">+			 */
+</a><a href="#h0-4-132" id="h0-4-132" class="i">+			fcpattern = FcPatternDuplicate(font-&gt;pattern);
+</a><a href="#h0-4-133" id="h0-4-133" class="i">+			fccharset = FcCharSetCreate();
+</a><a href="#h0-4-134" id="h0-4-134" class="i">+
+</a><a href="#h0-4-135" id="h0-4-135" class="i">+			FcCharSetAddChar(fccharset, u8char);
+</a><a href="#h0-4-136" id="h0-4-136" class="i">+			FcPatternAddCharSet(fcpattern, FC_CHARSET,
+</a><a href="#h0-4-137" id="h0-4-137" class="i">+					fccharset);
+</a><a href="#h0-4-138" id="h0-4-138" class="i">+			FcPatternAddBool(fcpattern, FC_SCALABLE,
+</a><a href="#h0-4-139" id="h0-4-139" class="i">+					FcTrue);
+</a><a href="#h0-4-140" id="h0-4-140" class="i">+
+</a><a href="#h0-4-141" id="h0-4-141" class="i">+			FcConfigSubstitute(0, fcpattern,
+</a><a href="#h0-4-142" id="h0-4-142" class="i">+					FcMatchPattern);
+</a><a href="#h0-4-143" id="h0-4-143" class="i">+			FcDefaultSubstitute(fcpattern);
+</a><a href="#h0-4-144" id="h0-4-144" class="i">+
+</a><a href="#h0-4-145" id="h0-4-145" class="i">+			fontpattern = FcFontSetMatch(0, fcsets,
+</a><a href="#h0-4-146" id="h0-4-146" class="i">+					FcTrue, fcpattern, &amp;fcres);
+</a><a href="#h0-4-147" id="h0-4-147" class="i">+
+</a><a href="#h0-4-148" id="h0-4-148" class="i">+			/*
+</a><a href="#h0-4-149" id="h0-4-149" class="i">+			 * Overwrite or create the new cache entry
+</a><a href="#h0-4-150" id="h0-4-150" class="i">+			 * entry.
+</a><a href="#h0-4-151" id="h0-4-151" class="i">+			 */
+</a><a href="#h0-4-152" id="h0-4-152" class="i">+			frccur++;
+</a><a href="#h0-4-153" id="h0-4-153" class="i">+			frclen++;
+</a><a href="#h0-4-154" id="h0-4-154" class="i">+			if (frccur &gt;= LEN(frc))
+</a><a href="#h0-4-155" id="h0-4-155" class="i">+				frccur = 0;
+</a><a href="#h0-4-156" id="h0-4-156" class="i">+			if (frclen &gt; LEN(frc)) {
+</a><a href="#h0-4-157" id="h0-4-157" class="i">+				frclen = LEN(frc);
+</a><a href="#h0-4-158" id="h0-4-158" class="i">+				XftFontClose(xw.dpy, frc[frccur].font);
+</a><a href="#h0-4-159" id="h0-4-159" class="i">+			}
+</a><a href="#h0-4-160" id="h0-4-160" class="i">+
+</a><a href="#h0-4-161" id="h0-4-161" class="i">+			frc[frccur].font = XftFontOpenPattern(xw.dpy,
+</a><a href="#h0-4-162" id="h0-4-162" class="i">+					fontpattern);
+</a><a href="#h0-4-163" id="h0-4-163" class="i">+			frc[frccur].c = u8char;
+</a><a href="#h0-4-164" id="h0-4-164" class="i">+			frc[frccur].flags = frcflags;
+</a><a href="#h0-4-165" id="h0-4-165" class="i">+
+</a><a href="#h0-4-166" id="h0-4-166" class="i">+			FcPatternDestroy(fcpattern);
+</a><a href="#h0-4-167" id="h0-4-167" class="i">+			FcCharSetDestroy(fccharset);
+</a><a href="#h0-4-168" id="h0-4-168" class="i">+
+</a><a href="#h0-4-169" id="h0-4-169" class="i">+			frp = frccur;
+</a><a href="#h0-4-170" id="h0-4-170" class="i">+		}
+</a><a href="#h0-4-171" id="h0-4-171" class="i">+
+</a><a href="#h0-4-172" id="h0-4-172" class="i">+		XftDrawStringUtf8(xw.draw, fg, frc[frp].font,
+</a><a href="#h0-4-173" id="h0-4-173" class="i">+				xp, winy + frc[frp].font-&gt;ascent,
+</a><a href="#h0-4-174" id="h0-4-174" class="i">+				(FcChar8 *)u8c, u8cblen);
+</a> 
+ 		xp += font-&gt;width;
+ 	}
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cleanup - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1654d6cd6269bc784ee99045edd89e4bda24149f.html">1654d6cd6269bc784ee99045edd89e4bda24149f</a>
+<b>parent</b> <a href="../commit/6cc0b0dc086feaf944b166d0b459ac407192ea5e.html">6cc0b0dc086feaf944b166d0b459ac407192ea5e</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Sun, 15 May 2011 02:37:49 +0100
+
+cleanup
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">19</td><td><span class="i">++++++++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">6</td><td><span class="i">+</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dmenu.1</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">draw.c</a></td><td> | </td><td class="num">8</td><td><span class="i">+++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>4 files changed, 18 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,6 +3,9 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+SRC = dmenu.c draw.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+OBJ = ${SRC:.c=.o}
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a> all: options dmenu
+ 
+ options:
+<a href="#h0-1" id="h0-1" class="h">@@ -11,22 +14,24 @@ options:
+</a> 	@echo &quot;LDFLAGS  = ${LDFLAGS}&quot;
+ 	@echo &quot;CC       = ${CC}&quot;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-dmenu: dmenu.o draw.o
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	@echo CC -o $@
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	@${CC} -o $@ dmenu.o draw.o ${LDFLAGS}
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-.c.o: config.mk
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+.c.o:
+</a> 	@echo CC -c $&lt;
+ 	@${CC} -c $&lt; ${CFLAGS}
+ 
+<a href="#h0-1-12" id="h0-1-12" class="i">+${OBJ}: config.mk
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+dmenu: ${OBJ}
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	@echo CC -o $@
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	@${CC} -o $@ ${OBJ} ${LDFLAGS}
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+
+</a> clean:
+ 	@echo cleaning
+<a href="#h0-1-20" id="h0-1-20" class="d">-	@rm -f dmenu dmenu.o draw.o dmenu-${VERSION}.tar.gz
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	@rm -f dmenu ${OBJ} dmenu-${VERSION}.tar.gz
+</a> 
+ dist: clean
+ 	@echo creating dist tarball
+ 	@mkdir -p dmenu-${VERSION}
+<a href="#h0-1-26" id="h0-1-26" class="d">-	@cp LICENSE Makefile README config.mk dmenu.1 dmenu.c draw.c draw.h dmenu_path dmenu_run dmenu-${VERSION}
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+	@cp LICENSE Makefile README config.mk dmenu.1 draw.h dmenu_path dmenu_run ${SRC} dmenu-${VERSION}
+</a> 	@tar -cf dmenu-${VERSION}.tar dmenu-${VERSION}
+ 	@gzip dmenu-${VERSION}.tar
+ 	@rm -rf dmenu-${VERSION}
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,10 +1,6 @@
+</a> # dmenu version
+ VERSION = 4.3
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-# dmenu_path cache (absolute or relative to $HOME)
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-CACHE = .dmenu_cache
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-
+</a> # paths
+ PREFIX = /usr/local
+ MANPREFIX = ${PREFIX}/share/man
+<a href="#h1-1" id="h1-1" class="h">@@ -21,7 +17,7 @@ INCS = -I${X11INC}
+</a> LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS}
+ 
+ # flags
+<a href="#h1-1-3" id="h1-1-3" class="d">-CPPFLAGS = -D_BSD_SOURCE -DVERSION=\&quot;${VERSION}\&quot; -DCACHE=\&quot;${CACHE}\&quot; ${XINERAMAFLAGS}
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+CPPFLAGS = -D_BSD_SOURCE -DVERSION=\&quot;${VERSION}\&quot; ${XINERAMAFLAGS}
+</a> CFLAGS   = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+ LDFLAGS  = -s ${LIBS}
+ 
+<b>diff --git a/<a id="h2" href="../file/dmenu.1.html">dmenu.1</a> b/<a href="../file/dmenu.1.html">dmenu.1</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -31,9 +31,9 @@ dmenu \- dynamic menu
+</a> .B dmenu
+ is a dynamic menu for X, originally designed for
+ .BR dwm (1).
+<a href="#h2-0-3" id="h2-0-3" class="d">-It manages huge numbers of user-defined menu items efficiently.
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+It manages huge numbers of user\-defined menu items efficiently.
+</a> .P
+<a href="#h2-0-6" id="h2-0-6" class="d">-dmenu reads a list of newline-separated items from stdin and creates a menu.
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+dmenu reads a list of newline\-separated items from stdin and creates a menu.
+</a> When the user selects an item or enters any text and presses Return, their
+ choice is printed to stdout and dmenu terminates.
+ .P
+<b>diff --git a/<a id="h3" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -25,14 +25,13 @@ drawrect(DC *dc, int x, int y, unsigned int w, unsigned int h, Bool fill, unsign
+</a> 	(fill ? XFillRectangles : XDrawRectangles)(dc-&gt;dpy, dc-&gt;canvas, dc-&gt;gc, &amp;r, 1);
+ }
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-
+</a> void
+ drawtext(DC *dc, const char *text, unsigned long col[ColLast]) {
+<a href="#h3-0-6" id="h3-0-6" class="d">-	char buf[256];
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+	char buf[BUFSIZ];
+</a> 	size_t mn, n = strlen(text);
+ 
+ 	/* shorten text if necessary */
+<a href="#h3-0-11" id="h3-0-11" class="d">-	for(mn = MIN(n, sizeof buf); textnw(dc, text, mn) &gt; dc-&gt;w - dc-&gt;font.height/2; mn--)
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+	for(mn = MIN(n, sizeof buf); textnw(dc, text, mn) + dc-&gt;font.height/2 &gt; dc-&gt;w; mn--)
+</a> 		if(mn == 0)
+ 			return;
+ 	memcpy(buf, text, mn);
+<a href="#h3-1" id="h3-1" class="h">@@ -157,12 +156,11 @@ void
+</a> resizedc(DC *dc, unsigned int w, unsigned int h) {
+ 	if(dc-&gt;canvas)
+ 		XFreePixmap(dc-&gt;dpy, dc-&gt;canvas);
+<a href="#h3-1-3" id="h3-1-3" class="i">+
+</a> 	dc-&gt;canvas = XCreatePixmap(dc-&gt;dpy, DefaultRootWindow(dc-&gt;dpy), w, h,
+ 	                           DefaultDepth(dc-&gt;dpy, DefaultScreen(dc-&gt;dpy)));
+<a href="#h3-1-6" id="h3-1-6" class="d">-	dc-&gt;x = dc-&gt;y = 0;
+</a> 	dc-&gt;w = w;
+ 	dc-&gt;h = h;
+<a href="#h3-1-9" id="h3-1-9" class="d">-	dc-&gt;invert = False;
+</a> }
+ 
+ int
+</pre>
+</div>
+</body>
+</html>

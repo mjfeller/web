@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add webkit language settings - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/981ade6eeb0f975990b0d336bb6b43e6475d6c40.html">981ade6eeb0f975990b0d336bb6b43e6475d6c40</a>
+<b>parent</b> <a href="../commit/00f9dcdf439f85df4a2b1efef32e7422a671c26c.html">00f9dcdf439f85df4a2b1efef32e7422a671c26c</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sun, 22 Nov 2015 19:13:48 +0100
+
+Add webkit language settings
+
+You can now set your prefered website languages in order.
+It is also possible to enable spell checking in the same way.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">7</td><td><span class="i">+++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 12 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -18,6 +18,11 @@ static char *cookiepolicies = &quot;Aa@&quot;; /* A: accept all; a: accept nothing,
+</a>                                       * @: accept no third party */
+ static int strictssl       = 0; /* Refuse untrusted SSL connections */
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+/* Languages */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static int enablespellchecking         = 0;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static const char *spellinglanguages[] = { &quot;en_US&quot;, NULL };
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+static const char *preferedlanguages[] = { NULL };
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a> /* Webkit default features */
+ static int enablescrollbars      = 1;
+ static int enablecaretbrowsing   = 1;
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -726,6 +726,13 @@ newview(Client *c, WebKitWebView *rv)
+</a> 		webkit_cookie_manager_set_accept_policy(
+ 		    webkit_web_context_get_cookie_manager(context),
+ 		    cookiepolicy_get());
+<a href="#h1-0-3" id="h1-0-3" class="i">+		/* languages */
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		webkit_web_context_set_preferred_languages(context,
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+		                                           preferedlanguages);
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+		webkit_web_context_set_spell_checking_languages(context,
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		    spellinglanguages);
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+		webkit_web_context_set_spell_checking_enabled(context,
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		    enablespellchecking);
+</a> 
+ 		g_signal_connect(G_OBJECT(context), &quot;download-started&quot;,
+ 		                 G_CALLBACK(downloadstarted), c);
+</pre>
+</div>
+</body>
+</html>

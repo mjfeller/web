@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>make tabs autohide - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1edbba3f31f7aa37639410f230f8293eb2e9bff9.html">1edbba3f31f7aa37639410f230f8293eb2e9bff9</a>
+<b>parent</b> <a href="../commit/b5f9ec647aae2d9a1d3bd586eb7523a4e0a329a3.html">b5f9ec647aae2d9a1d3bd586eb7523a4e0a329a3</a>
+<b>Author:</b> Mark Feller &lt;<a href="mailto:mfeller@recurly.com">mfeller@recurly.com</a>&gt;
+<b>Date:</b>   Mon, 30 Mar 2020 22:47:17 -0600
+
+make tabs autohide
+
+Signed-off-by: Mark Feller &lt;mfeller@recurly.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">11</td><td><span class="i">++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.c</a></td><td> | </td><td class="num">51</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 58 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,7 +1,7 @@
+</a> /* See LICENSE file for copyright and license details. */
+ 
+ /* appearance */
+<a href="#h0-0-3" id="h0-0-3" class="d">-static const char font[]        = &quot;monospace:size=9&quot;;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static const char font[]        = &quot;Fira Mono:size=10&quot;;
+</a> static const char* normbgcolor  = &quot;#222222&quot;;
+ static const char* normfgcolor  = &quot;#cccccc&quot;;
+ static const char* selbgcolor   = &quot;#555555&quot;;
+<a href="#h0-1" id="h0-1" class="h">@@ -63,4 +63,13 @@ static Key keys[] = {
+</a> 	{ MODKEY|ShiftMask,     XK_u,      toggle,      { .v = (void*) &amp;urgentswitch } },
+ 
+ 	{ 0,                    XK_F11,    fullscreen,  { 0 } },
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	{ MODKEY,               XK_Shift_L,   showbar,  { .i = 1 } },
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	{ ShiftMask,            XK_Control_L, showbar,  { .i = 1 } },
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+};
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+static Key keyreleases[] = {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	/* modifier             key          function   argument */
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	{ MODKEY|ShiftMask,     XK_Shift_L,   showbar,  { .i = 0 } },
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	{ MODKEY|ShiftMask,     XK_Control_L, showbar,  { .i = 0 } },
+</a> };
+<b>diff --git a/<a id="h1" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -113,6 +113,7 @@ static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+</a> static void initfont(const char *fontstr);
+ static Bool isprotodel(int c);
+ static void keypress(const XEvent *e);
+<a href="#h1-0-3" id="h1-0-3" class="i">+static void keyrelease(const XEvent *e);
+</a> static void killclient(const Arg *arg);
+ static void manage(Window win);
+ static void maprequest(const XEvent *e);
+<a href="#h1-1" id="h1-1" class="h">@@ -126,6 +127,7 @@ static void sendxembed(int c, long msg, long detail, long d1, long d2);
+</a> static void setcmd(int argc, char *argv[], int);
+ static void setup(void);
+ static void sigchld(int unused);
+<a href="#h1-1-3" id="h1-1-3" class="i">+static void showbar(const Arg *arg);
+</a> static void spawn(const Arg *arg);
+ static int textnw(const char *text, unsigned int len);
+ static void toggle(const Arg *arg);
+<a href="#h1-2" id="h1-2" class="h">@@ -149,10 +151,11 @@ static void (*handler[LASTEvent]) (const XEvent *) = {
+</a> 	[Expose] = expose,
+ 	[FocusIn] = focusin,
+ 	[KeyPress] = keypress,
+<a href="#h1-2-3" id="h1-2-3" class="i">+	[KeyRelease] = keyrelease,
+</a> 	[MapRequest] = maprequest,
+ 	[PropertyNotify] = propertynotify,
+ };
+<a href="#h1-2-7" id="h1-2-7" class="d">-static int bh, wx, wy, ww, wh;
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+static int bh, wx, wy, ww, wh, vbh;
+</a> static unsigned int numlockmask;
+ static Bool running = True, nextfocus, doinitspawn = True,
+             fillagain = False, closelastclient = False,
+<a href="#h1-3" id="h1-3" class="h">@@ -169,6 +172,7 @@ static char winid[64];
+</a> static char **cmd;
+ static char *wmname = &quot;tabbed&quot;;
+ static const char *geometry;
+<a href="#h1-3-3" id="h1-3-3" class="i">+static Bool barvisibility = False;
+</a> 
+ char *argv0;
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -315,9 +319,18 @@ void
+</a> drawbar(void)
+ {
+ 	XftColor *col;
+<a href="#h1-4-3" id="h1-4-3" class="d">-	int c, cc, fc, width;
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+	int c, cc, fc, width, nbh;
+</a> 	char *name = NULL;
+ 
+<a href="#h1-4-7" id="h1-4-7" class="i">+	nbh = barvisibility ? vbh : 0;
+</a><a href="#h1-4-8" id="h1-4-8" class="i">+	if (nbh != bh) {
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+		bh = nbh;
+</a><a href="#h1-4-10" id="h1-4-10" class="i">+		for (c = 0; c &lt; nclients; c++)
+</a><a href="#h1-4-11" id="h1-4-11" class="i">+			XMoveResizeWindow(dpy, clients[c]-&gt;win, 0, bh, ww, wh-bh);
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+	}
+</a><a href="#h1-4-13" id="h1-4-13" class="i">+
+</a><a href="#h1-4-14" id="h1-4-14" class="i">+	if (bh == 0) return;
+</a><a href="#h1-4-15" id="h1-4-15" class="i">+
+</a> 	if (nclients == 0) {
+ 		dc.x = 0;
+ 		dc.w = ww;
+<a href="#h1-5" id="h1-5" class="h">@@ -665,6 +678,22 @@ keypress(const XEvent *e)
+</a> }
+ 
+ void
+<a href="#h1-5-3" id="h1-5-3" class="i">+keyrelease(const XEvent *e)
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+{
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+	const XKeyEvent *ev = &amp;e-&gt;xkey;
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+	unsigned int i;
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+	KeySym keysym;
+</a><a href="#h1-5-8" id="h1-5-8" class="i">+
+</a><a href="#h1-5-9" id="h1-5-9" class="i">+	keysym = XkbKeycodeToKeysym(dpy, (KeyCode)ev-&gt;keycode, 0, 0);
+</a><a href="#h1-5-10" id="h1-5-10" class="i">+	for (i = 0; i &lt; LENGTH(keyreleases); i++) {
+</a><a href="#h1-5-11" id="h1-5-11" class="i">+		if (keysym == keyreleases[i].keysym &amp;&amp;
+</a><a href="#h1-5-12" id="h1-5-12" class="i">+		    CLEANMASK(keyreleases[i].mod) == CLEANMASK(ev-&gt;state) &amp;&amp;
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+		    keyreleases[i].func)
+</a><a href="#h1-5-14" id="h1-5-14" class="i">+			keyreleases[i].func(&amp;(keyreleases[i].arg));
+</a><a href="#h1-5-15" id="h1-5-15" class="i">+	}
+</a><a href="#h1-5-16" id="h1-5-16" class="i">+}
+</a><a href="#h1-5-17" id="h1-5-17" class="i">+
+</a><a href="#h1-5-18" id="h1-5-18" class="i">+void
+</a> killclient(const Arg *arg)
+ {
+ 	XEvent ev;
+<a href="#h1-6" id="h1-6" class="h">@@ -714,6 +743,15 @@ manage(Window w)
+</a> 			}
+ 		}
+ 
+<a href="#h1-6-3" id="h1-6-3" class="i">+		for (i = 0; i &lt; LENGTH(keyreleases); i++) {
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+			if ((code = XKeysymToKeycode(dpy, keyreleases[i].keysym))) {
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+				for (j = 0; j &lt; LENGTH(modifiers); j++)
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+					XGrabKey(dpy, code, keyreleases[i].mod |
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+					 	 modifiers[j], w, True,
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+					 	 GrabModeAsync, GrabModeAsync);
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+			}
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+		}
+</a><a href="#h1-6-11" id="h1-6-11" class="i">+
+</a> 		c = ecalloc(1, sizeof *c);
+ 		c-&gt;win = w;
+ 
+<a href="#h1-7" id="h1-7" class="h">@@ -975,7 +1013,7 @@ setup(void)
+</a> 	screen = DefaultScreen(dpy);
+ 	root = RootWindow(dpy, screen);
+ 	initfont(font);
+<a href="#h1-7-3" id="h1-7-3" class="d">-	bh = dc.h = dc.font.height + 2;
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	vbh = dc.h = dc.font.height + 2;
+</a> 
+ 	/* init atoms */
+ 	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+<a href="#h1-8" id="h1-8" class="h">@@ -1069,6 +1107,13 @@ setup(void)
+</a> }
+ 
+ void
+<a href="#h1-8-3" id="h1-8-3" class="i">+showbar(const Arg *arg)
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+{
+</a><a href="#h1-8-5" id="h1-8-5" class="i">+	barvisibility = arg-&gt;i;
+</a><a href="#h1-8-6" id="h1-8-6" class="i">+	drawbar();
+</a><a href="#h1-8-7" id="h1-8-7" class="i">+}
+</a><a href="#h1-8-8" id="h1-8-8" class="i">+
+</a><a href="#h1-8-9" id="h1-8-9" class="i">+void
+</a> sigchld(int unused)
+ {
+ 	if (signal(SIGCHLD, sigchld) == SIG_ERR)
+</pre>
+</div>
+</body>
+</html>

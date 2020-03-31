@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>separated layout-specific stuff into separate .h and .c files which are included in config.h resp. config.mk - this allows writing layouts for dwm without any need to patch existing code - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2d81b78b853565a3e34a8a9190e2362a6fdde739.html">2d81b78b853565a3e34a8a9190e2362a6fdde739</a>
+<b>parent</b> <a href="../commit/b5eea45a316a897632578a74c909aa336557b1d6.html">b5eea45a316a897632578a74c909aa336557b1d6</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 11 Aug 2007 12:11:50 +0200
+
+separated layout-specific stuff into separate .h and .c files which are included in config.h resp. config.mk - this allows writing layouts for dwm without any need to patch existing code
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">client.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">config.arg.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">config.default.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">config.mk</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">dwm.h</a></td><td> | </td><td class="num">5</td><td><span class="i">+</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">event.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h7">float.c</a></td><td> | </td><td class="num">41</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h8">float.h</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">layout.c</a></td><td> | </td><td class="num">116</td><td><span class="i">++</span><span class="d">-----------------------------------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">tag.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h11">tile.c</a></td><td> | </td><td class="num">88</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h12">tile.h</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>13 files changed, 164 insertions(+), 134 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = client.c draw.c event.c layout.c main.c tag.c util.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+SRC += client.c draw.c event.c layout.c main.c tag.c util.c
+</a> OBJ = ${SRC:.c=.o}
+ 
+ all: options dwm
+<b>diff --git a/<a id="h1" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -230,7 +230,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 	setclientstate(c, IconicState);
+ 	c-&gt;isbanned = True;
+ 	focus(c);
+<a href="#h1-0-3" id="h1-0-3" class="d">-	lt-&gt;arrange(NULL);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<a href="#h1-1" id="h1-1" class="h">@@ -305,7 +305,7 @@ togglefloating(const char *arg) {
+</a> 	sel-&gt;isfloating = !sel-&gt;isfloating;
+ 	if(sel-&gt;isfloating)
+ 		resize(sel, sel-&gt;x, sel-&gt;y, sel-&gt;w, sel-&gt;h, True);
+<a href="#h1-1-3" id="h1-1-3" class="d">-	lt-&gt;arrange(NULL);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<a href="#h1-2" id="h1-2" class="h">@@ -337,7 +337,7 @@ unmanage(Client *c) {
+</a> 	XSync(dpy, False);
+ 	XSetErrorHandler(xerror);
+ 	XUngrabServer(dpy);
+<a href="#h1-2-3" id="h1-2-3" class="d">-	lt-&gt;arrange(NULL);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<b>diff --git a/<a id="h2" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -24,7 +24,8 @@ static Rule rule[] = { \
+</a> };
+ 
+ /* layout(s) */
+<a href="#h2-0-3" id="h2-0-3" class="d">-void tile(const char *arg);		/* arranges all windows tiled */
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+#include &quot;tile.h&quot;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+#include &quot;float.h&quot;
+</a> #define LAYOUTS \
+ static Layout layout[] = { \
+ 	/* symbol		function */ \
+<a href="#h2-1" id="h2-1" class="h">@@ -46,10 +47,10 @@ static Key key[] = { \
+</a> 		&quot;exec urxvtcd -tr -bg &#39;#111&#39; -fg &#39;#eee&#39; -cr &#39;#eee&#39; +sb -fn &#39;&quot;FONT&quot;&#39;&quot; }, \
+ 	{ MODKEY,			XK_space,	setlayout,	NULL }, \
+ 	{ MODKEY,			XK_b,		togglebar,	NULL }, \
+<a href="#h2-1-3" id="h2-1-3" class="d">-	{ MODKEY,			XK_h,		tile,		&quot;-0.05&quot; }, \
+</a> 	{ MODKEY,			XK_j,		focusclient,	&quot;1&quot; }, \
+ 	{ MODKEY,			XK_k,		focusclient,	&quot;-1&quot; }, \
+<a href="#h2-1-6" id="h2-1-6" class="d">-	{ MODKEY,			XK_l,		tile,		&quot;0.05&quot; }, \
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+	{ MODKEY,			XK_h,		incmaster,	&quot;-0.05&quot; }, \
+</a><a href="#h2-1-8" id="h2-1-8" class="i">+	{ MODKEY,			XK_l,		incmaster,	&quot;0.05&quot; }, \
+</a> 	{ MODKEY,			XK_m,		togglemax,	NULL }, \
+ 	{ MODKEY,			XK_Return,	zoom,		NULL }, \
+ 	{ MODKEY|ShiftMask,		XK_space,	togglefloating,	NULL }, \
+<b>diff --git a/<a id="h3" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -25,7 +25,8 @@ static Rule rule[] = { \
+</a> };
+ 
+ /* layout(s) */
+<a href="#h3-0-3" id="h3-0-3" class="d">-void tile(const char *arg);		/* arranges all windows tiled */
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+#include &quot;tile.h&quot;
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+#include &quot;float.h&quot;
+</a> #define LAYOUTS \
+ static Layout layout[] = { \
+ 	/* symbol		function */ \
+<a href="#h3-1" id="h3-1" class="h">@@ -44,10 +45,10 @@ static Key key[] = { \
+</a> 	{ MODKEY,			XK_p,		spawn, 		&quot;exe=`dmenu_path | dmenu` &amp;&amp; exec $exe&quot; }, \
+ 	{ MODKEY,			XK_space,	setlayout,	NULL }, \
+ 	{ MODKEY,			XK_b,		togglebar,	NULL }, \
+<a href="#h3-1-3" id="h3-1-3" class="d">-	{ MODKEY,			XK_h,		tile,		&quot;-0.05&quot; }, \
+</a> 	{ MODKEY,			XK_j,		focusclient,	&quot;1&quot; }, \
+ 	{ MODKEY,			XK_k,		focusclient,	&quot;-1&quot; }, \
+<a href="#h3-1-6" id="h3-1-6" class="d">-	{ MODKEY,			XK_l,		tile,		&quot;0.05&quot; }, \
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+	{ MODKEY,			XK_h,		incmaster,	&quot;-0.05&quot; }, \
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+	{ MODKEY,			XK_l,		incmaster,	&quot;0.05&quot; }, \
+</a> 	{ MODKEY,			XK_m,		togglemax,	NULL }, \
+ 	{ MODKEY,			XK_Return,	zoom,		NULL }, \
+ 	{ MODKEY|ShiftMask,		XK_space,	togglefloating,	NULL }, \
+<b>diff --git a/<a id="h4" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -3,6 +3,9 @@ VERSION = 4.4
+</a> 
+ # Customize below to fit your system
+ 
+<a href="#h4-0-3" id="h4-0-3" class="i">+# layouts
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+SRC = float.c tile.c
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+
+</a> # paths
+ PREFIX = /usr/local
+ MANPREFIX = ${PREFIX}/share/man
+<b>diff --git a/<a id="h5" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -76,7 +76,7 @@ typedef struct {
+</a> 
+ typedef struct {
+ 	const char *symbol;
+<a href="#h5-0-3" id="h5-0-3" class="d">-	void (*arrange)(const char *);
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	void (*arrange)(void);
+</a> } Layout;
+ 
+ extern const char *tags[];			/* all tags */
+<a href="#h5-1" id="h5-1" class="h">@@ -120,15 +120,12 @@ unsigned int textw(const char *text);	/* return the width of text in px*/
+</a> void grabkeys(void);			/* grab all keys defined in config.h */
+ 
+ /* layout.c */
+<a href="#h5-1-3" id="h5-1-3" class="d">-void floating(const char *arg);		/* arranges all windows floating */
+</a> void focusclient(const char *arg);	/* focuses next(1)/previous(-1) visible client */
+ void initlayouts(void);			/* initialize layout array */
+ Client *nexttiled(Client *c);		/* returns tiled successor of c */
+ void restack(void);			/* restores z layers of all clients */
+ void setlayout(const char *arg);	/* sets layout, NULL means next layout */
+ void togglebar(const char *arg);	/* shows/hides the bar */
+<a href="#h5-1-10" id="h5-1-10" class="d">-void togglemax(const char *arg);	/* toggles maximization of floating client */
+</a><a href="#h5-1-11" id="h5-1-11" class="d">-void zoom(const char *arg);		/* zooms the focused client to master area, arg is ignored */
+</a> 
+ /* main.c */
+ void updatebarpos(void);		/* updates the bar position */
+<b>diff --git a/<a id="h6" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -216,7 +216,7 @@ configurenotify(XEvent *e) {
+</a> 		dc.drawable = XCreatePixmap(dpy, root, sw, bh, DefaultDepth(dpy, screen));
+ 		XResizeWindow(dpy, barwin, sw, bh);
+ 		updatebarpos();
+<a href="#h6-0-3" id="h6-0-3" class="d">-		lt-&gt;arrange(NULL);
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+		lt-&gt;arrange();
+</a> 	}
+ }
+ 
+<a href="#h6-1" id="h6-1" class="h">@@ -317,7 +317,7 @@ propertynotify(XEvent *e) {
+</a> 			case XA_WM_TRANSIENT_FOR:
+ 				XGetTransientForHint(dpy, c-&gt;win, &amp;trans);
+ 				if(!c-&gt;isfloating &amp;&amp; (c-&gt;isfloating = (getclient(trans) != NULL)))
+<a href="#h6-1-3" id="h6-1-3" class="d">-					lt-&gt;arrange(NULL);
+</a><a href="#h6-1-4" id="h6-1-4" class="i">+					lt-&gt;arrange();
+</a> 				break;
+ 			case XA_WM_NORMAL_HINTS:
+ 				updatesizehints(c);
+<b>diff --git a/<a id="h7" href="../file/float.c.html">float.c</a> b/<a href="../file/float.c.html">float.c</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -0,0 +1,41 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h7-0-1" id="h7-0-1" class="i">+#include &quot;dwm.h&quot;
+</a><a href="#h7-0-2" id="h7-0-2" class="i">+
+</a><a href="#h7-0-3" id="h7-0-3" class="i">+/* extern */
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+
+</a><a href="#h7-0-5" id="h7-0-5" class="i">+void
+</a><a href="#h7-0-6" id="h7-0-6" class="i">+floating(void) {
+</a><a href="#h7-0-7" id="h7-0-7" class="i">+	Client *c;
+</a><a href="#h7-0-8" id="h7-0-8" class="i">+
+</a><a href="#h7-0-9" id="h7-0-9" class="i">+	if(lt-&gt;arrange != floating)
+</a><a href="#h7-0-10" id="h7-0-10" class="i">+		return;
+</a><a href="#h7-0-11" id="h7-0-11" class="i">+
+</a><a href="#h7-0-12" id="h7-0-12" class="i">+	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h7-0-13" id="h7-0-13" class="i">+		if(isvisible(c)) {
+</a><a href="#h7-0-14" id="h7-0-14" class="i">+			unban(c);
+</a><a href="#h7-0-15" id="h7-0-15" class="i">+			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+</a><a href="#h7-0-16" id="h7-0-16" class="i">+		}
+</a><a href="#h7-0-17" id="h7-0-17" class="i">+		else
+</a><a href="#h7-0-18" id="h7-0-18" class="i">+			ban(c);
+</a><a href="#h7-0-19" id="h7-0-19" class="i">+	focus(NULL);
+</a><a href="#h7-0-20" id="h7-0-20" class="i">+	restack();
+</a><a href="#h7-0-21" id="h7-0-21" class="i">+}
+</a><a href="#h7-0-22" id="h7-0-22" class="i">+
+</a><a href="#h7-0-23" id="h7-0-23" class="i">+void
+</a><a href="#h7-0-24" id="h7-0-24" class="i">+togglemax(const char *arg) {
+</a><a href="#h7-0-25" id="h7-0-25" class="i">+	XEvent ev;
+</a><a href="#h7-0-26" id="h7-0-26" class="i">+
+</a><a href="#h7-0-27" id="h7-0-27" class="i">+	if(!sel || (lt-&gt;arrange != floating &amp;&amp; !sel-&gt;isfloating) || sel-&gt;isfixed)
+</a><a href="#h7-0-28" id="h7-0-28" class="i">+		return;
+</a><a href="#h7-0-29" id="h7-0-29" class="i">+	if((sel-&gt;ismax = !sel-&gt;ismax)) {
+</a><a href="#h7-0-30" id="h7-0-30" class="i">+		sel-&gt;rx = sel-&gt;x;
+</a><a href="#h7-0-31" id="h7-0-31" class="i">+		sel-&gt;ry = sel-&gt;y;
+</a><a href="#h7-0-32" id="h7-0-32" class="i">+		sel-&gt;rw = sel-&gt;w;
+</a><a href="#h7-0-33" id="h7-0-33" class="i">+		sel-&gt;rh = sel-&gt;h;
+</a><a href="#h7-0-34" id="h7-0-34" class="i">+		resize(sel, wax, way, waw - 2 * sel-&gt;border, wah - 2 * sel-&gt;border, True);
+</a><a href="#h7-0-35" id="h7-0-35" class="i">+	}
+</a><a href="#h7-0-36" id="h7-0-36" class="i">+	else
+</a><a href="#h7-0-37" id="h7-0-37" class="i">+		resize(sel, sel-&gt;rx, sel-&gt;ry, sel-&gt;rw, sel-&gt;rh, True);
+</a><a href="#h7-0-38" id="h7-0-38" class="i">+	drawstatus();
+</a><a href="#h7-0-39" id="h7-0-39" class="i">+	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+</a><a href="#h7-0-40" id="h7-0-40" class="i">+}
+</a><b>diff --git a/<a id="h8" href="../file/float.h.html">float.h</a> b/<a href="../file/float.h.html">float.h</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -0,0 +1,5 @@
+</a><a href="#h8-0-0" id="h8-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h8-0-1" id="h8-0-1" class="i">+
+</a><a href="#h8-0-2" id="h8-0-2" class="i">+/* float.c */
+</a><a href="#h8-0-3" id="h8-0-3" class="i">+void floating(void);			/* arranges all windows floating */
+</a><a href="#h8-0-4" id="h8-0-4" class="i">+void togglemax(const char *arg);	/* toggles maximization of floating client */
+</a><b>diff --git a/<a id="h9" href="../file/layout.c.html">layout.c</a> b/<a href="../file/layout.c.html">layout.c</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -1,6 +1,5 @@
+</a> /* See LICENSE file for copyright and license details. */
+ #include &quot;dwm.h&quot;
+<a href="#h9-0-2" id="h9-0-2" class="d">-#include &lt;stdio.h&gt;
+</a> #include &lt;stdlib.h&gt;
+ 
+ unsigned int blw = 0;
+<a href="#h9-1" id="h9-1" class="h">@@ -15,24 +14,6 @@ LAYOUTS
+</a> /* extern */
+ 
+ void
+<a href="#h9-1-3" id="h9-1-3" class="d">-floating(const char *arg) {
+</a><a href="#h9-1-4" id="h9-1-4" class="d">-	Client *c;
+</a><a href="#h9-1-5" id="h9-1-5" class="d">-
+</a><a href="#h9-1-6" id="h9-1-6" class="d">-	if(lt-&gt;arrange != floating)
+</a><a href="#h9-1-7" id="h9-1-7" class="d">-		return;
+</a><a href="#h9-1-8" id="h9-1-8" class="d">-
+</a><a href="#h9-1-9" id="h9-1-9" class="d">-	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h9-1-10" id="h9-1-10" class="d">-		if(isvisible(c)) {
+</a><a href="#h9-1-11" id="h9-1-11" class="d">-			unban(c);
+</a><a href="#h9-1-12" id="h9-1-12" class="d">-			resize(c, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h, True);
+</a><a href="#h9-1-13" id="h9-1-13" class="d">-		}
+</a><a href="#h9-1-14" id="h9-1-14" class="d">-		else
+</a><a href="#h9-1-15" id="h9-1-15" class="d">-			ban(c);
+</a><a href="#h9-1-16" id="h9-1-16" class="d">-	focus(NULL);
+</a><a href="#h9-1-17" id="h9-1-17" class="d">-	restack();
+</a><a href="#h9-1-18" id="h9-1-18" class="d">-}
+</a><a href="#h9-1-19" id="h9-1-19" class="d">-
+</a><a href="#h9-1-20" id="h9-1-20" class="d">-void
+</a> focusclient(const char *arg) {
+ 	Client *c;
+    
+<a href="#h9-2" id="h9-2" class="h">@@ -120,110 +101,17 @@ setlayout(const char *arg) {
+</a> 		lt = &amp;layout[i];
+ 	}
+ 	if(sel)
+<a href="#h9-2-3" id="h9-2-3" class="d">-		lt-&gt;arrange(NULL);
+</a><a href="#h9-2-4" id="h9-2-4" class="i">+		lt-&gt;arrange();
+</a> 	else
+ 		drawstatus();
+ }
+ 
+ void
+<a href="#h9-2-10" id="h9-2-10" class="d">-tile(const char *arg) {
+</a><a href="#h9-2-11" id="h9-2-11" class="d">-	static double master = MASTER;
+</a><a href="#h9-2-12" id="h9-2-12" class="d">-	double delta;
+</a><a href="#h9-2-13" id="h9-2-13" class="d">-	unsigned int i, n, nx, ny, nw, nh, mw, th;
+</a><a href="#h9-2-14" id="h9-2-14" class="d">-	Client *c;
+</a><a href="#h9-2-15" id="h9-2-15" class="d">-
+</a><a href="#h9-2-16" id="h9-2-16" class="d">-	if(lt-&gt;arrange != tile)
+</a><a href="#h9-2-17" id="h9-2-17" class="d">-		return;
+</a><a href="#h9-2-18" id="h9-2-18" class="d">-
+</a><a href="#h9-2-19" id="h9-2-19" class="d">-	/* arg handling, manipulate master */
+</a><a href="#h9-2-20" id="h9-2-20" class="d">-	if(arg &amp;&amp; (1 == sscanf(arg, &quot;%lf&quot;, &amp;delta))) {
+</a><a href="#h9-2-21" id="h9-2-21" class="d">-		if(delta + master &gt; 0.1 &amp;&amp; delta + master &lt; 0.9)
+</a><a href="#h9-2-22" id="h9-2-22" class="d">-			master += delta;
+</a><a href="#h9-2-23" id="h9-2-23" class="d">-	}
+</a><a href="#h9-2-24" id="h9-2-24" class="d">-
+</a><a href="#h9-2-25" id="h9-2-25" class="d">-	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+</a><a href="#h9-2-26" id="h9-2-26" class="d">-		n++;
+</a><a href="#h9-2-27" id="h9-2-27" class="d">-
+</a><a href="#h9-2-28" id="h9-2-28" class="d">-	/* window geoms */
+</a><a href="#h9-2-29" id="h9-2-29" class="d">-	mw = (n == 1) ? waw : master * waw;
+</a><a href="#h9-2-30" id="h9-2-30" class="d">-	th = (n &gt; 1) ? wah / (n - 1) : 0;
+</a><a href="#h9-2-31" id="h9-2-31" class="d">-	if(n &gt; 1 &amp;&amp; th &lt; bh)
+</a><a href="#h9-2-32" id="h9-2-32" class="d">-		th = wah;
+</a><a href="#h9-2-33" id="h9-2-33" class="d">-
+</a><a href="#h9-2-34" id="h9-2-34" class="d">-	nx = wax;
+</a><a href="#h9-2-35" id="h9-2-35" class="d">-	ny = way;
+</a><a href="#h9-2-36" id="h9-2-36" class="d">-	for(i = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h9-2-37" id="h9-2-37" class="d">-		if(isvisible(c)) {
+</a><a href="#h9-2-38" id="h9-2-38" class="d">-			unban(c);
+</a><a href="#h9-2-39" id="h9-2-39" class="d">-			if(c-&gt;isfloating)
+</a><a href="#h9-2-40" id="h9-2-40" class="d">-				continue;
+</a><a href="#h9-2-41" id="h9-2-41" class="d">-			c-&gt;ismax = False;
+</a><a href="#h9-2-42" id="h9-2-42" class="d">-			if(i == 0) { /* master */
+</a><a href="#h9-2-43" id="h9-2-43" class="d">-				nw = mw - 2 * c-&gt;border;
+</a><a href="#h9-2-44" id="h9-2-44" class="d">-				nh = wah - 2 * c-&gt;border;
+</a><a href="#h9-2-45" id="h9-2-45" class="d">-			}
+</a><a href="#h9-2-46" id="h9-2-46" class="d">-			else {  /* tile window */
+</a><a href="#h9-2-47" id="h9-2-47" class="d">-				if(i == 1) {
+</a><a href="#h9-2-48" id="h9-2-48" class="d">-					ny = way;
+</a><a href="#h9-2-49" id="h9-2-49" class="d">-					nx += mw;
+</a><a href="#h9-2-50" id="h9-2-50" class="d">-				}
+</a><a href="#h9-2-51" id="h9-2-51" class="d">-				nw = waw - mw - 2 * c-&gt;border;
+</a><a href="#h9-2-52" id="h9-2-52" class="d">-				if(i + 1 == n) /* remainder */
+</a><a href="#h9-2-53" id="h9-2-53" class="d">-					nh = (way + wah) - ny - 2 * c-&gt;border;
+</a><a href="#h9-2-54" id="h9-2-54" class="d">-				else
+</a><a href="#h9-2-55" id="h9-2-55" class="d">-					nh = th - 2 * c-&gt;border;
+</a><a href="#h9-2-56" id="h9-2-56" class="d">-			}
+</a><a href="#h9-2-57" id="h9-2-57" class="d">-			resize(c, nx, ny, nw, nh, False);
+</a><a href="#h9-2-58" id="h9-2-58" class="d">-			if(n &gt; 1 &amp;&amp; th != wah)
+</a><a href="#h9-2-59" id="h9-2-59" class="d">-				ny += nh + 2 * c-&gt;border;
+</a><a href="#h9-2-60" id="h9-2-60" class="d">-			i++;
+</a><a href="#h9-2-61" id="h9-2-61" class="d">-		}
+</a><a href="#h9-2-62" id="h9-2-62" class="d">-		else
+</a><a href="#h9-2-63" id="h9-2-63" class="d">-			ban(c);
+</a><a href="#h9-2-64" id="h9-2-64" class="d">-	focus(NULL);
+</a><a href="#h9-2-65" id="h9-2-65" class="d">-	restack();
+</a><a href="#h9-2-66" id="h9-2-66" class="d">-}
+</a><a href="#h9-2-67" id="h9-2-67" class="d">-
+</a><a href="#h9-2-68" id="h9-2-68" class="d">-void
+</a> togglebar(const char *arg) {
+ 	if(bpos == BarOff)
+ 		bpos = (BARPOS == BarOff) ? BarTop : BARPOS;
+ 	else
+ 		bpos = BarOff;
+ 	updatebarpos();
+<a href="#h9-2-75" id="h9-2-75" class="d">-	lt-&gt;arrange(NULL);
+</a><a href="#h9-2-76" id="h9-2-76" class="d">-}
+</a><a href="#h9-2-77" id="h9-2-77" class="d">-
+</a><a href="#h9-2-78" id="h9-2-78" class="d">-void
+</a><a href="#h9-2-79" id="h9-2-79" class="d">-togglemax(const char *arg) {
+</a><a href="#h9-2-80" id="h9-2-80" class="d">-	XEvent ev;
+</a><a href="#h9-2-81" id="h9-2-81" class="d">-
+</a><a href="#h9-2-82" id="h9-2-82" class="d">-	if(!sel || (lt-&gt;arrange != floating &amp;&amp; !sel-&gt;isfloating) || sel-&gt;isfixed)
+</a><a href="#h9-2-83" id="h9-2-83" class="d">-		return;
+</a><a href="#h9-2-84" id="h9-2-84" class="d">-	if((sel-&gt;ismax = !sel-&gt;ismax)) {
+</a><a href="#h9-2-85" id="h9-2-85" class="d">-		sel-&gt;rx = sel-&gt;x;
+</a><a href="#h9-2-86" id="h9-2-86" class="d">-		sel-&gt;ry = sel-&gt;y;
+</a><a href="#h9-2-87" id="h9-2-87" class="d">-		sel-&gt;rw = sel-&gt;w;
+</a><a href="#h9-2-88" id="h9-2-88" class="d">-		sel-&gt;rh = sel-&gt;h;
+</a><a href="#h9-2-89" id="h9-2-89" class="d">-		resize(sel, wax, way, waw - 2 * sel-&gt;border, wah - 2 * sel-&gt;border, True);
+</a><a href="#h9-2-90" id="h9-2-90" class="d">-	}
+</a><a href="#h9-2-91" id="h9-2-91" class="d">-	else
+</a><a href="#h9-2-92" id="h9-2-92" class="d">-		resize(sel, sel-&gt;rx, sel-&gt;ry, sel-&gt;rw, sel-&gt;rh, True);
+</a><a href="#h9-2-93" id="h9-2-93" class="d">-	drawstatus();
+</a><a href="#h9-2-94" id="h9-2-94" class="d">-	while(XCheckMaskEvent(dpy, EnterWindowMask, &amp;ev));
+</a><a href="#h9-2-95" id="h9-2-95" class="d">-}
+</a><a href="#h9-2-96" id="h9-2-96" class="d">-
+</a><a href="#h9-2-97" id="h9-2-97" class="d">-void
+</a><a href="#h9-2-98" id="h9-2-98" class="d">-zoom(const char *arg) {
+</a><a href="#h9-2-99" id="h9-2-99" class="d">-	Client *c;
+</a><a href="#h9-2-100" id="h9-2-100" class="d">-
+</a><a href="#h9-2-101" id="h9-2-101" class="d">-	if(!sel || lt-&gt;arrange == floating || sel-&gt;isfloating)
+</a><a href="#h9-2-102" id="h9-2-102" class="d">-		return;
+</a><a href="#h9-2-103" id="h9-2-103" class="d">-	if((c = sel) == nexttiled(clients))
+</a><a href="#h9-2-104" id="h9-2-104" class="d">-		if(!(c = nexttiled(c-&gt;next)))
+</a><a href="#h9-2-105" id="h9-2-105" class="d">-			return;
+</a><a href="#h9-2-106" id="h9-2-106" class="d">-	detach(c);
+</a><a href="#h9-2-107" id="h9-2-107" class="d">-	attach(c);
+</a><a href="#h9-2-108" id="h9-2-108" class="d">-	focus(c);
+</a><a href="#h9-2-109" id="h9-2-109" class="d">-	lt-&gt;arrange(NULL);
+</a><a href="#h9-2-110" id="h9-2-110" class="i">+	lt-&gt;arrange();
+</a> }
+<b>diff --git a/<a id="h10" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -110,7 +110,7 @@ tag(const char *arg) {
+</a> 	i = arg ? atoi(arg) : 0;
+ 	if(i &gt;= 0 &amp;&amp; i &lt; ntags)
+ 		sel-&gt;tags[i] = True;
+<a href="#h10-0-3" id="h10-0-3" class="d">-	lt-&gt;arrange(NULL);
+</a><a href="#h10-0-4" id="h10-0-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<a href="#h10-1" id="h10-1" class="h">@@ -124,7 +124,7 @@ toggletag(const char *arg) {
+</a> 	for(j = 0; j &lt; ntags &amp;&amp; !sel-&gt;tags[j]; j++);
+ 	if(j == ntags)
+ 		sel-&gt;tags[i] = True;
+<a href="#h10-1-3" id="h10-1-3" class="d">-	lt-&gt;arrange(NULL);
+</a><a href="#h10-1-4" id="h10-1-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<a href="#h10-2" id="h10-2" class="h">@@ -136,7 +136,7 @@ toggleview(const char *arg) {
+</a> 	for(j = 0; j &lt; ntags &amp;&amp; !seltag[j]; j++);
+ 	if(j == ntags)
+ 		seltag[i] = True; /* cannot toggle last view */
+<a href="#h10-2-3" id="h10-2-3" class="d">-	lt-&gt;arrange(NULL);
+</a><a href="#h10-2-4" id="h10-2-4" class="i">+	lt-&gt;arrange();
+</a> }
+ 
+ void
+<a href="#h10-3" id="h10-3" class="h">@@ -148,5 +148,5 @@ view(const char *arg) {
+</a> 	i = arg ? atoi(arg) : 0;
+ 	if(i &gt;= 0 &amp;&amp; i &lt; ntags)
+ 		seltag[i] = True;
+<a href="#h10-3-3" id="h10-3-3" class="d">-	lt-&gt;arrange(NULL);
+</a><a href="#h10-3-4" id="h10-3-4" class="i">+	lt-&gt;arrange();
+</a> }
+<b>diff --git a/<a id="h11" href="../file/tile.c.html">tile.c</a> b/<a href="../file/tile.c.html">tile.c</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -0,0 +1,88 @@
+</a><a href="#h11-0-0" id="h11-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h11-0-1" id="h11-0-1" class="i">+#include &quot;dwm.h&quot;
+</a><a href="#h11-0-2" id="h11-0-2" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h11-0-3" id="h11-0-3" class="i">+
+</a><a href="#h11-0-4" id="h11-0-4" class="i">+/* static */
+</a><a href="#h11-0-5" id="h11-0-5" class="i">+
+</a><a href="#h11-0-6" id="h11-0-6" class="i">+static double master = MASTER;
+</a><a href="#h11-0-7" id="h11-0-7" class="i">+
+</a><a href="#h11-0-8" id="h11-0-8" class="i">+/* extern */
+</a><a href="#h11-0-9" id="h11-0-9" class="i">+
+</a><a href="#h11-0-10" id="h11-0-10" class="i">+void
+</a><a href="#h11-0-11" id="h11-0-11" class="i">+incmaster(const char *arg) {
+</a><a href="#h11-0-12" id="h11-0-12" class="i">+	double delta;
+</a><a href="#h11-0-13" id="h11-0-13" class="i">+
+</a><a href="#h11-0-14" id="h11-0-14" class="i">+	if(lt-&gt;arrange != tile)
+</a><a href="#h11-0-15" id="h11-0-15" class="i">+		return;
+</a><a href="#h11-0-16" id="h11-0-16" class="i">+
+</a><a href="#h11-0-17" id="h11-0-17" class="i">+	/* arg handling, manipulate master */
+</a><a href="#h11-0-18" id="h11-0-18" class="i">+	if(arg &amp;&amp; (1 == sscanf(arg, &quot;%lf&quot;, &amp;delta))) {
+</a><a href="#h11-0-19" id="h11-0-19" class="i">+		if(delta + master &gt; 0.1 &amp;&amp; delta + master &lt; 0.9)
+</a><a href="#h11-0-20" id="h11-0-20" class="i">+			master += delta;
+</a><a href="#h11-0-21" id="h11-0-21" class="i">+	}
+</a><a href="#h11-0-22" id="h11-0-22" class="i">+
+</a><a href="#h11-0-23" id="h11-0-23" class="i">+	lt-&gt;arrange();
+</a><a href="#h11-0-24" id="h11-0-24" class="i">+}
+</a><a href="#h11-0-25" id="h11-0-25" class="i">+
+</a><a href="#h11-0-26" id="h11-0-26" class="i">+void
+</a><a href="#h11-0-27" id="h11-0-27" class="i">+tile(void) {
+</a><a href="#h11-0-28" id="h11-0-28" class="i">+	unsigned int i, n, nx, ny, nw, nh, mw, th;
+</a><a href="#h11-0-29" id="h11-0-29" class="i">+	Client *c;
+</a><a href="#h11-0-30" id="h11-0-30" class="i">+
+</a><a href="#h11-0-31" id="h11-0-31" class="i">+	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c-&gt;next))
+</a><a href="#h11-0-32" id="h11-0-32" class="i">+		n++;
+</a><a href="#h11-0-33" id="h11-0-33" class="i">+
+</a><a href="#h11-0-34" id="h11-0-34" class="i">+	/* window geoms */
+</a><a href="#h11-0-35" id="h11-0-35" class="i">+	mw = (n == 1) ? waw : master * waw;
+</a><a href="#h11-0-36" id="h11-0-36" class="i">+	th = (n &gt; 1) ? wah / (n - 1) : 0;
+</a><a href="#h11-0-37" id="h11-0-37" class="i">+	if(n &gt; 1 &amp;&amp; th &lt; bh)
+</a><a href="#h11-0-38" id="h11-0-38" class="i">+		th = wah;
+</a><a href="#h11-0-39" id="h11-0-39" class="i">+
+</a><a href="#h11-0-40" id="h11-0-40" class="i">+	nx = wax;
+</a><a href="#h11-0-41" id="h11-0-41" class="i">+	ny = way;
+</a><a href="#h11-0-42" id="h11-0-42" class="i">+	for(i = 0, c = clients; c; c = c-&gt;next)
+</a><a href="#h11-0-43" id="h11-0-43" class="i">+		if(isvisible(c)) {
+</a><a href="#h11-0-44" id="h11-0-44" class="i">+			unban(c);
+</a><a href="#h11-0-45" id="h11-0-45" class="i">+			if(c-&gt;isfloating)
+</a><a href="#h11-0-46" id="h11-0-46" class="i">+				continue;
+</a><a href="#h11-0-47" id="h11-0-47" class="i">+			c-&gt;ismax = False;
+</a><a href="#h11-0-48" id="h11-0-48" class="i">+			if(i == 0) { /* master */
+</a><a href="#h11-0-49" id="h11-0-49" class="i">+				nw = mw - 2 * c-&gt;border;
+</a><a href="#h11-0-50" id="h11-0-50" class="i">+				nh = wah - 2 * c-&gt;border;
+</a><a href="#h11-0-51" id="h11-0-51" class="i">+			}
+</a><a href="#h11-0-52" id="h11-0-52" class="i">+			else {  /* tile window */
+</a><a href="#h11-0-53" id="h11-0-53" class="i">+				if(i == 1) {
+</a><a href="#h11-0-54" id="h11-0-54" class="i">+					ny = way;
+</a><a href="#h11-0-55" id="h11-0-55" class="i">+					nx += mw;
+</a><a href="#h11-0-56" id="h11-0-56" class="i">+				}
+</a><a href="#h11-0-57" id="h11-0-57" class="i">+				nw = waw - mw - 2 * c-&gt;border;
+</a><a href="#h11-0-58" id="h11-0-58" class="i">+				if(i + 1 == n) /* remainder */
+</a><a href="#h11-0-59" id="h11-0-59" class="i">+					nh = (way + wah) - ny - 2 * c-&gt;border;
+</a><a href="#h11-0-60" id="h11-0-60" class="i">+				else
+</a><a href="#h11-0-61" id="h11-0-61" class="i">+					nh = th - 2 * c-&gt;border;
+</a><a href="#h11-0-62" id="h11-0-62" class="i">+			}
+</a><a href="#h11-0-63" id="h11-0-63" class="i">+			resize(c, nx, ny, nw, nh, False);
+</a><a href="#h11-0-64" id="h11-0-64" class="i">+			if(n &gt; 1 &amp;&amp; th != wah)
+</a><a href="#h11-0-65" id="h11-0-65" class="i">+				ny += nh + 2 * c-&gt;border;
+</a><a href="#h11-0-66" id="h11-0-66" class="i">+			i++;
+</a><a href="#h11-0-67" id="h11-0-67" class="i">+		}
+</a><a href="#h11-0-68" id="h11-0-68" class="i">+		else
+</a><a href="#h11-0-69" id="h11-0-69" class="i">+			ban(c);
+</a><a href="#h11-0-70" id="h11-0-70" class="i">+	focus(NULL);
+</a><a href="#h11-0-71" id="h11-0-71" class="i">+	restack();
+</a><a href="#h11-0-72" id="h11-0-72" class="i">+}
+</a><a href="#h11-0-73" id="h11-0-73" class="i">+
+</a><a href="#h11-0-74" id="h11-0-74" class="i">+void
+</a><a href="#h11-0-75" id="h11-0-75" class="i">+zoom(const char *arg) {
+</a><a href="#h11-0-76" id="h11-0-76" class="i">+	Client *c;
+</a><a href="#h11-0-77" id="h11-0-77" class="i">+
+</a><a href="#h11-0-78" id="h11-0-78" class="i">+	if(!sel || lt-&gt;arrange == floating || sel-&gt;isfloating)
+</a><a href="#h11-0-79" id="h11-0-79" class="i">+		return;
+</a><a href="#h11-0-80" id="h11-0-80" class="i">+	if((c = sel) == nexttiled(clients))
+</a><a href="#h11-0-81" id="h11-0-81" class="i">+		if(!(c = nexttiled(c-&gt;next)))
+</a><a href="#h11-0-82" id="h11-0-82" class="i">+			return;
+</a><a href="#h11-0-83" id="h11-0-83" class="i">+	detach(c);
+</a><a href="#h11-0-84" id="h11-0-84" class="i">+	attach(c);
+</a><a href="#h11-0-85" id="h11-0-85" class="i">+	focus(c);
+</a><a href="#h11-0-86" id="h11-0-86" class="i">+	lt-&gt;arrange();
+</a><a href="#h11-0-87" id="h11-0-87" class="i">+}
+</a><b>diff --git a/<a id="h12" href="../file/tile.h.html">tile.h</a> b/<a href="../file/tile.h.html">tile.h</a></b>
+<a href="#h12-0" id="h12-0" class="h">@@ -0,0 +1,6 @@
+</a><a href="#h12-0-0" id="h12-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h12-0-1" id="h12-0-1" class="i">+
+</a><a href="#h12-0-2" id="h12-0-2" class="i">+/* tile.c */
+</a><a href="#h12-0-3" id="h12-0-3" class="i">+void incmaster(const char *arg);	/* arranges all windows tiled */
+</a><a href="#h12-0-4" id="h12-0-4" class="i">+void tile(void);			/* arranges all windows tiled */
+</a><a href="#h12-0-5" id="h12-0-5" class="i">+void zoom(const char *arg);		/* zooms the focused client to master area, arg is ignored */
+</a></pre>
+</div>
+</body>
+</html>

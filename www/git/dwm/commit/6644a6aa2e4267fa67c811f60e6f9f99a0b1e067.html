@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>some minor fixes regarding the new xinerama support - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6644a6aa2e4267fa67c811f60e6f9f99a0b1e067.html">6644a6aa2e4267fa67c811f60e6f9f99a0b1e067</a>
+<b>parent</b> <a href="../commit/3da24539976b4474862415606f641d0f69336729.html">3da24539976b4474862415606f641d0f69336729</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Sat, 20 Jun 2009 16:18:02 +0100
+
+some minor fixes regarding the new xinerama support
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">78</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 48 insertions(+), 30 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -116,6 +116,7 @@ typedef struct {
+</a> 
+ typedef struct {
+ 	char symbol[4];
+<a href="#h0-0-3" id="h0-0-3" class="i">+	float mfact;
+</a> 	int by, btx;          /* bar geometry */
+ 	int wx, wy, ww, wh;   /* window area  */
+ 	unsigned int seltags;
+<a href="#h0-1" id="h0-1" class="h">@@ -251,7 +252,7 @@ static Display *dpy;
+</a> static DC dc;
+ static Layout *lt[] = { NULL, NULL };
+ static Monitor *mon = NULL, *selmon = NULL;
+<a href="#h0-1-3" id="h0-1-3" class="d">-static unsigned int nmons;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static unsigned int nmons = 0;
+</a> static Window root;
+ /* configuration, allows nested code to access above variables */
+ #include &quot;config.h&quot;
+<a href="#h0-2" id="h0-2" class="h">@@ -1322,10 +1323,10 @@ setmfact(const Arg *arg) {
+</a> 
+ 	if(!arg || !lt[selmon-&gt;sellt]-&gt;arrange)
+ 		return;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	f = arg-&gt;f &lt; 1.0 ? arg-&gt;f + mfact : arg-&gt;f - 1.0;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	f = arg-&gt;f &lt; 1.0 ? arg-&gt;f + selmon-&gt;mfact : arg-&gt;f - 1.0;
+</a> 	if(f &lt; 0.1 || f &gt; 0.9)
+ 		return;
+<a href="#h0-2-7" id="h0-2-7" class="d">-	mfact = f;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	selmon-&gt;mfact = f;
+</a> 	arrange();
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -1483,7 +1484,7 @@ tile(Monitor *m) {
+</a> 
+ 	/* master */
+ 	c = nexttiled(m, clients);
+<a href="#h0-3-3" id="h0-3-3" class="d">-	mw = mfact * m-&gt;ww;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	mw = m-&gt;mfact * m-&gt;ww;
+</a> 	resize(c, m-&gt;wx, m-&gt;wy, (n == 1 ? m-&gt;ww : mw) - 2 * c-&gt;bw, m-&gt;wh - 2 * c-&gt;bw);
+ 
+ 	if(--n == 0)
+<a href="#h0-4" id="h0-4" class="h">@@ -1581,30 +1582,31 @@ unmapnotify(XEvent *e) {
+</a> void
+ updategeom(void) {
+ #ifdef XINERAMA
+<a href="#h0-4-3" id="h0-4-3" class="d">-	int di, x, y, n;
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	unsigned int dui, i = 0;
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-	Bool pquery;
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+	int n;
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+	unsigned int i = 0;
+</a> 	Client *c;
+<a href="#h0-4-9" id="h0-4-9" class="d">-	Window dummy;
+</a> 	XineramaScreenInfo *info = NULL;
+ 
+ 	/* window area geometry */
+ 	if(XineramaIsActive(dpy) &amp;&amp; (info = XineramaQueryScreens(dpy, &amp;n))) {
+<a href="#h0-4-14" id="h0-4-14" class="d">-		nmons = (unsigned int)n;
+</a><a href="#h0-4-15" id="h0-4-15" class="d">-		for(c = clients; c; c = c-&gt;next)
+</a><a href="#h0-4-16" id="h0-4-16" class="d">-			if(c-&gt;mon &gt;= nmons)
+</a><a href="#h0-4-17" id="h0-4-17" class="d">-				c-&gt;mon = nmons - 1;
+</a><a href="#h0-4-18" id="h0-4-18" class="d">-		if(!(mon = (Monitor *)realloc(mon, sizeof(Monitor) * nmons)))
+</a><a href="#h0-4-19" id="h0-4-19" class="d">-			die(&quot;fatal: could not realloc() %u bytes\n&quot;, sizeof(Monitor) * nmons);
+</a><a href="#h0-4-20" id="h0-4-20" class="d">-		pquery = XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x, &amp;y, &amp;di, &amp;di, &amp;dui);
+</a><a href="#h0-4-21" id="h0-4-21" class="d">-		for(i = 0; i &lt; nmons; i++) {
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+		if(n != nmons) {
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+			for(c = clients; c; c = c-&gt;next)
+</a><a href="#h0-4-24" id="h0-4-24" class="i">+				if(c-&gt;mon &gt;= n)
+</a><a href="#h0-4-25" id="h0-4-25" class="i">+					c-&gt;mon = n - 1;
+</a><a href="#h0-4-26" id="h0-4-26" class="i">+			if(!(mon = (Monitor *)realloc(mon, sizeof(Monitor) * n)))
+</a><a href="#h0-4-27" id="h0-4-27" class="i">+				die(&quot;fatal: could not realloc() %u bytes\n&quot;, sizeof(Monitor) * nmons);
+</a><a href="#h0-4-28" id="h0-4-28" class="i">+		}
+</a><a href="#h0-4-29" id="h0-4-29" class="i">+		for(i = 0; i &lt; n ; i++) {
+</a> 			/* TODO: consider re-using XineramaScreenInfo */
+ 			mon[i].symbol[0] = &#39;[&#39;;
+ 			mon[i].symbol[1] = &#39;0&#39; + info[i].screen_number;
+ 			mon[i].symbol[2] = &#39;]&#39;;
+ 			mon[i].symbol[3] = 0;
+<a href="#h0-4-35" id="h0-4-35" class="d">-			mon[i].showbar = showbar;
+</a><a href="#h0-4-36" id="h0-4-36" class="d">-			mon[i].topbar = topbar;
+</a><a href="#h0-4-37" id="h0-4-37" class="i">+			if(!selmon) { /* not initialised yet */
+</a><a href="#h0-4-38" id="h0-4-38" class="i">+				mon[i].mfact = mfact;
+</a><a href="#h0-4-39" id="h0-4-39" class="i">+				mon[i].showbar = showbar;
+</a><a href="#h0-4-40" id="h0-4-40" class="i">+				mon[i].topbar = topbar;
+</a><a href="#h0-4-41" id="h0-4-41" class="i">+			}
+</a> 			mon[i].wx = info[i].x_org;
+ 			mon[i].wy = mon[i].showbar &amp;&amp; mon[i].topbar ? info[i].y_org + bh : info[i].y_org;
+ 			mon[i].ww = info[i].width;
+<a href="#h0-5" id="h0-5" class="h">@@ -1615,24 +1617,39 @@ updategeom(void) {
+</a> 				mon[i].by = mon[i].topbar ? info[i].y_org : mon[i].wy + mon[i].wh;
+ 			else
+ 				mon[i].by = -bh;
+<a href="#h0-5-3" id="h0-5-3" class="d">-			if(pquery &amp;&amp; INRECT(x, y, info[i].x_org, info[i].y_org, info[i].width, info[i].height))
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-				selmon = &amp;mon[i];
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+		}
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+		nmons = (unsigned int)n;
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+		if(!selmon) {
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+			selmon = &amp;mon[0];
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+			int di, x, y;
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+			unsigned int dui;
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+			Window dummy;
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+			if(XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x, &amp;y, &amp;di, &amp;di, &amp;dui)) 
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+				for(i = 0; i &lt; nmons; i++)
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+					if(INRECT(x, y, info[i].x_org, info[i].y_org, info[i].width, info[i].height)) {
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+						selmon = &amp;mon[i];
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+						break;
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+					}
+</a> 		}
+ 		XFree(info);
+ 	}
+ 	else
+ #endif /* XINERAMA */
+ 	{
+<a href="#h0-5-24" id="h0-5-24" class="d">-		nmons = 1;
+</a><a href="#h0-5-25" id="h0-5-25" class="d">-		if(!(mon = (Monitor *)realloc(mon, sizeof(Monitor))))
+</a><a href="#h0-5-26" id="h0-5-26" class="d">-			die(&quot;fatal: could not realloc() %u bytes\n&quot;, sizeof(Monitor));
+</a><a href="#h0-5-27" id="h0-5-27" class="d">-		selmon = &amp;mon[0];
+</a><a href="#h0-5-28" id="h0-5-28" class="d">-		mon[0].symbol[0] = &#39;[&#39;;
+</a><a href="#h0-5-29" id="h0-5-29" class="d">-		mon[0].symbol[1] = &#39;0&#39;;
+</a><a href="#h0-5-30" id="h0-5-30" class="d">-		mon[0].symbol[2] = &#39;]&#39;;
+</a><a href="#h0-5-31" id="h0-5-31" class="d">-		mon[0].symbol[3] = 0;
+</a><a href="#h0-5-32" id="h0-5-32" class="d">-		mon[0].showbar = showbar;
+</a><a href="#h0-5-33" id="h0-5-33" class="d">-		mon[0].topbar = topbar;
+</a><a href="#h0-5-34" id="h0-5-34" class="i">+		if(!mon) {
+</a><a href="#h0-5-35" id="h0-5-35" class="i">+			nmons = 1;
+</a><a href="#h0-5-36" id="h0-5-36" class="i">+			if(!(mon = (Monitor *)malloc(sizeof(Monitor))))
+</a><a href="#h0-5-37" id="h0-5-37" class="i">+				die(&quot;fatal: could not malloc() %u bytes\n&quot;, sizeof(Monitor));
+</a><a href="#h0-5-38" id="h0-5-38" class="i">+		}
+</a><a href="#h0-5-39" id="h0-5-39" class="i">+		if(!selmon) {
+</a><a href="#h0-5-40" id="h0-5-40" class="i">+			mon[0].symbol[0] = &#39;[&#39;;
+</a><a href="#h0-5-41" id="h0-5-41" class="i">+			mon[0].symbol[1] = &#39;0&#39;;
+</a><a href="#h0-5-42" id="h0-5-42" class="i">+			mon[0].symbol[2] = &#39;]&#39;;
+</a><a href="#h0-5-43" id="h0-5-43" class="i">+			mon[0].symbol[3] = 0;
+</a><a href="#h0-5-44" id="h0-5-44" class="i">+			mon[0].mfact = mfact;
+</a><a href="#h0-5-45" id="h0-5-45" class="i">+			mon[0].showbar = showbar;
+</a><a href="#h0-5-46" id="h0-5-46" class="i">+			mon[0].topbar = topbar;
+</a><a href="#h0-5-47" id="h0-5-47" class="i">+		}
+</a> 		mon[0].wx = sx;
+ 		mon[0].wy = mon[0].showbar &amp;&amp; mon[0].topbar ? sy + bh : sy;
+ 		mon[0].ww = sw;
+<a href="#h0-6" id="h0-6" class="h">@@ -1643,6 +1660,7 @@ updategeom(void) {
+</a> 			mon[0].by = mon[0].topbar ? sy : mon[0].wy + mon[0].wh;
+ 		else
+ 			mon[0].by = -bh;
+<a href="#h0-6-3" id="h0-6-3" class="i">+		selmon = &amp;mon[0];
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

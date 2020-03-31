@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding Nibbles patch - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ca1c7f434bbf40a0ed65591910d81f13445c2db0.html">ca1c7f434bbf40a0ed65591910d81f13445c2db0</a>
+<b>parent</b> <a href="../commit/8cc71f8216d0ca28a2c22306e7efc9e7ec587383.html">8cc71f8216d0ca28a2c22306e7efc9e7ec587383</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Fri, 28 May 2010 13:20:17 +0200
+
+Adding Nibbles patch
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">8</td><td><span class="i">+++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>2 files changed, 8 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -12,15 +12,13 @@ static time_t sessiontime   = 0;
+</a> 	&quot;prop=\&quot;`xprop -id $2 $0 | cut -d &#39;\&quot;&#39; -f 2 | dmenu`\&quot; &amp;&amp;&quot; \
+ 	&quot;xprop -id $2 -f $1 8s -set $1 \&quot;$prop\&quot;&quot;, \
+ 	p, q, winid, NULL } }
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define DOWNLOAD(p)       { \
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define DOWNLOAD(d) { \
+</a> 	.v = (char *[]){ &quot;/bin/sh&quot;, &quot;-c&quot;, \
+<a href="#h0-0-6" id="h0-0-6" class="d">-	&quot;prop=\&quot;`xprop -id $1 $0 | cut -d &#39;\&quot;&#39; -f 2`\&quot;;&quot; \
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	&quot;xterm -e \&quot;wget --load-cookies ~/.surf/cookies.txt $prop;\&quot;&quot;, \
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	p, winid, NULL } }
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	&quot;xterm -e \&quot;wget --load-cookies ~/.surf/cookies.txt &#39;$0&#39;;\&quot;&quot;, \
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	d, NULL } }
+</a> #define MODKEY GDK_CONTROL_MASK
+ static Key keys[] = {
+     /* modifier	            keyval      function    arg             Focus */
+<a href="#h0-0-14" id="h0-0-14" class="d">-    { MODKEY,               GDK_s,      spawn,      DOWNLOAD(&quot;_SURF_HILIGHT&quot;) },
+</a>     { MODKEY|GDK_SHIFT_MASK,GDK_r,      reload,     { .b = TRUE } },
+     { MODKEY,               GDK_r,      reload,     { .b = FALSE } },
+     { MODKEY|GDK_SHIFT_MASK,GDK_p,      print,      { 0 } },
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -23,7 +23,7 @@
+</a> #define LENGTH(x)               (sizeof x / sizeof x[0])
+ #define CLEANMASK(mask)         (mask &amp; ~(GDK_MOD2_MASK))
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-enum { AtomFind, AtomGo, AtomUri, AtomHiLight, AtomLast };
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+enum { AtomFind, AtomGo, AtomUri, AtomLast };
+</a> 
+ typedef union Arg Arg;
+ union Arg {
+<a href="#h1-1" id="h1-1" class="h">@@ -188,10 +188,7 @@ createwindow(WebKitWebView  *v, WebKitWebFrame *f, Client *c) {
+</a> gboolean
+ decidedownload(WebKitWebView *v, WebKitWebFrame *f, WebKitNetworkRequest *r, gchar *m,  WebKitWebPolicyDecision *p, Client *c) {
+ 	if(!webkit_web_view_can_show_mime_type(v, m)) {
+<a href="#h1-1-3" id="h1-1-3" class="d">-		webkit_web_policy_decision_ignore(p);
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-		webkit_web_view_load_html_string(c-&gt;view,
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-				&quot;Can&#39;t display content.&quot;,
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-				webkit_network_request_get_uri(r));
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+		webkit_web_policy_decision_download(p);
+</a> 		return TRUE;
+ 	}
+ 	return FALSE;
+<a href="#h1-2" id="h1-2" class="h">@@ -334,7 +331,7 @@ initdownload(WebKitWebView *view, WebKitDownload *o, Client *c) {
+</a> 	Arg arg;
+ 
+ 	updatewinid(c);
+<a href="#h1-2-3" id="h1-2-3" class="d">-	arg = (Arg)DOWNLOAD(&quot;_SURF_HILIGHT&quot;);
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	arg = (Arg)DOWNLOAD((char *)webkit_download_get_uri(o));
+</a> 	spawn(c, &amp;arg);
+ 	return FALSE;
+ }
+<a href="#h1-3" id="h1-3" class="h">@@ -503,11 +500,12 @@ newclient(void) {
+</a> 	g_object_set(G_OBJECT(settings), &quot;auto-load-images&quot;, loadimage, NULL);
+ 	g_object_set(G_OBJECT(settings), &quot;enable-plugins&quot;, plugin, NULL);
+ 	g_object_set(G_OBJECT(settings), &quot;enable-scripts&quot;, script, NULL);
+<a href="#h1-3-3" id="h1-3-3" class="i">+	g_object_set(G_OBJECT(settings), &quot;enable-spatial-navigation&quot;, true, NULL);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+
+</a> 	g_free(uri);
+ 
+ 	setatom(c, AtomFind, &quot;&quot;);
+ 	setatom(c, AtomUri, &quot;about:blank&quot;);
+<a href="#h1-3-9" id="h1-3-9" class="d">-	setatom(c, AtomHiLight, &quot;about:blank&quot;);
+</a> 	if(NOBACKGROUND)
+ 		webkit_web_view_set_transparent(c-&gt;view, TRUE);
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -688,7 +686,6 @@ setup(void) {
+</a> 	atoms[AtomFind] = XInternAtom(dpy, &quot;_SURF_FIND&quot;, False);
+ 	atoms[AtomGo] = XInternAtom(dpy, &quot;_SURF_GO&quot;, False);
+ 	atoms[AtomUri] = XInternAtom(dpy, &quot;_SURF_URI&quot;, False);
+<a href="#h1-4-3" id="h1-4-3" class="d">-	atoms[AtomHiLight] = XInternAtom(dpy, &quot;_SURF_HILIGHT&quot;, False);
+</a> 
+ 	/* dirs and files */
+ 	cookiefile = buildpath(cookiefile);
+<a href="#h1-5" id="h1-5" class="h">@@ -763,7 +760,6 @@ update(Client *c) {
+</a> 		t = g_strdup(c-&gt;linkhover);
+ 	else
+ 		t = g_strdup(c-&gt;title);
+<a href="#h1-5-3" id="h1-5-3" class="d">-	setatom(c, AtomHiLight, c-&gt;linkhover ? c-&gt;linkhover : geturi(c));
+</a> 	drawindicator(c);
+ 	gtk_window_set_title(GTK_WINDOW(c-&gt;win), t);
+ 	g_free(t);
+</pre>
+</div>
+</body>
+</html>

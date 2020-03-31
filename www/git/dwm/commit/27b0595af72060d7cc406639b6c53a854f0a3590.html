@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>merged focus{prev.next} into focusclient(1/-1) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/27b0595af72060d7cc406639b6c53a854f0a3590.html">27b0595af72060d7cc406639b6c53a854f0a3590</a>
+<b>parent</b> <a href="../commit/12d5a26fd279cc2370954929dedf88d0ab205a16.html">12d5a26fd279cc2370954929dedf88d0ab205a16</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@suckless.org">arg@suckless.org</a>&gt;
+<b>Date:</b>   Thu, 22 Feb 2007 15:25:19 +0100
+
+merged focus{prev.next} into focusclient(1/-1)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">layout.c</a></td><td> | </td><td class="num">36</td><td><span class="i">++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>4 files changed, 21 insertions(+), 26 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -52,8 +52,8 @@ static Key key[] = { \
+</a> 	{ MODKEY,			XK_i,		incnmaster,	&quot;1&quot; }, \
+ 	{ MODKEY,			XK_h,		incmasterw,	&quot;-15&quot; }, \
+ 	{ MODKEY,			XK_l,		incmasterw,	&quot;15&quot; }, \
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ MODKEY,			XK_j,		focusnext,	NULL }, \
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ MODKEY,			XK_k,		focusprev,	NULL }, \
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	{ MODKEY,			XK_j,		focusclient,	&quot;1&quot; }, \
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	{ MODKEY,			XK_k,		focusclient,	&quot;-1&quot; }, \
+</a> 	{ MODKEY,			XK_m,		togglemax,	NULL }, \
+ 	{ MODKEY,			XK_Return,	zoom,		NULL }, \
+ 	{ MODKEY|ShiftMask,		XK_space,	toggleversatile,NULL }, \
+<b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -48,8 +48,8 @@ static Key key[] = { \
+</a> 	{ MODKEY,			XK_i,		incnmaster,	&quot;1&quot; }, \
+ 	{ MODKEY,			XK_g,		incmasterw,	&quot;15&quot; }, \
+ 	{ MODKEY,			XK_s,		incmasterw,	&quot;-15&quot; }, \
+<a href="#h1-0-3" id="h1-0-3" class="d">-	{ MODKEY,			XK_Tab,		focusnext,	NULL }, \
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	{ MODKEY|ShiftMask,		XK_Tab,		focusprev,	NULL }, \
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	{ MODKEY,			XK_Tab,		focusclient,	&quot;1&quot; }, \
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	{ MODKEY|ShiftMask,		XK_Tab,		focusclient,	&quot;-1&quot; }, \
+</a> 	{ MODKEY,			XK_m,		togglemax,	NULL }, \
+ 	{ MODKEY,			XK_Return,	zoom,		NULL }, \
+ 	{ MODKEY|ShiftMask,		XK_space,	toggleversatile,NULL }, \
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -119,8 +119,7 @@ extern unsigned int textw(const char *text);	/* return the width of text in px*/
+</a> extern void grabkeys(void);			/* grab all keys defined in config.h */
+ 
+ /* layout.c */
+<a href="#h2-0-3" id="h2-0-3" class="d">-extern void focusnext(const char *arg);		/* focuses next visible client, arg is ignored  */
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-extern void focusprev(const char *arg);		/* focuses previous visible client, arg is ignored */
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+extern void focusclient(const char *arg);	/* focuses next(1)/previous(-1) visible client */
+</a> extern void incmasterw(const char *arg);	/* increments the master width with arg&#39;s index value */
+ extern void incnmaster(const char *arg);	/* increments nmaster with arg&#39;s index value */
+ extern void initlayouts(void);			/* initialize layout array */
+<b>diff --git a/<a id="h3" href="../file/layout.c.html">layout.c</a> b/<a href="../file/layout.c.html">layout.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -70,30 +70,26 @@ LAYOUTS
+</a> /* extern */
+ 
+ void
+<a href="#h3-0-3" id="h3-0-3" class="d">-focusnext(const char *arg) {
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+focusclient(const char *arg) {
+</a> 	Client *c;
+    
+<a href="#h3-0-7" id="h3-0-7" class="d">-	if(!sel)
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+	if(!sel || !arg)
+</a> 		return;
+<a href="#h3-0-10" id="h3-0-10" class="d">-	for(c = sel-&gt;next; c &amp;&amp; !isvisible(c); c = c-&gt;next);
+</a><a href="#h3-0-11" id="h3-0-11" class="d">-	if(!c)
+</a><a href="#h3-0-12" id="h3-0-12" class="d">-		for(c = clients; c &amp;&amp; !isvisible(c); c = c-&gt;next);
+</a><a href="#h3-0-13" id="h3-0-13" class="d">-	if(c) {
+</a><a href="#h3-0-14" id="h3-0-14" class="d">-		focus(c);
+</a><a href="#h3-0-15" id="h3-0-15" class="d">-		restack();
+</a><a href="#h3-0-16" id="h3-0-16" class="d">-	}
+</a><a href="#h3-0-17" id="h3-0-17" class="d">-}
+</a><a href="#h3-0-18" id="h3-0-18" class="d">-
+</a><a href="#h3-0-19" id="h3-0-19" class="d">-void
+</a><a href="#h3-0-20" id="h3-0-20" class="d">-focusprev(const char *arg) {
+</a><a href="#h3-0-21" id="h3-0-21" class="d">-	Client *c;
+</a><a href="#h3-0-22" id="h3-0-22" class="d">-
+</a><a href="#h3-0-23" id="h3-0-23" class="d">-	if(!sel)
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+	switch(atoi(arg)) {
+</a><a href="#h3-0-25" id="h3-0-25" class="i">+	default:
+</a> 		return;
+<a href="#h3-0-27" id="h3-0-27" class="d">-	for(c = sel-&gt;prev; c &amp;&amp; !isvisible(c); c = c-&gt;prev);
+</a><a href="#h3-0-28" id="h3-0-28" class="d">-	if(!c) {
+</a><a href="#h3-0-29" id="h3-0-29" class="d">-		for(c = clients; c &amp;&amp; c-&gt;next; c = c-&gt;next);
+</a><a href="#h3-0-30" id="h3-0-30" class="d">-		for(; c &amp;&amp; !isvisible(c); c = c-&gt;prev);
+</a><a href="#h3-0-31" id="h3-0-31" class="i">+	case 1:
+</a><a href="#h3-0-32" id="h3-0-32" class="i">+		for(c = sel-&gt;next; c &amp;&amp; !isvisible(c); c = c-&gt;next);
+</a><a href="#h3-0-33" id="h3-0-33" class="i">+		if(!c)
+</a><a href="#h3-0-34" id="h3-0-34" class="i">+			for(c = clients; c &amp;&amp; !isvisible(c); c = c-&gt;next);
+</a><a href="#h3-0-35" id="h3-0-35" class="i">+		break;
+</a><a href="#h3-0-36" id="h3-0-36" class="i">+	case -1:
+</a><a href="#h3-0-37" id="h3-0-37" class="i">+		for(c = sel-&gt;prev; c &amp;&amp; !isvisible(c); c = c-&gt;prev);
+</a><a href="#h3-0-38" id="h3-0-38" class="i">+		if(!c) {
+</a><a href="#h3-0-39" id="h3-0-39" class="i">+			for(c = clients; c &amp;&amp; c-&gt;next; c = c-&gt;next);
+</a><a href="#h3-0-40" id="h3-0-40" class="i">+			for(; c &amp;&amp; !isvisible(c); c = c-&gt;prev);
+</a><a href="#h3-0-41" id="h3-0-41" class="i">+		}
+</a><a href="#h3-0-42" id="h3-0-42" class="i">+		break;
+</a> 	}
+ 	if(c) {
+ 		focus(c);
+</pre>
+</div>
+</body>
+</html>

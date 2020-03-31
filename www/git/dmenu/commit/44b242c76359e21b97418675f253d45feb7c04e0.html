@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>drw: cleanup drw_text, prevent gcc warning false-positive of unused var - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/44b242c76359e21b97418675f253d45feb7c04e0.html">44b242c76359e21b97418675f253d45feb7c04e0</a>
+<b>parent</b> <a href="../commit/e2e7fcb2198d40e2a50591932ee2b2a8f9969a5f.html">e2e7fcb2198d40e2a50591932ee2b2a8f9969a5f</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Tue, 20 Oct 2015 22:56:57 +0200
+
+drw: cleanup drw_text, prevent gcc warning false-positive of unused var
+
+... we don&#39;t allow passing text is NULL anymore either, for that behaviour
+just use drw_rect() (it is used in dwm).
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">drw.c</a></td><td> | </td><td class="num">35</td><td><span class="i">++++++++++++++</span><span class="d">---------------------</span></td></tr>
+</table></pre><pre>1 file changed, 14 insertions(+), 21 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/drw.c.html">drw.c</a> b/<a href="../file/drw.c.html">drw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -224,9 +224,7 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *tex
+</a> 	char buf[1024];
+ 	int tx, ty, th;
+ 	Extnts tex;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	Colormap cmap;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	Visual *vis;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	XftDraw *d;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	XftDraw *d = NULL;
+</a> 	Fnt *curfont, *nextfont;
+ 	size_t i, len;
+ 	int utf8strlen, utf8charlen, render;
+<a href="#h0-1" id="h0-1" class="h">@@ -238,22 +236,18 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *tex
+</a> 	XftResult result;
+ 	int charexists = 0;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if (!(render = x || y || w || h))
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		w = ~w;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	if (!drw || !drw-&gt;scheme) {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	if (!drw-&gt;scheme || !drw-&gt;fontcount)
+</a> 		return 0;
+<a href="#h0-1-9" id="h0-1-9" class="d">-	} else if (render) {
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-		XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;scheme-&gt;fg-&gt;pix : drw-&gt;scheme-&gt;bg-&gt;pix);
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-		XFillRectangle(drw-&gt;dpy, drw-&gt;drawable, drw-&gt;gc, x, y, w, h);
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-	}
+</a> 
+<a href="#h0-1-14" id="h0-1-14" class="d">-	if (!text || !drw-&gt;fontcount) {
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-		return 0;
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-	} else if (render) {
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-		cmap = DefaultColormap(drw-&gt;dpy, drw-&gt;screen);
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-		vis = DefaultVisual(drw-&gt;dpy, drw-&gt;screen);
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-		d = XftDrawCreate(drw-&gt;dpy, drw-&gt;drawable, vis, cmap);
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	if (!(render = x || y || w || h)) {
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+		w = ~w;
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	} else {
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+		XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ?
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+		               drw-&gt;scheme-&gt;fg-&gt;pix : drw-&gt;scheme-&gt;bg-&gt;pix);
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+		XFillRectangle(drw-&gt;dpy, drw-&gt;drawable, drw-&gt;gc, x, y, w, h);
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+		d = XftDrawCreate(drw-&gt;dpy, drw-&gt;drawable,
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+		                  DefaultVisual(drw-&gt;dpy, drw-&gt;screen),
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+		                  DefaultColormap(drw-&gt;dpy, drw-&gt;screen));
+</a> 	}
+ 
+ 	curfont = drw-&gt;fonts[0];
+<a href="#h0-2" id="h0-2" class="h">@@ -325,7 +319,7 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *tex
+</a> 			if (!drw-&gt;fonts[0]-&gt;pattern) {
+ 				/* Refer to the comment in drw_font_xcreate for more
+ 				 * information. */
+<a href="#h0-2-3" id="h0-2-3" class="d">-				die(&quot;The first font in the cache must be loaded from a font string.\n&quot;);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+				die(&quot;the first font in the cache must be loaded from a font string.\n&quot;);
+</a> 			}
+ 
+ 			fcpattern = FcPatternDuplicate(drw-&gt;fonts[0]-&gt;pattern);
+<a href="#h0-3" id="h0-3" class="h">@@ -344,14 +338,13 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *tex
+</a> 				if (curfont &amp;&amp; XftCharExists(drw-&gt;dpy, curfont-&gt;xfont, utf8codepoint)) {
+ 					drw-&gt;fonts[drw-&gt;fontcount++] = curfont;
+ 				} else {
+<a href="#h0-3-3" id="h0-3-3" class="d">-					if (curfont)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-						drw_font_free(curfont);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+					drw_font_free(curfont);
+</a> 					curfont = drw-&gt;fonts[0];
+ 				}
+ 			}
+ 		}
+ 	}
+<a href="#h0-3-11" id="h0-3-11" class="d">-	if (render)
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+	if (d)
+</a> 		XftDrawDestroy(d);
+ 
+ 	return x;
+</pre>
+</div>
+</body>
+</html>

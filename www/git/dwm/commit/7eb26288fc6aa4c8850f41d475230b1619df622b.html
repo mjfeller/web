@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed Geom stuff, introduced updategeom() again, still view is somewhat broken? - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7eb26288fc6aa4c8850f41d475230b1619df622b.html">7eb26288fc6aa4c8850f41d475230b1619df622b</a>
+<b>parent</b> <a href="../commit/93a4fe1052e1271f7b4f519b4f2de4e3f4e15edc.html">93a4fe1052e1271f7b4f519b4f2de4e3f4e15edc</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 11 May 2008 20:20:53 +0100
+
+removed Geom stuff, introduced updategeom() again, still view is somewhat broken?
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">12</td><td><span class="i">+</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.1</a></td><td> | </td><td class="num">3</td><td><span class="i"></span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.c</a></td><td> | </td><td class="num">122</td><td><span class="i">+++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 52 insertions(+), 85 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -18,17 +18,8 @@ Rule rules[] = {
+</a> 	{ &quot;Gimp&quot;,	NULL,		NULL,		NULL,		True },
+ };
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-/* geometries, s{x,y,w,h} and bh are already initualized here */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-/*   func name  bx  by  bw  wx  wy  ww     wh  mx  my       mw  mh     tx  ty     tw  th  mox moy mow moh */
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-#define MFACT			0.55	/* master width factor [0.1 .. 0.9] */
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-DEFGEOM(single,  0,  0, sw,  0, bh, sw, sh-bh, wx, wy, mfact*ww, wh, mx+mw, wy, ww-mw, wh,  wx, wy, ww, wh)
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-Geom geoms[] = {
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	/* symbol	function */
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	{ &quot;[]&quot;,		single },	/* first entry is default */
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-};
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-
+</a> /* layout(s) */
+<a href="#h0-0-14" id="h0-0-14" class="i">+#define MFACT			0.55	/* master width factor [0.1 .. 0.9] */
+</a> #define RESIZEHINTS		True	/* False - respect size hints in tiled resizals */
+ #define SNAP			32	/* snap pixel */
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -58,7 +49,6 @@ Key keys[] = {
+</a> 	{ MODKEY|ShiftMask,		XK_c,		killclient,	NULL },
+ 	{ MODKEY,			XK_space,	setlayout,	NULL },
+ 	{ MODKEY|ShiftMask,		XK_space,	togglefloating,	NULL },
+<a href="#h0-1-3" id="h0-1-3" class="d">-	{ MODKEY|ControlMask,		XK_space,	setgeom,	NULL },
+</a> 	{ MODKEY,			XK_0,		view,		NULL },
+ 	{ MODKEY,			XK_1,		view,		tags[0] },
+ 	{ MODKEY,			XK_2,		view,		tags[1] },
+<b>diff --git a/<a id="h1" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -60,9 +60,6 @@ Start
+</a> .B Mod1\-space
+ Toggles between layouts.
+ .TP
+<a href="#h1-0-3" id="h1-0-3" class="d">-.B Mod1\-Control\-space
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-Toggles between geometries.
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-.TP
+</a> .B Mod1\-j
+ Focus next window.
+ .TP
+<b>diff --git a/<a id="h2" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -41,21 +41,13 @@
+</a> #include &lt;X11/Xutil.h&gt;
+ 
+ /* macros */
+<a href="#h2-0-3" id="h2-0-3" class="d">-#define MAX(a, b) ((a)&gt;(b)?(a):(b))
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-#define MIN(a, b) ((a)&lt;(b)?(a):(b))
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-#define BUTTONMASK		(ButtonPressMask|ButtonReleaseMask)
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-#define CLEANMASK(mask)		(mask &amp; ~(numlockmask|LockMask))
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-#define LENGTH(x)		(sizeof x / sizeof x[0])
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-#define MAXTAGLEN		16
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-#define MOUSEMASK		(BUTTONMASK|PointerMotionMask)
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-#define DEFGEOM(GEONAME,BX,BY,BW,WX,WY,WW,WH,MX,MY,MW,MH,TX,TY,TW,TH,MOX,MOY,MOW,MOH) \
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-void GEONAME(void) { \
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-	bx = (BX); by = (BY); bw = (BW); \
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-	wx = (WX); wy = (WY); ww = (WW); wh = (WH); \
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-	mx = (MX); my = (MY); mw = (MW); mh = (MH); \
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-	tx = (TX); ty = (TY); tw = (TW); th = (TH); \
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-	mox = (MOX); moy = (MOY); mow = (MOW); moh = (MOH); \
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-}
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+#define MAX(a, b)	((a) &gt; (b) ? (a) : (b))
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+#define MIN(a, b)	((a) &lt; (b) ? (a) : (b))
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+#define BUTTONMASK	(ButtonPressMask|ButtonReleaseMask)
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+#define CLEANMASK(mask)	(mask &amp; ~(numlockmask|LockMask))
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+#define LENGTH(x)	(sizeof x / sizeof x[0])
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+#define MAXTAGLEN	16
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+#define MOUSEMASK	(BUTTONMASK|PointerMotionMask)
+</a> 
+ /* enums */
+ enum { CurNormal, CurResize, CurMove, CurLast };	/* cursor */
+<a href="#h2-1" id="h2-1" class="h">@@ -97,11 +89,6 @@ typedef struct {
+</a> } DC; /* draw context */
+ 
+ typedef struct {
+<a href="#h2-1-3" id="h2-1-3" class="d">-	const char *symbol;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	void (*apply)(void);
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-} Geom;
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-typedef struct {
+</a> 	unsigned long mod;
+ 	KeySym keysym;
+ 	void (*func)(const char *arg);
+<a href="#h2-2" id="h2-2" class="h">@@ -178,7 +165,6 @@ void restack(void);
+</a> void run(void);
+ void scan(void);
+ void setclientstate(Client *c, long state);
+<a href="#h2-2-3" id="h2-2-3" class="d">-void setgeom(const char *arg);
+</a> void setlayout(const char *arg);
+ void setmfact(const char *arg);
+ void setup(void);
+<a href="#h2-3" id="h2-3" class="h">@@ -198,7 +184,8 @@ void toggleview(const char *arg);
+</a> void unban(Client *c);
+ void unmanage(Client *c);
+ void unmapnotify(XEvent *e);
+<a href="#h2-3-3" id="h2-3-3" class="d">-void updatebarpos(void);
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+void updatebar(void);
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+void updategeom(void);
+</a> void updatesizehints(Client *c);
+ void updatetitle(Client *c);
+ void updatewmhints(Client *c);
+<a href="#h2-4" id="h2-4" class="h">@@ -213,7 +200,7 @@ void zoom(const char *arg);
+</a> char stext[256];
+ int screen, sx, sy, sw, sh;
+ int (*xerrorxlib)(Display *, XErrorEvent *);
+<a href="#h2-4-3" id="h2-4-3" class="d">-int bx, by, bw, bh, blw, bgw, mx, my, mw, mh, mox, moy, mow, moh, tx, ty, tw, th, wx, wy, ww, wh;
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+int bx, by, bw, bh, blw, mx, my, mw, mh, tx, ty, tw, th, wx, wy, ww, wh;
+</a> int seltags = 0;
+ double mfact;
+ unsigned int numlockmask = 0;
+<a href="#h2-5" id="h2-5" class="h">@@ -241,8 +228,6 @@ Client *stack = NULL;
+</a> Cursor cursor[CurLast];
+ Display *dpy;
+ DC dc = {0};
+<a href="#h2-5-3" id="h2-5-3" class="d">-Geom geoms[];
+</a><a href="#h2-5-4" id="h2-5-4" class="d">-Geom *geom = geoms;
+</a> Layout layouts[];
+ Layout *lt = layouts;
+ Window root, barwin;
+<a href="#h2-6" id="h2-6" class="h">@@ -330,14 +315,10 @@ buttonpress(XEvent *e) {
+</a> 	XButtonPressedEvent *ev = &amp;e-&gt;xbutton;
+ 
+ 	if(ev-&gt;window == barwin) {
+<a href="#h2-6-3" id="h2-6-3" class="d">-		if((ev-&gt;x &lt; bgw) &amp;&amp; ev-&gt;button == Button1) {
+</a><a href="#h2-6-4" id="h2-6-4" class="d">-			setgeom(NULL);
+</a><a href="#h2-6-5" id="h2-6-5" class="d">-			return;
+</a><a href="#h2-6-6" id="h2-6-6" class="d">-		}
+</a><a href="#h2-6-7" id="h2-6-7" class="d">-		x = bgw;
+</a><a href="#h2-6-8" id="h2-6-8" class="i">+		x = 0;
+</a> 		for(i = 0; i &lt; LENGTH(tags); i++) {
+ 			x += textw(tags[i]);
+<a href="#h2-6-11" id="h2-6-11" class="d">-			if(ev-&gt;x &gt;= bgw &amp;&amp; ev-&gt;x &lt; x) {
+</a><a href="#h2-6-12" id="h2-6-12" class="i">+			if(ev-&gt;x &lt; x) {
+</a> 				if(ev-&gt;button == Button1) {
+ 					if(ev-&gt;state &amp; MODKEY)
+ 						tag(tags[i]);
+<a href="#h2-7" id="h2-7" class="h">@@ -440,7 +421,9 @@ configurenotify(XEvent *e) {
+</a> 	if(ev-&gt;window == root &amp;&amp; (ev-&gt;width != sw || ev-&gt;height != sh)) {
+ 		sw = ev-&gt;width;
+ 		sh = ev-&gt;height;
+<a href="#h2-7-3" id="h2-7-3" class="d">-		setgeom(geom-&gt;symbol);
+</a><a href="#h2-7-4" id="h2-7-4" class="i">+		updategeom();
+</a><a href="#h2-7-5" id="h2-7-5" class="i">+		updatebar();
+</a><a href="#h2-7-6" id="h2-7-6" class="i">+		arrange();
+</a> 	}
+ }
+ 
+<a href="#h2-8" id="h2-8" class="h">@@ -531,11 +514,6 @@ drawbar(void) {
+</a> 	Client *c;
+ 
+ 	dc.x = 0;
+<a href="#h2-8-3" id="h2-8-3" class="d">-	if(bgw &gt; 0) {
+</a><a href="#h2-8-4" id="h2-8-4" class="d">-		dc.w = bgw;
+</a><a href="#h2-8-5" id="h2-8-5" class="d">-		drawtext(geom-&gt;symbol, dc.norm, False);
+</a><a href="#h2-8-6" id="h2-8-6" class="d">-		dc.x += bgw;
+</a><a href="#h2-8-7" id="h2-8-7" class="d">-	}
+</a> 	for(c = stack; c &amp;&amp; !isvisible(c, NULL); c = c-&gt;snext);
+ 	for(i = 0; i &lt; LENGTH(tags); i++) {
+ 		dc.w = textw(tags[i]);
+<a href="#h2-9" id="h2-9" class="h">@@ -1064,7 +1042,7 @@ monocle(void) {
+</a> 
+ 	for(c = clients; c; c = c-&gt;next)
+ 		if((lt-&gt;isfloating || !c-&gt;isfloating) &amp;&amp;  isvisible(c, NULL))
+<a href="#h2-9-3" id="h2-9-3" class="d">-			resize(c, mox, moy, mow - 2 * c-&gt;bw, moh - 2 * c-&gt;bw, RESIZEHINTS);
+</a><a href="#h2-9-4" id="h2-9-4" class="i">+			resize(c, wx, wy, ww - 2 * c-&gt;bw, wh - 2 * c-&gt;bw, RESIZEHINTS);
+</a> }
+ 
+ void
+<a href="#h2-10" id="h2-10" class="h">@@ -1399,27 +1377,6 @@ setclientstate(Client *c, long state) {
+</a> }
+ 
+ void
+<a href="#h2-10-3" id="h2-10-3" class="d">-setgeom(const char *arg) {
+</a><a href="#h2-10-4" id="h2-10-4" class="d">-	unsigned int i;
+</a><a href="#h2-10-5" id="h2-10-5" class="d">-
+</a><a href="#h2-10-6" id="h2-10-6" class="d">-	if(!arg) {
+</a><a href="#h2-10-7" id="h2-10-7" class="d">-		if(++geom == &amp;geoms[LENGTH(geoms)])
+</a><a href="#h2-10-8" id="h2-10-8" class="d">-			geom = &amp;geoms[0];
+</a><a href="#h2-10-9" id="h2-10-9" class="d">-	}
+</a><a href="#h2-10-10" id="h2-10-10" class="d">-	else {
+</a><a href="#h2-10-11" id="h2-10-11" class="d">-		for(i = 0; i &lt; LENGTH(geoms); i++)
+</a><a href="#h2-10-12" id="h2-10-12" class="d">-			if(!strcmp(geoms[i].symbol, arg))
+</a><a href="#h2-10-13" id="h2-10-13" class="d">-				break;
+</a><a href="#h2-10-14" id="h2-10-14" class="d">-		if(i == LENGTH(geoms))
+</a><a href="#h2-10-15" id="h2-10-15" class="d">-			return;
+</a><a href="#h2-10-16" id="h2-10-16" class="d">-		geom = &amp;geoms[i];
+</a><a href="#h2-10-17" id="h2-10-17" class="d">-	}
+</a><a href="#h2-10-18" id="h2-10-18" class="d">-	geom-&gt;apply();
+</a><a href="#h2-10-19" id="h2-10-19" class="d">-	updatebarpos();
+</a><a href="#h2-10-20" id="h2-10-20" class="d">-	arrange();
+</a><a href="#h2-10-21" id="h2-10-21" class="d">-}
+</a><a href="#h2-10-22" id="h2-10-22" class="d">-
+</a><a href="#h2-10-23" id="h2-10-23" class="d">-void
+</a> setlayout(const char *arg) {
+ 	unsigned int i;
+ 
+<a href="#h2-11" id="h2-11" class="h">@@ -1457,7 +1414,8 @@ setmfact(const char *arg) {
+</a> 			return;
+ 		mfact = d;
+ 	}
+<a href="#h2-11-3" id="h2-11-3" class="d">-	setgeom(geom-&gt;symbol);
+</a><a href="#h2-11-4" id="h2-11-4" class="i">+	updategeom();
+</a><a href="#h2-11-5" id="h2-11-5" class="i">+	arrange();
+</a> }
+ 
+ void
+<a href="#h2-12" id="h2-12" class="h">@@ -1469,15 +1427,14 @@ setup(void) {
+</a> 	screen = DefaultScreen(dpy);
+ 	root = RootWindow(dpy, screen);
+ 	initfont(FONT);
+<a href="#h2-12-3" id="h2-12-3" class="d">-
+</a><a href="#h2-12-4" id="h2-12-4" class="d">-	/* apply default geometry */
+</a> 	sx = 0;
+ 	sy = 0;
+ 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+ 	bh = dc.font.height + 2;
+<a href="#h2-12-10" id="h2-12-10" class="d">-	mfact = MFACT;
+</a><a href="#h2-12-11" id="h2-12-11" class="d">-	geom-&gt;apply();
+</a><a href="#h2-12-12" id="h2-12-12" class="i">+
+</a><a href="#h2-12-13" id="h2-12-13" class="i">+	/* update geometry */
+</a><a href="#h2-12-14" id="h2-12-14" class="i">+	updategeom();
+</a> 
+ 	/* init atoms */
+ 	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+<a href="#h2-13" id="h2-13" class="h">@@ -1517,10 +1474,6 @@ setup(void) {
+</a> 		w = textw(layouts[i].symbol);
+ 		blw = MAX(blw, w);
+ 	}
+<a href="#h2-13-3" id="h2-13-3" class="d">-	for(bgw = i = 0; LENGTH(geoms) &gt; 1 &amp;&amp; i &lt; LENGTH(geoms); i++) {
+</a><a href="#h2-13-4" id="h2-13-4" class="d">-		w = textw(geoms[i].symbol);
+</a><a href="#h2-13-5" id="h2-13-5" class="d">-		bgw = MAX(bgw, w);
+</a><a href="#h2-13-6" id="h2-13-6" class="d">-	}
+</a> 
+ 	wa.override_redirect = 1;
+ 	wa.background_pixmap = ParentRelative;
+<a href="#h2-14" id="h2-14" class="h">@@ -1633,7 +1586,7 @@ tilemaster(unsigned int n) {
+</a> 	Client *c = nexttiled(clients);
+ 
+ 	if(n == 1)
+<a href="#h2-14-3" id="h2-14-3" class="d">-		tileresize(c, mox, moy, mow - 2 * c-&gt;bw, moh - 2 * c-&gt;bw);
+</a><a href="#h2-14-4" id="h2-14-4" class="i">+		tileresize(c, wx, wy, ww - 2 * c-&gt;bw, wh - 2 * c-&gt;bw);
+</a> 	else
+ 		tileresize(c, mx, my, mw - 2 * c-&gt;bw, mh - 2 * c-&gt;bw);
+ 	return c;
+<a href="#h2-15" id="h2-15" class="h">@@ -1751,7 +1704,7 @@ unmapnotify(XEvent *e) {
+</a> }
+ 
+ void
+<a href="#h2-15-3" id="h2-15-3" class="d">-updatebarpos(void) {
+</a><a href="#h2-15-4" id="h2-15-4" class="i">+updatebar(void) {
+</a> 
+ 	if(dc.drawable != 0)
+ 		XFreePixmap(dpy, dc.drawable);
+<a href="#h2-16" id="h2-16" class="h">@@ -1760,6 +1713,34 @@ updatebarpos(void) {
+</a> }
+ 
+ void
+<a href="#h2-16-3" id="h2-16-3" class="i">+updategeom(void) {
+</a><a href="#h2-16-4" id="h2-16-4" class="i">+
+</a><a href="#h2-16-5" id="h2-16-5" class="i">+	/* bar geometry */
+</a><a href="#h2-16-6" id="h2-16-6" class="i">+	bx = 0;
+</a><a href="#h2-16-7" id="h2-16-7" class="i">+	by = 0;
+</a><a href="#h2-16-8" id="h2-16-8" class="i">+	bw = sw;
+</a><a href="#h2-16-9" id="h2-16-9" class="i">+
+</a><a href="#h2-16-10" id="h2-16-10" class="i">+	/* window area geometry */
+</a><a href="#h2-16-11" id="h2-16-11" class="i">+	wx = sx;
+</a><a href="#h2-16-12" id="h2-16-12" class="i">+	wy = sy;
+</a><a href="#h2-16-13" id="h2-16-13" class="i">+	ww = sw;
+</a><a href="#h2-16-14" id="h2-16-14" class="i">+	sh = sh - bh;
+</a><a href="#h2-16-15" id="h2-16-15" class="i">+
+</a><a href="#h2-16-16" id="h2-16-16" class="i">+	/* master area geometry */
+</a><a href="#h2-16-17" id="h2-16-17" class="i">+	mfact = MFACT;
+</a><a href="#h2-16-18" id="h2-16-18" class="i">+	mx = wx;
+</a><a href="#h2-16-19" id="h2-16-19" class="i">+	my = wy;
+</a><a href="#h2-16-20" id="h2-16-20" class="i">+	mw = mfact * ww;
+</a><a href="#h2-16-21" id="h2-16-21" class="i">+	mh = wh;
+</a><a href="#h2-16-22" id="h2-16-22" class="i">+
+</a><a href="#h2-16-23" id="h2-16-23" class="i">+	/* tile area geometry */
+</a><a href="#h2-16-24" id="h2-16-24" class="i">+	tx = mx + mw;
+</a><a href="#h2-16-25" id="h2-16-25" class="i">+	ty = wy;
+</a><a href="#h2-16-26" id="h2-16-26" class="i">+	tw = ww - mw;
+</a><a href="#h2-16-27" id="h2-16-27" class="i">+	th = wh;
+</a><a href="#h2-16-28" id="h2-16-28" class="i">+}
+</a><a href="#h2-16-29" id="h2-16-29" class="i">+
+</a><a href="#h2-16-30" id="h2-16-30" class="i">+void
+</a> updatesizehints(Client *c) {
+ 	long msize;
+ 	XSizeHints size;
+<a href="#h2-17" id="h2-17" class="h">@@ -1912,4 +1893,3 @@ main(int argc, char *argv[]) {
+</a> 	XCloseDisplay(dpy);
+ 	return 0;
+ }
+<a href="#h2-17-3" id="h2-17-3" class="d">-
+</a></pre>
+</div>
+</body>
+</html>

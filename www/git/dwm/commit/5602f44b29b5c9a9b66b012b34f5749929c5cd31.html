@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implemented exact focus next, if arg != NULL to focus{next,prev} - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5602f44b29b5c9a9b66b012b34f5749929c5cd31.html">5602f44b29b5c9a9b66b012b34f5749929c5cd31</a>
+<b>parent</b> <a href="../commit/b848f4bda8861115c04aecd9fd87baf928d931de.html">b848f4bda8861115c04aecd9fd87baf928d931de</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 11 May 2008 14:40:37 +0100
+
+implemented exact focus next, if arg != NULL to focus{next,prev}
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.1</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dwm.c</a></td><td> | </td><td class="num">32</td><td><span class="i">+++++++++++++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>4 files changed, 27 insertions(+), 17 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -53,7 +53,9 @@ Key keys[] = {
+</a> 		&quot;exec dmenu_run -fn &#39;&quot;FONT&quot;&#39; -nb &#39;&quot;NORMBGCOLOR&quot;&#39; -nf &#39;&quot;NORMFGCOLOR&quot;&#39; -sb &#39;&quot;SELBGCOLOR&quot;&#39; -sf &#39;&quot;SELFGCOLOR&quot;&#39;&quot; },
+ 	{ MODKEY|ShiftMask,		XK_Return,	spawn,		&quot;exec uxterm&quot; },
+ 	{ MODKEY,			XK_j,		focusnext,	NULL },
+<a href="#h0-0-3" id="h0-0-3" class="i">+	{ MODKEY|ShiftMask,		XK_j,		focusnext,	&quot;exact&quot; },
+</a> 	{ MODKEY,			XK_k,		focusprev,	NULL },
+<a href="#h0-0-5" id="h0-0-5" class="i">+	{ MODKEY|ShiftMask,		XK_k,		focusprev,	&quot;exact&quot; },
+</a> 	{ MODKEY,			XK_r,		reapply,	NULL },
+ 	{ MODKEY,			XK_h,		setmfact,	&quot;-0.05&quot; },
+ 	{ MODKEY,			XK_l,		setmfact,	&quot;+0.05&quot; },
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -17,8 +17,8 @@ LIBS = -L/usr/lib -lc -L${X11LIB} -lX11
+</a> # flags
+ CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+ LDFLAGS = -s ${LIBS}
+<a href="#h1-0-3" id="h1-0-3" class="d">-#CFLAGS = -g -std=c99 -pedantic -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#LDFLAGS = -g ${LIBS}
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+CFLAGS = -g -std=c99 -pedantic -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+LDFLAGS = -g ${LIBS}
+</a> 
+ # Solaris
+ #CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+<b>diff --git a/<a id="h2" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -66,9 +66,15 @@ Toggles between geometries.
+</a> .B Mod1\-j
+ Focus next window.
+ .TP
+<a href="#h2-0-3" id="h2-0-3" class="i">+.B Mod1\-Shift\-j
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+Focus next window with exactly the same tags as the current one.
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+.TP
+</a> .B Mod1\-k
+ Focus previous window.
+ .TP
+<a href="#h2-0-9" id="h2-0-9" class="i">+.B Mod1\-Shift\-k
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+Focus previous window with exactly the same tags as the current one.
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+.TP
+</a> .B Mod1\-h
+ Decrease master area size.
+ .TP
+<b>diff --git a/<a id="h3" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -160,7 +160,7 @@ void initfont(const char *fontstr);
+</a> Bool isoccupied(unsigned int t);
+ Bool isprotodel(Client *c);
+ Bool isurgent(unsigned int t);
+<a href="#h3-0-3" id="h3-0-3" class="d">-Bool isvisible(Client *c);
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+Bool isvisible(Client *c, Bool *cmp);
+</a> void keypress(XEvent *e);
+ void killclient(const char *arg);
+ void manage(Window w, XWindowAttributes *wa);
+<a href="#h3-1" id="h3-1" class="h">@@ -287,7 +287,7 @@ arrange(void) {
+</a> 	Client *c;
+ 
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h3-1-3" id="h3-1-3" class="d">-		if(isvisible(c)) {
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+		if(isvisible(c, NULL)) {
+</a> 			unban(c);
+ 			if(lt-&gt;isfloating || c-&gt;isfloating)
+ 				resize(c, c-&gt;fx, c-&gt;fy, c-&gt;fw, c-&gt;fh, True);
+<a href="#h3-2" id="h3-2" class="h">@@ -469,7 +469,7 @@ configurerequest(XEvent *e) {
+</a> 			if((ev-&gt;value_mask &amp; (CWX|CWY))
+ 			&amp;&amp; !(ev-&gt;value_mask &amp; (CWWidth|CWHeight)))
+ 				configure(c);
+<a href="#h3-2-3" id="h3-2-3" class="d">-			if(isvisible(c))
+</a><a href="#h3-2-4" id="h3-2-4" class="i">+			if(isvisible(c, NULL))
+</a> 				XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+ 		}
+ 		else
+<a href="#h3-3" id="h3-3" class="h">@@ -536,7 +536,7 @@ drawbar(void) {
+</a> 		drawtext(geom-&gt;symbol, dc.norm, False);
+ 		dc.x += bgw;
+ 	}
+<a href="#h3-3-3" id="h3-3-3" class="d">-	for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+</a><a href="#h3-3-4" id="h3-3-4" class="i">+	for(c = stack; c &amp;&amp; !isvisible(c, NULL); c = c-&gt;snext);
+</a> 	for(i = 0; i &lt; LENGTH(tags); i++) {
+ 		dc.w = textw(tags[i]);
+ 		if(tagset[seltags][i]) {
+<a href="#h3-4" id="h3-4" class="h">@@ -676,8 +676,8 @@ expose(XEvent *e) {
+</a> 
+ void
+ focus(Client *c) {
+<a href="#h3-4-3" id="h3-4-3" class="d">-	if(!c || (c &amp;&amp; !isvisible(c)))
+</a><a href="#h3-4-4" id="h3-4-4" class="d">-		for(c = stack; c &amp;&amp; !isvisible(c); c = c-&gt;snext);
+</a><a href="#h3-4-5" id="h3-4-5" class="i">+	if(!c || (c &amp;&amp; !isvisible(c, NULL)))
+</a><a href="#h3-4-6" id="h3-4-6" class="i">+		for(c = stack; c &amp;&amp; !isvisible(c, NULL); c = c-&gt;snext);
+</a> 	if(sel &amp;&amp; sel != c) {
+ 		grabbuttons(sel, False);
+ 		XSetWindowBorder(dpy, sel-&gt;win, dc.norm[ColBorder]);
+<a href="#h3-5" id="h3-5" class="h">@@ -711,9 +711,9 @@ focusnext(const char *arg) {
+</a> 
+ 	if(!sel)
+ 		return;
+<a href="#h3-5-3" id="h3-5-3" class="d">-	for(c = sel-&gt;next; c &amp;&amp; !isvisible(c); c = c-&gt;next);
+</a><a href="#h3-5-4" id="h3-5-4" class="i">+	for(c = sel-&gt;next; c &amp;&amp; !isvisible(c, arg ? sel-&gt;tags : NULL); c = c-&gt;next);
+</a> 	if(!c)
+<a href="#h3-5-6" id="h3-5-6" class="d">-		for(c = clients; c &amp;&amp; !isvisible(c); c = c-&gt;next);
+</a><a href="#h3-5-7" id="h3-5-7" class="i">+		for(c = clients; c &amp;&amp; !isvisible(c, arg ? sel-&gt;tags : NULL); c = c-&gt;next);
+</a> 	if(c) {
+ 		focus(c);
+ 		restack();
+<a href="#h3-6" id="h3-6" class="h">@@ -726,10 +726,10 @@ focusprev(const char *arg) {
+</a> 
+ 	if(!sel)
+ 		return;
+<a href="#h3-6-3" id="h3-6-3" class="d">-	for(c = sel-&gt;prev; c &amp;&amp; !isvisible(c); c = c-&gt;prev);
+</a><a href="#h3-6-4" id="h3-6-4" class="i">+	for(c = sel-&gt;prev; c &amp;&amp; !isvisible(c, arg ? sel-&gt;tags : NULL); c = c-&gt;prev);
+</a> 	if(!c) {
+ 		for(c = clients; c &amp;&amp; c-&gt;next; c = c-&gt;next);
+<a href="#h3-6-7" id="h3-6-7" class="d">-		for(; c &amp;&amp; !isvisible(c); c = c-&gt;prev);
+</a><a href="#h3-6-8" id="h3-6-8" class="i">+		for(; c &amp;&amp; !isvisible(c, arg ? sel-&gt;tags : NULL); c = c-&gt;prev);
+</a> 	}
+ 	if(c) {
+ 		focus(c);
+<a href="#h3-7" id="h3-7" class="h">@@ -930,11 +930,13 @@ isurgent(unsigned int t) {
+</a> }
+ 
+ Bool
+<a href="#h3-7-3" id="h3-7-3" class="d">-isvisible(Client *c) {
+</a><a href="#h3-7-4" id="h3-7-4" class="i">+isvisible(Client *c, Bool *cmp) {
+</a> 	unsigned int i;
+ 
+<a href="#h3-7-7" id="h3-7-7" class="i">+	if(!cmp)
+</a><a href="#h3-7-8" id="h3-7-8" class="i">+		cmp = tagset[seltags];
+</a> 	for(i = 0; i &lt; LENGTH(tags); i++)
+<a href="#h3-7-10" id="h3-7-10" class="d">-		if(c-&gt;tags[i] &amp;&amp; tagset[seltags][i])
+</a><a href="#h3-7-11" id="h3-7-11" class="i">+		if(c-&gt;tags[i] &amp;&amp; cmp[i])
+</a> 			return True;
+ 	return False;
+ }
+<a href="#h3-8" id="h3-8" class="h">@@ -1061,7 +1063,7 @@ monocle(void) {
+</a> 	Client *c;
+ 
+ 	for(c = clients; c; c = c-&gt;next)
+<a href="#h3-8-3" id="h3-8-3" class="d">-		if((lt-&gt;isfloating || !c-&gt;isfloating) &amp;&amp;  isvisible(c))
+</a><a href="#h3-8-4" id="h3-8-4" class="i">+		if((lt-&gt;isfloating || !c-&gt;isfloating) &amp;&amp;  isvisible(c, NULL))
+</a> 			resize(c, mox, moy, mow - 2 * c-&gt;bw, moh - 2 * c-&gt;bw, RESIZEHINTS);
+ }
+ 
+<a href="#h3-9" id="h3-9" class="h">@@ -1115,7 +1117,7 @@ movemouse(Client *c) {
+</a> 
+ Client *
+ nexttiled(Client *c) {
+<a href="#h3-9-3" id="h3-9-3" class="d">-	for(; c &amp;&amp; (c-&gt;isfloating || !isvisible(c)); c = c-&gt;next);
+</a><a href="#h3-9-4" id="h3-9-4" class="i">+	for(; c &amp;&amp; (c-&gt;isfloating || !isvisible(c, NULL)); c = c-&gt;next);
+</a> 	return c;
+ }
+ 
+<a href="#h3-10" id="h3-10" class="h">@@ -1292,7 +1294,7 @@ restack(void) {
+</a> 		wc.stack_mode = Below;
+ 		wc.sibling = barwin;
+ 		for(c = stack; c; c = c-&gt;snext)
+<a href="#h3-10-3" id="h3-10-3" class="d">-			if(!c-&gt;isfloating &amp;&amp; isvisible(c)) {
+</a><a href="#h3-10-4" id="h3-10-4" class="i">+			if(!c-&gt;isfloating &amp;&amp; isvisible(c, NULL)) {
+</a> 				XConfigureWindow(dpy, c-&gt;win, CWSibling|CWStackMode, &amp;wc);
+ 				wc.sibling = c-&gt;win;
+ 			}
+</pre>
+</div>
+</body>
+</html>

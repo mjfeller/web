@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implemented viewextend and added M-S-C-n shortcuts for extending the current view... updated man page (works great!) nice feature - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/292ccc4c43d9529cb6db0973fcab6e24c73607a5.html">292ccc4c43d9529cb6db0973fcab6e24c73607a5</a>
+<b>parent</b> <a href="../commit/d7413ffd2d9a84fc3140b28b26f8cb6bb80164e4.html">d7413ffd2d9a84fc3140b28b26f8cb6bb80164e4</a>
+<b>Author:</b> Anselm R.Garbe &lt;<a href="mailto:arg@10ksloc.org">arg@10ksloc.org</a>&gt;
+<b>Date:</b>   Fri, 11 Aug 2006 19:26:12 +0200
+
+implemented viewextend and added M-S-C-n shortcuts for extending the current view... updated man page (works great!) nice feature
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">45</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">---------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">57</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">--------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">draw.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dwm.1</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">dwm.h</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">event.c</a></td><td> | </td><td class="num">7</td><td><span class="i">++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">main.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h7">tag.c</a></td><td> | </td><td class="num">25</td><td><span class="i">+++++++++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>8 files changed, 100 insertions(+), 68 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -18,31 +18,34 @@ const char *tags[] = { &quot;work&quot;, &quot;net&quot;, &quot;fnord&quot;, NULL };
+</a> 
+ #define KEYS \
+ static Key key[] = { \
+<a href="#h0-0-3" id="h0-0-3" class="d">-	/* modifier		key		function	arguments */ \
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ MODKEY,		XK_1,		view,		{ .i = 0 } }, \
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	{ MODKEY,		XK_2,		view,		{ .i = 1 } }, \
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	{ MODKEY,		XK_3,		view,		{ .i = 2 } }, \
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	{ MODKEY,		XK_h,		viewprev,	{ 0 } }, \
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	{ MODKEY,		XK_j,		focusnext,	{ 0 } }, \
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	{ MODKEY,		XK_k,		focusprev,	{ 0 } }, \
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	{ MODKEY,		XK_l,		viewnext,	{ 0 } }, \
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	{ MODKEY,		XK_m,		togglemax,	{ 0 } }, \
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	{ MODKEY,		XK_p,		spawn, \
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	/* modifier			key		function	arguments */ \
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	{ MODKEY,			XK_1,		view,		{ .i = 0 } }, \
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	{ MODKEY,			XK_2,		view,		{ .i = 1 } }, \
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	{ MODKEY,			XK_3,		view,		{ .i = 2 } }, \
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	{ MODKEY,			XK_h,		viewprev,	{ 0 } }, \
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	{ MODKEY,			XK_j,		focusnext,	{ 0 } }, \
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	{ MODKEY,			XK_k,		focusprev,	{ 0 } }, \
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	{ MODKEY,			XK_l,		viewnext,	{ 0 } }, \
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	{ MODKEY,			XK_m,		togglemax,	{ 0 } }, \
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	{ MODKEY,			XK_p,		spawn, \
+</a> 		{ .cmd = &quot;exec `ls -lL /usr/bin /usr/local/bin 2&gt;/dev/null | &quot; \
+ 			&quot;awk &#39;NF&gt;2 &amp;&amp; $1 ~ /^[^d].*x/ {print $NF}&#39; | sort | uniq | dmenu`&quot; } }, \
+<a href="#h0-0-25" id="h0-0-25" class="d">-	{ MODKEY,		XK_space,	togglemode,	{ 0 } }, \
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-	{ MODKEY,		XK_Return,	zoom,		{ 0 } }, \
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-	{ MODKEY|ControlMask,	XK_1,		appendtag,	{ .i = 0 } }, \
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-	{ MODKEY|ControlMask,	XK_2,		appendtag,	{ .i = 1 } }, \
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-	{ MODKEY|ControlMask,	XK_3,		appendtag,	{ .i = 2 } }, \
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-	{ MODKEY|ShiftMask,	XK_1,		replacetag,	{ .i = 0 } }, \
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-	{ MODKEY|ShiftMask,	XK_2,		replacetag,	{ .i = 1 } }, \
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-	{ MODKEY|ShiftMask,	XK_3,		replacetag,	{ .i = 2 } }, \
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-	{ MODKEY|ShiftMask,	XK_c,		killclient,	{ 0 } }, \
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-	{ MODKEY|ShiftMask,	XK_q,		quit,		{ 0 } }, \
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-	{ MODKEY|ShiftMask,	XK_Return,	spawn, \
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+	{ MODKEY,			XK_space,	togglemode,	{ 0 } }, \
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+	{ MODKEY,			XK_Return,	zoom,		{ 0 } }, \
+</a><a href="#h0-0-38" id="h0-0-38" class="i">+	{ MODKEY|ControlMask,		XK_1,		appendtag,	{ .i = 0 } }, \
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+	{ MODKEY|ControlMask,		XK_2,		appendtag,	{ .i = 1 } }, \
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+	{ MODKEY|ControlMask,		XK_3,		appendtag,	{ .i = 2 } }, \
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	{ MODKEY|ShiftMask,		XK_1,		replacetag,	{ .i = 0 } }, \
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	{ MODKEY|ShiftMask,		XK_2,		replacetag,	{ .i = 1 } }, \
+</a><a href="#h0-0-43" id="h0-0-43" class="i">+	{ MODKEY|ShiftMask,		XK_3,		replacetag,	{ .i = 2 } }, \
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+	{ MODKEY|ShiftMask,		XK_c,		killclient,	{ 0 } }, \
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+	{ MODKEY|ShiftMask,		XK_q,		quit,		{ 0 } }, \
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+	{ MODKEY|ShiftMask,		XK_Return,	spawn, \
+</a> 		{ .cmd = &quot;exec urxvt +sb -tr -bg black -fg &#39;#eeeeee&#39; -cr &#39;#eeeeee&#39; +sb &quot; \
+ 			&quot;-fn &#39;-*-terminus-medium-*-*-*-12-*-*-*-*-*-iso10646-*&#39;&quot; } }, \
+<a href="#h0-0-49" id="h0-0-49" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_1,		viewextend,	{ .i = 0 } }, \
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+	{ MODKEY|ShiftMask,		XK_2,		viewextend,	{ .i = 1 } }, \
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+	{ MODKEY|ShiftMask,		XK_3,		viewextend,	{ .i = 2 } }, \
+</a> };
+ 
+ #define RULES \
+<b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -18,32 +18,37 @@ const char *tags[] = { &quot;0&quot;, &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, NULL };
+</a> 
+ #define KEYS \
+ static Key key[] = { \
+<a href="#h1-0-3" id="h1-0-3" class="d">-	/* modifier		key		function	arguments */ \
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	{ MODKEY,		XK_0,		view,		{ .i = 0 } }, \
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-	{ MODKEY,		XK_1,		view,		{ .i = 1 } }, \
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-	{ MODKEY,		XK_2,		view,		{ .i = 2 } }, \
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-	{ MODKEY,		XK_3,		view,		{ .i = 3 } }, \
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-	{ MODKEY,		XK_4,		view,		{ .i = 4 } }, \
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-	{ MODKEY,		XK_h,		viewprev,	{ 0 } }, \
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-	{ MODKEY,		XK_j,		focusnext,	{ 0 } }, \
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-	{ MODKEY,		XK_k,		focusprev,	{ 0 } }, \
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-	{ MODKEY,		XK_l,		viewnext,	{ 0 } }, \
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-	{ MODKEY,		XK_m,		togglemax,	{ 0 } }, \
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-	{ MODKEY,		XK_space,	togglemode,	{ 0 } }, \
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-	{ MODKEY,		XK_Return,	zoom,		{ 0 } }, \
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-	{ MODKEY|ControlMask,	XK_0,		appendtag,	{ .i = 0 } }, \
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-	{ MODKEY|ControlMask,	XK_1,		appendtag,	{ .i = 1 } }, \
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-	{ MODKEY|ControlMask,	XK_2,		appendtag,	{ .i = 2 } }, \
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-	{ MODKEY|ControlMask,	XK_3,		appendtag,	{ .i = 3 } }, \
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-	{ MODKEY|ControlMask,	XK_4,		appendtag,	{ .i = 4 } }, \
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-	{ MODKEY|ShiftMask,	XK_0,		replacetag,	{ .i = 0 } }, \
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-	{ MODKEY|ShiftMask,	XK_1,		replacetag,	{ .i = 1 } }, \
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-	{ MODKEY|ShiftMask,	XK_2,		replacetag,	{ .i = 2 } }, \
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-	{ MODKEY|ShiftMask,	XK_3,		replacetag,	{ .i = 3 } }, \
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-	{ MODKEY|ShiftMask,	XK_4,		replacetag,	{ .i = 4 } }, \
+</a><a href="#h1-0-26" id="h1-0-26" class="d">-	{ MODKEY|ShiftMask,	XK_c,		killclient,	{ 0 } }, \
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-	{ MODKEY|ShiftMask,	XK_q,		quit,		{ 0 } }, \
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-	{ MODKEY|ShiftMask,	XK_Return,	spawn,		{ .cmd = &quot;exec xterm&quot; } }, \
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+	/* modifier			key		function	arguments */ \
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+	{ MODKEY,			XK_0,		view,		{ .i = 0 } }, \
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+	{ MODKEY,			XK_1,		view,		{ .i = 1 } }, \
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+	{ MODKEY,			XK_2,		view,		{ .i = 2 } }, \
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	{ MODKEY,			XK_3,		view,		{ .i = 3 } }, \
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+	{ MODKEY,			XK_4,		view,		{ .i = 4 } }, \
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	{ MODKEY,			XK_h,		viewprev,	{ 0 } }, \
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	{ MODKEY,			XK_j,		focusnext,	{ 0 } }, \
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	{ MODKEY,			XK_k,		focusprev,	{ 0 } }, \
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+	{ MODKEY,			XK_l,		viewnext,	{ 0 } }, \
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+	{ MODKEY,			XK_m,		togglemax,	{ 0 } }, \
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+	{ MODKEY,			XK_space,	togglemode,	{ 0 } }, \
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+	{ MODKEY,			XK_Return,	zoom,		{ 0 } }, \
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+	{ MODKEY|ControlMask,		XK_0,		appendtag,	{ .i = 0 } }, \
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+	{ MODKEY|ControlMask,		XK_1,		appendtag,	{ .i = 1 } }, \
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+	{ MODKEY|ControlMask,		XK_2,		appendtag,	{ .i = 2 } }, \
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+	{ MODKEY|ControlMask,		XK_3,		appendtag,	{ .i = 3 } }, \
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+	{ MODKEY|ControlMask,		XK_4,		appendtag,	{ .i = 4 } }, \
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+	{ MODKEY|ShiftMask,		XK_0,		replacetag,	{ .i = 0 } }, \
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+	{ MODKEY|ShiftMask,		XK_1,		replacetag,	{ .i = 1 } }, \
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+	{ MODKEY|ShiftMask,		XK_2,		replacetag,	{ .i = 2 } }, \
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+	{ MODKEY|ShiftMask,		XK_3,		replacetag,	{ .i = 3 } }, \
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+	{ MODKEY|ShiftMask,		XK_4,		replacetag,	{ .i = 4 } }, \
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+	{ MODKEY|ShiftMask,		XK_c,		killclient,	{ 0 } }, \
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+	{ MODKEY|ShiftMask,		XK_q,		quit,		{ 0 } }, \
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+	{ MODKEY|ShiftMask,		XK_Return,	spawn,		{ .cmd = &quot;exec xterm&quot; } }, \
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_0,		viewextend,	{ .i = 0 } }, \
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_1,		viewextend,	{ .i = 1 } }, \
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_2,		viewextend,	{ .i = 2 } }, \
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_3,		viewextend,	{ .i = 3 } }, \
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_4,		viewextend,	{ .i = 4 } }, \
+</a> };
+ 
+ #define RULES \
+<b>diff --git a/<a id="h2" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -109,9 +109,9 @@ drawstatus()
+</a> 		dc.x += dc.w;
+ 		dc.w = textw(tags[i]);
+ 		if(istile)
+<a href="#h2-0-3" id="h2-0-3" class="d">-			drawtext(tags[i], tsel[i]);
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+			drawtext(tags[i], seltag[i]);
+</a> 		else
+<a href="#h2-0-6" id="h2-0-6" class="d">-			drawtext(tags[i], !tsel[i]);
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+			drawtext(tags[i], !seltag[i]);
+</a> 	}
+ 	x = dc.x + dc.w;
+ 	dc.w = textw(stext);
+<b>diff --git a/<a id="h3" href="../file/dwm.1.html">dwm.1</a> b/<a href="../file/dwm.1.html">dwm.1</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -36,14 +36,21 @@ prints version information to standard output, then exits.
+</a> .B Standard input
+ is read and displayed in the status text area.
+ .TP
+<a href="#h3-0-3" id="h3-0-3" class="d">-.B Button[1-3]
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-click on a tag label focuses that tag.
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+.B Button[1,3]
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+click on a tag label focuses that
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+.B tag.
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+.TP
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+.B Button2
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+click on a tag label (un)extends the current
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+.B tag.
+</a> .TP
+ .B Button[1,4]
+<a href="#h3-0-14" id="h3-0-14" class="d">-click on the bar focuses the previous tag.
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+click on the bar focuses the previous
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+.B tag.
+</a> .TP
+ .B Button[2,5]
+<a href="#h3-0-19" id="h3-0-19" class="d">-click on the bar focuses the next tag.
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+click on the bar focuses the next
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+.B tag.
+</a> .SS Keyboard commands
+ .TP
+ .B Mod1-Return
+<a href="#h3-1" id="h3-1" class="h">@@ -108,6 +115,12 @@ Append
+</a> .B nth tag
+ to current
+ .B window.
+<a href="#h3-1-3" id="h3-1-3" class="i">+.TP
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+.B Mod1-Control-Shift-[0..n]
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+(Un)extends
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+.B nth tag
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+with current
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+.B tag.
+</a> .SS Mouse commands
+ .TP
+ .B Mod1-Button1
+<b>diff --git a/<a id="h4" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -74,7 +74,7 @@ extern unsigned int ntags;
+</a> extern void (*handler[LASTEvent])(XEvent *);
+ extern void (*arrange)(Arg *);
+ extern Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h4-0-3" id="h4-0-3" class="d">-extern Bool running, issel, *tsel;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+extern Bool running, issel, *seltag;
+</a> extern Client *clients, *sel;
+ extern Cursor cursor[CurLast];
+ extern DC dc;
+<a href="#h4-1" id="h4-1" class="h">@@ -128,6 +128,7 @@ extern void replacetag(Arg *arg);
+</a> extern void settags(Client *c);
+ extern void togglemode(Arg *arg);
+ extern void view(Arg *arg);
+<a href="#h4-1-3" id="h4-1-3" class="i">+extern void viewextend(Arg *arg);
+</a> extern void viewnext(Arg *arg);
+ extern void viewprev(Arg *arg);
+ 
+<b>diff --git a/<a id="h5" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -108,11 +108,8 @@ buttonpress(XEvent *e)
+</a> 			for(a.i = 0; a.i &lt; ntags; a.i++) {
+ 				x += textw(tags[a.i]);
+ 				if(ev-&gt;x &lt; x) {
+<a href="#h5-0-3" id="h5-0-3" class="d">-					if(ev-&gt;button == Button3) {
+</a><a href="#h5-0-4" id="h5-0-4" class="d">-						tsel[a.i] = True;
+</a><a href="#h5-0-5" id="h5-0-5" class="d">-						arrange(NULL);
+</a><a href="#h5-0-6" id="h5-0-6" class="d">-						drawall();
+</a><a href="#h5-0-7" id="h5-0-7" class="d">-					}
+</a><a href="#h5-0-8" id="h5-0-8" class="i">+					if(ev-&gt;button == Button3)
+</a><a href="#h5-0-9" id="h5-0-9" class="i">+						viewextend(&amp;a);
+</a> 					else
+ 						view(&amp;a);
+ 					return;
+<b>diff --git a/<a id="h6" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -83,7 +83,7 @@ xerrorstart(Display *dsply, XErrorEvent *ee)
+</a> /* extern */
+ 
+ char stext[1024];
+<a href="#h6-0-3" id="h6-0-3" class="d">-Bool *tsel;
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+Bool *seltag;
+</a> int screen, sx, sy, sw, sh, bx, by, bw, bh, mw;
+ unsigned int ntags;
+ Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h6-1" id="h6-1" class="h">@@ -213,8 +213,8 @@ main(int argc, char *argv[])
+</a> 	initrregs();
+ 
+ 	for(ntags = 0; tags[ntags]; ntags++);
+<a href="#h6-1-3" id="h6-1-3" class="d">-	tsel = emallocz(sizeof(Bool) * ntags);
+</a><a href="#h6-1-4" id="h6-1-4" class="d">-	tsel[DEFTAG] = True;
+</a><a href="#h6-1-5" id="h6-1-5" class="i">+	seltag = emallocz(sizeof(Bool) * ntags);
+</a><a href="#h6-1-6" id="h6-1-6" class="i">+	seltag[DEFTAG] = True;
+</a> 
+ 	/* style */
+ 	dc.bg = getcolor(BGCOLOR);
+<b>diff --git a/<a id="h7" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -181,7 +181,7 @@ isvisible(Client *c)
+</a> 	unsigned int i;
+ 
+ 	for(i = 0; i &lt; ntags; i++)
+<a href="#h7-0-3" id="h7-0-3" class="d">-		if(c-&gt;tags[i] &amp;&amp; tsel[i])
+</a><a href="#h7-0-4" id="h7-0-4" class="i">+		if(c-&gt;tags[i] &amp;&amp; seltag[i])
+</a> 			return True;
+ 	return False;
+ }
+<a href="#h7-1" id="h7-1" class="h">@@ -229,7 +229,7 @@ settags(Client *c)
+</a> 	}
+ 	if(!matched)
+ 		for(i = 0; i &lt; ntags; i++)
+<a href="#h7-1-3" id="h7-1-3" class="d">-			c-&gt;tags[i] = tsel[i];
+</a><a href="#h7-1-4" id="h7-1-4" class="i">+			c-&gt;tags[i] = seltag[i];
+</a> }
+ 
+ void
+<a href="#h7-2" id="h7-2" class="h">@@ -245,8 +245,21 @@ view(Arg *arg)
+</a> 	unsigned int i;
+ 
+ 	for(i = 0; i &lt; ntags; i++)
+<a href="#h7-2-3" id="h7-2-3" class="d">-		tsel[i] = False;
+</a><a href="#h7-2-4" id="h7-2-4" class="d">-	tsel[arg-&gt;i] = True;
+</a><a href="#h7-2-5" id="h7-2-5" class="i">+		seltag[i] = False;
+</a><a href="#h7-2-6" id="h7-2-6" class="i">+	seltag[arg-&gt;i] = True;
+</a><a href="#h7-2-7" id="h7-2-7" class="i">+	arrange(NULL);
+</a><a href="#h7-2-8" id="h7-2-8" class="i">+	drawall();
+</a><a href="#h7-2-9" id="h7-2-9" class="i">+}
+</a><a href="#h7-2-10" id="h7-2-10" class="i">+
+</a><a href="#h7-2-11" id="h7-2-11" class="i">+void
+</a><a href="#h7-2-12" id="h7-2-12" class="i">+viewextend(Arg *arg)
+</a><a href="#h7-2-13" id="h7-2-13" class="i">+{
+</a><a href="#h7-2-14" id="h7-2-14" class="i">+	unsigned int i;
+</a><a href="#h7-2-15" id="h7-2-15" class="i">+
+</a><a href="#h7-2-16" id="h7-2-16" class="i">+	seltag[arg-&gt;i] = !seltag[arg-&gt;i];
+</a><a href="#h7-2-17" id="h7-2-17" class="i">+	for(i = 0; !seltag[i] &amp;&amp; i &lt; ntags; i++);
+</a><a href="#h7-2-18" id="h7-2-18" class="i">+	if(i == ntags)
+</a><a href="#h7-2-19" id="h7-2-19" class="i">+		seltag[arg-&gt;i] = True; /* cannot toggle last view */
+</a> 	arrange(NULL);
+ 	drawall();
+ }
+<a href="#h7-3" id="h7-3" class="h">@@ -256,7 +269,7 @@ viewnext(Arg *arg)
+</a> {
+ 	unsigned int i;
+ 
+<a href="#h7-3-3" id="h7-3-3" class="d">-	for(i = 0; !tsel[i]; i++);
+</a><a href="#h7-3-4" id="h7-3-4" class="i">+	for(i = 0; !seltag[i]; i++);
+</a> 	arg-&gt;i = (i &lt; ntags-1) ? i+1 : 0;
+ 	view(arg);
+ }
+<a href="#h7-4" id="h7-4" class="h">@@ -266,7 +279,7 @@ viewprev(Arg *arg)
+</a> {
+ 	unsigned int i;
+ 
+<a href="#h7-4-3" id="h7-4-3" class="d">-	for(i = 0; !tsel[i]; i++);
+</a><a href="#h7-4-4" id="h7-4-4" class="i">+	for(i = 0; !seltag[i]; i++);
+</a> 	arg-&gt;i = (i &gt; 0) ? i-1 : ntags-1;
+ 	view(arg);
+ }
+</pre>
+</div>
+</body>
+</html>

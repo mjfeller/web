@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>updated dmenu to borderless drawing as well - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/13ef97e65ea5a713a3d5ab46916d1ac6d071b825.html">13ef97e65ea5a713a3d5ab46916d1ac6d071b825</a>
+<b>parent</b> <a href="../commit/65be999a3f76ad51fb97e12f2fb481f5038f6817.html">65be999a3f76ad51fb97e12f2fb481f5038f6817</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Fri, 25 Aug 2006 14:45:17 +0200
+
+updated dmenu to borderless drawing as well
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.arg.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.default.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dmenu.h</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">draw.c</a></td><td> | </td><td class="num">33</td><td><span class="i">++++++++</span><span class="d">-------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">main.c</a></td><td> | </td><td class="num">19</td><td><span class="i">++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>5 files changed, 32 insertions(+), 44 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.arg.h.html">config.arg.h</a> b/<a href="../file/config.arg.h.html">config.arg.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,6 +4,7 @@
+</a>  */
+ 
+ #define FONT			&quot;-*-terminus-medium-*-*-*-12-*-*-*-*-*-iso10646-*&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define BGCOLOR			&quot;#666699&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-#define FGCOLOR			&quot;#eeeeee&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-#define BORDERCOLOR		&quot;#9999CC&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#define SELBGCOLOR		&quot;#666699&quot;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+#define SELFGCOLOR		&quot;#eeeeee&quot;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+#define NORMBGCOLOR		&quot;#333366&quot;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+#define NORMFGCOLOR		&quot;#cccccc&quot;
+</a><b>diff --git a/<a id="h1" href="../file/config.default.h.html">config.default.h</a> b/<a href="../file/config.default.h.html">config.default.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -4,6 +4,7 @@
+</a>  */
+ 
+ #define FONT			&quot;fixed&quot;
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define BGCOLOR			&quot;#666699&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#define FGCOLOR			&quot;#eeeeee&quot;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-#define BORDERCOLOR		&quot;#9999CC&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+#define SELBGCOLOR		&quot;#666699&quot;
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+#define SELFGCOLOR		&quot;#eeeeee&quot;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#define NORMBGCOLOR		&quot;#333366&quot;
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+#define NORMFGCOLOR		&quot;#cccccc&quot;
+</a><b>diff --git a/<a id="h2" href="../file/dmenu.h.html">dmenu.h</a> b/<a href="../file/dmenu.h.html">dmenu.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -9,6 +9,9 @@
+</a> 
+ #define SPACE		30 /* px */
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+/* color */
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+enum { ColFG, ColBG, ColLast };
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+
+</a> typedef struct DC DC;
+ typedef struct Fnt Fnt;
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -22,9 +25,8 @@ struct Fnt {
+</a> 
+ struct DC { /* draw context */
+ 	int x, y, w, h;
+<a href="#h2-1-3" id="h2-1-3" class="d">-	unsigned long bg;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-	unsigned long fg;
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-	unsigned long border;
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+	unsigned long norm[ColLast];
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+	unsigned long sel[ColLast];
+</a> 	Drawable drawable;
+ 	Fnt font;
+ 	GC gc;
+<a href="#h2-2" id="h2-2" class="h">@@ -35,7 +37,7 @@ extern Display *dpy;
+</a> extern DC dc;
+ 
+ /* draw.c */
+<a href="#h2-2-3" id="h2-2-3" class="d">-extern void drawtext(const char *text, Bool invert, Bool border);
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+extern void drawtext(const char *text, unsigned long col[ColLast]);
+</a> extern unsigned long getcolor(const char *colstr);
+ extern void setfont(const char *fontstr);
+ extern unsigned int textw(const char *text);
+<b>diff --git a/<a id="h3" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -24,37 +24,21 @@ textnw(const char *text, unsigned int len)
+</a> /* extern */
+ 
+ void
+<a href="#h3-0-3" id="h3-0-3" class="d">-drawtext(const char *text, Bool invert, Bool border)
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+drawtext(const char *text, unsigned long col[ColLast])
+</a> {
+ 	int x, y, w, h;
+ 	static char buf[256];
+ 	unsigned int len, olen;
+ 	XGCValues gcv;
+<a href="#h3-0-10" id="h3-0-10" class="d">-	XPoint points[5];
+</a> 	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+ 
+<a href="#h3-0-13" id="h3-0-13" class="d">-	XSetForeground(dpy, dc.gc, invert ? dc.fg : dc.bg);
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+	XSetForeground(dpy, dc.gc, col[ColBG]);
+</a> 	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+ 
+<a href="#h3-0-17" id="h3-0-17" class="d">-	w = 0;
+</a><a href="#h3-0-18" id="h3-0-18" class="d">-	if(border) {
+</a><a href="#h3-0-19" id="h3-0-19" class="d">-		points[0].x = dc.x;
+</a><a href="#h3-0-20" id="h3-0-20" class="d">-		points[0].y = dc.y;
+</a><a href="#h3-0-21" id="h3-0-21" class="d">-		points[1].x = dc.w - 1;
+</a><a href="#h3-0-22" id="h3-0-22" class="d">-		points[1].y = 0;
+</a><a href="#h3-0-23" id="h3-0-23" class="d">-		points[2].x = 0;
+</a><a href="#h3-0-24" id="h3-0-24" class="d">-		points[2].y = dc.h - 1;
+</a><a href="#h3-0-25" id="h3-0-25" class="d">-		points[3].x = -(dc.w - 1);
+</a><a href="#h3-0-26" id="h3-0-26" class="d">-		points[3].y = 0;
+</a><a href="#h3-0-27" id="h3-0-27" class="d">-		points[4].x = 0;
+</a><a href="#h3-0-28" id="h3-0-28" class="d">-		points[4].y = -(dc.h - 1);
+</a><a href="#h3-0-29" id="h3-0-29" class="d">-		XSetForeground(dpy, dc.gc, dc.border);
+</a><a href="#h3-0-30" id="h3-0-30" class="d">-		XDrawLines(dpy, dc.drawable, dc.gc, points, 5, CoordModePrevious);
+</a><a href="#h3-0-31" id="h3-0-31" class="d">-	}
+</a><a href="#h3-0-32" id="h3-0-32" class="d">-
+</a> 	if(!text)
+ 		return;
+ 
+<a href="#h3-0-36" id="h3-0-36" class="i">+	w = 0;
+</a> 	olen = len = strlen(text);
+ 	if(len &gt;= sizeof(buf))
+ 		len = sizeof(buf) - 1;
+<a href="#h3-1" id="h3-1" class="h">@@ -80,17 +64,16 @@ drawtext(const char *text, Bool invert, Bool border)
+</a> 	if(w &gt; dc.w)
+ 		return; /* too long */
+ 
+<a href="#h3-1-3" id="h3-1-3" class="d">-	gcv.foreground = invert ? dc.bg : dc.fg;
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-	gcv.background = invert ? dc.fg : dc.bg;
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	gcv.foreground = col[ColFG];
+</a> 	if(dc.font.set) {
+<a href="#h3-1-7" id="h3-1-7" class="d">-		XChangeGC(dpy, dc.gc, GCForeground | GCBackground, &amp;gcv);
+</a><a href="#h3-1-8" id="h3-1-8" class="d">-		XmbDrawImageString(dpy, dc.drawable, dc.font.set, dc.gc,
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+		XChangeGC(dpy, dc.gc, GCForeground, &amp;gcv);
+</a><a href="#h3-1-10" id="h3-1-10" class="i">+		XmbDrawString(dpy, dc.drawable, dc.font.set, dc.gc,
+</a> 				x, y, buf, len);
+ 	}
+ 	else {
+ 		gcv.font = dc.font.xfont-&gt;fid;
+<a href="#h3-1-15" id="h3-1-15" class="d">-		XChangeGC(dpy, dc.gc, GCForeground | GCBackground | GCFont, &amp;gcv);
+</a><a href="#h3-1-16" id="h3-1-16" class="d">-		XDrawImageString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+</a><a href="#h3-1-17" id="h3-1-17" class="i">+		XChangeGC(dpy, dc.gc, GCForeground | GCFont, &amp;gcv);
+</a><a href="#h3-1-18" id="h3-1-18" class="i">+		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+</a> 	}
+ }
+ 
+<b>diff --git a/<a id="h4" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -77,17 +77,17 @@ drawmenu()
+</a> 	dc.y = 0;
+ 	dc.w = mw;
+ 	dc.h = mh;
+<a href="#h4-0-3" id="h4-0-3" class="d">-	drawtext(NULL, False, False);
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+	drawtext(NULL, dc.norm);
+</a> 
+ 	/* print command */
+ 	if(cmdw &amp;&amp; item)
+ 		dc.w = cmdw;
+<a href="#h4-0-9" id="h4-0-9" class="d">-	drawtext(text[0] ? text : NULL, False, False);
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+	drawtext(text[0] ? text : NULL, dc.norm);
+</a> 	dc.x += cmdw;
+ 
+ 	if(curr) {
+ 		dc.w = SPACE;
+<a href="#h4-0-15" id="h4-0-15" class="d">-		drawtext((curr &amp;&amp; curr-&gt;left) ? &quot;&lt;&quot; : NULL, False, False);
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+		drawtext((curr &amp;&amp; curr-&gt;left) ? &quot;&lt;&quot; : NULL, dc.norm);
+</a> 		dc.x += dc.w;
+ 
+ 		/* determine maximum items */
+<a href="#h4-1" id="h4-1" class="h">@@ -95,13 +95,13 @@ drawmenu()
+</a> 			dc.w = textw(i-&gt;text);
+ 			if(dc.w &gt; mw / 3)
+ 				dc.w = mw / 3;
+<a href="#h4-1-3" id="h4-1-3" class="d">-			drawtext(i-&gt;text, sel == i, sel == i);
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+			drawtext(i-&gt;text, (sel == i) ? dc.sel : dc.norm);
+</a> 			dc.x += dc.w;
+ 		}
+ 
+ 		dc.x = mw - SPACE;
+ 		dc.w = SPACE;
+<a href="#h4-1-10" id="h4-1-10" class="d">-		drawtext(next ? &quot;&gt;&quot; : NULL, False, False);
+</a><a href="#h4-1-11" id="h4-1-11" class="i">+		drawtext(next ? &quot;&gt;&quot; : NULL, dc.norm);
+</a> 	}
+ 	XCopyArea(dpy, dc.drawable, win, dc.gc, 0, 0, mw, mh, 0, 0);
+ 	XFlush(dpy);
+<a href="#h4-2" id="h4-2" class="h">@@ -315,9 +315,10 @@ main(int argc, char *argv[])
+</a> 		usleep(1000);
+ 
+ 	/* style */
+<a href="#h4-2-3" id="h4-2-3" class="d">-	dc.bg = getcolor(BGCOLOR);
+</a><a href="#h4-2-4" id="h4-2-4" class="d">-	dc.fg = getcolor(FGCOLOR);
+</a><a href="#h4-2-5" id="h4-2-5" class="d">-	dc.border = getcolor(BORDERCOLOR);
+</a><a href="#h4-2-6" id="h4-2-6" class="i">+	dc.sel[ColBG] = getcolor(SELBGCOLOR);
+</a><a href="#h4-2-7" id="h4-2-7" class="i">+	dc.sel[ColFG] = getcolor(SELFGCOLOR);
+</a><a href="#h4-2-8" id="h4-2-8" class="i">+	dc.norm[ColBG] = getcolor(NORMBGCOLOR);
+</a><a href="#h4-2-9" id="h4-2-9" class="i">+	dc.norm[ColFG] = getcolor(NORMFGCOLOR);
+</a> 	setfont(FONT);
+ 
+ 	wa.override_redirect = 1;
+<a href="#h4-3" id="h4-3" class="h">@@ -326,7 +327,7 @@ main(int argc, char *argv[])
+</a> 
+ 	mx = my = 0;
+ 	mw = DisplayWidth(dpy, screen);
+<a href="#h4-3-3" id="h4-3-3" class="d">-	mh = dc.font.height + 4;
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+	mh = dc.font.height + 2;
+</a> 
+ 	win = XCreateWindow(dpy, root, mx, my, mw, mh, 0,
+ 			DefaultDepth(dpy, screen), CopyFromParent,
+</pre>
+</div>
+</body>
+</html>

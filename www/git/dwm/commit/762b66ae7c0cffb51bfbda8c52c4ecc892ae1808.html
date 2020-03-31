@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>hack that adds NET_SUPPORTING_WM_CHECK handling, dwm identifies itself as compiz, hence I believe this might workaround the JDK 1.6+ XToolkit bug - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/762b66ae7c0cffb51bfbda8c52c4ecc892ae1808.html">762b66ae7c0cffb51bfbda8c52c4ecc892ae1808</a>
+<b>parent</b> <a href="../commit/cb4951dd54951611bb99924b9ae1d0a7c87f47cc.html">cb4951dd54951611bb99924b9ae1d0a7c87f47cc</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 15 Nov 2007 18:57:31 +0100
+
+hack that adds NET_SUPPORTING_WM_CHECK handling, dwm identifies itself as compiz, hence I believe this might workaround the JDK 1.6+ XToolkit bug
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">18</td><td><span class="i">+++++++++++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 15 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -53,7 +53,7 @@
+</a> enum { BarTop, BarBot, BarOff };			/* bar position */
+ enum { CurNormal, CurResize, CurMove, CurLast };	/* cursor */
+ enum { ColBorder, ColFG, ColBG, ColLast };		/* color */
+<a href="#h0-0-3" id="h0-0-3" class="d">-enum { NetSupported, NetWMName, NetLast };		/* EWMH atoms */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+enum { NetSupported, NetWMCheck, NetWMName, NetLast };	/* EWMH atoms */
+</a> enum { WMProtocols, WMDelete, WMName, WMState, WMLast };/* default atoms */
+ 
+ /* typedefs */
+<a href="#h0-1" id="h0-1" class="h">@@ -1427,19 +1427,20 @@ void
+</a> setup(void) {
+ 	int d;
+ 	unsigned int i, j, mask;
+<a href="#h0-1-3" id="h0-1-3" class="i">+	Atom utf8string;
+</a> 	Window w;
+ 	XModifierKeymap *modmap;
+ 	XSetWindowAttributes wa;
+ 
+ 	/* init atoms */
+<a href="#h0-1-9" id="h0-1-9" class="i">+	utf8string = XInternAtom(dpy, &quot;UTF8_STRING&quot;, False);
+</a> 	wmatom[WMProtocols] = XInternAtom(dpy, &quot;WM_PROTOCOLS&quot;, False);
+ 	wmatom[WMDelete] = XInternAtom(dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+ 	wmatom[WMName] = XInternAtom(dpy, &quot;WM_NAME&quot;, False);
+ 	wmatom[WMState] = XInternAtom(dpy, &quot;WM_STATE&quot;, False);
+ 	netatom[NetSupported] = XInternAtom(dpy, &quot;_NET_SUPPORTED&quot;, False);
+<a href="#h0-1-15" id="h0-1-15" class="i">+	netatom[NetWMCheck] = XInternAtom(dpy, &quot;_NET_SUPPORTING_WM_CHECK&quot;, False);
+</a> 	netatom[NetWMName] = XInternAtom(dpy, &quot;_NET_WM_NAME&quot;, False);
+<a href="#h0-1-17" id="h0-1-17" class="d">-	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-			PropModeReplace, (unsigned char *) netatom, NetLast);
+</a> 
+ 	/* init cursors */
+ 	cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
+<a href="#h0-2" id="h0-2" class="h">@@ -1514,6 +1515,17 @@ setup(void) {
+</a> 
+ 	/* multihead support */
+ 	selscreen = XQueryPointer(dpy, root, &amp;w, &amp;w, &amp;d, &amp;d, &amp;d, &amp;d, &amp;mask);
+<a href="#h0-2-3" id="h0-2-3" class="i">+
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	/* EWMH properties */
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	XChangeProperty(dpy, barwin, netatom[NetWMCheck], XA_WINDOW, 32,
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+			PropModeReplace, (unsigned char *) &amp;barwin, 1);
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	/* HACK: dwm identifies itself as compiz to workaround the XToolkit bug of Sun JDK */
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	XChangeProperty(dpy, barwin, netatom[NetWMName], utf8string, 8,
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+			PropModeReplace, (unsigned char *) &quot;compiz&quot;, 7);
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	XChangeProperty(dpy, root, netatom[NetWMCheck], XA_WINDOW, 32,
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+			PropModeReplace, (unsigned char *) &amp;barwin, 1);
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	XChangeProperty(dpy, root, netatom[NetSupported], XA_ATOM, 32,
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+			PropModeReplace, (unsigned char *) netatom, NetLast);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>tabbed works. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/21ae332817f235ba45e28fe6389abf39308ed93b.html">21ae332817f235ba45e28fe6389abf39308ed93b</a>
+<b>parent</b> <a href="../commit/9bd43db63a9bf890cb6ed170796c0dc7002aae8e.html">9bd43db63a9bf890cb6ed170796c0dc7002aae8e</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue,  8 Sep 2009 11:30:08 +0200
+
+tabbed works.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">tabbed.c</a></td><td> | </td><td class="num">263</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>2 files changed, 258 insertions(+), 17 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,13 +3,14 @@ static const char normbgcolor[]     = &quot;#202020&quot;;
+</a> static const char normfgcolor[]     = &quot;#c0c0c0&quot;;
+ static const char selbgcolor[]      = &quot;#884400&quot;;
+ static const char selfgcolor[]      = &quot;#f0f0f0&quot;;
+<a href="#h0-0-3" id="h0-0-3" class="i">+static const int tabwidth           = 200;
+</a> 
+<a href="#h0-0-5" id="h0-0-5" class="d">-#define SURF &quot;surf&quot;, &quot;-x&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#define EXEC &quot;surf&quot;, &quot;-x&quot;
+</a> #define MODKEY ControlMask
+ Key keys[] = { \
+ 	/* modifier                     key        function        argument */
+<a href="#h0-0-10" id="h0-0-10" class="d">-	{ MODKEY|ShiftMask,             XK_Return, spawntab,       { .v = (char*[]){ SURF, NULL} } },
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	{ MODKEY|ShiftMask,             XK_t,      spawntab,       { .v = (char*[]){ SURF, NULL} } },
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	{ MODKEY|ShiftMask,             XK_Return, spawntab,       { .v = (char*[]){ EXEC, NULL} } },
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	{ MODKEY|ShiftMask,             XK_t,      spawntab,       { .v = (char*[]){ EXEC, NULL} } },
+</a> 	{ MODKEY|ShiftMask,             XK_l,      rotate,         { .i = +1 } },
+ 	{ MODKEY|ShiftMask,             XK_h,      rotate,         { .i = -1 } },
+ 	{ MODKEY,                       XK_1,      move,           { .i = 1 } },
+<a href="#h0-1" id="h0-1" class="h">@@ -24,3 +25,8 @@ Key keys[] = { \
+</a> 	{ MODKEY,                       XK_0,      move,           { .i = 10 } },
+ 	{ MODKEY,                       XK_q,      killclient,     { 0 } },
+ };
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+Autostart autostarts[] = { \
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	/* function         argument */
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	{ spawntab,       { .v = (char*[]){ EXEC, NULL} } },
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+};
+</a><b>diff --git a/<a id="h1" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -12,13 +12,17 @@
+</a> #include &lt;stdio.h&gt;
+ #include &lt;string.h&gt;
+ #include &lt;stdlib.h&gt;
+<a href="#h1-0-3" id="h1-0-3" class="i">+#include &lt;X11/cursorfont.h&gt;
+</a> #include &lt;X11/keysym.h&gt;
+ #include &lt;X11/Xatom.h&gt;
+ #include &lt;X11/Xlib.h&gt;
+<a href="#h1-0-7" id="h1-0-7" class="i">+#include &lt;X11/Xproto.h&gt;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#include &lt;X11/Xutil.h&gt;
+</a> #include &lt;errno.h&gt;
+ 
+ /* macros */
+ #define MAX(a, b)       ((a) &gt; (b) ? (a) : (b))
+<a href="#h1-0-13" id="h1-0-13" class="i">+#define MIN(a, b)       ((a) &lt; (b) ? (a) : (b))
+</a> #define LENGTH(x)       (sizeof x / sizeof x[0])
+ #define CLEANMASK(mask) (mask &amp; ~(numlockmask|LockMask))
+ #define TEXTW(x)        (textnw(x, strlen(x)) + dc.font.height)
+<a href="#h1-1" id="h1-1" class="h">@@ -40,6 +44,11 @@ typedef struct {
+</a> } Key;
+ 
+ typedef struct {
+<a href="#h1-1-3" id="h1-1-3" class="i">+	void (*func)(const Arg *);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	const Arg arg;
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+} Autostart;
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+typedef struct {
+</a> 	int x, y, w, h;
+ 	unsigned long norm[ColLast];
+ 	unsigned long sel[ColLast];
+<a href="#h1-2" id="h1-2" class="h">@@ -66,30 +75,39 @@ typedef struct Listener {
+</a> } Listener;
+ 
+ /* function declarations */
+<a href="#h1-2-3" id="h1-2-3" class="i">+static void autostart(void);
+</a> static void cleanup(void);
+ static void configurenotify(XEvent *e);
+<a href="#h1-2-6" id="h1-2-6" class="d">-static void unmapnotify(XEvent *e);
+</a> static void die(const char *errstr, ...);
+<a href="#h1-2-8" id="h1-2-8" class="i">+static void drawbar();
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+static void drawtext(const char *text, unsigned long col[ColLast]);
+</a> static void expose(XEvent *e);
+ static unsigned long getcolor(const char *colstr);
+<a href="#h1-2-12" id="h1-2-12" class="i">+static Client *getclient(Window w);
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+static Client *getfirsttab();
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+static Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+</a> static void initfont(const char *fontstr);
+ static void keypress(XEvent *e);
+ static void killclient(const Arg *arg);
+ static void move(const Arg *arg);
+ static void spawntab(const Arg *arg);
+<a href="#h1-2-20" id="h1-2-20" class="d">-static void reparent(Window win);
+</a><a href="#h1-2-21" id="h1-2-21" class="i">+static void manage(Window win);
+</a><a href="#h1-2-22" id="h1-2-22" class="i">+static void propertynotify(XEvent *e);
+</a><a href="#h1-2-23" id="h1-2-23" class="i">+static void resize(Client *c, int w, int h);
+</a> static void rotate(const Arg *arg);
+ static void run(void);
+ static void setup(void);
+ static int textnw(const char *text, unsigned int len);
+<a href="#h1-2-28" id="h1-2-28" class="i">+static void unmapnotify(XEvent *e);
+</a> static void updatenumlockmask(void);
+<a href="#h1-2-30" id="h1-2-30" class="i">+static void updatetitle(Client *c);
+</a> static int xerror(Display *dpy, XErrorEvent *ee);
+ 
+ /* variables */
+ static int screen;
+<a href="#h1-2-35" id="h1-2-35" class="d">-static int wx, wy, ww, wh;
+</a> static void (*handler[LASTEvent]) (XEvent *) = {
+ 	[ConfigureNotify] = configurenotify,
+<a href="#h1-2-38" id="h1-2-38" class="i">+	[PropertyNotify] = propertynotify,
+</a> 	[UnmapNotify] = unmapnotify,
+ 	[KeyPress] = keypress,
+ 	[Expose] = expose,
+<a href="#h1-3" id="h1-3" class="h">@@ -99,12 +117,22 @@ static DC dc;
+</a> static Window root, win;
+ static Bool running = True;
+ static unsigned int numlockmask = 0;
+<a href="#h1-3-3" id="h1-3-3" class="d">-Client *clients, *sel;
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-Listener *listeners;
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+static unsigned bh, wx, wy, ww, wh;
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+static Client *clients, *sel;
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+static Listener *listeners;
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+static Bool badwindow = False;
+</a> /* configuration, allows nested code to access above variables */
+ #include &quot;config.h&quot;
+ 
+ void
+<a href="#h1-3-13" id="h1-3-13" class="i">+autostart() {
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+	int i;
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+	for(i = 0; i &lt; LENGTH(autostarts); i++)
+</a><a href="#h1-3-17" id="h1-3-17" class="i">+		autostarts[i].func(&amp;(autostarts[i].arg));
+</a><a href="#h1-3-18" id="h1-3-18" class="i">+}
+</a><a href="#h1-3-19" id="h1-3-19" class="i">+
+</a><a href="#h1-3-20" id="h1-3-20" class="i">+void
+</a> cleanup(void) {
+ 	if(dc.font.set)
+ 		XFreeFontSet(dpy, dc.font.set);
+<a href="#h1-4" id="h1-4" class="h">@@ -114,18 +142,21 @@ cleanup(void) {
+</a> 	XFreeGC(dpy, dc.gc);
+ 	XDestroyWindow(dpy, win);
+ 	XSync(dpy, False);
+<a href="#h1-4-3" id="h1-4-3" class="d">-	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
+</a> }
+ 
+ void
+ configurenotify(XEvent *e) {
+ 	XConfigureEvent *ev = &amp;e-&gt;xconfigure;
+<a href="#h1-4-9" id="h1-4-9" class="i">+	Client *c;
+</a> 
+ 	if(ev-&gt;window == win &amp;&amp; (ev-&gt;width != ww || ev-&gt;height != wh)) {
+ 		ww = ev-&gt;width;
+ 		wh = ev-&gt;height;
+ 		XFreePixmap(dpy, dc.drawable);
+ 		dc.drawable = XCreatePixmap(dpy, root, ww, wh, DefaultDepth(dpy, screen));
+<a href="#h1-4-16" id="h1-4-16" class="i">+		for(c = clients; c; c = c-&gt;next)
+</a><a href="#h1-4-17" id="h1-4-17" class="i">+			resize(c, ww, wh - bh);
+</a><a href="#h1-4-18" id="h1-4-18" class="i">+		XSync(dpy, False);
+</a> 	}
+ }
+ 
+<a href="#h1-5" id="h1-5" class="h">@@ -139,6 +170,58 @@ die(const char *errstr, ...) {
+</a> 	exit(EXIT_FAILURE);
+ }
+ 
+<a href="#h1-5-3" id="h1-5-3" class="i">+void
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+drawbar() {
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+	unsigned long *col;
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+	unsigned int n;
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+	Client *c, *fc;
+</a><a href="#h1-5-8" id="h1-5-8" class="i">+
+</a><a href="#h1-5-9" id="h1-5-9" class="i">+	dc.x = 0;
+</a><a href="#h1-5-10" id="h1-5-10" class="i">+	drawtext(&quot;&quot;, dc.norm);
+</a><a href="#h1-5-11" id="h1-5-11" class="i">+	for(fc = c = getfirsttab(); c; c = c-&gt;next, n++);
+</a><a href="#h1-5-12" id="h1-5-12" class="i">+	for(c = fc; c &amp;&amp; dc.x &lt; ww; c = c-&gt;next) {
+</a><a href="#h1-5-13" id="h1-5-13" class="i">+		dc.w = tabwidth;
+</a><a href="#h1-5-14" id="h1-5-14" class="i">+		if(c == sel) {
+</a><a href="#h1-5-15" id="h1-5-15" class="i">+			col = dc.sel;
+</a><a href="#h1-5-16" id="h1-5-16" class="i">+		}
+</a><a href="#h1-5-17" id="h1-5-17" class="i">+		else {
+</a><a href="#h1-5-18" id="h1-5-18" class="i">+			col = dc.norm;
+</a><a href="#h1-5-19" id="h1-5-19" class="i">+		}
+</a><a href="#h1-5-20" id="h1-5-20" class="i">+		drawtext(c-&gt;name, col);
+</a><a href="#h1-5-21" id="h1-5-21" class="i">+		dc.x += dc.w;
+</a><a href="#h1-5-22" id="h1-5-22" class="i">+	}
+</a><a href="#h1-5-23" id="h1-5-23" class="i">+	XCopyArea(dpy, dc.drawable, win, dc.gc, 0, 0, ww, bh, 0, 0);
+</a><a href="#h1-5-24" id="h1-5-24" class="i">+	XSync(dpy, False);
+</a><a href="#h1-5-25" id="h1-5-25" class="i">+}
+</a><a href="#h1-5-26" id="h1-5-26" class="i">+
+</a><a href="#h1-5-27" id="h1-5-27" class="i">+void
+</a><a href="#h1-5-28" id="h1-5-28" class="i">+drawtext(const char *text, unsigned long col[ColLast]) {
+</a><a href="#h1-5-29" id="h1-5-29" class="i">+	char buf[256];
+</a><a href="#h1-5-30" id="h1-5-30" class="i">+	int i, x, y, h, len, olen;
+</a><a href="#h1-5-31" id="h1-5-31" class="i">+	XRectangle r = { dc.x, dc.y, dc.w, dc.h };
+</a><a href="#h1-5-32" id="h1-5-32" class="i">+
+</a><a href="#h1-5-33" id="h1-5-33" class="i">+	XSetForeground(dpy, dc.gc, col[ColBG]);
+</a><a href="#h1-5-34" id="h1-5-34" class="i">+	XFillRectangles(dpy, dc.drawable, dc.gc, &amp;r, 1);
+</a><a href="#h1-5-35" id="h1-5-35" class="i">+	if(!text)
+</a><a href="#h1-5-36" id="h1-5-36" class="i">+		return;
+</a><a href="#h1-5-37" id="h1-5-37" class="i">+	olen = strlen(text);
+</a><a href="#h1-5-38" id="h1-5-38" class="i">+	h = dc.font.ascent + dc.font.descent;
+</a><a href="#h1-5-39" id="h1-5-39" class="i">+	y = dc.y + (dc.h / 2) - (h / 2) + dc.font.ascent;
+</a><a href="#h1-5-40" id="h1-5-40" class="i">+	x = dc.x + (h / 2);
+</a><a href="#h1-5-41" id="h1-5-41" class="i">+	/* shorten text if necessary */
+</a><a href="#h1-5-42" id="h1-5-42" class="i">+	for(len = MIN(olen, sizeof buf); len &amp;&amp; textnw(text, len) &gt; dc.w - h; len--);
+</a><a href="#h1-5-43" id="h1-5-43" class="i">+	if(!len)
+</a><a href="#h1-5-44" id="h1-5-44" class="i">+		return;
+</a><a href="#h1-5-45" id="h1-5-45" class="i">+	memcpy(buf, text, len);
+</a><a href="#h1-5-46" id="h1-5-46" class="i">+	if(len &lt; olen)
+</a><a href="#h1-5-47" id="h1-5-47" class="i">+		for(i = len; i &amp;&amp; i &gt; len - 3; buf[--i] = &#39;.&#39;);
+</a><a href="#h1-5-48" id="h1-5-48" class="i">+	XSetForeground(dpy, dc.gc, col[ColFG]);
+</a><a href="#h1-5-49" id="h1-5-49" class="i">+	if(dc.font.set)
+</a><a href="#h1-5-50" id="h1-5-50" class="i">+		XmbDrawString(dpy, dc.drawable, dc.font.set, dc.gc, x, y, buf, len);
+</a><a href="#h1-5-51" id="h1-5-51" class="i">+	else
+</a><a href="#h1-5-52" id="h1-5-52" class="i">+		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+</a><a href="#h1-5-53" id="h1-5-53" class="i">+}
+</a><a href="#h1-5-54" id="h1-5-54" class="i">+
+</a> void *
+ emallocz(size_t size) {
+ 	void *p;
+<a href="#h1-6" id="h1-6" class="h">@@ -150,7 +233,21 @@ emallocz(size_t size) {
+</a> 
+ void
+ expose(XEvent *e) {
+<a href="#h1-6-3" id="h1-6-3" class="d">-	/*XExposeEvent *ev = &amp;e-&gt;xexpose;*/
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+	XExposeEvent *ev = &amp;e-&gt;xexpose;
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+	if(ev-&gt;count == 0 &amp;&amp; win == ev-&gt;window)
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+		drawbar();
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+}
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+void
+</a><a href="#h1-6-11" id="h1-6-11" class="i">+focus(Client *c) {
+</a><a href="#h1-6-12" id="h1-6-12" class="i">+	if(!c || !clients)
+</a><a href="#h1-6-13" id="h1-6-13" class="i">+		return;
+</a><a href="#h1-6-14" id="h1-6-14" class="i">+	XRaiseWindow(dpy, c-&gt;win);
+</a><a href="#h1-6-15" id="h1-6-15" class="i">+	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+</a><a href="#h1-6-16" id="h1-6-16" class="i">+	XSelectInput(dpy, c-&gt;win, PropertyChangeMask);
+</a><a href="#h1-6-17" id="h1-6-17" class="i">+	sel = c;
+</a><a href="#h1-6-18" id="h1-6-18" class="i">+	drawbar();
+</a> }
+ 
+ unsigned long
+<a href="#h1-7" id="h1-7" class="h">@@ -163,6 +260,57 @@ getcolor(const char *colstr) {
+</a> 	return color.pixel;
+ }
+ 
+<a href="#h1-7-3" id="h1-7-3" class="i">+Client *
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+getclient(Window w) {
+</a><a href="#h1-7-5" id="h1-7-5" class="i">+	Client *c;
+</a><a href="#h1-7-6" id="h1-7-6" class="i">+
+</a><a href="#h1-7-7" id="h1-7-7" class="i">+	for(c = clients; c; c = c-&gt;next)
+</a><a href="#h1-7-8" id="h1-7-8" class="i">+		if(c-&gt;win == w)
+</a><a href="#h1-7-9" id="h1-7-9" class="i">+			return c;
+</a><a href="#h1-7-10" id="h1-7-10" class="i">+	return NULL;
+</a><a href="#h1-7-11" id="h1-7-11" class="i">+}
+</a><a href="#h1-7-12" id="h1-7-12" class="i">+
+</a><a href="#h1-7-13" id="h1-7-13" class="i">+Client *
+</a><a href="#h1-7-14" id="h1-7-14" class="i">+getfirsttab() {
+</a><a href="#h1-7-15" id="h1-7-15" class="i">+	unsigned int n, seli;
+</a><a href="#h1-7-16" id="h1-7-16" class="i">+	Client *c, *fc;
+</a><a href="#h1-7-17" id="h1-7-17" class="i">+
+</a><a href="#h1-7-18" id="h1-7-18" class="i">+	return clients;
+</a><a href="#h1-7-19" id="h1-7-19" class="i">+	c = fc = clients;
+</a><a href="#h1-7-20" id="h1-7-20" class="i">+	for(n = 0; c; c = c-&gt;next, n++);
+</a><a href="#h1-7-21" id="h1-7-21" class="i">+	if(n * tabwidth &gt; ww) {
+</a><a href="#h1-7-22" id="h1-7-22" class="i">+		for(seli = 0, c = clients; c &amp;&amp; c != sel; c = c-&gt;next, seli++);
+</a><a href="#h1-7-23" id="h1-7-23" class="i">+		for(; seli * tabwidth &gt; ww / 2 &amp;&amp; n * tabwidth &gt; ww;
+</a><a href="#h1-7-24" id="h1-7-24" class="i">+				fc = fc-&gt;next, seli--, n--);
+</a><a href="#h1-7-25" id="h1-7-25" class="i">+	}
+</a><a href="#h1-7-26" id="h1-7-26" class="i">+	return fc;
+</a><a href="#h1-7-27" id="h1-7-27" class="i">+}
+</a><a href="#h1-7-28" id="h1-7-28" class="i">+
+</a><a href="#h1-7-29" id="h1-7-29" class="i">+Bool
+</a><a href="#h1-7-30" id="h1-7-30" class="i">+gettextprop(Window w, Atom atom, char *text, unsigned int size) {
+</a><a href="#h1-7-31" id="h1-7-31" class="i">+	char **list = NULL;
+</a><a href="#h1-7-32" id="h1-7-32" class="i">+	int n;
+</a><a href="#h1-7-33" id="h1-7-33" class="i">+	XTextProperty name;
+</a><a href="#h1-7-34" id="h1-7-34" class="i">+
+</a><a href="#h1-7-35" id="h1-7-35" class="i">+	if(!text || size == 0)
+</a><a href="#h1-7-36" id="h1-7-36" class="i">+		return False;
+</a><a href="#h1-7-37" id="h1-7-37" class="i">+	text[0] = &#39;\0&#39;;
+</a><a href="#h1-7-38" id="h1-7-38" class="i">+	XGetTextProperty(dpy, w, &amp;name, atom);
+</a><a href="#h1-7-39" id="h1-7-39" class="i">+	if(!name.nitems)
+</a><a href="#h1-7-40" id="h1-7-40" class="i">+		return False;
+</a><a href="#h1-7-41" id="h1-7-41" class="i">+	if(name.encoding == XA_STRING)
+</a><a href="#h1-7-42" id="h1-7-42" class="i">+		strncpy(text, (char *)name.value, size - 1);
+</a><a href="#h1-7-43" id="h1-7-43" class="i">+	else {
+</a><a href="#h1-7-44" id="h1-7-44" class="i">+		if(XmbTextPropertyToTextList(dpy, &amp;name, &amp;list, &amp;n) &gt;= Success &amp;&amp; n &gt; 0 &amp;&amp; *list) {
+</a><a href="#h1-7-45" id="h1-7-45" class="i">+			strncpy(text, *list, size - 1);
+</a><a href="#h1-7-46" id="h1-7-46" class="i">+			XFreeStringList(list);
+</a><a href="#h1-7-47" id="h1-7-47" class="i">+		}
+</a><a href="#h1-7-48" id="h1-7-48" class="i">+	}
+</a><a href="#h1-7-49" id="h1-7-49" class="i">+	text[size - 1] = &#39;\0&#39;;
+</a><a href="#h1-7-50" id="h1-7-50" class="i">+	XFree(name.value);
+</a><a href="#h1-7-51" id="h1-7-51" class="i">+	return True;
+</a><a href="#h1-7-52" id="h1-7-52" class="i">+}
+</a><a href="#h1-7-53" id="h1-7-53" class="i">+
+</a> void
+ initfont(const char *fontstr) {
+ 	char *def, **missing;
+<a href="#h1-8" id="h1-8" class="h">@@ -225,7 +373,13 @@ killclient(const Arg *arg) {
+</a> 
+ void
+ move(const Arg *arg) {
+<a href="#h1-8-3" id="h1-8-3" class="d">-	puts(&quot;move to nth tab&quot;);
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+	int i;
+</a><a href="#h1-8-5" id="h1-8-5" class="i">+	Client *c;
+</a><a href="#h1-8-6" id="h1-8-6" class="i">+
+</a><a href="#h1-8-7" id="h1-8-7" class="i">+	for(i = 0, c = clients; c; c = c-&gt;next, i++) {
+</a><a href="#h1-8-8" id="h1-8-8" class="i">+		if(arg-&gt;i == i)
+</a><a href="#h1-8-9" id="h1-8-9" class="i">+			focus(c);
+</a><a href="#h1-8-10" id="h1-8-10" class="i">+	}
+</a> }
+ 
+ void
+<a href="#h1-9" id="h1-9" class="h">@@ -262,14 +416,84 @@ spawntab(const Arg *arg) {
+</a> }
+ 
+ void
+<a href="#h1-9-3" id="h1-9-3" class="d">-reparent(Window w) {
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+manage(Window w) {
+</a><a href="#h1-9-5" id="h1-9-5" class="i">+	updatenumlockmask();
+</a><a href="#h1-9-6" id="h1-9-6" class="i">+	{
+</a><a href="#h1-9-7" id="h1-9-7" class="i">+		int i, j;
+</a><a href="#h1-9-8" id="h1-9-8" class="i">+		unsigned int modifiers[] = { 0, LockMask, numlockmask, numlockmask|LockMask };
+</a><a href="#h1-9-9" id="h1-9-9" class="i">+		KeyCode code;
+</a><a href="#h1-9-10" id="h1-9-10" class="i">+		Client *c;
+</a><a href="#h1-9-11" id="h1-9-11" class="i">+
+</a><a href="#h1-9-12" id="h1-9-12" class="i">+		XSync(dpy, False);
+</a><a href="#h1-9-13" id="h1-9-13" class="i">+		XReparentWindow(dpy, w, win, 0, bh);
+</a><a href="#h1-9-14" id="h1-9-14" class="i">+		if(badwindow) {
+</a><a href="#h1-9-15" id="h1-9-15" class="i">+			badwindow = False;
+</a><a href="#h1-9-16" id="h1-9-16" class="i">+			return;
+</a><a href="#h1-9-17" id="h1-9-17" class="i">+		}
+</a><a href="#h1-9-18" id="h1-9-18" class="i">+		for(i = 0; i &lt; LENGTH(keys); i++) {
+</a><a href="#h1-9-19" id="h1-9-19" class="i">+			if((code = XKeysymToKeycode(dpy, keys[i].keysym)))
+</a><a href="#h1-9-20" id="h1-9-20" class="i">+				for(j = 0; j &lt; LENGTH(modifiers); j++)
+</a><a href="#h1-9-21" id="h1-9-21" class="i">+					XGrabKey(dpy, code, keys[i].mod | modifiers[j], w,
+</a><a href="#h1-9-22" id="h1-9-22" class="i">+						 True, GrabModeAsync, GrabModeAsync);
+</a><a href="#h1-9-23" id="h1-9-23" class="i">+		}
+</a><a href="#h1-9-24" id="h1-9-24" class="i">+		c = emallocz(sizeof(Client));
+</a><a href="#h1-9-25" id="h1-9-25" class="i">+		c-&gt;next = clients;
+</a><a href="#h1-9-26" id="h1-9-26" class="i">+		c-&gt;win = w;
+</a><a href="#h1-9-27" id="h1-9-27" class="i">+		clients = c;
+</a><a href="#h1-9-28" id="h1-9-28" class="i">+		focus(c);
+</a><a href="#h1-9-29" id="h1-9-29" class="i">+		updatetitle(c);
+</a><a href="#h1-9-30" id="h1-9-30" class="i">+		resize(c, ww, wh - bh);
+</a><a href="#h1-9-31" id="h1-9-31" class="i">+		drawbar();
+</a><a href="#h1-9-32" id="h1-9-32" class="i">+	}
+</a><a href="#h1-9-33" id="h1-9-33" class="i">+}
+</a><a href="#h1-9-34" id="h1-9-34" class="i">+
+</a><a href="#h1-9-35" id="h1-9-35" class="i">+void
+</a><a href="#h1-9-36" id="h1-9-36" class="i">+propertynotify(XEvent *e) {
+</a><a href="#h1-9-37" id="h1-9-37" class="i">+	Client *c;
+</a><a href="#h1-9-38" id="h1-9-38" class="i">+	XPropertyEvent *ev = &amp;e-&gt;xproperty;
+</a><a href="#h1-9-39" id="h1-9-39" class="i">+
+</a><a href="#h1-9-40" id="h1-9-40" class="i">+	if(ev-&gt;state != PropertyDelete &amp;&amp; ev-&gt;atom == XA_WM_NAME
+</a><a href="#h1-9-41" id="h1-9-41" class="i">+			&amp;&amp; (c = getclient(ev-&gt;window))) {
+</a><a href="#h1-9-42" id="h1-9-42" class="i">+		updatetitle(c);
+</a><a href="#h1-9-43" id="h1-9-43" class="i">+	}
+</a><a href="#h1-9-44" id="h1-9-44" class="i">+}
+</a><a href="#h1-9-45" id="h1-9-45" class="i">+
+</a><a href="#h1-9-46" id="h1-9-46" class="i">+void
+</a><a href="#h1-9-47" id="h1-9-47" class="i">+resize(Client *c, int w, int h) {
+</a><a href="#h1-9-48" id="h1-9-48" class="i">+	XConfigureEvent ce;
+</a><a href="#h1-9-49" id="h1-9-49" class="i">+	XWindowChanges wc;
+</a><a href="#h1-9-50" id="h1-9-50" class="i">+
+</a><a href="#h1-9-51" id="h1-9-51" class="i">+	ce.x = 0;
+</a><a href="#h1-9-52" id="h1-9-52" class="i">+	ce.y = bh;
+</a><a href="#h1-9-53" id="h1-9-53" class="i">+	ce.width = wc.width = w;
+</a><a href="#h1-9-54" id="h1-9-54" class="i">+	ce.height = wc.height = h;
+</a><a href="#h1-9-55" id="h1-9-55" class="i">+	ce.type = ConfigureNotify;
+</a><a href="#h1-9-56" id="h1-9-56" class="i">+	ce.display = dpy;
+</a><a href="#h1-9-57" id="h1-9-57" class="i">+	ce.event = c-&gt;win;
+</a><a href="#h1-9-58" id="h1-9-58" class="i">+	ce.window = c-&gt;win;
+</a><a href="#h1-9-59" id="h1-9-59" class="i">+	ce.above = None;
+</a><a href="#h1-9-60" id="h1-9-60" class="i">+	ce.override_redirect = False;
+</a><a href="#h1-9-61" id="h1-9-61" class="i">+	ce.border_width = 0;
+</a><a href="#h1-9-62" id="h1-9-62" class="i">+	XConfigureWindow(dpy, c-&gt;win, CWWidth|CWHeight, &amp;wc);
+</a><a href="#h1-9-63" id="h1-9-63" class="i">+	XSendEvent(dpy, c-&gt;win, False, StructureNotifyMask, (XEvent *)&amp;ce);
+</a> 	XSync(dpy, False);
+<a href="#h1-9-65" id="h1-9-65" class="d">-	XReparentWindow(dpy, w, win, 0, 0);
+</a> }
+ 
+ void
+ rotate(const Arg *arg) {
+<a href="#h1-9-70" id="h1-9-70" class="d">-	puts(&quot;next/prev tab&quot;);
+</a><a href="#h1-9-71" id="h1-9-71" class="i">+	Client *c;
+</a><a href="#h1-9-72" id="h1-9-72" class="i">+
+</a><a href="#h1-9-73" id="h1-9-73" class="i">+	if(arg-&gt;i &gt; 0) {
+</a><a href="#h1-9-74" id="h1-9-74" class="i">+		if(sel &amp;&amp; sel-&gt;next)
+</a><a href="#h1-9-75" id="h1-9-75" class="i">+			focus(sel-&gt;next);
+</a><a href="#h1-9-76" id="h1-9-76" class="i">+		else
+</a><a href="#h1-9-77" id="h1-9-77" class="i">+			focus(clients);
+</a><a href="#h1-9-78" id="h1-9-78" class="i">+	}
+</a><a href="#h1-9-79" id="h1-9-79" class="i">+	else {
+</a><a href="#h1-9-80" id="h1-9-80" class="i">+		for(c = clients; c &amp;&amp; c-&gt;next &amp;&amp; c-&gt;next != sel; c = c-&gt;next);
+</a><a href="#h1-9-81" id="h1-9-81" class="i">+		if(c)
+</a><a href="#h1-9-82" id="h1-9-82" class="i">+			focus(c);
+</a><a href="#h1-9-83" id="h1-9-83" class="i">+	}
+</a> }
+ 
+ void
+<a href="#h1-10" id="h1-10" class="h">@@ -281,7 +505,7 @@ run(void) {
+</a> 	XEvent ev;
+ 	Listener *l, *pl;
+ 
+<a href="#h1-10-3" id="h1-10-3" class="d">-	/* main event loop, also reads status text from stdin */
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+	/* main event loop, also reads xids from stdin */
+</a> 	XSync(dpy, False);
+ 	xfd = ConnectionNumber(dpy);
+ 	buf[LENGTH(buf) - 1] = &#39;\0&#39;; /* 0-terminator is never touched */
+<a href="#h1-11" id="h1-11" class="h">@@ -318,7 +542,7 @@ run(void) {
+</a> 					if(*p == &#39;\n&#39; || *p == &#39;\0&#39;) {
+ 						*p = &#39;\0&#39;;
+ 						if((wid = atoi(buf)))
+<a href="#h1-11-3" id="h1-11-3" class="d">-							reparent((Window)wid);
+</a><a href="#h1-11-4" id="h1-11-4" class="i">+							manage((Window)wid);
+</a> 						p += r - 1; /* p is buf + offset + r - 1 */
+ 						for(r = 0; *(p - r) &amp;&amp; *(p - r) != &#39;\n&#39;; r++);
+ 						offset = r;
+<a href="#h1-12" id="h1-12" class="h">@@ -343,6 +567,7 @@ setup(void) {
+</a> 	screen = DefaultScreen(dpy);
+ 	root = RootWindow(dpy, screen);
+ 	initfont(font);
+<a href="#h1-12-3" id="h1-12-3" class="i">+	bh = dc.h = dc.font.height + 2;
+</a> 
+ 	/* init appearance */
+ 	wx = 0;
+<a href="#h1-13" id="h1-13" class="h">@@ -397,13 +622,22 @@ updatenumlockmask(void) {
+</a> 	XFreeModifiermap(modmap);
+ }
+ 
+<a href="#h1-13-3" id="h1-13-3" class="i">+void
+</a><a href="#h1-13-4" id="h1-13-4" class="i">+updatetitle(Client *c) {
+</a><a href="#h1-13-5" id="h1-13-5" class="i">+	gettextprop(c-&gt;win, XA_WM_NAME, c-&gt;name, sizeof c-&gt;name);
+</a><a href="#h1-13-6" id="h1-13-6" class="i">+	drawbar();
+</a><a href="#h1-13-7" id="h1-13-7" class="i">+}
+</a><a href="#h1-13-8" id="h1-13-8" class="i">+
+</a> /* There&#39;s no way to check accesses to destroyed windows, thus those cases are
+  * ignored (especially on UnmapNotify&#39;s).  Other types of errors call Xlibs
+  * default error handler, which may call exit.  */
+ int
+ xerror(Display *dpy, XErrorEvent *ee) {
+<a href="#h1-13-14" id="h1-13-14" class="d">-	if(ee-&gt;error_code == BadWindow)
+</a><a href="#h1-13-15" id="h1-13-15" class="i">+	if(ee-&gt;error_code == BadWindow) {
+</a><a href="#h1-13-16" id="h1-13-16" class="i">+		badwindow = True;
+</a><a href="#h1-13-17" id="h1-13-17" class="i">+		puts(&quot;badwindow&quot;);
+</a> 		return 0;
+<a href="#h1-13-19" id="h1-13-19" class="i">+	}
+</a> 	die(&quot;dwm: fatal error: request code=%d, error code=%d\n&quot;,
+ 			ee-&gt;request_code, ee-&gt;error_code);
+ 	return 1;
+<a href="#h1-14" id="h1-14" class="h">@@ -420,6 +654,7 @@ main(int argc, char *argv[]) {
+</a> 	if(!(dpy = XOpenDisplay(0)))
+ 		die(&quot;tabbed: cannot open display\n&quot;);
+ 	setup();
+<a href="#h1-14-3" id="h1-14-3" class="i">+	autostart();
+</a> 	run();
+ 	/*dummys*/
+ 	cleanup();
+</pre>
+</div>
+</body>
+</html>

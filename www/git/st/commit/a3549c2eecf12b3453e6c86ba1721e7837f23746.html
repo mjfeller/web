@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Improve execsh() and don&#39;t allow anonymous shells - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/a3549c2eecf12b3453e6c86ba1721e7837f23746.html">a3549c2eecf12b3453e6c86ba1721e7837f23746</a>
+<b>parent</b> <a href="../commit/8342036f983288046e03a34055c10fc6b6b11017.html">8342036f983288046e03a34055c10fc6b6b11017</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Tue, 19 Aug 2014 00:55:02 +0200
+
+Improve execsh() and don&#39;t allow anonymous shells
+
+This patch improves the shell selection on execsh and forbid
+shell with users don&#39;t registered in the passwd file.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">30</td><td><span class="i">+++++++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>1 file changed, 17 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1139,23 +1139,29 @@ die(const char *errstr, ...) {
+</a> 
+ void
+ execsh(void) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	char **args;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	char *envshell = getenv(&quot;SHELL&quot;);
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	const struct passwd *pass = getpwuid(getuid());
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	char **args, *sh;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	const struct passwd *pw;
+</a> 	char buf[sizeof(long) * 8 + 1];
+ 
+<a href="#h0-0-10" id="h0-0-10" class="i">+	errno = 0;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	if((pw = getpwuid(getuid())) == NULL) {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		if(errno)
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+			die(&quot;getpwuid:%s\n&quot;, strerror(errno));
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+		else
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+			die(&quot;who are you?\n&quot;);
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	}
+</a> 	unsetenv(&quot;COLUMNS&quot;);
+ 	unsetenv(&quot;LINES&quot;);
+ 	unsetenv(&quot;TERMCAP&quot;);
+ 
+<a href="#h0-0-21" id="h0-0-21" class="d">-	if(pass) {
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-		setenv(&quot;LOGNAME&quot;, pass-&gt;pw_name, 1);
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-		setenv(&quot;USER&quot;, pass-&gt;pw_name, 1);
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-		setenv(&quot;SHELL&quot;, pass-&gt;pw_shell, 0);
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-		setenv(&quot;HOME&quot;, pass-&gt;pw_dir, 0);
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-	}
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	sh = (pw-&gt;pw_shell[0]) ? pw-&gt;pw_shell : shell;
+</a> 	snprintf(buf, sizeof(buf), &quot;%lu&quot;, xw.win);
+<a href="#h0-0-30" id="h0-0-30" class="i">+
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+	setenv(&quot;LOGNAME&quot;, pw-&gt;pw_name, 1);
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+	setenv(&quot;USER&quot;, pw-&gt;pw_name, 1);
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+	setenv(&quot;SHELL&quot;, sh, 1);
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+	setenv(&quot;HOME&quot;, pw-&gt;pw_dir, 1);
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+	setenv(&quot;TERM&quot;, termname, 1);
+</a> 	setenv(&quot;WINDOWID&quot;, buf, 1);
+ 
+ 	signal(SIGCHLD, SIG_DFL);
+<a href="#h0-1" id="h0-1" class="h">@@ -1165,9 +1171,7 @@ execsh(void) {
+</a> 	signal(SIGTERM, SIG_DFL);
+ 	signal(SIGALRM, SIG_DFL);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	DEFAULT(envshell, shell);
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	setenv(&quot;TERM&quot;, termname, 1);
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	args = opt_cmd ? opt_cmd : (char *[]){envshell, &quot;-i&quot;, NULL};
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	args = opt_cmd ? opt_cmd : (char *[]){sh, &quot;-i&quot;, NULL};
+</a> 	execvp(args[0], args);
+ 	exit(EXIT_FAILURE);
+ }
+</pre>
+</div>
+</body>
+</html>

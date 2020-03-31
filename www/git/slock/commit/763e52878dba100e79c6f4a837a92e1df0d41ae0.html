@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>initial commit - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/763e52878dba100e79c6f4a837a92e1df0d41ae0.html">763e52878dba100e79c6f4a837a92e1df0d41ae0</a>
+<b>Author:</b> arg@suckless.org &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Wed, 11 Oct 2006 12:35:21 +0200
+
+initial commit
+
+<b>Diffstat:</b>
+<table><tr><td class="A">A</td><td><a href="#h0">LICENSE</a></td><td> | </td><td class="num">21</td><td><span class="i">+++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">Makefile</a></td><td> | </td><td class="num">52</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">README</a></td><td> | </td><td class="num">24</td><td><span class="i">++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h3">config.mk</a></td><td> | </td><td class="num">25</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">slock.c</a></td><td> | </td><td class="num">92</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>5 files changed, 214 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/LICENSE.html">LICENSE</a> b/<a href="../file/LICENSE.html">LICENSE</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -0,0 +1,21 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+MIT/X Consortium License
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+(C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+Permission is hereby granted, free of charge, to any person obtaining a
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+copy of this software and associated documentation files (the &quot;Software&quot;),
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+to deal in the Software without restriction, including without limitation
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+and/or sell copies of the Software, and to permit persons to whom the 
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+Software is furnished to do so, subject to the following conditions:
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+The above copyright notice and this permission notice shall be included in 
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+all copies or substantial portions of the Software. 
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL 
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+DEALINGS IN THE SOFTWARE.
+</a><b>diff --git a/<a id="h1" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,52 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+# slock - simple screen locker
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+#   (C)opyright MMVI Anselm R. Garbe
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+include config.mk
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+SRC = slock.c
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+OBJ = ${SRC:.c=.o}
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+all: options slock
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+options:
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	@echo slock build options:
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	@echo &quot;CFLAGS   = ${CFLAGS}&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	@echo &quot;LDFLAGS  = ${LDFLAGS}&quot;
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	@echo &quot;CC       = ${CC}&quot;
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	@echo &quot;LD       = ${LD}&quot;
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+.c.o:
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	@echo CC $&lt;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	@${CC} -c ${CFLAGS} $&lt;
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+${OBJ}: config.mk
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+slock: ${OBJ}
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+	@echo LD $@
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+	@${LD} -o $@ ${OBJ} ${LDFLAGS}
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+	@strip $@
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+clean:
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+	@echo cleaning
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+	@rm -f slock ${OBJ} slock-${VERSION}.tar.gz
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+dist: clean
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+	@echo creating dist tarball
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+	@mkdir -p slock-${VERSION}
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	@cp -R LICENSE Makefile README config.mk ${SRC} slock-${VERSION}
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	@tar -cf slock-${VERSION}.tar slock-${VERSION}
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	@gzip slock-${VERSION}.tar
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+	@rm -rf slock-${VERSION}
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+install: all
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+	@mkdir -p ${DESTDIR}${PREFIX}/bin
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+	@cp -f slock ${DESTDIR}${PREFIX}/bin
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+	@chmod 755 ${DESTDIR}${PREFIX}/bin/slock
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+	@chmod u+s ${DESTDIR}${PREFIX}/bin/slock
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+uninstall:
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+	@rm -f ${DESTDIR}${PREFIX}/bin/slock
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+.PHONY: all options clean dist install uninstall
+</a><b>diff --git a/<a id="h2" href="../file/README.html">README</a> b/<a href="../file/README.html">README</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,24 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+slock - simple screen locker
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+============================
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+simple screen locker utility for X. 
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+Requirements
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+------------
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+In order to build slock you need the Xlib header files.
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+Installation
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+------------
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+Edit config.mk to match your local setup (slock is installed into
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+the /usr/local namespace by default).
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+Afterwards enter the following command to build and install slock (if
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+necessary as root):
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+    make clean install
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+Running slock
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+-------------
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+Simply invoke the &#39;slock&#39; command.
+</a><b>diff --git a/<a id="h3" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -0,0 +1,25 @@
+</a><a href="#h3-0-0" id="h3-0-0" class="i">+# slock version
+</a><a href="#h3-0-1" id="h3-0-1" class="i">+VERSION = 0.1
+</a><a href="#h3-0-2" id="h3-0-2" class="i">+
+</a><a href="#h3-0-3" id="h3-0-3" class="i">+# Customize below to fit your system
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+
+</a><a href="#h3-0-5" id="h3-0-5" class="i">+# paths
+</a><a href="#h3-0-6" id="h3-0-6" class="i">+PREFIX = /usr/local
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+MANPREFIX = ${PREFIX}/share/man
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+X11INC = /usr/X11R6/include
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+X11LIB = /usr/X11R6/lib
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+
+</a><a href="#h3-0-12" id="h3-0-12" class="i">+# includes and libs
+</a><a href="#h3-0-13" id="h3-0-13" class="i">+INCS = -I. -I/usr/include -I${X11INC}
+</a><a href="#h3-0-14" id="h3-0-14" class="i">+LIBS = -L/usr/lib -lc -lcrypt -L${X11LIB} -lX11
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+
+</a><a href="#h3-0-16" id="h3-0-16" class="i">+# flags
+</a><a href="#h3-0-17" id="h3-0-17" class="i">+CFLAGS = -Os ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h3-0-18" id="h3-0-18" class="i">+LDFLAGS = ${LIBS}
+</a><a href="#h3-0-19" id="h3-0-19" class="i">+#CFLAGS = -g -Wall -O2 ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h3-0-20" id="h3-0-20" class="i">+#LDFLAGS = -g ${LIBS}
+</a><a href="#h3-0-21" id="h3-0-21" class="i">+
+</a><a href="#h3-0-22" id="h3-0-22" class="i">+# compiler and linker
+</a><a href="#h3-0-23" id="h3-0-23" class="i">+CC = cc
+</a><a href="#h3-0-24" id="h3-0-24" class="i">+LD = ${CC}
+</a><b>diff --git a/<a id="h4" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,92 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+/* (C)opyright MMIV-MMV Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+ * See LICENSE file for license details.
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+ */
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+#define _XOPEN_SOURCE
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+#include &lt;shadow.h&gt;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+#include &lt;string.h&gt;
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+#include &lt;unistd.h&gt;
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+#include &lt;sys/types.h&gt;
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+#include &lt;X11/keysym.h&gt;
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+#include &lt;X11/Xlib.h&gt;
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+#include &lt;X11/Xutil.h&gt;
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+int
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+main(int argc, char **argv) {
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+	char buf[32], passwd[256];
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+	int num, prev_nitem;
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	struct spwd *sp;
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+	unsigned int i, len;
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+	Bool running = True;
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+	KeySym ksym;
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+	Display *dpy;
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+	XEvent ev;
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+	if((argc &gt; 1) &amp;&amp; !strncmp(argv[1], &quot;-v&quot;, 3)) {
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+		fputs(&quot;slock-&quot;VERSION&quot;, (C)opyright MMVI Anselm R. Garbe\n&quot;, stdout);
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+		exit(EXIT_SUCCESS);
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+	}
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+	if(!(sp = getspnam(getenv(&quot;USER&quot;)))) {
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+		fputs(&quot;slock: cannot retrieve password entry (make sure to suid slock)\n&quot;, stderr);
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+		exit(EXIT_FAILURE);
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+	}
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+	endspent();
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+	if(!(dpy = XOpenDisplay(0))) {
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+		fputs(&quot;slock: cannot open display\n&quot;, stderr);
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+		exit(EXIT_FAILURE);
+</a><a href="#h4-0-37" id="h4-0-37" class="i">+	}
+</a><a href="#h4-0-38" id="h4-0-38" class="i">+
+</a><a href="#h4-0-39" id="h4-0-39" class="i">+	/* init */
+</a><a href="#h4-0-40" id="h4-0-40" class="i">+	passwd[0] = 0;
+</a><a href="#h4-0-41" id="h4-0-41" class="i">+	while(XGrabKeyboard(dpy, DefaultRootWindow(dpy), True, GrabModeAsync,
+</a><a href="#h4-0-42" id="h4-0-42" class="i">+			 GrabModeAsync, CurrentTime) != GrabSuccess)
+</a><a href="#h4-0-43" id="h4-0-43" class="i">+		usleep(1000);
+</a><a href="#h4-0-44" id="h4-0-44" class="i">+
+</a><a href="#h4-0-45" id="h4-0-45" class="i">+	/* main event loop */
+</a><a href="#h4-0-46" id="h4-0-46" class="i">+	while(running &amp;&amp; !XNextEvent(dpy, &amp;ev))
+</a><a href="#h4-0-47" id="h4-0-47" class="i">+		if(ev.type == KeyPress) {
+</a><a href="#h4-0-48" id="h4-0-48" class="i">+			len = strlen(passwd);
+</a><a href="#h4-0-49" id="h4-0-49" class="i">+			buf[0] = 0;
+</a><a href="#h4-0-50" id="h4-0-50" class="i">+			num = XLookupString(&amp;ev.xkey, buf, sizeof(buf), &amp;ksym, 0);
+</a><a href="#h4-0-51" id="h4-0-51" class="i">+			if(IsFunctionKey(ksym) || IsKeypadKey(ksym)
+</a><a href="#h4-0-52" id="h4-0-52" class="i">+					|| IsMiscFunctionKey(ksym) || IsPFKey(ksym)
+</a><a href="#h4-0-53" id="h4-0-53" class="i">+					|| IsPrivateKeypadKey(ksym))
+</a><a href="#h4-0-54" id="h4-0-54" class="i">+				continue;
+</a><a href="#h4-0-55" id="h4-0-55" class="i">+			/* first check if a control mask is omitted */
+</a><a href="#h4-0-56" id="h4-0-56" class="i">+			if(ev.xkey.state &amp; ControlMask) {
+</a><a href="#h4-0-57" id="h4-0-57" class="i">+				switch (ksym) {
+</a><a href="#h4-0-58" id="h4-0-58" class="i">+				case XK_h:
+</a><a href="#h4-0-59" id="h4-0-59" class="i">+				case XK_H: ksym = XK_BackSpace;
+</a><a href="#h4-0-60" id="h4-0-60" class="i">+					break;
+</a><a href="#h4-0-61" id="h4-0-61" class="i">+				case XK_u:
+</a><a href="#h4-0-62" id="h4-0-62" class="i">+				case XK_U: passwd[0] = 0;
+</a><a href="#h4-0-63" id="h4-0-63" class="i">+					continue;
+</a><a href="#h4-0-64" id="h4-0-64" class="i">+				}
+</a><a href="#h4-0-65" id="h4-0-65" class="i">+			}
+</a><a href="#h4-0-66" id="h4-0-66" class="i">+			switch(ksym) {
+</a><a href="#h4-0-67" id="h4-0-67" class="i">+			case XK_Return:
+</a><a href="#h4-0-68" id="h4-0-68" class="i">+				running = strncmp(crypt(passwd, sp-&gt;sp_pwdp), sp-&gt;sp_pwdp, sizeof(passwd));
+</a><a href="#h4-0-69" id="h4-0-69" class="i">+				passwd[0] = 0;
+</a><a href="#h4-0-70" id="h4-0-70" class="i">+				break;
+</a><a href="#h4-0-71" id="h4-0-71" class="i">+			case XK_Escape:
+</a><a href="#h4-0-72" id="h4-0-72" class="i">+				passwd[0] = 0;
+</a><a href="#h4-0-73" id="h4-0-73" class="i">+				break;
+</a><a href="#h4-0-74" id="h4-0-74" class="i">+			case XK_BackSpace:
+</a><a href="#h4-0-75" id="h4-0-75" class="i">+				if(len)
+</a><a href="#h4-0-76" id="h4-0-76" class="i">+					passwd[--len] = 0;
+</a><a href="#h4-0-77" id="h4-0-77" class="i">+				break;
+</a><a href="#h4-0-78" id="h4-0-78" class="i">+			default:
+</a><a href="#h4-0-79" id="h4-0-79" class="i">+				if(num &amp;&amp; !iscntrl((int) buf[0])) {
+</a><a href="#h4-0-80" id="h4-0-80" class="i">+					buf[num] = 0;
+</a><a href="#h4-0-81" id="h4-0-81" class="i">+					if(len)
+</a><a href="#h4-0-82" id="h4-0-82" class="i">+						strncat(passwd, buf, sizeof(passwd));
+</a><a href="#h4-0-83" id="h4-0-83" class="i">+					else
+</a><a href="#h4-0-84" id="h4-0-84" class="i">+						strncpy(passwd, buf, sizeof(passwd));
+</a><a href="#h4-0-85" id="h4-0-85" class="i">+				}
+</a><a href="#h4-0-86" id="h4-0-86" class="i">+				break;
+</a><a href="#h4-0-87" id="h4-0-87" class="i">+			}
+</a><a href="#h4-0-88" id="h4-0-88" class="i">+		}
+</a><a href="#h4-0-89" id="h4-0-89" class="i">+	XCloseDisplay(dpy);
+</a><a href="#h4-0-90" id="h4-0-90" class="i">+	return 0;
+</a><a href="#h4-0-91" id="h4-0-91" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

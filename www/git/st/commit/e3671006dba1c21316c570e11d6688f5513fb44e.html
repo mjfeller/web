@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add xcalloc wrapper - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e3671006dba1c21316c570e11d6688f5513fb44e.html">e3671006dba1c21316c570e11d6688f5513fb44e</a>
+<b>parent</b> <a href="../commit/426887ccec8577ee33d1fb44f258d6a70a2eddf1.html">426887ccec8577ee33d1fb44f258d6a70a2eddf1</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Mon, 17 Sep 2012 22:11:20 +0200
+
+Add xcalloc wrapper
+
+malloc and realloc are called through xmalloc and xrealloc, so calloc should
+be called through xcalloc.
+---
+ st.c |   13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -324,6 +324,7 @@ static int isfullutf8(char *, int);
+</a> 
+ static void *xmalloc(size_t);
+ static void *xrealloc(void *, size_t);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void *xcalloc(size_t nmemb, size_t size);
+</a> 
+ static void (*handler[LASTEvent])(XEvent *) = {
+ 	[KeyPress] = kpress,
+<a href="#h0-1" id="h0-1" class="h">@@ -373,6 +374,14 @@ xrealloc(void *p, size_t len) {
+</a> 	return p;
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+void *
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+xcalloc(size_t nmemb, size_t size) {
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	void *p = calloc(nmemb, size);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	if(!p)
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+		die(&quot;Out of memory\n&quot;);
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	return p;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+}
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+
+</a> int
+ utf8decode(char *s, long *u) {
+ 	uchar c;
+<a href="#h0-2" id="h0-2" class="h">@@ -1801,8 +1810,8 @@ tresize(int col, int row) {
+</a> 	/* allocate any new rows */
+ 	for(/* i == minrow */; i &lt; row; i++) {
+ 		term.dirty[i] = 1;
+<a href="#h0-2-3" id="h0-2-3" class="d">-		term.line[i] = calloc(col, sizeof(Glyph));
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		term.alt [i] = calloc(col, sizeof(Glyph));
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		term.line[i] = xcalloc(col, sizeof(Glyph));
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+		term.alt [i] = xcalloc(col, sizeof(Glyph));
+</a> 	}
+ 	if(col &gt; term.col) {
+ 		bool *bp = term.tabs + term.col;
+</pre>
+</div>
+</body>
+</html>

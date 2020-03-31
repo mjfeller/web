@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>new colorscheme (16-bit compliant) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2091200c957783deed032380d56c4199a23c6b81.html">2091200c957783deed032380d56c4199a23c6b81</a>
+<b>parent</b> <a href="../commit/7e476fb86ba254e6fe3a916ed7b5298e432a469c.html">7e476fb86ba254e6fe3a916ed7b5298e432a469c</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 15 Sep 2007 20:39:31 +0200
+
+new colorscheme (16-bit compliant)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bar.c</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.h</a></td><td> | </td><td class="num">14</td><td><span class="i">+++</span><span class="d">-----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">dwm.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">main.c</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+</table></pre><pre>4 files changed, 14 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bar.c.html">bar.c</a> b/<a href="../file/bar.c.html">bar.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -69,7 +69,8 @@ initfont(const char *fontstr) {
+</a> 		if(dc.font.xfont)
+ 			XFreeFont(dpy, dc.font.xfont);
+ 		dc.font.xfont = NULL;
+<a href="#h0-0-3" id="h0-0-3" class="d">-		if(!(dc.font.xfont = XLoadQueryFont(dpy, fontstr)))
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		if(!(dc.font.xfont = XLoadQueryFont(dpy, fontstr))
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		|| !(dc.font.xfont = XLoadQueryFont(dpy, &quot;fixed&quot;)))
+</a> 			eprint(&quot;error, cannot load font: &#39;%s&#39;\n&quot;, fontstr);
+ 		dc.font.ascent = dc.font.xfont-&gt;ascent;
+ 		dc.font.descent = dc.font.xfont-&gt;descent;
+<a href="#h0-1" id="h0-1" class="h">@@ -186,9 +187,7 @@ drawbar(void) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="d">-initbar(void) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	XSetWindowAttributes wa;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+initstyle(void) {
+</a> 	dc.norm[ColBorder] = initcolor(NORMBORDERCOLOR);
+ 	dc.norm[ColBG] = initcolor(NORMBGCOLOR);
+ 	dc.norm[ColFG] = initcolor(NORMFGCOLOR);
+<a href="#h0-2" id="h0-2" class="h">@@ -197,6 +196,12 @@ initbar(void) {
+</a> 	dc.sel[ColFG] = initcolor(SELFGCOLOR);
+ 	initfont(FONT);
+ 	dc.h = bh = dc.font.height + 2;
+<a href="#h0-2-3" id="h0-2-3" class="i">+}
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+void
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+initbar(void) {
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	XSetWindowAttributes wa;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+
+</a> 	wa.override_redirect = 1;
+ 	wa.background_pixmap = ParentRelative;
+ 	wa.event_mask = ButtonPressMask | ExposureMask;
+<b>diff --git a/<a id="h1" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -4,19 +4,11 @@
+</a> #define BARPOS			BarTop /* BarBot, BarOff */
+ #define BORDERPX		1
+ #define FONT			&quot;-*-terminus-medium-r-*-*-12-*-*-*-*-*-iso10646-*&quot;
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define DARK /* LIGHT */
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#ifdef DARK
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-#define NORMBORDERCOLOR		&quot;#222&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+#define NORMBORDERCOLOR		&quot;#333&quot;
+</a> #define NORMBGCOLOR		&quot;#000&quot;
+<a href="#h1-0-8" id="h1-0-8" class="d">-#define NORMFGCOLOR		&quot;#ddd&quot;
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-#define SELBORDERCOLOR		&quot;#09f&quot;
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-#else
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-#define NORMBORDERCOLOR		&quot;#666&quot;
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-#define NORMBGCOLOR		&quot;#eee&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-#define NORMFGCOLOR		&quot;#222&quot;
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+#define NORMFGCOLOR		&quot;#ccc&quot;
+</a> #define SELBORDERCOLOR		&quot;#f00&quot;
+<a href="#h1-0-16" id="h1-0-16" class="d">-#endif
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-#define SELBGCOLOR		&quot;#369&quot;
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+#define SELBGCOLOR		&quot;#00f&quot;
+</a> #define SELFGCOLOR		&quot;#fff&quot;
+ 
+ /* tagging */
+<b>diff --git a/<a id="h2" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -91,6 +91,7 @@ extern Window root, barwin;
+</a> /* bar.c */
+ void drawbar(void);			/* draw the bar */
+ void initbar(void);			/* initializes the bar */
+<a href="#h2-0-3" id="h2-0-3" class="i">+void initstyle(void);			/* initializes colors and font */
+</a> unsigned int textw(const char *text);	/* return the width of text in px*/
+ void togglebar(const char *arg);	/* shows/hides the bar */
+ void updatebarpos(void);		/* updates the bar position */
+<b>diff --git a/<a id="h3" href="../file/main.c.html">main.c</a> b/<a href="../file/main.c.html">main.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -148,6 +148,7 @@ setup(void) {
+</a> 	sx = sy = 0;
+ 	sw = DisplayWidth(dpy, screen);
+ 	sh = DisplayHeight(dpy, screen);
+<a href="#h3-0-3" id="h3-0-3" class="i">+	initstyle();
+</a> 	initlayouts();
+ 	initbar();
+ 	/* multihead support */
+</pre>
+</div>
+</body>
+</html>

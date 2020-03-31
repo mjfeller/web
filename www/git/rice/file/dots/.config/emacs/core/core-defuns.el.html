@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>core-defuns.el - rice - config file
+</title>
+<link rel="icon" type="image/png" href="../../../../../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="rice Atom Feed" href="../../../../../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../../../../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>rice</h1><span class="desc">config file
+</span></td></tr><tr><td></td><td>
+<a href="../../../../../log.html">Log</a> | <a href="../../../../../files.html">Files</a> | <a href="../../../../../refs.html">Refs</a> | <a href="../../../../../file/README.html">README</a> | <a href="../../../../../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<p> core-defuns.el (7370B)</p><hr/><pre id="blob">
+<a href="#l1" class="line" id="l1">      1</a> ;;; core-defuns.el --- personal defuns
+<a href="#l2" class="line" id="l2">      2</a> 
+<a href="#l3" class="line" id="l3">      3</a> ;; Author: Mark Feller &lt;mark.feller@member.fsf.org&gt;
+<a href="#l4" class="line" id="l4">      4</a> 
+<a href="#l5" class="line" id="l5">      5</a> ;; This file is not part of GNU Emacs.
+<a href="#l6" class="line" id="l6">      6</a> 
+<a href="#l7" class="line" id="l7">      7</a> ;; This file is free software; you can redistribute it and/or modify
+<a href="#l8" class="line" id="l8">      8</a> ;; it under the terms of the GNU General Public License as published by
+<a href="#l9" class="line" id="l9">      9</a> ;; the Free Software Foundation; either version 3, or (at your option)
+<a href="#l10" class="line" id="l10">     10</a> ;; any later version.
+<a href="#l11" class="line" id="l11">     11</a> 
+<a href="#l12" class="line" id="l12">     12</a> ;; This file is distributed in the hope that it will be useful,
+<a href="#l13" class="line" id="l13">     13</a> ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+<a href="#l14" class="line" id="l14">     14</a> ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+<a href="#l15" class="line" id="l15">     15</a> ;; GNU General Public License for more details.
+<a href="#l16" class="line" id="l16">     16</a> 
+<a href="#l17" class="line" id="l17">     17</a> ;; You should have received a copy of the GNU General Public License
+<a href="#l18" class="line" id="l18">     18</a> ;; along with this file.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+<a href="#l19" class="line" id="l19">     19</a> 
+<a href="#l20" class="line" id="l20">     20</a> ;;; Commentary:
+<a href="#l21" class="line" id="l21">     21</a> 
+<a href="#l22" class="line" id="l22">     22</a> ;;; Code:
+<a href="#l23" class="line" id="l23">     23</a> 
+<a href="#l24" class="line" id="l24">     24</a> (defun server-shutdown ()
+<a href="#l25" class="line" id="l25">     25</a>   &quot;Save buffers, Quit, and Shutdown (kill) server&quot;
+<a href="#l26" class="line" id="l26">     26</a>   (interactive)
+<a href="#l27" class="line" id="l27">     27</a>   (save-some-buffers)
+<a href="#l28" class="line" id="l28">     28</a>   (kill-emacs))
+<a href="#l29" class="line" id="l29">     29</a> 
+<a href="#l30" class="line" id="l30">     30</a> (defun iwb()
+<a href="#l31" class="line" id="l31">     31</a>   &quot;Indent Whole Buffer&quot;
+<a href="#l32" class="line" id="l32">     32</a>   (interactive)
+<a href="#l33" class="line" id="l33">     33</a>   (delete-trailing-whitespace)
+<a href="#l34" class="line" id="l34">     34</a>   (indent-region (point-min) (point-max) nil)
+<a href="#l35" class="line" id="l35">     35</a>   (untabify (point-min) (point-max)))
+<a href="#l36" class="line" id="l36">     36</a> 
+<a href="#l37" class="line" id="l37">     37</a> (defun transpose-words (arg)
+<a href="#l38" class="line" id="l38">     38</a>   &quot;[Override for default transpose-words in simple.el]
+<a href="#l39" class="line" id="l39">     39</a>               Interchange words around point, leaving point at end of
+<a href="#l40" class="line" id="l40">     40</a>               them. With prefix arg ARG, effect is to take word before or
+<a href="#l41" class="line" id="l41">     41</a>               around point and drag it backward past ARG other words (forward
+<a href="#l42" class="line" id="l42">     42</a>               if ARG negative).  If ARG is zero, the words around or after
+<a href="#l43" class="line" id="l43">     43</a>               point and around or after mark are interchanged.&quot;
+<a href="#l44" class="line" id="l44">     44</a>   (interactive &quot;*p&quot;)
+<a href="#l45" class="line" id="l45">     45</a>   (if (eolp) (forward-char -1))
+<a href="#l46" class="line" id="l46">     46</a>   (transpose-subr &#39;backward-word arg)
+<a href="#l47" class="line" id="l47">     47</a>   (forward-word (+ arg 1)))
+<a href="#l48" class="line" id="l48">     48</a> 
+<a href="#l49" class="line" id="l49">     49</a> (defun untabify-buffer ()
+<a href="#l50" class="line" id="l50">     50</a>   (interactive)
+<a href="#l51" class="line" id="l51">     51</a>   (untabify (point-min) (point-max)))
+<a href="#l52" class="line" id="l52">     52</a> 
+<a href="#l53" class="line" id="l53">     53</a> (defun indent-buffer ()
+<a href="#l54" class="line" id="l54">     54</a>   (interactive)
+<a href="#l55" class="line" id="l55">     55</a>   (indent-region (point-min) (point-max)))
+<a href="#l56" class="line" id="l56">     56</a> 
+<a href="#l57" class="line" id="l57">     57</a> (defun cleanup-buffer ()
+<a href="#l58" class="line" id="l58">     58</a>   &quot;Perform a bunch of operations on the whitespace content of a buffer.
+<a href="#l59" class="line" id="l59">     59</a> Including indent-buffer, which should not be called automatically on save.&quot;
+<a href="#l60" class="line" id="l60">     60</a>   (interactive)
+<a href="#l61" class="line" id="l61">     61</a>   (untabify-buffer)
+<a href="#l62" class="line" id="l62">     62</a>   (delete-trailing-whitespace)
+<a href="#l63" class="line" id="l63">     63</a>   (indent-buffer))
+<a href="#l64" class="line" id="l64">     64</a> 
+<a href="#l65" class="line" id="l65">     65</a> (defun toggle-window-split ()
+<a href="#l66" class="line" id="l66">     66</a>   &quot;Toggle the current window split.&quot;
+<a href="#l67" class="line" id="l67">     67</a>   (interactive)
+<a href="#l68" class="line" id="l68">     68</a>   (if (= (count-windows) 2)
+<a href="#l69" class="line" id="l69">     69</a>       (let* ((this-win-buffer (window-buffer))
+<a href="#l70" class="line" id="l70">     70</a>              (next-win-buffer (window-buffer (next-window)))
+<a href="#l71" class="line" id="l71">     71</a>              (this-win-edges (window-edges (selected-window)))
+<a href="#l72" class="line" id="l72">     72</a>              (next-win-edges (window-edges (next-window)))
+<a href="#l73" class="line" id="l73">     73</a>              (this-win-2nd (not (and (&lt;= (car this-win-edges)
+<a href="#l74" class="line" id="l74">     74</a>                                          (car next-win-edges))
+<a href="#l75" class="line" id="l75">     75</a>                                      (&lt;= (cadr this-win-edges)
+<a href="#l76" class="line" id="l76">     76</a>                                          (cadr next-win-edges)))))
+<a href="#l77" class="line" id="l77">     77</a>              (splitter
+<a href="#l78" class="line" id="l78">     78</a>               (if (= (car this-win-edges)
+<a href="#l79" class="line" id="l79">     79</a>                      (car (window-edges (next-window))))
+<a href="#l80" class="line" id="l80">     80</a>                   &#39;split-window-horizontally
+<a href="#l81" class="line" id="l81">     81</a>                 &#39;split-window-vertically)))
+<a href="#l82" class="line" id="l82">     82</a>         (delete-other-windows)
+<a href="#l83" class="line" id="l83">     83</a>         (let ((first-win (selected-window)))
+<a href="#l84" class="line" id="l84">     84</a>           (funcall splitter)
+<a href="#l85" class="line" id="l85">     85</a>           (if this-win-2nd (other-window 1))
+<a href="#l86" class="line" id="l86">     86</a>           (set-window-buffer (selected-window) this-win-buffer)
+<a href="#l87" class="line" id="l87">     87</a>           (set-window-buffer (next-window) next-win-buffer)
+<a href="#l88" class="line" id="l88">     88</a>           (select-window first-win)
+<a href="#l89" class="line" id="l89">     89</a>           (if this-win-2nd (other-window 1))))))
+<a href="#l90" class="line" id="l90">     90</a> 
+<a href="#l91" class="line" id="l91">     91</a> (defun toggle-fullscreen ()
+<a href="#l92" class="line" id="l92">     92</a>   &quot;Toggle full screen&quot;
+<a href="#l93" class="line" id="l93">     93</a>   (interactive)
+<a href="#l94" class="line" id="l94">     94</a>   (set-frame-parameter
+<a href="#l95" class="line" id="l95">     95</a>    nil &#39;fullscreen
+<a href="#l96" class="line" id="l96">     96</a>    (when (not (frame-parameter nil &#39;fullscreen)) &#39;fullboth)))
+<a href="#l97" class="line" id="l97">     97</a> 
+<a href="#l98" class="line" id="l98">     98</a> (defun info-mode ()
+<a href="#l99" class="line" id="l99">     99</a>   (interactive)
+<a href="#l100" class="line" id="l100">    100</a>   (let ((file-name (buffer-file-name)))
+<a href="#l101" class="line" id="l101">    101</a>     (kill-buffer (current-buffer))
+<a href="#l102" class="line" id="l102">    102</a>     (info file-name)))
+<a href="#l103" class="line" id="l103">    103</a> (add-to-list &#39;auto-mode-alist &#39;(&quot;\\.info\\&#39;&quot; . info-mode))
+<a href="#l104" class="line" id="l104">    104</a> 
+<a href="#l105" class="line" id="l105">    105</a> (defadvice move-beginning-of-line (around smarter-bol activate)
+<a href="#l106" class="line" id="l106">    106</a>   ;; Move to requested line if needed.
+<a href="#l107" class="line" id="l107">    107</a>   (let ((arg (or (ad-get-arg 0) 1)))
+<a href="#l108" class="line" id="l108">    108</a>     (when (/= arg 1)
+<a href="#l109" class="line" id="l109">    109</a>       (forward-line (1- arg))))
+<a href="#l110" class="line" id="l110">    110</a>   ;; Move to indentation on first call, then to actual BOL on second.
+<a href="#l111" class="line" id="l111">    111</a>   (let ((pos (point)))
+<a href="#l112" class="line" id="l112">    112</a>     (back-to-indentation)
+<a href="#l113" class="line" id="l113">    113</a>     (when (= pos (point))
+<a href="#l114" class="line" id="l114">    114</a>       ad-do-it)))
+<a href="#l115" class="line" id="l115">    115</a> 
+<a href="#l116" class="line" id="l116">    116</a> ;; If the *scratch* buffer is killed, recreate it automatically
+<a href="#l117" class="line" id="l117">    117</a> ;; FROM: Morten Welind
+<a href="#l118" class="line" id="l118">    118</a> ;;http://www.geocrawler.com/archives/3/338/1994/6/0/1877802/
+<a href="#l119" class="line" id="l119">    119</a> (save-excursion
+<a href="#l120" class="line" id="l120">    120</a>   (set-buffer (get-buffer-create &quot;*scratch*&quot;))
+<a href="#l121" class="line" id="l121">    121</a>   (lisp-interaction-mode)
+<a href="#l122" class="line" id="l122">    122</a>   (make-local-variable &#39;kill-buffer-query-functions)
+<a href="#l123" class="line" id="l123">    123</a>   (add-hook &#39;kill-buffer-query-functions &#39;kill-scratch-buffer))
+<a href="#l124" class="line" id="l124">    124</a> 
+<a href="#l125" class="line" id="l125">    125</a> (defun kill-scratch-buffer ()
+<a href="#l126" class="line" id="l126">    126</a>   ;; The next line is just in case someone calls this manually
+<a href="#l127" class="line" id="l127">    127</a>   (set-buffer (get-buffer-create &quot;*scratch*&quot;))
+<a href="#l128" class="line" id="l128">    128</a>   ;; Kill the current (*scratch*) buffer
+<a href="#l129" class="line" id="l129">    129</a>   (remove-hook &#39;kill-buffer-query-functions &#39;kill-scratch-buffer)
+<a href="#l130" class="line" id="l130">    130</a>   (kill-buffer (current-buffer))
+<a href="#l131" class="line" id="l131">    131</a>   ;; Make a brand new *scratch* buffer
+<a href="#l132" class="line" id="l132">    132</a>   (set-buffer (get-buffer-create &quot;*scratch*&quot;))
+<a href="#l133" class="line" id="l133">    133</a>   (lisp-interaction-mode)
+<a href="#l134" class="line" id="l134">    134</a>   (make-local-variable &#39;kill-buffer-query-functions)
+<a href="#l135" class="line" id="l135">    135</a>   (add-hook &#39;kill-buffer-query-functions &#39;kill-scratch-buffer)
+<a href="#l136" class="line" id="l136">    136</a>   ;; Since we killed it, don&#39;t let caller do that.
+<a href="#l137" class="line" id="l137">    137</a>   nil)
+<a href="#l138" class="line" id="l138">    138</a> 
+<a href="#l139" class="line" id="l139">    139</a> (defun save-buffer-without-dtw ()
+<a href="#l140" class="line" id="l140">    140</a>   (interactive)
+<a href="#l141" class="line" id="l141">    141</a>   (let ((b (current-buffer)))   ; memorize the buffer
+<a href="#l142" class="line" id="l142">    142</a>     (with-temp-buffer ; new temp buffer to bind the global value of before-save-hook
+<a href="#l143" class="line" id="l143">    143</a>       (let ((before-save-hook (remove &#39;delete-trailing-whitespace before-save-hook)))
+<a href="#l144" class="line" id="l144">    144</a>         (with-current-buffer b  ; go back to the current buffer, before-save-hook is now buffer-local
+<a href="#l145" class="line" id="l145">    145</a>           (let ((before-save-hook (remove &#39;delete-trailing-whitespace before-save-hook)))
+<a href="#l146" class="line" id="l146">    146</a>             (save-buffer)))))))
+<a href="#l147" class="line" id="l147">    147</a> 
+<a href="#l148" class="line" id="l148">    148</a> (defun narrow-or-widen-dwim (p)
+<a href="#l149" class="line" id="l149">    149</a>   &quot;Widen if buffer is narrowed, narrow-dwim otherwise.
+<a href="#l150" class="line" id="l150">    150</a> Dwim means: region, org-src-block, org-subtree, or
+<a href="#l151" class="line" id="l151">    151</a> defun, whichever applies first. Narrowing to
+<a href="#l152" class="line" id="l152">    152</a> org-src-block actually calls `org-edit-src-code&#39;.
+<a href="#l153" class="line" id="l153">    153</a> 
+<a href="#l154" class="line" id="l154">    154</a> With prefix P, don&#39;t widen, just narrow even if buffer
+<a href="#l155" class="line" id="l155">    155</a> is already narrowed.&quot;
+<a href="#l156" class="line" id="l156">    156</a>   (interactive &quot;P&quot;)
+<a href="#l157" class="line" id="l157">    157</a>   (declare (interactive-only))
+<a href="#l158" class="line" id="l158">    158</a>   (cond ((and (buffer-narrowed-p) (not p)) (widen))
+<a href="#l159" class="line" id="l159">    159</a>         ((region-active-p)
+<a href="#l160" class="line" id="l160">    160</a>          (narrow-to-region (region-beginning)
+<a href="#l161" class="line" id="l161">    161</a>                            (region-end)))
+<a href="#l162" class="line" id="l162">    162</a>         ((derived-mode-p &#39;org-mode)
+<a href="#l163" class="line" id="l163">    163</a>          ;; `org-edit-src-code&#39; is not a real narrowing
+<a href="#l164" class="line" id="l164">    164</a>          ;; command. Remove this first conditional if
+<a href="#l165" class="line" id="l165">    165</a>          ;; you don&#39;t want it.
+<a href="#l166" class="line" id="l166">    166</a>          (cond ((ignore-errors (org-edit-src-code) t)
+<a href="#l167" class="line" id="l167">    167</a>                 (delete-other-windows))
+<a href="#l168" class="line" id="l168">    168</a>                ((ignore-errors (org-narrow-to-block) t))
+<a href="#l169" class="line" id="l169">    169</a>                (t (org-narrow-to-subtree))))
+<a href="#l170" class="line" id="l170">    170</a>         ((derived-mode-p &#39;latex-mode)
+<a href="#l171" class="line" id="l171">    171</a>          (LaTeX-narrow-to-environment))
+<a href="#l172" class="line" id="l172">    172</a>         (t (narrow-to-defun))))
+<a href="#l173" class="line" id="l173">    173</a> 
+<a href="#l174" class="line" id="l174">    174</a> ;; (define-key endless/toggle-map &quot;n&quot;
+<a href="#l175" class="line" id="l175">    175</a> ;;   #&#39;narrow-or-widen-dwim)
+<a href="#l176" class="line" id="l176">    176</a> ;; This line actually replaces Emacs&#39; entire narrowing
+<a href="#l177" class="line" id="l177">    177</a> ;; keymap, that&#39;s how much I like this command. Only
+<a href="#l178" class="line" id="l178">    178</a> ;; copy it if that&#39;s what you want.
+<a href="#l179" class="line" id="l179">    179</a> (define-key ctl-x-map &quot;n&quot; #&#39;narrow-or-widen-dwim)
+<a href="#l180" class="line" id="l180">    180</a> (add-hook &#39;LaTeX-mode-hook
+<a href="#l181" class="line" id="l181">    181</a>           (lambda ()
+<a href="#l182" class="line" id="l182">    182</a>             (define-key LaTeX-mode-map &quot;\C-xn&quot;
+<a href="#l183" class="line" id="l183">    183</a>               nil)))
+<a href="#l184" class="line" id="l184">    184</a> 
+<a href="#l185" class="line" id="l185">    185</a> (defun toggle-modeline ()
+<a href="#l186" class="line" id="l186">    186</a>   (interactive)
+<a href="#l187" class="line" id="l187">    187</a>   (if (not (consp mode-line-format))
+<a href="#l188" class="line" id="l188">    188</a>       (setq mode-line-format (default-value &#39;mode-line-format))
+<a href="#l189" class="line" id="l189">    189</a>     (setq mode-line-format nil)))
+<a href="#l190" class="line" id="l190">    190</a> 
+<a href="#l191" class="line" id="l191">    191</a> (defun resize-small ()
+<a href="#l192" class="line" id="l192">    192</a>   (interactive)
+<a href="#l193" class="line" id="l193">    193</a>   (set-frame-width (selected-frame) 85)
+<a href="#l194" class="line" id="l194">    194</a>   (set-frame-height (selected-frame) 50))
+<a href="#l195" class="line" id="l195">    195</a> 
+<a href="#l196" class="line" id="l196">    196</a> (defun resize-wide ()
+<a href="#l197" class="line" id="l197">    197</a>   (interactive)
+<a href="#l198" class="line" id="l198">    198</a>   (set-frame-width (selected-frame) 200)
+<a href="#l199" class="line" id="l199">    199</a>   (set-frame-height (selected-frame) 50))
+<a href="#l200" class="line" id="l200">    200</a> 
+<a href="#l201" class="line" id="l201">    201</a> (defun resize-big ()
+<a href="#l202" class="line" id="l202">    202</a>   (interactive)
+<a href="#l203" class="line" id="l203">    203</a>   (set-frame-width (selected-frame) 240)
+<a href="#l204" class="line" id="l204">    204</a>   (set-frame-height (selected-frame) 70))
+<a href="#l205" class="line" id="l205">    205</a> 
+<a href="#l206" class="line" id="l206">    206</a> (provide &#39;core-defuns)
+<a href="#l207" class="line" id="l207">    207</a> 
+<a href="#l208" class="line" id="l208">    208</a> ;;; core-defuns.el ends here
+</pre>
+</div>
+</body>
+</html>

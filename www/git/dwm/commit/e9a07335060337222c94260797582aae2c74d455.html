@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Using a new tags definition (const char [][MAXTAGLEN] - thanks go to Szabolcs! - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e9a07335060337222c94260797582aae2c74d455.html">e9a07335060337222c94260797582aae2c74d455</a>
+<b>parent</b> <a href="../commit/198502f41dc3c436b73215f5e2a6b58b050ecfce.html">198502f41dc3c436b73215f5e2a6b58b050ecfce</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 10 Nov 2007 19:16:11 +0100
+
+Using a new tags definition (const char [][MAXTAGLEN] - thanks go to Szabolcs!
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">115</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">44</td><td><span class="i">++++++++++++++++++++++++</span><span class="d">--------------------</span></td></tr>
+</table></pre><pre>2 files changed, 81 insertions(+), 78 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -12,7 +12,7 @@
+</a> #define SELFGCOLOR		&quot;#ffffff&quot;
+ 
+ /* tagging */
+<a href="#h0-0-3" id="h0-0-3" class="d">-const char *tags[] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;www&quot; };
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+const char tags[][MAXTAGLEN] = { &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;www&quot; };
+</a> Bool seltags[LENGTH(tags)] = {[0] = True};
+ Rule rules[] = {
+ 	/* class:instance:title regex	tags regex	isfloating */
+<a href="#h0-1" id="h0-1" class="h">@@ -34,61 +34,60 @@ Layout layouts[] = {
+</a> 
+ /* key definitions */
+ #define MODKEY			Mod1Mask
+<a href="#h0-1-3" id="h0-1-3" class="d">-#define KEYS \
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-Key keys[] = { \
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	/* modifier			key		function	argument */ \
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	{ MODKEY,			XK_p,		spawn, \
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		&quot;exe=`dmenu_path | dmenu -fn &#39;&quot;FONT&quot;&#39; -nb &#39;&quot;NORMBGCOLOR&quot;&#39; -nf &#39;&quot;NORMFGCOLOR&quot;&#39;&quot; \
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-		&quot; -sb &#39;&quot;SELBGCOLOR&quot;&#39; -sf &#39;&quot;SELFGCOLOR&quot;&#39;` &amp;&amp; exec $exe&quot; }, \
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	{ MODKEY|ShiftMask,		XK_Return,	spawn, &quot;exec uxterm&quot; }, \
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	{ MODKEY,			XK_space,	setlayout,	NULL }, \
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-	{ MODKEY,			XK_b,		togglebar,	NULL }, \
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-	{ MODKEY,			XK_j,		focusnext,	NULL }, \
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-	{ MODKEY,			XK_k,		focusprev,	NULL }, \
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-	{ MODKEY,			XK_h,		setmwfact,	&quot;-0.05&quot; }, \
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-	{ MODKEY,			XK_l,		setmwfact,	&quot;+0.05&quot; }, \
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-	{ MODKEY,			XK_m,		togglemax,	NULL }, \
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-	{ MODKEY,			XK_Return,	zoom,		NULL }, \
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-	{ MODKEY,			XK_Tab,		viewprevtag,	NULL }, \
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-	{ MODKEY|ShiftMask,		XK_space,	togglefloating,	NULL }, \
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-	{ MODKEY|ShiftMask,		XK_c,		killclient,	NULL }, \
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-	{ MODKEY,			XK_0,		view,		NULL }, \
+</a><a href="#h0-1-22" id="h0-1-22" class="d">-	{ MODKEY,			XK_1,		view,		tags[0] }, \
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-	{ MODKEY,			XK_2,		view,		tags[1] }, \
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-	{ MODKEY,			XK_3,		view,		tags[2] }, \
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-	{ MODKEY,			XK_4,		view,		tags[3] }, \
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-	{ MODKEY,			XK_5,		view,		tags[4] }, \
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-	{ MODKEY,			XK_6,		view,		tags[5] }, \
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-	{ MODKEY,			XK_7,		view,		tags[6] }, \
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-	{ MODKEY,			XK_8,		view,		tags[7] }, \
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-	{ MODKEY,			XK_9,		view,		tags[8] }, \
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-	{ MODKEY|ControlMask,		XK_1,		toggleview,	tags[0] }, \
+</a><a href="#h0-1-32" id="h0-1-32" class="d">-	{ MODKEY|ControlMask,		XK_2,		toggleview,	tags[1] }, \
+</a><a href="#h0-1-33" id="h0-1-33" class="d">-	{ MODKEY|ControlMask,		XK_3,		toggleview,	tags[2] }, \
+</a><a href="#h0-1-34" id="h0-1-34" class="d">-	{ MODKEY|ControlMask,		XK_4,		toggleview,	tags[3] }, \
+</a><a href="#h0-1-35" id="h0-1-35" class="d">-	{ MODKEY|ControlMask,		XK_5,		toggleview,	tags[4] }, \
+</a><a href="#h0-1-36" id="h0-1-36" class="d">-	{ MODKEY|ControlMask,		XK_6,		toggleview,	tags[5] }, \
+</a><a href="#h0-1-37" id="h0-1-37" class="d">-	{ MODKEY|ControlMask,		XK_7,		toggleview,	tags[6] }, \
+</a><a href="#h0-1-38" id="h0-1-38" class="d">-	{ MODKEY|ControlMask,		XK_8,		toggleview,	tags[7] }, \
+</a><a href="#h0-1-39" id="h0-1-39" class="d">-	{ MODKEY|ControlMask,		XK_9,		toggleview,	tags[8] }, \
+</a><a href="#h0-1-40" id="h0-1-40" class="d">-	{ MODKEY|ShiftMask,		XK_0,		tag,		NULL }, \
+</a><a href="#h0-1-41" id="h0-1-41" class="d">-	{ MODKEY|ShiftMask,		XK_1,		tag,		tags[0] }, \
+</a><a href="#h0-1-42" id="h0-1-42" class="d">-	{ MODKEY|ShiftMask,		XK_2,		tag,		tags[1] }, \
+</a><a href="#h0-1-43" id="h0-1-43" class="d">-	{ MODKEY|ShiftMask,		XK_3,		tag,		tags[2] }, \
+</a><a href="#h0-1-44" id="h0-1-44" class="d">-	{ MODKEY|ShiftMask,		XK_4,		tag,		tags[3] }, \
+</a><a href="#h0-1-45" id="h0-1-45" class="d">-	{ MODKEY|ShiftMask,		XK_5,		tag,		tags[4] }, \
+</a><a href="#h0-1-46" id="h0-1-46" class="d">-	{ MODKEY|ShiftMask,		XK_6,		tag,		tags[5] }, \
+</a><a href="#h0-1-47" id="h0-1-47" class="d">-	{ MODKEY|ShiftMask,		XK_7,		tag,		tags[6] }, \
+</a><a href="#h0-1-48" id="h0-1-48" class="d">-	{ MODKEY|ShiftMask,		XK_8,		tag,		tags[7] }, \
+</a><a href="#h0-1-49" id="h0-1-49" class="d">-	{ MODKEY|ShiftMask,		XK_9,		tag,		tags[8] }, \
+</a><a href="#h0-1-50" id="h0-1-50" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_1,		toggletag,	tags[0] }, \
+</a><a href="#h0-1-51" id="h0-1-51" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_2,		toggletag,	tags[1] }, \
+</a><a href="#h0-1-52" id="h0-1-52" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_3,		toggletag,	tags[2] }, \
+</a><a href="#h0-1-53" id="h0-1-53" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_4,		toggletag,	tags[3] }, \
+</a><a href="#h0-1-54" id="h0-1-54" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_5,		toggletag,	tags[4] }, \
+</a><a href="#h0-1-55" id="h0-1-55" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_6,		toggletag,	tags[5] }, \
+</a><a href="#h0-1-56" id="h0-1-56" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_7,		toggletag,	tags[6] }, \
+</a><a href="#h0-1-57" id="h0-1-57" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_8,		toggletag,	tags[7] }, \
+</a><a href="#h0-1-58" id="h0-1-58" class="d">-	{ MODKEY|ControlMask|ShiftMask,	XK_9,		toggletag,	tags[8] }, \
+</a><a href="#h0-1-59" id="h0-1-59" class="d">-	{ MODKEY|ShiftMask,		XK_q,		quit,		NULL }, \
+</a><a href="#h0-1-60" id="h0-1-60" class="i">+Key keys[] = {
+</a><a href="#h0-1-61" id="h0-1-61" class="i">+	/* modifier			key		function	argument */
+</a><a href="#h0-1-62" id="h0-1-62" class="i">+	{ MODKEY,			XK_p,		spawn,
+</a><a href="#h0-1-63" id="h0-1-63" class="i">+		&quot;exe=`dmenu_path | dmenu -fn &#39;&quot;FONT&quot;&#39; -nb &#39;&quot;NORMBGCOLOR&quot;&#39; -nf &#39;&quot;NORMFGCOLOR&quot;&#39;&quot;
+</a><a href="#h0-1-64" id="h0-1-64" class="i">+		&quot; -sb &#39;&quot;SELBGCOLOR&quot;&#39; -sf &#39;&quot;SELFGCOLOR&quot;&#39;` &amp;&amp; exec $exe&quot; },
+</a><a href="#h0-1-65" id="h0-1-65" class="i">+	{ MODKEY|ShiftMask,		XK_Return,	spawn, &quot;exec uxterm&quot; },
+</a><a href="#h0-1-66" id="h0-1-66" class="i">+	{ MODKEY,			XK_space,	setlayout,	NULL },
+</a><a href="#h0-1-67" id="h0-1-67" class="i">+	{ MODKEY,			XK_b,		togglebar,	NULL },
+</a><a href="#h0-1-68" id="h0-1-68" class="i">+	{ MODKEY,			XK_j,		focusnext,	NULL },
+</a><a href="#h0-1-69" id="h0-1-69" class="i">+	{ MODKEY,			XK_k,		focusprev,	NULL },
+</a><a href="#h0-1-70" id="h0-1-70" class="i">+	{ MODKEY,			XK_h,		setmwfact,	&quot;-0.05&quot; },
+</a><a href="#h0-1-71" id="h0-1-71" class="i">+	{ MODKEY,			XK_l,		setmwfact,	&quot;+0.05&quot; },
+</a><a href="#h0-1-72" id="h0-1-72" class="i">+	{ MODKEY,			XK_m,		togglemax,	NULL },
+</a><a href="#h0-1-73" id="h0-1-73" class="i">+	{ MODKEY,			XK_Return,	zoom,		NULL },
+</a><a href="#h0-1-74" id="h0-1-74" class="i">+	{ MODKEY,			XK_Tab,		viewprevtag,	NULL },
+</a><a href="#h0-1-75" id="h0-1-75" class="i">+	{ MODKEY|ShiftMask,		XK_space,	togglefloating,	NULL },
+</a><a href="#h0-1-76" id="h0-1-76" class="i">+	{ MODKEY|ShiftMask,		XK_c,		killclient,	NULL },
+</a><a href="#h0-1-77" id="h0-1-77" class="i">+	{ MODKEY,			XK_0,		view,		NULL },
+</a><a href="#h0-1-78" id="h0-1-78" class="i">+	{ MODKEY,			XK_1,		view,		tags[0] },
+</a><a href="#h0-1-79" id="h0-1-79" class="i">+	{ MODKEY,			XK_2,		view,		tags[1] },
+</a><a href="#h0-1-80" id="h0-1-80" class="i">+	{ MODKEY,			XK_3,		view,		tags[2] },
+</a><a href="#h0-1-81" id="h0-1-81" class="i">+	{ MODKEY,			XK_4,		view,		tags[3] },
+</a><a href="#h0-1-82" id="h0-1-82" class="i">+	{ MODKEY,			XK_5,		view,		tags[4] },
+</a><a href="#h0-1-83" id="h0-1-83" class="i">+	{ MODKEY,			XK_6,		view,		tags[5] },
+</a><a href="#h0-1-84" id="h0-1-84" class="i">+	{ MODKEY,			XK_7,		view,		tags[6] },
+</a><a href="#h0-1-85" id="h0-1-85" class="i">+	{ MODKEY,			XK_8,		view,		tags[7] },
+</a><a href="#h0-1-86" id="h0-1-86" class="i">+	{ MODKEY,			XK_9,		view,		tags[8] },
+</a><a href="#h0-1-87" id="h0-1-87" class="i">+	{ MODKEY|ControlMask,		XK_1,		toggleview,	tags[0] },
+</a><a href="#h0-1-88" id="h0-1-88" class="i">+	{ MODKEY|ControlMask,		XK_2,		toggleview,	tags[1] },
+</a><a href="#h0-1-89" id="h0-1-89" class="i">+	{ MODKEY|ControlMask,		XK_3,		toggleview,	tags[2] },
+</a><a href="#h0-1-90" id="h0-1-90" class="i">+	{ MODKEY|ControlMask,		XK_4,		toggleview,	tags[3] },
+</a><a href="#h0-1-91" id="h0-1-91" class="i">+	{ MODKEY|ControlMask,		XK_5,		toggleview,	tags[4] },
+</a><a href="#h0-1-92" id="h0-1-92" class="i">+	{ MODKEY|ControlMask,		XK_6,		toggleview,	tags[5] },
+</a><a href="#h0-1-93" id="h0-1-93" class="i">+	{ MODKEY|ControlMask,		XK_7,		toggleview,	tags[6] },
+</a><a href="#h0-1-94" id="h0-1-94" class="i">+	{ MODKEY|ControlMask,		XK_8,		toggleview,	tags[7] },
+</a><a href="#h0-1-95" id="h0-1-95" class="i">+	{ MODKEY|ControlMask,		XK_9,		toggleview,	tags[8] },
+</a><a href="#h0-1-96" id="h0-1-96" class="i">+	{ MODKEY|ShiftMask,		XK_0,		tag,		NULL },
+</a><a href="#h0-1-97" id="h0-1-97" class="i">+	{ MODKEY|ShiftMask,		XK_1,		tag,		tags[0] },
+</a><a href="#h0-1-98" id="h0-1-98" class="i">+	{ MODKEY|ShiftMask,		XK_2,		tag,		tags[1] },
+</a><a href="#h0-1-99" id="h0-1-99" class="i">+	{ MODKEY|ShiftMask,		XK_3,		tag,		tags[2] },
+</a><a href="#h0-1-100" id="h0-1-100" class="i">+	{ MODKEY|ShiftMask,		XK_4,		tag,		tags[3] },
+</a><a href="#h0-1-101" id="h0-1-101" class="i">+	{ MODKEY|ShiftMask,		XK_5,		tag,		tags[4] },
+</a><a href="#h0-1-102" id="h0-1-102" class="i">+	{ MODKEY|ShiftMask,		XK_6,		tag,		tags[5] },
+</a><a href="#h0-1-103" id="h0-1-103" class="i">+	{ MODKEY|ShiftMask,		XK_7,		tag,		tags[6] },
+</a><a href="#h0-1-104" id="h0-1-104" class="i">+	{ MODKEY|ShiftMask,		XK_8,		tag,		tags[7] },
+</a><a href="#h0-1-105" id="h0-1-105" class="i">+	{ MODKEY|ShiftMask,		XK_9,		tag,		tags[8] },
+</a><a href="#h0-1-106" id="h0-1-106" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_1,		toggletag,	tags[0] },
+</a><a href="#h0-1-107" id="h0-1-107" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_2,		toggletag,	tags[1] },
+</a><a href="#h0-1-108" id="h0-1-108" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_3,		toggletag,	tags[2] },
+</a><a href="#h0-1-109" id="h0-1-109" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_4,		toggletag,	tags[3] },
+</a><a href="#h0-1-110" id="h0-1-110" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_5,		toggletag,	tags[4] },
+</a><a href="#h0-1-111" id="h0-1-111" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_6,		toggletag,	tags[5] },
+</a><a href="#h0-1-112" id="h0-1-112" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_7,		toggletag,	tags[6] },
+</a><a href="#h0-1-113" id="h0-1-113" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_8,		toggletag,	tags[7] },
+</a><a href="#h0-1-114" id="h0-1-114" class="i">+	{ MODKEY|ControlMask|ShiftMask,	XK_9,		toggletag,	tags[8] },
+</a><a href="#h0-1-115" id="h0-1-115" class="i">+	{ MODKEY|ShiftMask,		XK_q,		quit,		NULL },
+</a> };
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -44,8 +44,9 @@
+</a> /* macros */
+ #define BUTTONMASK		(ButtonPressMask | ButtonReleaseMask)
+ #define CLEANMASK(mask)		(mask &amp; ~(numlockmask | LockMask))
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define MOUSEMASK		(BUTTONMASK | PointerMotionMask)
+</a> #define LENGTH(x)		(sizeof x / sizeof x[0])
+<a href="#h1-0-5" id="h1-0-5" class="i">+#define MAXTAGLEN		16
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+#define MOUSEMASK		(BUTTONMASK | PointerMotionMask)
+</a> 
+ 
+ /* enums */
+<a href="#h1-1" id="h1-1" class="h">@@ -143,6 +144,7 @@ unsigned long getcolor(const char *colstr);
+</a> long getstate(Window w);
+ Bool gettextprop(Window w, Atom atom, char *text, unsigned int size);
+ void grabbuttons(Client *c, Bool focused);
+<a href="#h1-1-3" id="h1-1-3" class="i">+void grabkeys(void);
+</a> unsigned int idxoftag(const char *tag);
+ void initfont(const char *fontstr);
+ Bool isoccupied(unsigned int t);
+<a href="#h1-2" id="h1-2" class="h">@@ -838,6 +840,25 @@ grabbuttons(Client *c, Bool focused) {
+</a> 				GrabModeAsync, GrabModeSync, None, None);
+ }
+ 
+<a href="#h1-2-3" id="h1-2-3" class="i">+void
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+grabkeys(void)  {
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	unsigned int i;
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+	KeyCode code;
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+	XUngrabKey(dpy, AnyKey, AnyModifier, root);
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+	for(i = 0; i &lt; LENGTH(keys); i++) {
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+		code = XKeysymToKeycode(dpy, keys[i].keysym);
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+		XGrabKey(dpy, code, keys[i].mod, root, True,
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+				GrabModeAsync, GrabModeAsync);
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+		XGrabKey(dpy, code, keys[i].mod | LockMask, root, True,
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+				GrabModeAsync, GrabModeAsync);
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+		XGrabKey(dpy, code, keys[i].mod | numlockmask, root, True,
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+				GrabModeAsync, GrabModeAsync);
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+		XGrabKey(dpy, code, keys[i].mod | numlockmask | LockMask, root, True,
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+				GrabModeAsync, GrabModeAsync);
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+	}
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+}
+</a><a href="#h1-2-21" id="h1-2-21" class="i">+
+</a> unsigned int
+ idxoftag(const char *tag) {
+ 	unsigned int i;
+<a href="#h1-3" id="h1-3" class="h">@@ -925,27 +946,10 @@ isvisible(Client *c) {
+</a> 
+ void
+ keypress(XEvent *e) {
+<a href="#h1-3-3" id="h1-3-3" class="d">-	KEYS
+</a> 	unsigned int i;
+<a href="#h1-3-5" id="h1-3-5" class="d">-	KeyCode code;
+</a> 	KeySym keysym;
+ 	XKeyEvent *ev;
+ 
+<a href="#h1-3-9" id="h1-3-9" class="d">-	if(!e) { /* grabkeys */
+</a><a href="#h1-3-10" id="h1-3-10" class="d">-		XUngrabKey(dpy, AnyKey, AnyModifier, root);
+</a><a href="#h1-3-11" id="h1-3-11" class="d">-		for(i = 0; i &lt; LENGTH(keys); i++) {
+</a><a href="#h1-3-12" id="h1-3-12" class="d">-			code = XKeysymToKeycode(dpy, keys[i].keysym);
+</a><a href="#h1-3-13" id="h1-3-13" class="d">-			XGrabKey(dpy, code, keys[i].mod, root, True,
+</a><a href="#h1-3-14" id="h1-3-14" class="d">-					GrabModeAsync, GrabModeAsync);
+</a><a href="#h1-3-15" id="h1-3-15" class="d">-			XGrabKey(dpy, code, keys[i].mod | LockMask, root, True,
+</a><a href="#h1-3-16" id="h1-3-16" class="d">-					GrabModeAsync, GrabModeAsync);
+</a><a href="#h1-3-17" id="h1-3-17" class="d">-			XGrabKey(dpy, code, keys[i].mod | numlockmask, root, True,
+</a><a href="#h1-3-18" id="h1-3-18" class="d">-					GrabModeAsync, GrabModeAsync);
+</a><a href="#h1-3-19" id="h1-3-19" class="d">-			XGrabKey(dpy, code, keys[i].mod | numlockmask | LockMask, root, True,
+</a><a href="#h1-3-20" id="h1-3-20" class="d">-					GrabModeAsync, GrabModeAsync);
+</a><a href="#h1-3-21" id="h1-3-21" class="d">-		}
+</a><a href="#h1-3-22" id="h1-3-22" class="d">-		return;
+</a><a href="#h1-3-23" id="h1-3-23" class="d">-	}
+</a> 	ev = &amp;e-&gt;xkey;
+ 	keysym = XKeycodeToKeysym(dpy, (KeyCode)ev-&gt;keycode, 0);
+ 	for(i = 0; i &lt; LENGTH(keys); i++)
+<a href="#h1-4" id="h1-4" class="h">@@ -1048,7 +1052,7 @@ mappingnotify(XEvent *e) {
+</a> 
+ 	XRefreshKeyboardMapping(ev);
+ 	if(ev-&gt;request == MappingKeyboard)
+<a href="#h1-4-3" id="h1-4-3" class="d">-		keypress(NULL);
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+		grabkeys();
+</a> }
+ 
+ void
+<a href="#h1-5" id="h1-5" class="h">@@ -1460,7 +1464,7 @@ setup(void) {
+</a> 	XSelectInput(dpy, root, wa.event_mask);
+ 
+ 	/* grab keys */
+<a href="#h1-5-3" id="h1-5-3" class="d">-	keypress(NULL);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+	grabkeys();
+</a> 
+ 	/* init tags */
+ 	compileregs();
+</pre>
+</div>
+</body>
+</html>

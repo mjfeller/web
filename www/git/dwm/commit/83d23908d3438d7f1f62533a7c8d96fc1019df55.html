@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>implemented draw_client stuff - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/83d23908d3438d7f1f62533a7c8d96fc1019df55.html">83d23908d3438d7f1f62533a7c8d96fc1019df55</a>
+<b>parent</b> <a href="../commit/a05beb6585713aeb661cf30c080e77fbfdb28867.html">a05beb6585713aeb661cf30c080e77fbfdb28867</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Tue, 11 Jul 2006 23:18:30 +0200
+
+implemented draw_client stuff
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">64</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">event.c</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">wm.c</a></td><td> | </td><td class="num">9</td><td><span class="i">+++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>3 files changed, 58 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -37,10 +37,6 @@ update_name(Client *c)
+</a> 		}
+ 	}
+ 	XFree(name.value);
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if(c == stack)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		draw_bar();
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	else
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-		draw_client(c);
+</a> }
+ 
+ void
+<a href="#h0-1" id="h0-1" class="h">@@ -51,27 +47,52 @@ update_size(Client *c)
+</a> 	if(!XGetWMNormalHints(dpy, c-&gt;win, &amp;size, &amp;msize) || !size.flags)
+ 		size.flags = PSize;
+ 	c-&gt;flags = size.flags;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	c-&gt;basew = size.base_width;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	c-&gt;baseh = size.base_height;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	c-&gt;incw = size.width_inc;
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	c-&gt;inch = size.height_inc;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	c-&gt;maxw = size.max_width;
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	c-&gt;maxh = size.max_height;
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	c-&gt;minw = size.min_width;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	c-&gt;minh = size.min_height;
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	if(c-&gt;flags &amp; PBaseSize) {
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		c-&gt;basew = size.base_width;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+		c-&gt;baseh = size.base_height;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	}
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	else
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+		c-&gt;basew = c-&gt;baseh = 0;
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	if(c-&gt;flags &amp; PResizeInc) {
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		c-&gt;incw = size.width_inc;
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+		c-&gt;inch = size.height_inc;
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	}
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	else
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+		c-&gt;incw = c-&gt;inch = 0;
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	if(c-&gt;flags &amp; PMaxSize) {
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+		c-&gt;maxw = size.max_width;
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+		c-&gt;maxh = size.max_height;
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+	}
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+	else
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+		c-&gt;maxw = c-&gt;maxh = 0;
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+	if(c-&gt;flags &amp; PMinSize) {
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+		c-&gt;minw = size.min_width;
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+		c-&gt;minh = size.min_height;
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+	}
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+	else
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+		c-&gt;minw = c-&gt;minh = 0;
+</a> }
+ 
+ void
+ focus(Client *c)
+ {
+<a href="#h0-1-40" id="h0-1-40" class="d">-	Client **l;
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+	Client **l, *old;
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+	old = stack;
+</a> 	for(l=&amp;stack; *l &amp;&amp; *l != c; l=&amp;(*l)-&gt;snext);
+ 	eassert(*l == c);
+ 	*l = c-&gt;snext;
+ 	c-&gt;snext = stack;
+ 	stack = c;
+ 	XRaiseWindow(dpy, c-&gt;win);
+<a href="#h0-1-50" id="h0-1-50" class="i">+	XRaiseWindow(dpy, c-&gt;title);
+</a> 	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+<a href="#h0-1-52" id="h0-1-52" class="i">+	if(old &amp;&amp; old != c) {
+</a><a href="#h0-1-53" id="h0-1-53" class="i">+		XMapWindow(dpy, old-&gt;title);
+</a><a href="#h0-1-54" id="h0-1-54" class="i">+		draw_client(old);
+</a><a href="#h0-1-55" id="h0-1-55" class="i">+	}
+</a><a href="#h0-1-56" id="h0-1-56" class="i">+	XUnmapWindow(dpy, c-&gt;title);
+</a><a href="#h0-1-57" id="h0-1-57" class="i">+	draw_bar();
+</a> 	XFlush(dpy);
+ }
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -91,7 +112,6 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	XSetWindowBorderWidth(dpy, c-&gt;win, 1);
+ 	XSelectInput(dpy, c-&gt;win, CLIENT_MASK);
+ 	XGetTransientForHint(dpy, c-&gt;win, &amp;c-&gt;trans);
+<a href="#h0-2-3" id="h0-2-3" class="d">-	update_name(c);
+</a> 	twa.override_redirect = 1;
+ 	twa.background_pixmap = ParentRelative;
+ 	twa.event_mask = ExposureMask;
+<a href="#h0-3" id="h0-3" class="h">@@ -100,6 +120,7 @@ manage(Window w, XWindowAttributes *wa)
+</a> 			0, DefaultDepth(dpy, screen), CopyFromParent,
+ 			DefaultVisual(dpy, screen),
+ 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;twa);
+<a href="#h0-3-3" id="h0-3-3" class="i">+	update_name(c);
+</a> 
+ 	for(l=&amp;clients; *l; l=&amp;(*l)-&gt;next);
+ 	c-&gt;next = *l; /* *l == nil */
+<a href="#h0-4" id="h0-4" class="h">@@ -107,12 +128,14 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	c-&gt;snext = stack;
+ 	stack = c;
+ 	XMapWindow(dpy, c-&gt;win);
+<a href="#h0-4-3" id="h0-4-3" class="i">+	XMapWindow(dpy, c-&gt;title);
+</a> 	XGrabButton(dpy, Button1, Mod1Mask, c-&gt;win, False, ButtonPressMask,
+ 			GrabModeAsync, GrabModeSync, None, None);
+ 	XGrabButton(dpy, Button2, Mod1Mask, c-&gt;win, False, ButtonPressMask,
+ 			GrabModeAsync, GrabModeSync, None, None);
+ 	XGrabButton(dpy, Button3, Mod1Mask, c-&gt;win, False, ButtonPressMask,
+ 			GrabModeAsync, GrabModeSync, None, None);
+<a href="#h0-4-10" id="h0-4-10" class="i">+	resize(c);
+</a> 	focus(c);
+ }
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -122,6 +145,7 @@ resize(Client *c)
+</a> 	XConfigureEvent e;
+ 
+ 	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+<a href="#h0-5-3" id="h0-5-3" class="i">+	XMoveResizeWindow(dpy, c-&gt;title, c-&gt;x + c-&gt;w / 3, c-&gt;y, 2 * c-&gt;w / 3, barrect.height);
+</a> 	e.type = ConfigureNotify;
+ 	e.event = c-&gt;win;
+ 	e.window = c-&gt;win;
+<a href="#h0-6" id="h0-6" class="h">@@ -186,7 +210,17 @@ getclient(Window w)
+</a> void
+ draw_client(Client *c)
+ {
+<a href="#h0-6-3" id="h0-6-3" class="d">-	
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	if(!c)
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+		return;
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+	if(c == stack)
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+		draw_bar();
+</a> 
+<a href="#h0-6-9" id="h0-6-9" class="i">+	brush.rect.x = brush.rect.y = 0;
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+	brush.rect.width = 2 * c-&gt;w / 3;
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+	brush.rect.height = barrect.height;
+</a> 
+<a href="#h0-6-13" id="h0-6-13" class="i">+	draw(dpy, &amp;brush, True, c-&gt;name);
+</a><a href="#h0-6-14" id="h0-6-14" class="i">+	XCopyArea(dpy, brush.drawable, c-&gt;title, brush.gc, 0, 0,
+</a><a href="#h0-6-15" id="h0-6-15" class="i">+			brush.rect.width, brush.rect.height, 0, 0);
+</a><a href="#h0-6-16" id="h0-6-16" class="i">+	XFlush(dpy);
+</a> }
+<b>diff --git a/<a id="h1" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -143,9 +143,12 @@ static void
+</a> expose(XEvent *e)
+ {
+ 	XExposeEvent *ev = &amp;e-&gt;xexpose;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	Client *c;
+</a> 
+ 	if(ev-&gt;count == 0) {
+<a href="#h1-0-6" id="h1-0-6" class="d">-		if(ev-&gt;window == barwin)
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+		if((c = getclient(ev-&gt;window)))
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+			draw_client(c);
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		else if(ev-&gt;window == barwin)
+</a> 			draw_bar();
+ 	}
+ }
+<b>diff --git a/<a id="h2" href="../file/wm.c.html">wm.c</a> b/<a href="../file/wm.c.html">wm.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -245,10 +245,6 @@ main(int argc, char *argv[])
+</a> 
+ 	update_keys();
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-	brush.drawable = XCreatePixmap(dpy, root, rect.width, rect.height,
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-			DefaultDepth(dpy, screen));
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-	brush.gc = XCreateGC(dpy, root, 0, 0);
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-
+</a> 	/* style */
+ 	loadcolors(dpy, screen, &amp;brush, BGCOLOR, FGCOLOR, BORDERCOLOR);
+ 	loadfont(dpy, &amp;brush.font, FONT);
+<a href="#h2-1" id="h2-1" class="h">@@ -266,6 +262,11 @@ main(int argc, char *argv[])
+</a> 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+ 	XDefineCursor(dpy, barwin, cursor[CurNormal]);
+ 	XMapRaised(dpy, barwin);
+<a href="#h2-1-3" id="h2-1-3" class="i">+
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	brush.drawable = XCreatePixmap(dpy, root, rect.width, barrect.height,
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+			DefaultDepth(dpy, screen));
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+	brush.gc = XCreateGC(dpy, root, 0, 0);
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+
+</a> 	pipe_spawn(statustext, sizeof(statustext), dpy, (char **)status);
+ 	draw_bar();
+ 
+</pre>
+</div>
+</body>
+</html>

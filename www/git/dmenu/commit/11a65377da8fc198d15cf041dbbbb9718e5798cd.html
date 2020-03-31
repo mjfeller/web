@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Use slow path if stdin is a tty - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/11a65377da8fc198d15cf041dbbbb9718e5798cd.html">11a65377da8fc198d15cf041dbbbb9718e5798cd</a>
+<b>parent</b> <a href="../commit/bbc464dc80225b8cf9390f14fac6c682f63940d2.html">bbc464dc80225b8cf9390f14fac6c682f63940d2</a>
+<b>Author:</b> dok &lt;<a href="mailto:dok@grehack.fr">dok@grehack.fr</a>&gt;
+<b>Date:</b>   Sat, 26 Jan 2019 15:49:15 +0100
+
+Use slow path if stdin is a tty
+
+If stdin is a tty and dmenu is ran with the fast option then it&#39;s
+impossible to close stdin because the keyboard is already grabbed.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+</span><span class="d">---</span></td></tr>
+</table></pre><pre>1 file changed, 1 insertion(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -6,9 +6,7 @@
+</a> #include &lt;string.h&gt;
+ #include &lt;strings.h&gt;
+ #include &lt;time.h&gt;
+<a href="#h0-0-3" id="h0-0-3" class="d">-#ifdef __OpenBSD__
+</a> #include &lt;unistd.h&gt;
+<a href="#h0-0-5" id="h0-0-5" class="d">-#endif
+</a> 
+ #include &lt;X11/Xlib.h&gt;
+ #include &lt;X11/Xatom.h&gt;
+<a href="#h0-1" id="h0-1" class="h">@@ -754,7 +752,7 @@ main(int argc, char *argv[])
+</a> 		die(&quot;pledge&quot;);
+ #endif
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if (fast) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if (fast &amp;&amp; !isatty(0)) {
+</a> 		grabkeyboard();
+ 		readstdin();
+ 	} else {
+</pre>
+</div>
+</body>
+</html>

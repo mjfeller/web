@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>applied sanders no_sizehints for tiled mode patch (thx!) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/04eb016e782743ec88f150ec6f5389703bed3ce2.html">04eb016e782743ec88f150ec6f5389703bed3ce2</a>
+<b>parent</b> <a href="../commit/0a4342098b6d01367c69782c643cb685f1cd3c3d.html">0a4342098b6d01367c69782c643cb685f1cd3c3d</a>
+<b>Author:</b> arg@10ksloc.org &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Thu, 20 Jul 2006 19:09:11 +0200
+
+applied sanders no_sizehints for tiled mode patch (thx!)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 11 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -293,30 +293,30 @@ pop(Client *c)
+</a> }
+ 
+ void
+<a href="#h0-0-3" id="h0-0-3" class="d">-resize(Client *c, Bool inc, Corner sticky)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+resize(Client *c, Bool sizehints, Corner sticky)
+</a> {
+ 	int bottom = c-&gt;y + c-&gt;h;
+ 	int right = c-&gt;x + c-&gt;w;
+ 	XConfigureEvent e;
+ 
+<a href="#h0-0-10" id="h0-0-10" class="d">-	if(inc) {
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	if(sizehints) {
+</a> 		if(c-&gt;incw)
+ 			c-&gt;w -= (c-&gt;w - c-&gt;basew) % c-&gt;incw;
+ 		if(c-&gt;inch)
+ 			c-&gt;h -= (c-&gt;h - c-&gt;baseh) % c-&gt;inch;
+<a href="#h0-0-16" id="h0-0-16" class="i">+		if(c-&gt;minw &amp;&amp; c-&gt;w &lt; c-&gt;minw)
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+			c-&gt;w = c-&gt;minw;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		if(c-&gt;minh &amp;&amp; c-&gt;h &lt; c-&gt;minh)
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+			c-&gt;h = c-&gt;minh;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		if(c-&gt;maxw &amp;&amp; c-&gt;w &gt; c-&gt;maxw)
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+			c-&gt;w = c-&gt;maxw;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+		if(c-&gt;maxh &amp;&amp; c-&gt;h &gt; c-&gt;maxh)
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+			c-&gt;h = c-&gt;maxh;
+</a> 	}
+ 	if(c-&gt;x &gt; sw) /* might happen on restart */
+ 		c-&gt;x = sw - c-&gt;w;
+ 	if(c-&gt;y &gt; sh)
+ 		c-&gt;y = sh - c-&gt;h;
+<a href="#h0-0-29" id="h0-0-29" class="d">-	if(c-&gt;minw &amp;&amp; c-&gt;w &lt; c-&gt;minw)
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-		c-&gt;w = c-&gt;minw;
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-	if(c-&gt;minh &amp;&amp; c-&gt;h &lt; c-&gt;minh)
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-		c-&gt;h = c-&gt;minh;
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-	if(c-&gt;maxw &amp;&amp; c-&gt;w &gt; c-&gt;maxw)
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-		c-&gt;w = c-&gt;maxw;
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-	if(c-&gt;maxh &amp;&amp; c-&gt;h &gt; c-&gt;maxh)
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-		c-&gt;h = c-&gt;maxh;
+</a> 	if(sticky == TopRight || sticky == BotRight)
+ 		c-&gt;x = right - c-&gt;w;
+ 	if(sticky == BotLeft || sticky == BotRight)
+<b>diff --git a/<a id="h1" href="../file/dwm.h.html">dwm.h</a> b/<a href="../file/dwm.h.html">dwm.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -106,7 +106,7 @@ extern void killclient(Arg *arg);
+</a> extern void lower(Client *c);
+ extern void manage(Window w, XWindowAttributes *wa);
+ extern void pop(Client *c);
+<a href="#h1-0-3" id="h1-0-3" class="d">-extern void resize(Client *c, Bool inc, Corner sticky);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+extern void resize(Client *c, Bool sizehints, Corner sticky);
+</a> extern void setsize(Client *c);
+ extern void settitle(Client *c);
+ extern void togglemax(Arg *arg);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>introduced ISTILE, which can be easily extended with other layout functions to allow reuse of setmwfact() and zoom() - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8d1810c85befb0e7ec406e64c07825b7d24c66fc.html">8d1810c85befb0e7ec406e64c07825b7d24c66fc</a>
+<b>parent</b> <a href="../commit/60444daa70591946f352446906e498c8ae3dafdf.html">60444daa70591946f352446906e498c8ae3dafdf</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 22 Sep 2007 21:55:19 +0200
+
+introduced ISTILE, which can be easily extended with other layout functions to allow reuse of setmwfact() and zoom()
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">dwm.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 7 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -22,14 +22,15 @@ Rule rules[] = {
+</a> };
+ 
+ /* layout(s) */
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define ISTILE			isarrange(tile)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define MWFACT			0.6	/* master width factor [0.1 .. 0.9] */
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#define RESIZEHINTS		True	/* False - respect size hints in tiled resizals */
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#define SNAP			32	/* snap pixel */
+</a> Layout layouts[] = {
+ 	/* symbol		function */
+ 	{ &quot;[]=&quot;,		tile }, /* first entry is default */
+ 	{ &quot;&gt;&lt;&gt;&quot;,		floating },
+ };
+<a href="#h0-0-12" id="h0-0-12" class="d">-#define RESIZEHINTS		True	/* False - respect size hints in tiled resizals */
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-#define MWFACT			0.6	/* master width factor [0.1 .. 0.9] */
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-#define SNAP			32	/* snap pixel */
+</a> 
+ /* key definitions */
+ #define MODKEY			Mod1Mask
+<b>diff --git a/<a id="h1" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -341,7 +341,7 @@ buttonpress(XEvent *e) {
+</a> 			movemouse(c);
+ 		}
+ 		else if(ev-&gt;button == Button2) {
+<a href="#h1-0-3" id="h1-0-3" class="d">-			if(isarrange(tile) &amp;&amp; !c-&gt;isfixed &amp;&amp; c-&gt;isfloating)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+			if(ISTILE &amp;&amp; !c-&gt;isfixed &amp;&amp; c-&gt;isfloating)
+</a> 				togglefloating(NULL);
+ 			else
+ 				zoom(NULL);
+<a href="#h1-1" id="h1-1" class="h">@@ -1398,7 +1398,7 @@ void
+</a> setmwfact(const char *arg) {
+ 	double delta;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if(isarrange(floating))
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	if(!ISTILE)
+</a> 		return;
+ 	/* arg handling, manipulate mwfact */
+ 	if(arg == NULL)
+<a href="#h1-2" id="h1-2" class="h">@@ -1850,7 +1850,7 @@ void
+</a> zoom(const char *arg) {
+ 	Client *c;
+ 
+<a href="#h1-2-3" id="h1-2-3" class="d">-	if(!sel || isarrange(floating) || sel-&gt;isfloating)
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	if(!sel || !ISTILE || sel-&gt;isfloating)
+</a> 		return;
+ 	if((c = sel) == nexttiled(clients))
+ 		if(!(c = nexttiled(c-&gt;next)))
+</pre>
+</div>
+</body>
+</html>

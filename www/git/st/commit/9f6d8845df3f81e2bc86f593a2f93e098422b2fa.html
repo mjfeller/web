@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix ttywrite() - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9f6d8845df3f81e2bc86f593a2f93e098422b2fa.html">9f6d8845df3f81e2bc86f593a2f93e098422b2fa</a>
+<b>parent</b> <a href="../commit/f0398db4d172e838ef4b4ae55db3fb6a6fee6717.html">f0398db4d172e838ef4b4ae55db3fb6a6fee6717</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Fri,  6 Nov 2015 20:01:00 +0100
+
+Fix ttywrite()
+
+ttywrite was assuming that if it could not write then it could
+read, but this is not necessarily true, there are some situations
+where you cannot read or write. The correct behaviour is to detect
+if you can read or/and write.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">38</td><td><span class="i">++++++++++++++++++++</span><span class="d">------------------</span></td></tr>
+</table></pre><pre>1 file changed, 20 insertions(+), 18 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -415,7 +415,7 @@ static int32_t tdefcolor(int *, int *, int);
+</a> static void tdeftran(char);
+ static inline int match(uint, uint);
+ static void ttynew(void);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void ttyread(void);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static size_t ttyread(void);
+</a> static void ttyresize(void);
+ static void ttysend(char *, size_t);
+ static void ttywrite(const char *, size_t);
+<a href="#h0-1" id="h0-1" class="h">@@ -1464,7 +1464,7 @@ ttynew(void)
+</a> 	}
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-void
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+size_t
+</a> ttyread(void)
+ {
+ 	static char buf[BUFSIZ];
+<a href="#h0-2" id="h0-2" class="h">@@ -1489,14 +1489,16 @@ ttyread(void)
+</a> 
+ 	/* keep any uncomplete utf8 char for the next call */
+ 	memmove(buf, ptr, buflen);
+<a href="#h0-2-3" id="h0-2-3" class="i">+
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	return ret;
+</a> }
+ 
+ void
+ ttywrite(const char *s, size_t n)
+ {
+<a href="#h0-2-10" id="h0-2-10" class="d">-	fd_set wfd;
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-	struct timespec tv;
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	fd_set wfd, rfd;
+</a> 	ssize_t r;
+<a href="#h0-2-14" id="h0-2-14" class="i">+	size_t lim = 256;
+</a> 
+ 	/*
+ 	 * Remember that we are using a pty, which might be a modem line.
+<a href="#h0-3" id="h0-3" class="h">@@ -1506,38 +1508,34 @@ ttywrite(const char *s, size_t n)
+</a> 	 */
+ 	while (n &gt; 0) {
+ 		FD_ZERO(&amp;wfd);
+<a href="#h0-3-3" id="h0-3-3" class="i">+		FD_ZERO(&amp;rfd);
+</a> 		FD_SET(cmdfd, &amp;wfd);
+<a href="#h0-3-5" id="h0-3-5" class="d">-		tv.tv_sec = 0;
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-		tv.tv_nsec = 0;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+		FD_SET(cmdfd, &amp;rfd);
+</a> 
+ 		/* Check if we can write. */
+<a href="#h0-3-10" id="h0-3-10" class="d">-		if (pselect(cmdfd+1, NULL, &amp;wfd, NULL, &amp;tv, NULL) &lt; 0) {
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+		if (pselect(cmdfd+1, &amp;rfd, &amp;wfd, NULL, NULL, NULL) &lt; 0) {
+</a> 			if (errno == EINTR)
+ 				continue;
+ 			die(&quot;select failed: %s\n&quot;, strerror(errno));
+ 		}
+<a href="#h0-3-16" id="h0-3-16" class="d">-		if(!FD_ISSET(cmdfd, &amp;wfd)) {
+</a><a href="#h0-3-17" id="h0-3-17" class="d">-			/* No, then free some buffer space. */
+</a><a href="#h0-3-18" id="h0-3-18" class="d">-			ttyread();
+</a><a href="#h0-3-19" id="h0-3-19" class="d">-		} else {
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+		if (FD_ISSET(cmdfd, &amp;rfd))
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+			lim = ttyread();
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+		if (FD_ISSET(cmdfd, &amp;wfd)) {
+</a> 			/*
+ 			 * Only write 256 bytes at maximum. This seems to be a
+ 			 * reasonable value for a serial line. Bigger values
+ 			 * might clog the I/O.
+ 			 */
+<a href="#h0-3-28" id="h0-3-28" class="d">-			r = write(cmdfd, s, (n &lt; 256)? n : 256);
+</a><a href="#h0-3-29" id="h0-3-29" class="d">-			if (r &lt; 0) {
+</a><a href="#h0-3-30" id="h0-3-30" class="d">-				die(&quot;write error on tty: %s\n&quot;,
+</a><a href="#h0-3-31" id="h0-3-31" class="d">-						strerror(errno));
+</a><a href="#h0-3-32" id="h0-3-32" class="d">-			}
+</a><a href="#h0-3-33" id="h0-3-33" class="i">+			if ((r = write(cmdfd, s, (n &lt; 256)? n : 256)) &lt; 0)
+</a><a href="#h0-3-34" id="h0-3-34" class="i">+				goto write_error;
+</a> 			if (r &lt; n) {
+ 				/*
+ 				 * We weren&#39;t able to write out everything.
+ 				 * This means the buffer is getting full
+ 				 * again. Empty it.
+ 				 */
+<a href="#h0-3-41" id="h0-3-41" class="d">-				if (n &lt; 256)
+</a><a href="#h0-3-42" id="h0-3-42" class="d">-					ttyread();
+</a><a href="#h0-3-43" id="h0-3-43" class="i">+				if (n &lt; lim)
+</a><a href="#h0-3-44" id="h0-3-44" class="i">+					lim = ttyread();
+</a> 				n -= r;
+ 				s += r;
+ 			} else {
+<a href="#h0-4" id="h0-4" class="h">@@ -1546,6 +1544,10 @@ ttywrite(const char *s, size_t n)
+</a> 			}
+ 		}
+ 	}
+<a href="#h0-4-3" id="h0-4-3" class="i">+	return;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+write_error:
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+	die(&quot;write error on tty: %s\n&quot;, strerror(errno));
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

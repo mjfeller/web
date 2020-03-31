@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>drw: a valid (non-NULL) Drw and Fnt context must be passed - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1f2226df1380f178240bb81dddcad6c5ff2e9d62.html">1f2226df1380f178240bb81dddcad6c5ff2e9d62</a>
+<b>parent</b> <a href="../commit/5a20b409c673a6736c3f9326cb54edc32908f717.html">5a20b409c673a6736c3f9326cb54edc32908f717</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Tue, 20 Oct 2015 22:53:55 +0200
+
+drw: a valid (non-NULL) Drw and Fnt context must be passed
+
+don&#39;t do these checks on this level. However for resource drw_*_free
+we will allow it.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">drw.c</a></td><td> | </td><td class="num">19</td><td><span class="i">+++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>1 file changed, 3 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/drw.c.html">drw.c</a> b/<a href="../file/drw.c.html">drw.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -82,8 +82,6 @@ drw_create(Display *dpy, int screen, Window root, unsigned int w, unsigned int h
+</a> void
+ drw_resize(Drw *drw, unsigned int w, unsigned int h)
+ {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if (!drw)
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		return;
+</a> 	drw-&gt;w = w;
+ 	drw-&gt;h = h;
+ 	if (drw-&gt;drawable)
+<a href="#h0-1" id="h0-1" class="h">@@ -188,8 +186,6 @@ Clr *
+</a> drw_clr_create(Drw *drw, const char *clrname)
+ {
+ 	Clr *clr;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if (!drw)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		return NULL;
+</a> 
+ 	clr = ecalloc(1, sizeof(Clr));
+ 	if (!XftColorAllocName(drw-&gt;dpy, DefaultVisual(drw-&gt;dpy, drw-&gt;screen),
+<a href="#h0-2" id="h0-2" class="h">@@ -210,15 +206,13 @@ drw_clr_free(Clr *clr)
+</a> void
+ drw_setscheme(Drw *drw, ClrScheme *scheme)
+ {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if (!drw)
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		return;
+</a> 	drw-&gt;scheme = scheme;
+ }
+ 
+ void
+ drw_rect(Drw *drw, int x, int y, unsigned int w, unsigned int h, int filled, int empty, int invert)
+ {
+<a href="#h0-2-11" id="h0-2-11" class="d">-	if (!drw || !drw-&gt;scheme)
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	if (!drw-&gt;scheme)
+</a> 		return;
+ 	XSetForeground(drw-&gt;dpy, drw-&gt;gc, invert ? drw-&gt;scheme-&gt;bg-&gt;pix : drw-&gt;scheme-&gt;fg-&gt;pix);
+ 	if (filled)
+<a href="#h0-3" id="h0-3" class="h">@@ -369,8 +363,6 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, const char *tex
+</a> void
+ drw_map(Drw *drw, Window win, int x, int y, unsigned int w, unsigned int h)
+ {
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if (!drw)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		return;
+</a> 	XCopyArea(drw-&gt;dpy, drw-&gt;drawable, win, drw-&gt;gc, x, y, w, h, x, y);
+ 	XSync(drw-&gt;dpy, False);
+ }
+<a href="#h0-4" id="h0-4" class="h">@@ -380,8 +372,6 @@ drw_font_getexts(Fnt *font, const char *text, unsigned int len, Extnts *tex)
+</a> {
+ 	XGlyphInfo ext;
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-	if (!font || !text)
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		return;
+</a> 	XftTextExtentsUtf8(font-&gt;dpy, font-&gt;xfont, (XftChar8 *)text, len, &amp;ext);
+ 	tex-&gt;h = font-&gt;h;
+ 	tex-&gt;w = ext.xOff;
+<a href="#h0-5" id="h0-5" class="h">@@ -392,9 +382,8 @@ drw_font_getexts_width(Fnt *font, const char *text, unsigned int len)
+</a> {
+ 	Extnts tex;
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-	if (!font)
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-		return -1;
+</a> 	drw_font_getexts(font, text, len, &amp;tex);
+<a href="#h0-5-6" id="h0-5-6" class="i">+
+</a> 	return tex.w;
+ }
+ 
+<a href="#h0-6" id="h0-6" class="h">@@ -403,8 +392,6 @@ drw_cur_create(Drw *drw, int shape)
+</a> {
+ 	Cur *cur;
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-	if (!drw)
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-		return NULL;
+</a> 	cur = ecalloc(1, sizeof(Cur));
+ 	cur-&gt;cursor = XCreateFontCursor(drw-&gt;dpy, shape);
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -414,7 +401,7 @@ drw_cur_create(Drw *drw, int shape)
+</a> void
+ drw_cur_free(Drw *drw, Cur *cursor)
+ {
+<a href="#h0-7-3" id="h0-7-3" class="d">-	if (!drw || !cursor)
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	if (!cursor)
+</a> 		return;
+ 	XFreeCursor(drw-&gt;dpy, cursor-&gt;cursor);
+ 	free(cursor);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>reparenting works. - tabbed - tab interface for application supporting Xembed
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="tabbed Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>tabbed</h1><span class="desc">tab interface for application supporting Xembed
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9bd43db63a9bf890cb6ed170796c0dc7002aae8e.html">9bd43db63a9bf890cb6ed170796c0dc7002aae8e</a>
+<b>parent</b> <a href="../commit/b8139e44db0fcd6f1858e1eec00daeec93838de5.html">b8139e44db0fcd6f1858e1eec00daeec93838de5</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue,  8 Sep 2009 07:34:15 +0200
+
+reparenting works.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tabbed.c</a></td><td> | </td><td class="num">19</td><td><span class="i">+++++++++++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 17 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tabbed.c.html">tabbed.c</a> b/<a href="../file/tabbed.c.html">tabbed.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -83,6 +83,7 @@ static void run(void);
+</a> static void setup(void);
+ static int textnw(const char *text, unsigned int len);
+ static void updatenumlockmask(void);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static int xerror(Display *dpy, XErrorEvent *ee);
+</a> 
+ /* variables */
+ static int screen;
+<a href="#h0-1" id="h0-1" class="h">@@ -261,8 +262,9 @@ spawntab(const Arg *arg) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="d">-reparent(Window win) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	puts(&quot;reparent window&quot;);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+reparent(Window w) {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	XSync(dpy, False);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	XReparentWindow(dpy, w, win, 0, 0);
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -361,6 +363,7 @@ setup(void) {
+</a> 			ButtonPressMask|ExposureMask|KeyPressMask|
+ 			LeaveWindowMask);
+ 	XMapRaised(dpy, win);
+<a href="#h0-2-3" id="h0-2-3" class="i">+	XSetErrorHandler(xerror);
+</a> }
+ 
+ int
+<a href="#h0-3" id="h0-3" class="h">@@ -394,6 +397,18 @@ updatenumlockmask(void) {
+</a> 	XFreeModifiermap(modmap);
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+/* There&#39;s no way to check accesses to destroyed windows, thus those cases are
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+ * ignored (especially on UnmapNotify&#39;s).  Other types of errors call Xlibs
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+ * default error handler, which may call exit.  */
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+int
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+xerror(Display *dpy, XErrorEvent *ee) {
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	if(ee-&gt;error_code == BadWindow)
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+		return 0;
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+	die(&quot;dwm: fatal error: request code=%d, error code=%d\n&quot;,
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+			ee-&gt;request_code, ee-&gt;error_code);
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+	return 1;
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+}
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+
+</a> int
+ main(int argc, char *argv[]) {
+ 	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+</pre>
+</div>
+</body>
+</html>

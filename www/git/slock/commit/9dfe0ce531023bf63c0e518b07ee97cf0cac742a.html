@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>error messages on grab failure - slock - simple X display locker utility
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="slock Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>slock</h1><span class="desc">simple X display locker utility
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9dfe0ce531023bf63c0e518b07ee97cf0cac742a.html">9dfe0ce531023bf63c0e518b07ee97cf0cac742a</a>
+<b>parent</b> <a href="../commit/55e827af0fb94f6c2b9e76a7bfe7e98cf697dc7b.html">55e827af0fb94f6c2b9e76a7bfe7e98cf697dc7b</a>
+<b>Author:</b> Markus Teich &lt;<a href="mailto:markus.teich@stusta.mhn.de">markus.teich@stusta.mhn.de</a>&gt;
+<b>Date:</b>   Mon, 18 Jan 2016 16:49:15 +0100
+
+error messages on grab failure
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">slock.c</a></td><td> | </td><td class="num">30</td><td><span class="i">++++++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 16 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/slock.c.html">slock.c</a> b/<a href="../file/slock.c.html">slock.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -230,7 +230,7 @@ lockscreen(Display *dpy, int screen)
+</a> 	XSetWindowAttributes wa;
+ 	Cursor invisible;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if (dpy == NULL || screen &lt; 0 || !(lock = malloc(sizeof(Lock))))
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if (!running || dpy == NULL || screen &lt; 0 || !(lock = malloc(sizeof(Lock))))
+</a> 		return NULL;
+ 
+ 	lock-&gt;screen = screen;
+<a href="#h0-1" id="h0-1" class="h">@@ -253,29 +253,31 @@ lockscreen(Display *dpy, int screen)
+</a> 	XMapRaised(dpy, lock-&gt;win);
+ 	if (rr)
+ 		XRRSelectInput(dpy, lock-&gt;win, RRScreenChangeNotifyMask);
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	/* Try to grab mouse pointer *and* keyboard, else fail the lock */
+</a> 	for (len = 1000; len; len--) {
+ 		if (XGrabPointer(dpy, lock-&gt;root, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
+ 		    GrabModeAsync, GrabModeAsync, None, invisible, CurrentTime) == GrabSuccess)
+ 			break;
+ 		usleep(1000);
+ 	}
+<a href="#h0-1-11" id="h0-1-11" class="d">-	if (running &amp;&amp; len) {
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	if (!len) {
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+		fprintf(stderr, &quot;slock: unable to grab mouse pointer for screen %d\n&quot;, screen);
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	} else {
+</a> 		for (len = 1000; len; len--) {
+<a href="#h0-1-16" id="h0-1-16" class="d">-			if (XGrabKeyboard(dpy, lock-&gt;root, True, GrabModeAsync, GrabModeAsync, CurrentTime) == GrabSuccess)
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-				break;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+			if (XGrabKeyboard(dpy, lock-&gt;root, True, GrabModeAsync, GrabModeAsync, CurrentTime) == GrabSuccess) {
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+				/* everything fine, we grabbed both inputs */
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+				XSelectInput(dpy, lock-&gt;root, SubstructureNotifyMask);
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+				return lock;
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+			}
+</a> 			usleep(1000);
+ 		}
+<a href="#h0-1-25" id="h0-1-25" class="i">+		fprintf(stderr, &quot;slock: unable to grab keyboard for screen %d\n&quot;, screen);
+</a> 	}
+<a href="#h0-1-27" id="h0-1-27" class="d">-
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-	running &amp;= (len &gt; 0);
+</a><a href="#h0-1-29" id="h0-1-29" class="d">-	if (!running) {
+</a><a href="#h0-1-30" id="h0-1-30" class="d">-		unlockscreen(dpy, lock);
+</a><a href="#h0-1-31" id="h0-1-31" class="d">-		lock = NULL;
+</a><a href="#h0-1-32" id="h0-1-32" class="d">-	} else {
+</a><a href="#h0-1-33" id="h0-1-33" class="d">-		XSelectInput(dpy, lock-&gt;root, SubstructureNotifyMask);
+</a><a href="#h0-1-34" id="h0-1-34" class="d">-	}
+</a><a href="#h0-1-35" id="h0-1-35" class="d">-
+</a><a href="#h0-1-36" id="h0-1-36" class="d">-	return lock;
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+	/* grabbing one of the inputs failed */
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+	running = 0;
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+	unlockscreen(dpy, lock);
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+	return NULL;
+</a> }
+ 
+ static void
+</pre>
+</div>
+</body>
+</html>

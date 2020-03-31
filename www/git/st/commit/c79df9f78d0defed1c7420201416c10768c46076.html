@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Enable multiple arguments in SM and RM - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c79df9f78d0defed1c7420201416c10768c46076.html">c79df9f78d0defed1c7420201416c10768c46076</a>
+<b>parent</b> <a href="../commit/4cdcc395397f7b7db48265f5ce0949effaf99c1f.html">4cdcc395397f7b7db48265f5ce0949effaf99c1f</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Sun,  2 Sep 2012 19:09:35 +0200
+
+Enable multiple arguments in SM and RM
+
+SM and RM can receive multiple parameters, but the code only was accepting
+only one. This patch join the code of set and reset modes (SM and RM) in a
+common function and uses a loop which deals with all the arguments of the
+sequence. This patch improves xterm and vt100 compability.
+---
+ st.c |  180 ++++++++++++++++++++++++++++--------------------------------------
+ 1 file changed, 76 insertions(+), 104 deletions(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">180</td><td><span class="i">+++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 76 insertions(+), 104 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -273,6 +273,7 @@ static void tsetchar(char*);
+</a> static void tsetscroll(int, int);
+ static void tswapscreen(void);
+ static void tsetdirt(int, int);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void tsetmode(bool, bool, int *, int);
+</a> static void tfulldirt(void);
+ 
+ static void ttynew(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -1178,6 +1179,79 @@ tsetscroll(int t, int b) {
+</a> 	term.bot = b;
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+#define MODBIT(x, set, bit) ((set) ? ((x) |= (bit)) : ((x) &amp;= ~(bit)))
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+void
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+tsetmode(bool priv, bool set, int *args, int narg) {
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	int *lim, mode;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	for (lim = args + narg; args &lt; lim; ++args) {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		if(priv) {
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+			switch(*args) {
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+			case 1:
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+				MODBIT(term.mode, set, MODE_APPKEYPAD);
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+				break;
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+			case 5: /* DECSCNM -- Reverve video */
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+				mode = term.mode;
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+				MODBIT(term.mode,set, MODE_REVERSE);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+				if (mode != term.mode)
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+					draw();
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+				break;
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+			case 7:
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+				MODBIT(term.mode, set, MODE_WRAP);
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+				break;
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+			case 20:
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+				MODBIT(term.mode, set, MODE_CRLF);
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+				break;
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+			case 12: /* att610 -- Start blinking cursor (IGNORED) */
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+				break;
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+			case 25:
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+				MODBIT(term.c.state, !set, CURSOR_HIDE);
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+				break;
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+			case 1000: /* 1000,1002: enable xterm mouse report */
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+				MODBIT(term.mode, set, MODE_MOUSEBTN);
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+				break;
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+			case 1002:
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+				MODBIT(term.mode, set, MODE_MOUSEMOTION);
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+				break;
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+			case 1049: /* = 1047 and 1048 */
+</a><a href="#h0-1-39" id="h0-1-39" class="i">+			case 47:
+</a><a href="#h0-1-40" id="h0-1-40" class="i">+			case 1047:
+</a><a href="#h0-1-41" id="h0-1-41" class="i">+				if(IS_SET(MODE_ALTSCREEN))
+</a><a href="#h0-1-42" id="h0-1-42" class="i">+					tclearregion(0, 0, term.col-1, term.row-1);
+</a><a href="#h0-1-43" id="h0-1-43" class="i">+				if ((set &amp;&amp; !IS_SET(MODE_ALTSCREEN)) ||
+</a><a href="#h0-1-44" id="h0-1-44" class="i">+				    (!set &amp;&amp; IS_SET(MODE_ALTSCREEN))) {
+</a><a href="#h0-1-45" id="h0-1-45" class="i">+					    tswapscreen();
+</a><a href="#h0-1-46" id="h0-1-46" class="i">+				}
+</a><a href="#h0-1-47" id="h0-1-47" class="i">+				if (*args != 1049)
+</a><a href="#h0-1-48" id="h0-1-48" class="i">+					break;
+</a><a href="#h0-1-49" id="h0-1-49" class="i">+				/* pass through */
+</a><a href="#h0-1-50" id="h0-1-50" class="i">+			case 1048:
+</a><a href="#h0-1-51" id="h0-1-51" class="i">+				tcursor((set) ? CURSOR_SAVE : CURSOR_LOAD);
+</a><a href="#h0-1-52" id="h0-1-52" class="i">+				break;
+</a><a href="#h0-1-53" id="h0-1-53" class="i">+			default:
+</a><a href="#h0-1-54" id="h0-1-54" class="i">+				fprintf(stderr,
+</a><a href="#h0-1-55" id="h0-1-55" class="i">+					&quot;erresc: unknown private set/reset mode %d\n&quot;,
+</a><a href="#h0-1-56" id="h0-1-56" class="i">+					*args);
+</a><a href="#h0-1-57" id="h0-1-57" class="i">+				break;
+</a><a href="#h0-1-58" id="h0-1-58" class="i">+			}
+</a><a href="#h0-1-59" id="h0-1-59" class="i">+		} else {
+</a><a href="#h0-1-60" id="h0-1-60" class="i">+			switch(*args) {
+</a><a href="#h0-1-61" id="h0-1-61" class="i">+			case 4:
+</a><a href="#h0-1-62" id="h0-1-62" class="i">+				MODBIT(term.mode, set, MODE_INSERT);
+</a><a href="#h0-1-63" id="h0-1-63" class="i">+				break;
+</a><a href="#h0-1-64" id="h0-1-64" class="i">+			default:
+</a><a href="#h0-1-65" id="h0-1-65" class="i">+				fprintf(stderr,
+</a><a href="#h0-1-66" id="h0-1-66" class="i">+					&quot;erresc: unknown set/reset mode %d\n&quot;,
+</a><a href="#h0-1-67" id="h0-1-67" class="i">+					*args);
+</a><a href="#h0-1-68" id="h0-1-68" class="i">+				break;
+</a><a href="#h0-1-69" id="h0-1-69" class="i">+			}
+</a><a href="#h0-1-70" id="h0-1-70" class="i">+		}
+</a><a href="#h0-1-71" id="h0-1-71" class="i">+	}
+</a><a href="#h0-1-72" id="h0-1-72" class="i">+}
+</a><a href="#h0-1-73" id="h0-1-73" class="i">+#undef MODBIT
+</a><a href="#h0-1-74" id="h0-1-74" class="i">+
+</a><a href="#h0-1-75" id="h0-1-75" class="i">+
+</a> void
+ csihandle(void) {
+ 	switch(csiescseq.mode) {
+<a href="#h0-2" id="h0-2" class="h">@@ -1291,58 +1365,7 @@ csihandle(void) {
+</a> 		tinsertblankline(csiescseq.arg[0]);
+ 		break;
+ 	case &#39;l&#39;: /* RM -- Reset Mode */
+<a href="#h0-2-3" id="h0-2-3" class="d">-		if(csiescseq.priv) {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-			switch(csiescseq.arg[0]) {
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-			case 1:
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-				term.mode &amp;= ~MODE_APPKEYPAD;
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-				break;
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-			case 5: /* DECSCNM -- Remove reverse video */
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-				if(IS_SET(MODE_REVERSE)) {
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-					term.mode &amp;= ~MODE_REVERSE;
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-					draw();
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-				}
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-				break;
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-			case 7:
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-				term.mode &amp;= ~MODE_WRAP;
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-				break;
+</a><a href="#h0-2-17" id="h0-2-17" class="d">-			case 12: /* att610 -- Stop blinking cursor (IGNORED) */
+</a><a href="#h0-2-18" id="h0-2-18" class="d">-				break;
+</a><a href="#h0-2-19" id="h0-2-19" class="d">-			case 20:
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-				term.mode &amp;= ~MODE_CRLF;
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-				break;
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-			case 25:
+</a><a href="#h0-2-23" id="h0-2-23" class="d">-				term.c.state |= CURSOR_HIDE;
+</a><a href="#h0-2-24" id="h0-2-24" class="d">-				break;
+</a><a href="#h0-2-25" id="h0-2-25" class="d">-			case 1000: /* disable X11 xterm mouse reporting */
+</a><a href="#h0-2-26" id="h0-2-26" class="d">-				term.mode &amp;= ~MODE_MOUSEBTN;
+</a><a href="#h0-2-27" id="h0-2-27" class="d">-				break;
+</a><a href="#h0-2-28" id="h0-2-28" class="d">-			case 1002:
+</a><a href="#h0-2-29" id="h0-2-29" class="d">-				term.mode &amp;= ~MODE_MOUSEMOTION;
+</a><a href="#h0-2-30" id="h0-2-30" class="d">-				break;
+</a><a href="#h0-2-31" id="h0-2-31" class="d">-			case 1049: /* = 1047 and 1048 */
+</a><a href="#h0-2-32" id="h0-2-32" class="d">-			case 47:
+</a><a href="#h0-2-33" id="h0-2-33" class="d">-			case 1047:
+</a><a href="#h0-2-34" id="h0-2-34" class="d">-				if(IS_SET(MODE_ALTSCREEN)) {
+</a><a href="#h0-2-35" id="h0-2-35" class="d">-					tclearregion(0, 0, term.col-1, term.row-1);
+</a><a href="#h0-2-36" id="h0-2-36" class="d">-					tswapscreen();
+</a><a href="#h0-2-37" id="h0-2-37" class="d">-				}
+</a><a href="#h0-2-38" id="h0-2-38" class="d">-				if(csiescseq.arg[0] != 1049)
+</a><a href="#h0-2-39" id="h0-2-39" class="d">-					break;
+</a><a href="#h0-2-40" id="h0-2-40" class="d">-			case 1048:
+</a><a href="#h0-2-41" id="h0-2-41" class="d">-				tcursor(CURSOR_LOAD);
+</a><a href="#h0-2-42" id="h0-2-42" class="d">-				break;
+</a><a href="#h0-2-43" id="h0-2-43" class="d">-			default:
+</a><a href="#h0-2-44" id="h0-2-44" class="d">-				goto unknown;
+</a><a href="#h0-2-45" id="h0-2-45" class="d">-			}
+</a><a href="#h0-2-46" id="h0-2-46" class="d">-		} else {
+</a><a href="#h0-2-47" id="h0-2-47" class="d">-			switch(csiescseq.arg[0]) {
+</a><a href="#h0-2-48" id="h0-2-48" class="d">-			case 4:
+</a><a href="#h0-2-49" id="h0-2-49" class="d">-				term.mode &amp;= ~MODE_INSERT;
+</a><a href="#h0-2-50" id="h0-2-50" class="d">-				break;
+</a><a href="#h0-2-51" id="h0-2-51" class="d">-			default:
+</a><a href="#h0-2-52" id="h0-2-52" class="d">-				goto unknown;
+</a><a href="#h0-2-53" id="h0-2-53" class="d">-			}
+</a><a href="#h0-2-54" id="h0-2-54" class="d">-		}
+</a><a href="#h0-2-55" id="h0-2-55" class="i">+		tsetmode(csiescseq.priv, 0, csiescseq.arg, csiescseq.narg);
+</a> 		break;
+ 	case &#39;M&#39;: /* DL -- Delete &lt;n&gt; lines */
+ 		DEFAULT(csiescseq.arg[0], 1);
+<a href="#h0-3" id="h0-3" class="h">@@ -1366,58 +1389,7 @@ csihandle(void) {
+</a> 		tmoveto(term.c.x, csiescseq.arg[0]-1);
+ 		break;
+ 	case &#39;h&#39;: /* SM -- Set terminal mode */
+<a href="#h0-3-3" id="h0-3-3" class="d">-		if(csiescseq.priv) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-			switch(csiescseq.arg[0]) {
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-			case 1:
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-				term.mode |= MODE_APPKEYPAD;
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-				break;
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-			case 5: /* DECSCNM -- Reverve video */
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-				if(!IS_SET(MODE_REVERSE)) {
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-					term.mode |= MODE_REVERSE;
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-					draw();
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-				}
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-				break;
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-			case 7:
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-				term.mode |= MODE_WRAP;
+</a><a href="#h0-3-16" id="h0-3-16" class="d">-				break;
+</a><a href="#h0-3-17" id="h0-3-17" class="d">-			case 20:
+</a><a href="#h0-3-18" id="h0-3-18" class="d">-				term.mode |= MODE_CRLF;
+</a><a href="#h0-3-19" id="h0-3-19" class="d">-				break;
+</a><a href="#h0-3-20" id="h0-3-20" class="d">-			case 12: /* att610 -- Start blinking cursor (IGNORED) */
+</a><a href="#h0-3-21" id="h0-3-21" class="d">-				 /* fallthrough for xterm cvvis = CSI [ ? 12 ; 25 h */
+</a><a href="#h0-3-22" id="h0-3-22" class="d">-				if(csiescseq.narg &gt; 1 &amp;&amp; csiescseq.arg[1] != 25)
+</a><a href="#h0-3-23" id="h0-3-23" class="d">-					break;
+</a><a href="#h0-3-24" id="h0-3-24" class="d">-			case 25:
+</a><a href="#h0-3-25" id="h0-3-25" class="d">-				term.c.state &amp;= ~CURSOR_HIDE;
+</a><a href="#h0-3-26" id="h0-3-26" class="d">-				break;
+</a><a href="#h0-3-27" id="h0-3-27" class="d">-			case 1000: /* 1000,1002: enable xterm mouse report */
+</a><a href="#h0-3-28" id="h0-3-28" class="d">-				term.mode |= MODE_MOUSEBTN;
+</a><a href="#h0-3-29" id="h0-3-29" class="d">-				break;
+</a><a href="#h0-3-30" id="h0-3-30" class="d">-			case 1002:
+</a><a href="#h0-3-31" id="h0-3-31" class="d">-				term.mode |= MODE_MOUSEMOTION;
+</a><a href="#h0-3-32" id="h0-3-32" class="d">-				break;
+</a><a href="#h0-3-33" id="h0-3-33" class="d">-			case 1049: /* = 1047 and 1048 */
+</a><a href="#h0-3-34" id="h0-3-34" class="d">-			case 47:
+</a><a href="#h0-3-35" id="h0-3-35" class="d">-			case 1047:
+</a><a href="#h0-3-36" id="h0-3-36" class="d">-				if(IS_SET(MODE_ALTSCREEN))
+</a><a href="#h0-3-37" id="h0-3-37" class="d">-					tclearregion(0, 0, term.col-1, term.row-1);
+</a><a href="#h0-3-38" id="h0-3-38" class="d">-				else
+</a><a href="#h0-3-39" id="h0-3-39" class="d">-					tswapscreen();
+</a><a href="#h0-3-40" id="h0-3-40" class="d">-				if(csiescseq.arg[0] != 1049)
+</a><a href="#h0-3-41" id="h0-3-41" class="d">-					break;
+</a><a href="#h0-3-42" id="h0-3-42" class="d">-			case 1048:
+</a><a href="#h0-3-43" id="h0-3-43" class="d">-				tcursor(CURSOR_SAVE);
+</a><a href="#h0-3-44" id="h0-3-44" class="d">-				break;
+</a><a href="#h0-3-45" id="h0-3-45" class="d">-			default: goto unknown;
+</a><a href="#h0-3-46" id="h0-3-46" class="d">-			}
+</a><a href="#h0-3-47" id="h0-3-47" class="d">-		} else {
+</a><a href="#h0-3-48" id="h0-3-48" class="d">-			switch(csiescseq.arg[0]) {
+</a><a href="#h0-3-49" id="h0-3-49" class="d">-			case 4:
+</a><a href="#h0-3-50" id="h0-3-50" class="d">-				term.mode |= MODE_INSERT;
+</a><a href="#h0-3-51" id="h0-3-51" class="d">-				break;
+</a><a href="#h0-3-52" id="h0-3-52" class="d">-			default: goto unknown;
+</a><a href="#h0-3-53" id="h0-3-53" class="d">-			}
+</a><a href="#h0-3-54" id="h0-3-54" class="d">-		};
+</a><a href="#h0-3-55" id="h0-3-55" class="i">+		tsetmode(csiescseq.priv, 1, csiescseq.arg, csiescseq.narg);
+</a> 		break;
+ 	case &#39;m&#39;: /* SGR -- Terminal attribute (color) */
+ 		tsetattr(csiescseq.arg, csiescseq.narg);
+</pre>
+</div>
+</body>
+</html>

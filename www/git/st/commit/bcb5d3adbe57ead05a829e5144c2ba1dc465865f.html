@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Move terminal-related selection logic into st.c - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/bcb5d3adbe57ead05a829e5144c2ba1dc465865f.html">bcb5d3adbe57ead05a829e5144c2ba1dc465865f</a>
+<b>parent</b> <a href="../commit/5683b1f80c5ac274adf98517ce2217b4d4896243.html">5683b1f80c5ac274adf98517ce2217b4d4896243</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 21 Feb 2018 23:29:41 -0600
+
+Move terminal-related selection logic into st.c
+
+The front-end determines information about mouse clicks and motion, and
+the terminal handles the actual selection start/extend/dirty logic by
+row and column.
+
+While we&#39;re in the neighborhood, we&#39;ll also rename getbuttoninfo() to
+mousesel() which is, at least, less wrong.
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">37</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.h</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">x.c</a></td><td> | </td><td class="num">55</td><td><span class="i">+++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 54 insertions(+), 41 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -140,6 +140,7 @@ static void tscrollup(int, int);
+</a> static void tscrolldown(int, int);
+ static void tsetattr(int *, int);
+ static void tsetchar(Rune, Glyph *, int, int);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void tsetdirt(int, int);
+</a> static void tsetscroll(int, int);
+ static void tswapscreen(void);
+ static void tsetmode(int, int, int *, int);
+<a href="#h0-1" id="h0-1" class="h">@@ -385,6 +386,42 @@ tlinelen(int y)
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="i">+selstart(int col, int row, int snap)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+{
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	selclear();
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	sel.mode = SEL_EMPTY;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	sel.type = SEL_REGULAR;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	sel.snap = snap;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	sel.oe.x = sel.ob.x = col;
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	sel.oe.y = sel.ob.y = row;
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+	selnormalize();
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	if (sel.snap != 0)
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+		sel.mode = SEL_READY;
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	tsetdirt(sel.nb.y, sel.ne.y);
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+}
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+void
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+selextend(int col, int row, int type)
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+{
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	int oldey, oldex, oldsby, oldsey, oldtype;
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	oldey = sel.oe.y;
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	oldex = sel.oe.x;
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+	oldsby = sel.nb.y;
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	oldsey = sel.ne.y;
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+	oldtype = sel.type;
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+	sel.alt = IS_SET(MODE_ALTSCREEN);
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+	sel.oe.x = col;
+</a><a href="#h0-1-30" id="h0-1-30" class="i">+	sel.oe.y = row;
+</a><a href="#h0-1-31" id="h0-1-31" class="i">+	selnormalize();
+</a><a href="#h0-1-32" id="h0-1-32" class="i">+	sel.type = type;
+</a><a href="#h0-1-33" id="h0-1-33" class="i">+
+</a><a href="#h0-1-34" id="h0-1-34" class="i">+	if (oldey != sel.oe.y || oldex != sel.oe.x || oldtype != sel.type)
+</a><a href="#h0-1-35" id="h0-1-35" class="i">+		tsetdirt(MIN(sel.nb.y, oldsby), MAX(sel.ne.y, oldsey));
+</a><a href="#h0-1-36" id="h0-1-36" class="i">+}
+</a><a href="#h0-1-37" id="h0-1-37" class="i">+
+</a><a href="#h0-1-38" id="h0-1-38" class="i">+void
+</a> selnormalize(void)
+ {
+ 	int i;
+<b>diff --git a/<a id="h1" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -172,7 +172,6 @@ void toggleprinter(const Arg *);
+</a> int tattrset(int);
+ void tnew(int, int);
+ void tresize(int, int);
+<a href="#h1-0-3" id="h1-0-3" class="d">-void tsetdirt(int, int);
+</a> void tsetdirtattr(int);
+ void ttynew(char *, char *, char **);
+ size_t ttyread(void);
+<a href="#h1-1" id="h1-1" class="h">@@ -184,6 +183,8 @@ void resettitle(void);
+</a> 
+ void selclear(void);
+ void selinit(void);
+<a href="#h1-1-3" id="h1-1-3" class="i">+void selstart(int, int, int);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+void selextend(int, int, int);
+</a> void selnormalize(void);
+ int selected(int, int);
+ char *getsel(void);
+<b>diff --git a/<a id="h2" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -157,7 +157,7 @@ static void selnotify(XEvent *);
+</a> static void selclear_(XEvent *);
+ static void selrequest(XEvent *);
+ static void setsel(char *, Time);
+<a href="#h2-0-3" id="h2-0-3" class="d">-static void getbuttoninfo(XEvent *);
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+static void mousesel(XEvent *);
+</a> static void mousereport(XEvent *);
+ static char *kmap(KeySym, uint);
+ static int match(uint, uint);
+<a href="#h2-1" id="h2-1" class="h">@@ -313,24 +313,19 @@ y2row(int y)
+</a> }
+ 
+ void
+<a href="#h2-1-3" id="h2-1-3" class="d">-getbuttoninfo(XEvent *e)
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+mousesel(XEvent *e)
+</a> {
+<a href="#h2-1-6" id="h2-1-6" class="d">-	int type;
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+	int type, seltype = SEL_REGULAR;
+</a> 	uint state = e-&gt;xbutton.state &amp; ~(Button1Mask | forceselmod);
+ 
+<a href="#h2-1-10" id="h2-1-10" class="d">-	sel.alt = IS_SET(MODE_ALTSCREEN);
+</a><a href="#h2-1-11" id="h2-1-11" class="d">-
+</a><a href="#h2-1-12" id="h2-1-12" class="d">-	sel.oe.x = x2col(e-&gt;xbutton.x);
+</a><a href="#h2-1-13" id="h2-1-13" class="d">-	sel.oe.y = y2row(e-&gt;xbutton.y);
+</a><a href="#h2-1-14" id="h2-1-14" class="d">-	selnormalize();
+</a><a href="#h2-1-15" id="h2-1-15" class="d">-
+</a><a href="#h2-1-16" id="h2-1-16" class="d">-	sel.type = SEL_REGULAR;
+</a> 	for (type = 1; type &lt; LEN(selmasks); ++type) {
+ 		if (match(selmasks[type], state)) {
+<a href="#h2-1-19" id="h2-1-19" class="d">-			sel.type = type;
+</a><a href="#h2-1-20" id="h2-1-20" class="i">+			seltype = type;
+</a> 			break;
+ 		}
+ 	}
+<a href="#h2-1-24" id="h2-1-24" class="i">+
+</a><a href="#h2-1-25" id="h2-1-25" class="i">+	selextend(x2col(e-&gt;xbutton.x), y2row(e-&gt;xbutton.y), seltype);
+</a> }
+ 
+ void
+<a href="#h2-2" id="h2-2" class="h">@@ -402,6 +397,7 @@ bpress(XEvent *e)
+</a> {
+ 	struct timespec now;
+ 	MouseShortcut *ms;
+<a href="#h2-2-3" id="h2-2-3" class="i">+	int snap;
+</a> 
+ 	if (IS_SET(MODE_MOUSE) &amp;&amp; !(e-&gt;xbutton.state &amp; forceselmod)) {
+ 		mousereport(e);
+<a href="#h2-3" id="h2-3" class="h">@@ -417,33 +413,22 @@ bpress(XEvent *e)
+</a> 	}
+ 
+ 	if (e-&gt;xbutton.button == Button1) {
+<a href="#h2-3-3" id="h2-3-3" class="d">-		clock_gettime(CLOCK_MONOTONIC, &amp;now);
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-
+</a><a href="#h2-3-5" id="h2-3-5" class="d">-		/* Clear previous selection, logically and visually. */
+</a><a href="#h2-3-6" id="h2-3-6" class="d">-		selclear_(NULL);
+</a><a href="#h2-3-7" id="h2-3-7" class="d">-		sel.mode = SEL_EMPTY;
+</a><a href="#h2-3-8" id="h2-3-8" class="d">-		sel.type = SEL_REGULAR;
+</a><a href="#h2-3-9" id="h2-3-9" class="d">-		sel.oe.x = sel.ob.x = x2col(e-&gt;xbutton.x);
+</a><a href="#h2-3-10" id="h2-3-10" class="d">-		sel.oe.y = sel.ob.y = y2row(e-&gt;xbutton.y);
+</a><a href="#h2-3-11" id="h2-3-11" class="d">-
+</a> 		/*
+ 		 * If the user clicks below predefined timeouts specific
+ 		 * snapping behaviour is exposed.
+ 		 */
+<a href="#h2-3-16" id="h2-3-16" class="i">+		clock_gettime(CLOCK_MONOTONIC, &amp;now);
+</a> 		if (TIMEDIFF(now, xsel.tclick2) &lt;= tripleclicktimeout) {
+<a href="#h2-3-18" id="h2-3-18" class="d">-			sel.snap = SNAP_LINE;
+</a><a href="#h2-3-19" id="h2-3-19" class="i">+			snap = SNAP_LINE;
+</a> 		} else if (TIMEDIFF(now, xsel.tclick1) &lt;= doubleclicktimeout) {
+<a href="#h2-3-21" id="h2-3-21" class="d">-			sel.snap = SNAP_WORD;
+</a><a href="#h2-3-22" id="h2-3-22" class="i">+			snap = SNAP_WORD;
+</a> 		} else {
+<a href="#h2-3-24" id="h2-3-24" class="d">-			sel.snap = 0;
+</a><a href="#h2-3-25" id="h2-3-25" class="i">+			snap = 0;
+</a> 		}
+<a href="#h2-3-27" id="h2-3-27" class="d">-		selnormalize();
+</a><a href="#h2-3-28" id="h2-3-28" class="d">-
+</a><a href="#h2-3-29" id="h2-3-29" class="d">-		if (sel.snap != 0)
+</a><a href="#h2-3-30" id="h2-3-30" class="d">-			sel.mode = SEL_READY;
+</a><a href="#h2-3-31" id="h2-3-31" class="d">-		tsetdirt(sel.nb.y, sel.ne.y);
+</a> 		xsel.tclick2 = xsel.tclick1;
+ 		xsel.tclick1 = now;
+<a href="#h2-3-34" id="h2-3-34" class="i">+
+</a><a href="#h2-3-35" id="h2-3-35" class="i">+		selstart(x2col(e-&gt;xbutton.x), y2row(e-&gt;xbutton.y), snap);
+</a> 	}
+ }
+ 
+<a href="#h2-4" id="h2-4" class="h">@@ -649,20 +634,17 @@ brelease(XEvent *e)
+</a> 		selpaste(NULL);
+ 	} else if (e-&gt;xbutton.button == Button1) {
+ 		if (sel.mode == SEL_READY) {
+<a href="#h2-4-3" id="h2-4-3" class="d">-			getbuttoninfo(e);
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+			mousesel(e);
+</a> 			setsel(getsel(), e-&gt;xbutton.time);
+ 		} else
+ 			selclear_(NULL);
+ 		sel.mode = SEL_IDLE;
+<a href="#h2-4-9" id="h2-4-9" class="d">-		tsetdirt(sel.nb.y, sel.ne.y);
+</a> 	}
+ }
+ 
+ void
+ bmotion(XEvent *e)
+ {
+<a href="#h2-4-16" id="h2-4-16" class="d">-	int oldey, oldex, oldsby, oldsey;
+</a><a href="#h2-4-17" id="h2-4-17" class="d">-
+</a> 	if (IS_SET(MODE_MOUSE) &amp;&amp; !(e-&gt;xbutton.state &amp; forceselmod)) {
+ 		mousereport(e);
+ 		return;
+<a href="#h2-5" id="h2-5" class="h">@@ -672,14 +654,7 @@ bmotion(XEvent *e)
+</a> 		return;
+ 
+ 	sel.mode = SEL_READY;
+<a href="#h2-5-3" id="h2-5-3" class="d">-	oldey = sel.oe.y;
+</a><a href="#h2-5-4" id="h2-5-4" class="d">-	oldex = sel.oe.x;
+</a><a href="#h2-5-5" id="h2-5-5" class="d">-	oldsby = sel.nb.y;
+</a><a href="#h2-5-6" id="h2-5-6" class="d">-	oldsey = sel.ne.y;
+</a><a href="#h2-5-7" id="h2-5-7" class="d">-	getbuttoninfo(e);
+</a><a href="#h2-5-8" id="h2-5-8" class="d">-
+</a><a href="#h2-5-9" id="h2-5-9" class="d">-	if (oldey != sel.oe.y || oldex != sel.oe.x)
+</a><a href="#h2-5-10" id="h2-5-10" class="d">-		tsetdirt(MIN(sel.nb.y, oldsby), MAX(sel.ne.y, oldsey));
+</a><a href="#h2-5-11" id="h2-5-11" class="i">+	mousesel(e);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

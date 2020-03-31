@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>replaced memset by loops in tresize(); turns out it&#39;s faster. - st - simple terminal
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st</h1><span class="desc">simple terminal
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/68d8fcf62a4f016c0292db543c1c2e694afc5b54.html">68d8fcf62a4f016c0292db543c1c2e694afc5b54</a>
+<b>parent</b> <a href="../commit/e4bf56ae1a9e2612ec9a6faf2aaecd6eadcccaa7.html">e4bf56ae1a9e2612ec9a6faf2aaecd6eadcccaa7</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 13 Oct 2010 01:27:09 +0200
+
+replaced memset by loops in tresize(); turns out it&#39;s faster.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">13</td><td><span class="i">++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -677,7 +677,7 @@ tsetchar(char c) {
+</a> 
+ void
+ tclearregion(int x1, int y1, int x2, int y2) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	int y, temp;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	int x, y, temp;
+</a> 
+ 	if(x1 &gt; x2)
+ 		temp = x1, x1 = x2, x2 = temp;
+<a href="#h0-1" id="h0-1" class="h">@@ -690,7 +690,8 @@ tclearregion(int x1, int y1, int x2, int y2) {
+</a> 	LIMIT(y2, 0, term.row-1);
+ 
+ 	for(y = y1; y &lt;= y2; y++)
+<a href="#h0-1-3" id="h0-1-3" class="d">-		memset(&amp;term.line[y][x1], 0, sizeof(Glyph)*(x2-x1+1));
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		for(x = x1; x &lt;= x2; x++)
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			term.line[y][x].state = 0;
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -1192,7 +1193,7 @@ tputs(char *s, int len) {
+</a> 
+ void
+ tresize(int col, int row) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	int i;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	int i, x;
+</a> 	int minrow = MIN(row, term.row);
+ 	int mincol = MIN(col, term.col);
+ 	int slide = term.c.y - row + 1;
+<a href="#h0-3" id="h0-3" class="h">@@ -1226,8 +1227,10 @@ tresize(int col, int row) {
+</a> 	for(i = 0; i &lt; minrow; i++) {
+ 		term.line[i] = realloc(term.line[i], col * sizeof(Glyph));
+ 		term.alt[i]  = realloc(term.alt[i],  col * sizeof(Glyph));
+<a href="#h0-3-3" id="h0-3-3" class="d">-		memset(term.line[i] + mincol, 0, (col - mincol) * sizeof(Glyph));
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		memset(term.alt[i]  + mincol, 0, (col - mincol) * sizeof(Glyph));
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+		for(x = mincol; x &lt; col; x++) {
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+			term.line[i][x].state = 0;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+			term.alt[i][x].state = 0;
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+		}
+</a> 	}
+ 
+ 	/* allocate any new rows */
+</pre>
+</div>
+</body>
+</html>

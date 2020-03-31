@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>instant ^E - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/86468aafe52a94ce6ba1a3601a587c65724a61aa.html">86468aafe52a94ce6ba1a3601a587c65724a61aa</a>
+<b>parent</b> <a href="../commit/be9afce03548e8110744064d1c9c67795c13cdb6.html">be9afce03548e8110744064d1c9c67795c13cdb6</a>
+<b>Author:</b> Connor Lane Smith &lt;<a href="mailto:cls@lubutu.com">cls@lubutu.com</a>&gt;
+<b>Date:</b>   Sat, 14 May 2011 18:39:27 +0100
+
+instant ^E
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">36</td><td><span class="i">++++++++++++++++++++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>1 file changed, 20 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -55,8 +55,8 @@ static Atom utf8;
+</a> static Bool topbar = True;
+ static DC *dc;
+ static Item *items = NULL;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static Item *matches, *sel;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-static Item *prev, *curr, *next;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static Item *matches, *matchend;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+static Item *prev, *curr, *next, *sel;
+</a> static Window root, win;
+ 
+ static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
+<a href="#h0-1" id="h0-1" class="h">@@ -308,12 +308,15 @@ keypress(XKeyEvent *ev) {
+</a> 			cursor = len;
+ 			break;
+ 		}
+<a href="#h0-1-3" id="h0-1-3" class="d">-		while(next) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			sel = curr = next;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+		if(next) {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			curr = matchend;
+</a> 			calcoffsets();
+<a href="#h0-1-8" id="h0-1-8" class="i">+			curr = prev;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+			calcoffsets();
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			while(next &amp;&amp; (curr = curr-&gt;right))
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+				calcoffsets();
+</a> 		}
+<a href="#h0-1-13" id="h0-1-13" class="d">-		while(sel &amp;&amp; sel-&gt;right)
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-			sel = sel-&gt;right;
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+		sel = matchend;
+</a> 		break;
+ 	case XK_Escape:
+ 		exit(EXIT_FAILURE);
+<a href="#h0-2" id="h0-2" class="h">@@ -381,10 +384,10 @@ keypress(XKeyEvent *ev) {
+</a> void
+ match(void) {
+ 	size_t len;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	Item *item, *itemend, *lexact, *lprefix, *lsubstr, *exactend, *prefixend, *substrend;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	Item *item, *lexact, *lprefix, *lsubstr, *exactend, *prefixend, *substrend;
+</a> 
+ 	len = strlen(text);
+<a href="#h0-2-7" id="h0-2-7" class="d">-	matches = lexact = lprefix = lsubstr = itemend = exactend = prefixend = substrend = NULL;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	matches = lexact = lprefix = lsubstr = matchend = exactend = prefixend = substrend = NULL;
+</a> 	for(item = items; item &amp;&amp; item-&gt;text; item++)
+ 		if(!fstrncmp(text, item-&gt;text, len + 1))
+ 			appenditem(item, &amp;lexact, &amp;exactend);
+<a href="#h0-3" id="h0-3" class="h">@@ -395,24 +398,25 @@ match(void) {
+</a> 
+ 	if(lexact) {
+ 		matches = lexact;
+<a href="#h0-3-3" id="h0-3-3" class="d">-		itemend = exactend;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		matchend = exactend;
+</a> 	}
+ 	if(lprefix) {
+<a href="#h0-3-7" id="h0-3-7" class="d">-		if(itemend) {
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-			itemend-&gt;right = lprefix;
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-			lprefix-&gt;left = itemend;
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+		if(matchend) {
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+			matchend-&gt;right = lprefix;
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+			lprefix-&gt;left = matchend;
+</a> 		}
+ 		else
+ 			matches = lprefix;
+<a href="#h0-3-16" id="h0-3-16" class="d">-		itemend = prefixend;
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+		matchend = prefixend;
+</a> 	}
+ 	if(lsubstr) {
+<a href="#h0-3-20" id="h0-3-20" class="d">-		if(itemend) {
+</a><a href="#h0-3-21" id="h0-3-21" class="d">-			itemend-&gt;right = lsubstr;
+</a><a href="#h0-3-22" id="h0-3-22" class="d">-			lsubstr-&gt;left = itemend;
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+		if(matchend) {
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+			matchend-&gt;right = lsubstr;
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+			lsubstr-&gt;left = matchend;
+</a> 		}
+ 		else
+ 			matches = lsubstr;
+<a href="#h0-3-29" id="h0-3-29" class="i">+		matchend = substrend;
+</a> 	}
+ 	curr = sel = matches;
+ 	calcoffsets();
+</pre>
+</div>
+</body>
+</html>

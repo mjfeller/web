@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>reverting the xkb dependency, I don&#39;t care if this function is deprecated, it seems it breaks other stuff instead. - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3aabc08ede9c6496720124be8ee34c8b39735239.html">3aabc08ede9c6496720124be8ee34c8b39735239</a>
+<b>parent</b> <a href="../commit/d456617f0eb93df0ec8eb81ff6e04ca988c09c60.html">d456617f0eb93df0ec8eb81ff6e04ca988c09c60</a>
+<b>Author:</b> anselm@garbe.us &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Sun, 18 Nov 2012 16:39:56 +0100
+
+reverting the xkb dependency, I don&#39;t care if this function is deprecated, it seems it breaks other stuff instead.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dwm.c</a></td><td> | </td><td class="num">11</td><td><span class="i">++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -36,7 +36,6 @@
+</a> #include &lt;X11/Xlib.h&gt;
+ #include &lt;X11/Xproto.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+<a href="#h0-0-3" id="h0-0-3" class="d">-#include &lt;X11/XKBlib.h&gt;
+</a> #ifdef XINERAMA
+ #include &lt;X11/extensions/Xinerama.h&gt;
+ #endif /* XINERAMA */
+<a href="#h0-1" id="h0-1" class="h">@@ -281,7 +280,7 @@ static void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[UnmapNotify] = unmapnotify
+ };
+ static Atom wmatom[WMLast], netatom[NetLast];
+<a href="#h0-1-3" id="h0-1-3" class="d">-static Bool running = True, usexkb;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static Bool running = True;
+</a> static Cursor cursor[CurLast];
+ static Display *dpy;
+ static DC dc;
+<a href="#h0-2" id="h0-2" class="h">@@ -1093,10 +1092,7 @@ keypress(XEvent *e) {
+</a> 	XKeyEvent *ev;
+ 
+ 	ev = &amp;e-&gt;xkey;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	if(usexkb)
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		keysym = XkbKeycodeToKeysym(dpy, (KeyCode)ev-&gt;keycode, 0, 0);
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	else
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-		keysym = XKeycodeToKeysym(dpy, (KeyCode)ev-&gt;keycode, 0);
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	keysym = XKeycodeToKeysym(dpy, (KeyCode)ev-&gt;keycode, 0);
+</a> 	for(i = 0; i &lt; LENGTH(keys); i++)
+ 		if(keysym == keys[i].keysym
+ 		&amp;&amp; CLEANMASK(keys[i].mod) == CLEANMASK(ev-&gt;state)
+<a href="#h0-3" id="h0-3" class="h">@@ -1606,7 +1602,6 @@ setmfact(const Arg *arg) {
+</a> void
+ setup(void) {
+ 	XSetWindowAttributes wa;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	int dummy = 0, xkbmajor = XkbMajorVersion, xkbminor = XkbMinorVersion;
+</a> 
+ 	/* clean up any zombies immediately */
+ 	sigchld(0);
+<a href="#h0-4" id="h0-4" class="h">@@ -1661,8 +1656,6 @@ setup(void) {
+</a> 	                |EnterWindowMask|LeaveWindowMask|StructureNotifyMask|PropertyChangeMask;
+ 	XChangeWindowAttributes(dpy, root, CWEventMask|CWCursor, &amp;wa);
+ 	XSelectInput(dpy, root, wa.event_mask);
+<a href="#h0-4-3" id="h0-4-3" class="d">-	/* init xkb */
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	usexkb = XkbQueryExtension(dpy, &amp;dummy, &amp;dummy, &amp;dummy, &amp;xkbmajor, &amp;xkbminor);
+</a> 	grabkeys();
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>changed the fix of yesterday, the resize should only be necessary at manage() time, not on any unban() - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/28c10330bd2e1830005602efe79db9218dbe9dc9.html">28c10330bd2e1830005602efe79db9218dbe9dc9</a>
+<b>parent</b> <a href="../commit/0d40590c2c37677bef170c1ae9f13320599dba5c.html">0d40590c2c37677bef170c1ae9f13320599dba5c</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 31 Jul 2007 18:22:13 +0200
+
+changed the fix of yesterday, the resize should only be necessary at manage() time, not on any unban()
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">client.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 1 insertion(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -226,6 +226,7 @@ manage(Window w, XWindowAttributes *wa) {
+</a> 		c-&gt;isfloating = (rettrans == Success) || c-&gt;isfixed;
+ 	attach(c);
+ 	attachstack(c);
+<a href="#h0-0-3" id="h0-0-3" class="i">+	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h); /* some windows require this */
+</a> 	setclientstate(c, IconicState);
+ 	c-&gt;isbanned = True;
+ 	focus(c);
+<a href="#h0-1" id="h0-1" class="h">@@ -311,7 +312,6 @@ void
+</a> unban(Client *c) {
+ 	if(!c-&gt;isbanned)
+ 		return;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	XMoveWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y); /* some windows require this */
+</a> 	XMapWindow(dpy, c-&gt;win);
+ 	setclientstate(c, NormalState);
+ 	c-&gt;isbanned = False;
+</pre>
+</div>
+</body>
+</html>

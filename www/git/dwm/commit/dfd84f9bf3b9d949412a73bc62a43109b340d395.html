@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>simplified several portions of code through replacing rect structs with x,y,h,w counterparts (much more readable) - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/dfd84f9bf3b9d949412a73bc62a43109b340d395.html">dfd84f9bf3b9d949412a73bc62a43109b340d395</a>
+<b>parent</b> <a href="../commit/7696c89c90c926f6371b1ee3ec1b13dd2414aa40.html">7696c89c90c926f6371b1ee3ec1b13dd2414aa40</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Wed, 12 Jul 2006 15:17:22 +0200
+
+simplified several portions of code through replacing rect structs with x,y,h,w counterparts (much more readable)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">bar.c</a></td><td> | </td><td class="num">17</td><td><span class="i">++++++++</span><span class="d">---------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">client.c</a></td><td> | </td><td class="num">64</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">cmd.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">config.h</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">draw.c</a></td><td> | </td><td class="num">45</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">----------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h5">draw.h</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h6">event.c</a></td><td> | </td><td class="num">17</td><td><span class="i">++++++</span><span class="d">-----------</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h7">font.c</a></td><td> | </td><td class="num">81</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h8">menu.c</a></td><td> | </td><td class="num">97</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h9">mouse.c</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h10">wm.c</a></td><td> | </td><td class="num">23</td><td><span class="i">++++++++++</span><span class="d">-------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h11">wm.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>12 files changed, 164 insertions(+), 235 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/bar.c.html">bar.c</a> b/<a href="../file/bar.c.html">bar.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,23 +8,22 @@
+</a> void
+ draw_bar()
+ {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	brush.rect = barrect;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	brush.rect.x = brush.rect.y = 0;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	brush.x = brush.y = 0;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	brush.w = bw;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	brush.h = bh;
+</a> 	draw(dpy, &amp;brush, False, NULL);
+ 
+ 	if(stack) {
+<a href="#h0-0-11" id="h0-0-11" class="d">-		brush.rect.width = textwidth(&amp;brush.font, stack-&gt;name) + labelheight(&amp;brush.font);
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		brush.w = textw(&amp;brush.font, stack-&gt;name) + bh;
+</a> 		swap((void **)&amp;brush.fg, (void **)&amp;brush.bg);
+ 		draw(dpy, &amp;brush, True, stack-&gt;name);
+ 		swap((void **)&amp;brush.fg, (void **)&amp;brush.bg);
+<a href="#h0-0-16" id="h0-0-16" class="d">-		brush.rect.x += brush.rect.width;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		brush.x += brush.w;
+</a> 	}
+ 
+<a href="#h0-0-20" id="h0-0-20" class="d">-	brush.rect.width = textwidth(&amp;brush.font, statustext) + labelheight(&amp;brush.font);
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-	brush.rect.x = barrect.x + barrect.width - brush.rect.width;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	brush.w = textw(&amp;brush.font, statustext) + bh;
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	brush.x = bx + bw - brush.w;
+</a> 	draw(dpy, &amp;brush, False, statustext);
+<a href="#h0-0-25" id="h0-0-25" class="d">-
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-	XCopyArea(dpy, brush.drawable, barwin, brush.gc, 0, 0, barrect.width,
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-			barrect.height, 0, 0);
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+	XCopyArea(dpy, brush.drawable, barwin, brush.gc, 0, 0, bw, bh, 0, 0);
+</a> 	XFlush(dpy);
+ }
+<b>diff --git a/<a id="h1" href="../file/client.c.html">client.c</a> b/<a href="../file/client.c.html">client.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -10,7 +10,16 @@
+</a> #include &quot;util.h&quot;
+ #include &quot;wm.h&quot;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define CLIENT_MASK		(StructureNotifyMask | PropertyChangeMask | EnterWindowMask)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+static void
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+resize_title(Client *c)
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+{
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+	c-&gt;tw = textw(&amp;brush.font, c-&gt;name) + bh;
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+	if(c-&gt;tw &gt; c-&gt;w)
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		c-&gt;tw = c-&gt;w + 2;
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	c-&gt;tx = c-&gt;x + c-&gt;w - c-&gt;tw + 2;
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	c-&gt;ty = c-&gt;y;
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	XMoveResizeWindow(dpy, c-&gt;title, c-&gt;tx, c-&gt;ty, c-&gt;tw, c-&gt;th);
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+}
+</a> 
+ void
+ update_name(Client *c)
+<a href="#h1-1" id="h1-1" class="h">@@ -37,6 +46,7 @@ update_name(Client *c)
+</a> 		}
+ 	}
+ 	XFree(name.value);
+<a href="#h1-1-3" id="h1-1-3" class="i">+	resize_title(c);
+</a> }
+ 
+ void
+<a href="#h1-2" id="h1-2" class="h">@@ -74,26 +84,37 @@ update_size(Client *c)
+</a> }
+ 
+ void
+<a href="#h1-2-3" id="h1-2-3" class="i">+raise(Client *c)
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+{
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	XRaiseWindow(dpy, c-&gt;win);
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+	XRaiseWindow(dpy, c-&gt;title);
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+}
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+void
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+lower(Client *c)
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+{
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+	XLowerWindow(dpy, c-&gt;title);
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+	XLowerWindow(dpy, c-&gt;win);
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+}
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+void
+</a> focus(Client *c)
+ {
+ 	Client **l, *old;
+ 
+ 	old = stack;
+<a href="#h1-2-22" id="h1-2-22" class="d">-	for(l=&amp;stack; *l &amp;&amp; *l != c; l=&amp;(*l)-&gt;snext);
+</a><a href="#h1-2-23" id="h1-2-23" class="i">+	for(l = &amp;stack; *l &amp;&amp; *l != c; l = &amp;(*l)-&gt;snext);
+</a> 	eassert(*l == c);
+ 	*l = c-&gt;snext;
+ 	c-&gt;snext = stack;
+ 	stack = c;
+<a href="#h1-2-28" id="h1-2-28" class="d">-	XRaiseWindow(dpy, c-&gt;win);
+</a><a href="#h1-2-29" id="h1-2-29" class="d">-	XRaiseWindow(dpy, c-&gt;title);
+</a><a href="#h1-2-30" id="h1-2-30" class="d">-	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+</a> 	if(old &amp;&amp; old != c) {
+ 		XMapWindow(dpy, old-&gt;title);
+ 		draw_client(old);
+ 	}
+ 	XUnmapWindow(dpy, c-&gt;title);
+<a href="#h1-2-36" id="h1-2-36" class="d">-	draw_bar();
+</a><a href="#h1-2-37" id="h1-2-37" class="d">-	discard_events(EnterWindowMask);
+</a><a href="#h1-2-38" id="h1-2-38" class="i">+	draw_client(old);
+</a><a href="#h1-2-39" id="h1-2-39" class="i">+	XSetInputFocus(dpy, c-&gt;win, RevertToPointerRoot, CurrentTime);
+</a> 	XFlush(dpy);
+ }
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -107,13 +128,16 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	c-&gt;win = w;
+ 	c-&gt;tx = c-&gt;x = wa-&gt;x;
+ 	c-&gt;ty = c-&gt;y = wa-&gt;y;
+<a href="#h1-3-3" id="h1-3-3" class="i">+	if(c-&gt;y &lt; bh)
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		c-&gt;ty = c-&gt;y += bh;
+</a> 	c-&gt;tw = c-&gt;w = wa-&gt;width;
+ 	c-&gt;h = wa-&gt;height;
+<a href="#h1-3-7" id="h1-3-7" class="d">-	c-&gt;th = barrect.height;
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+	c-&gt;th = bh;
+</a> 	update_size(c);
+ 	XSetWindowBorderWidth(dpy, c-&gt;win, 1);
+ 	XSetWindowBorder(dpy, c-&gt;win, brush.border);
+<a href="#h1-3-12" id="h1-3-12" class="d">-	XSelectInput(dpy, c-&gt;win, CLIENT_MASK);
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+	XSelectInput(dpy, c-&gt;win,
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+			StructureNotifyMask | PropertyChangeMask | EnterWindowMask);
+</a> 	XGetTransientForHint(dpy, c-&gt;win, &amp;c-&gt;trans);
+ 	twa.override_redirect = 1;
+ 	twa.background_pixmap = ParentRelative;
+<a href="#h1-4" id="h1-4" class="h">@@ -130,8 +154,8 @@ manage(Window w, XWindowAttributes *wa)
+</a> 	*l = c;
+ 	c-&gt;snext = stack;
+ 	stack = c;
+<a href="#h1-4-3" id="h1-4-3" class="d">-	XMapWindow(dpy, c-&gt;win);
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-	XMapWindow(dpy, c-&gt;title);
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+	XMapRaised(dpy, c-&gt;win);
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+	XMapRaised(dpy, c-&gt;title);
+</a> 	XGrabButton(dpy, Button1, Mod1Mask, c-&gt;win, False, ButtonPressMask,
+ 			GrabModeAsync, GrabModeSync, None, None);
+ 	XGrabButton(dpy, Button2, Mod1Mask, c-&gt;win, False, ButtonPressMask,
+<a href="#h1-5" id="h1-5" class="h">@@ -147,6 +171,7 @@ resize(Client *c)
+</a> {
+ 	XConfigureEvent e;
+ 
+<a href="#h1-5-3" id="h1-5-3" class="i">+	resize_title(c);
+</a> 	XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+ 	e.type = ConfigureNotify;
+ 	e.event = c-&gt;win;
+<a href="#h1-6" id="h1-6" class="h">@@ -158,9 +183,7 @@ resize(Client *c)
+</a> 	e.border_width = 0;
+ 	e.above = None;
+ 	e.override_redirect = False;
+<a href="#h1-6-3" id="h1-6-3" class="d">-	XSelectInput(dpy, c-&gt;win, CLIENT_MASK &amp; ~StructureNotifyMask);
+</a> 	XSendEvent(dpy, c-&gt;win, False, StructureNotifyMask, (XEvent *)&amp;e);
+<a href="#h1-6-5" id="h1-6-5" class="d">-	XSelectInput(dpy, c-&gt;win, CLIENT_MASK);
+</a> 	XFlush(dpy);
+ }
+ 
+<a href="#h1-7" id="h1-7" class="h">@@ -219,17 +242,14 @@ getclient(Window w)
+</a> void
+ draw_client(Client *c)
+ {
+<a href="#h1-7-3" id="h1-7-3" class="d">-	if(c == stack)
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	if(c == stack) {
+</a> 		draw_bar();
+<a href="#h1-7-6" id="h1-7-6" class="i">+		return;
+</a><a href="#h1-7-7" id="h1-7-7" class="i">+	}
+</a> 
+<a href="#h1-7-9" id="h1-7-9" class="d">-	c-&gt;tw = textwidth(&amp;brush.font, c-&gt;name) + labelheight(&amp;brush.font);
+</a><a href="#h1-7-10" id="h1-7-10" class="d">-	c-&gt;tx = c-&gt;x + c-&gt;w - c-&gt;tw + 2;
+</a><a href="#h1-7-11" id="h1-7-11" class="d">-	c-&gt;ty = c-&gt;y;
+</a><a href="#h1-7-12" id="h1-7-12" class="d">-	XMoveResizeWindow(dpy, c-&gt;title, c-&gt;tx, c-&gt;ty, c-&gt;tw, c-&gt;th);
+</a><a href="#h1-7-13" id="h1-7-13" class="d">-
+</a><a href="#h1-7-14" id="h1-7-14" class="d">-	brush.rect.x = brush.rect.y = 0;
+</a><a href="#h1-7-15" id="h1-7-15" class="d">-	brush.rect.width = c-&gt;tw;
+</a><a href="#h1-7-16" id="h1-7-16" class="d">-	brush.rect.height = c-&gt;th;
+</a><a href="#h1-7-17" id="h1-7-17" class="i">+	brush.x = brush.y = 0;
+</a><a href="#h1-7-18" id="h1-7-18" class="i">+	brush.w = c-&gt;tw;
+</a><a href="#h1-7-19" id="h1-7-19" class="i">+	brush.h = c-&gt;th;
+</a> 
+ 	draw(dpy, &amp;brush, True, c-&gt;name);
+ 	XCopyArea(dpy, brush.drawable, c-&gt;title, brush.gc,
+<b>diff --git a/<a id="h2" href="../file/cmd.c.html">cmd.c</a> b/<a href="../file/cmd.c.html">cmd.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -23,16 +23,18 @@ void
+</a> sel(void *aux)
+ {
+ 	const char *arg = aux;
+<a href="#h2-0-3" id="h2-0-3" class="d">-	Client *c;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	Client *c = NULL;
+</a> 
+ 	if(!arg || !stack)
+ 		return;
+ 	if(!strncmp(arg, &quot;next&quot;, 5))
+<a href="#h2-0-9" id="h2-0-9" class="d">-		focus(stack-&gt;snext ? stack-&gt;snext : stack);
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-	else if(!strncmp(arg, &quot;prev&quot;, 5)) {
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+		c = stack-&gt;snext ? stack-&gt;snext : stack;
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+	else if(!strncmp(arg, &quot;prev&quot;, 5))
+</a> 		for(c = stack; c &amp;&amp; c-&gt;snext; c = c-&gt;snext);
+<a href="#h2-0-14" id="h2-0-14" class="d">-		focus(c ? c : stack);
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-	}
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+	if(!c)
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+		c = stack;
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+	raise(c);
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+	focus(c);
+</a> }
+ 
+ void
+<b>diff --git a/<a id="h3" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -4,7 +4,7 @@
+</a>  */
+ 
+ #define FONT		&quot;-*-terminus-medium-*-*-*-13-*-*-*-*-*-iso10646-*&quot;
+<a href="#h3-0-3" id="h3-0-3" class="d">-#define BGCOLOR		&quot;#0c0c33&quot;
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-#define FGCOLOR		&quot;#b2c8cd&quot;
+</a><a href="#h3-0-5" id="h3-0-5" class="d">-#define BORDERCOLOR	&quot;#3030c0&quot;
+</a><a href="#h3-0-6" id="h3-0-6" class="d">-#define STATUSDELAY	10 /* milliseconds */
+</a><a href="#h3-0-7" id="h3-0-7" class="i">+#define BGCOLOR		&quot;#666699&quot;
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+#define FGCOLOR		&quot;#ffffff&quot;
+</a><a href="#h3-0-9" id="h3-0-9" class="i">+#define BORDERCOLOR	&quot;#9999CC&quot;
+</a><a href="#h3-0-10" id="h3-0-10" class="i">+#define STATUSDELAY	10 /* seconds */
+</a><b>diff --git a/<a id="h4" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -15,16 +15,16 @@ drawborder(Display *dpy, Brush *b)
+</a> 	XPoint points[5];
+ 	XSetLineAttributes(dpy, b-&gt;gc, 1, LineSolid, CapButt, JoinMiter);
+ 	XSetForeground(dpy, b-&gt;gc, b-&gt;border);
+<a href="#h4-0-3" id="h4-0-3" class="d">-	points[0].x = b-&gt;rect.x;
+</a><a href="#h4-0-4" id="h4-0-4" class="d">-	points[0].y = b-&gt;rect.y;
+</a><a href="#h4-0-5" id="h4-0-5" class="d">-	points[1].x = b-&gt;rect.width - 1;
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+	points[0].x = b-&gt;x;
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+	points[0].y = b-&gt;y;
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+	points[1].x = b-&gt;w - 1;
+</a> 	points[1].y = 0;
+ 	points[2].x = 0;
+<a href="#h4-0-11" id="h4-0-11" class="d">-	points[2].y = b-&gt;rect.height - 1;
+</a><a href="#h4-0-12" id="h4-0-12" class="d">-	points[3].x = -(b-&gt;rect.width - 1);
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+	points[2].y = b-&gt;h - 1;
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	points[3].x = -(b-&gt;w - 1);
+</a> 	points[3].y = 0;
+ 	points[4].x = 0;
+<a href="#h4-0-17" id="h4-0-17" class="d">-	points[4].y = -(b-&gt;rect.height - 1);
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+	points[4].y = -(b-&gt;h - 1);
+</a> 	XDrawLines(dpy, b-&gt;drawable, b-&gt;gc, points, 5, CoordModePrevious);
+ }
+ 
+<a href="#h4-1" id="h4-1" class="h">@@ -34,9 +34,10 @@ draw(Display *dpy, Brush *b, Bool border, const char *text)
+</a> 	unsigned int x, y, w, h, len;
+ 	static char buf[256];
+ 	XGCValues gcv;
+<a href="#h4-1-3" id="h4-1-3" class="i">+	XRectangle r = { b-&gt;x, b-&gt;y, b-&gt;w, b-&gt;h };
+</a> 
+ 	XSetForeground(dpy, b-&gt;gc, b-&gt;bg);
+<a href="#h4-1-6" id="h4-1-6" class="d">-	XFillRectangles(dpy, b-&gt;drawable, b-&gt;gc, &amp;b-&gt;rect, 1);
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+	XFillRectangles(dpy, b-&gt;drawable, b-&gt;gc, &amp;r, 1);
+</a> 
+ 	if(border)
+ 		drawborder(dpy, b);
+<a href="#h4-2" id="h4-2" class="h">@@ -51,14 +52,14 @@ draw(Display *dpy, Brush *b, Bool border, const char *text)
+</a> 	buf[len] = 0;
+ 
+ 	h = b-&gt;font.ascent + b-&gt;font.descent;
+<a href="#h4-2-3" id="h4-2-3" class="d">-	y = b-&gt;rect.y + (b-&gt;rect.height / 2) - (h / 2) + b-&gt;font.ascent;
+</a><a href="#h4-2-4" id="h4-2-4" class="d">-	x = b-&gt;rect.x + (h / 2);
+</a><a href="#h4-2-5" id="h4-2-5" class="i">+	y = b-&gt;y + (b-&gt;h / 2) - (h / 2) + b-&gt;font.ascent;
+</a><a href="#h4-2-6" id="h4-2-6" class="i">+	x = b-&gt;x + (h / 2);
+</a> 
+ 	/* shorten text if necessary */
+<a href="#h4-2-9" id="h4-2-9" class="d">-	while(len &amp;&amp; (w = textwidth_l(&amp;b-&gt;font, buf, len)) &gt; b-&gt;rect.width - h)
+</a><a href="#h4-2-10" id="h4-2-10" class="i">+	while(len &amp;&amp; (w = textnw(&amp;b-&gt;font, buf, len)) &gt; b-&gt;w - h)
+</a> 		buf[--len] = 0;
+ 
+<a href="#h4-2-13" id="h4-2-13" class="d">-	if(w &gt; b-&gt;rect.width)
+</a><a href="#h4-2-14" id="h4-2-14" class="i">+	if(w &gt; b-&gt;w)
+</a> 		return; /* too long */
+ 
+ 	gcv.foreground = b-&gt;fg;
+<a href="#h4-3" id="h4-3" class="h">@@ -94,20 +95,26 @@ loadcolors(Display *dpy, int screen, Brush *b,
+</a> }
+ 
+ unsigned int
+<a href="#h4-3-3" id="h4-3-3" class="d">-textwidth_l(Fnt *font, char *text, unsigned int len)
+</a><a href="#h4-3-4" id="h4-3-4" class="i">+textnw(Fnt *font, char *text, unsigned int len)
+</a> {
+<a href="#h4-3-6" id="h4-3-6" class="i">+	XRectangle r;
+</a> 	if(font-&gt;set) {
+<a href="#h4-3-8" id="h4-3-8" class="d">-		XRectangle r;
+</a><a href="#h4-3-9" id="h4-3-9" class="d">-		XmbTextExtents(font-&gt;set, text, len, 0, &amp;r);
+</a><a href="#h4-3-10" id="h4-3-10" class="i">+		XmbTextExtents(font-&gt;set, text, len, NULL, &amp;r);
+</a> 		return r.width;
+ 	}
+ 	return XTextWidth(font-&gt;xfont, text, len);
+ }
+ 
+ unsigned int
+<a href="#h4-3-17" id="h4-3-17" class="d">-textwidth(Fnt *font, char *text)
+</a><a href="#h4-3-18" id="h4-3-18" class="i">+textw(Fnt *font, char *text)
+</a> {
+<a href="#h4-3-20" id="h4-3-20" class="d">-	return textwidth_l(font, text, strlen(text));
+</a><a href="#h4-3-21" id="h4-3-21" class="i">+	return textnw(font, text, strlen(text));
+</a><a href="#h4-3-22" id="h4-3-22" class="i">+}
+</a><a href="#h4-3-23" id="h4-3-23" class="i">+
+</a><a href="#h4-3-24" id="h4-3-24" class="i">+unsigned int
+</a><a href="#h4-3-25" id="h4-3-25" class="i">+texth(Fnt *font)
+</a><a href="#h4-3-26" id="h4-3-26" class="i">+{
+</a><a href="#h4-3-27" id="h4-3-27" class="i">+	return font-&gt;height + 4;
+</a> }
+ 
+ void
+<a href="#h4-4" id="h4-4" class="h">@@ -162,9 +169,3 @@ loadfont(Display *dpy, Fnt *font, const char *fontstr)
+</a> 	}
+ 	font-&gt;height = font-&gt;ascent + font-&gt;descent;
+ }
+<a href="#h4-4-3" id="h4-4-3" class="d">-
+</a><a href="#h4-4-4" id="h4-4-4" class="d">-unsigned int
+</a><a href="#h4-4-5" id="h4-4-5" class="d">-labelheight(Fnt *font)
+</a><a href="#h4-4-6" id="h4-4-6" class="d">-{
+</a><a href="#h4-4-7" id="h4-4-7" class="d">-	return font-&gt;height + 4;
+</a><a href="#h4-4-8" id="h4-4-8" class="d">-}
+</a><b>diff --git a/<a id="h5" href="../file/draw.h.html">draw.h</a> b/<a href="../file/draw.h.html">draw.h</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -20,7 +20,7 @@ struct Fnt {
+</a> struct Brush {
+ 	GC gc;
+ 	Drawable drawable;
+<a href="#h5-0-3" id="h5-0-3" class="d">-	XRectangle rect;
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+	int x, y, w, h;
+</a> 	Fnt font;
+ 	unsigned long bg;
+ 	unsigned long fg;
+<a href="#h5-1" id="h5-1" class="h">@@ -31,6 +31,6 @@ extern void draw(Display *dpy, Brush *b, Bool border, const char *text);
+</a> extern void loadcolors(Display *dpy, int screen, Brush *b,
+ 		const char *bg, const char *fg, const char *bo);
+ extern void loadfont(Display *dpy, Fnt *font, const char *fontstr);
+<a href="#h5-1-3" id="h5-1-3" class="d">-extern unsigned int textwidth_l(Fnt *font, char *text, unsigned int len);
+</a><a href="#h5-1-4" id="h5-1-4" class="d">-extern unsigned int textwidth(Fnt *font, char *text);
+</a><a href="#h5-1-5" id="h5-1-5" class="d">-extern unsigned int labelheight(Fnt *font);
+</a><a href="#h5-1-6" id="h5-1-6" class="i">+extern unsigned int textnw(Fnt *font, char *text, unsigned int len);
+</a><a href="#h5-1-7" id="h5-1-7" class="i">+extern unsigned int textw(Fnt *font, char *text);
+</a><a href="#h5-1-8" id="h5-1-8" class="i">+extern unsigned int texth(Fnt *font);
+</a><b>diff --git a/<a id="h6" href="../file/event.c.html">event.c</a> b/<a href="../file/event.c.html">event.c</a></b>
+<a href="#h6-0" id="h6-0" class="h">@@ -37,13 +37,11 @@ void (*handler[LASTEvent]) (XEvent *) = {
+</a> 	[UnmapNotify] = unmapnotify
+ };
+ 
+<a href="#h6-0-3" id="h6-0-3" class="d">-unsigned int
+</a><a href="#h6-0-4" id="h6-0-4" class="i">+void
+</a> discard_events(long even_mask)
+ {
+ 	XEvent ev;
+<a href="#h6-0-8" id="h6-0-8" class="d">-	unsigned int n = 0;
+</a><a href="#h6-0-9" id="h6-0-9" class="d">-	while(XCheckMaskEvent(dpy, even_mask, &amp;ev)) n++;
+</a><a href="#h6-0-10" id="h6-0-10" class="d">-	return n;
+</a><a href="#h6-0-11" id="h6-0-11" class="i">+	while(XCheckMaskEvent(dpy, even_mask, &amp;ev));
+</a> }
+ 
+ static void
+<a href="#h6-1" id="h6-1" class="h">@@ -53,6 +51,7 @@ buttonpress(XEvent *e)
+</a> 	Client *c;
+ 
+ 	if((c = getclient(ev-&gt;window))) {
+<a href="#h6-1-3" id="h6-1-3" class="i">+		raise(c);
+</a> 		switch(ev-&gt;button) {
+ 		default:
+ 			break;
+<a href="#h6-2" id="h6-2" class="h">@@ -60,7 +59,7 @@ buttonpress(XEvent *e)
+</a> 			mmove(c);
+ 			break;
+ 		case Button2:
+<a href="#h6-2-3" id="h6-2-3" class="d">-			XLowerWindow(dpy, c-&gt;win);
+</a><a href="#h6-2-4" id="h6-2-4" class="i">+			lower(c);
+</a> 			break;
+ 		case Button3:
+ 			mresize(c);
+<a href="#h6-3" id="h6-3" class="h">@@ -122,10 +121,8 @@ enternotify(XEvent *e)
+</a> 
+ 	if((c = getclient(ev-&gt;window)))
+ 		focus(c);
+<a href="#h6-3-3" id="h6-3-3" class="d">-	else if(ev-&gt;window == root) {
+</a><a href="#h6-3-4" id="h6-3-4" class="i">+	else if(ev-&gt;window == root)
+</a> 		sel_screen = True;
+<a href="#h6-3-6" id="h6-3-6" class="d">-		/*draw_frames();*/
+</a><a href="#h6-3-7" id="h6-3-7" class="d">-	}
+</a> }
+ 
+ static void
+<a href="#h6-4" id="h6-4" class="h">@@ -133,10 +130,8 @@ leavenotify(XEvent *e)
+</a> {
+ 	XCrossingEvent *ev = &amp;e-&gt;xcrossing;
+ 
+<a href="#h6-4-3" id="h6-4-3" class="d">-	if((ev-&gt;window == root) &amp;&amp; !ev-&gt;same_screen) {
+</a><a href="#h6-4-4" id="h6-4-4" class="i">+	if((ev-&gt;window == root) &amp;&amp; !ev-&gt;same_screen)
+</a> 		sel_screen = True;
+<a href="#h6-4-6" id="h6-4-6" class="d">-		/*draw_frames();*/
+</a><a href="#h6-4-7" id="h6-4-7" class="d">-	}
+</a> }
+ 
+ static void
+<b>diff --git a/<a id="h7" href="../file/font.c.html">font.c</a> b/<a href="../file/font.c.html">font.c</a></b>
+<a href="#h7-0" id="h7-0" class="h">@@ -1,81 +0,0 @@
+</a><a href="#h7-0-0" id="h7-0-0" class="d">-/*
+</a><a href="#h7-0-1" id="h7-0-1" class="d">- * (C)opyright MMIV-MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h7-0-2" id="h7-0-2" class="d">- * See LICENSE file for license details.
+</a><a href="#h7-0-3" id="h7-0-3" class="d">- */
+</a><a href="#h7-0-4" id="h7-0-4" class="d">-
+</a><a href="#h7-0-5" id="h7-0-5" class="d">-#include &lt;stdio.h&gt;
+</a><a href="#h7-0-6" id="h7-0-6" class="d">-#include &lt;stdlib.h&gt;
+</a><a href="#h7-0-7" id="h7-0-7" class="d">-#include &lt;string.h&gt;
+</a><a href="#h7-0-8" id="h7-0-8" class="d">-#include &lt;locale.h&gt;
+</a><a href="#h7-0-9" id="h7-0-9" class="d">-
+</a><a href="#h7-0-10" id="h7-0-10" class="d">-unsigned int
+</a><a href="#h7-0-11" id="h7-0-11" class="d">-textwidth_l(BlitzFont *font, char *text, unsigned int len)
+</a><a href="#h7-0-12" id="h7-0-12" class="d">-{
+</a><a href="#h7-0-13" id="h7-0-13" class="d">-	if(font-&gt;set) {
+</a><a href="#h7-0-14" id="h7-0-14" class="d">-		XRectangle r;
+</a><a href="#h7-0-15" id="h7-0-15" class="d">-		XmbTextExtents(font-&gt;set, text, len, nil, &amp;r);
+</a><a href="#h7-0-16" id="h7-0-16" class="d">-		return r.width;
+</a><a href="#h7-0-17" id="h7-0-17" class="d">-	}
+</a><a href="#h7-0-18" id="h7-0-18" class="d">-	return XTextWidth(font-&gt;xfont, text, len);
+</a><a href="#h7-0-19" id="h7-0-19" class="d">-}
+</a><a href="#h7-0-20" id="h7-0-20" class="d">-
+</a><a href="#h7-0-21" id="h7-0-21" class="d">-unsigned int
+</a><a href="#h7-0-22" id="h7-0-22" class="d">-textwidth(BlitzFont *font, char *text)
+</a><a href="#h7-0-23" id="h7-0-23" class="d">-{
+</a><a href="#h7-0-24" id="h7-0-24" class="d">-	return blitz_textwidth_l(font, text, strlen(text));
+</a><a href="#h7-0-25" id="h7-0-25" class="d">-}
+</a><a href="#h7-0-26" id="h7-0-26" class="d">-
+</a><a href="#h7-0-27" id="h7-0-27" class="d">-void
+</a><a href="#h7-0-28" id="h7-0-28" class="d">-loadfont(Blitz *blitz, BlitzFont *font)
+</a><a href="#h7-0-29" id="h7-0-29" class="d">-{
+</a><a href="#h7-0-30" id="h7-0-30" class="d">-	char *fontname = font-&gt;fontstr;
+</a><a href="#h7-0-31" id="h7-0-31" class="d">-	char **missing = nil, *def = &quot;?&quot;;
+</a><a href="#h7-0-32" id="h7-0-32" class="d">-	int n;
+</a><a href="#h7-0-33" id="h7-0-33" class="d">-
+</a><a href="#h7-0-34" id="h7-0-34" class="d">-	setlocale(LC_ALL, &quot;&quot;);
+</a><a href="#h7-0-35" id="h7-0-35" class="d">-	if(font-&gt;set)
+</a><a href="#h7-0-36" id="h7-0-36" class="d">-		XFreeFontSet(blitz-&gt;dpy, font-&gt;set);
+</a><a href="#h7-0-37" id="h7-0-37" class="d">-	font-&gt;set = XCreateFontSet(blitz-&gt;dpy, fontname, &amp;missing, &amp;n, &amp;def);
+</a><a href="#h7-0-38" id="h7-0-38" class="d">-	if(missing) {
+</a><a href="#h7-0-39" id="h7-0-39" class="d">-		while(n--)
+</a><a href="#h7-0-40" id="h7-0-40" class="d">-			fprintf(stderr, &quot;missing fontset: %s\n&quot;, missing[n]);
+</a><a href="#h7-0-41" id="h7-0-41" class="d">-		XFreeStringList(missing);
+</a><a href="#h7-0-42" id="h7-0-42" class="d">-		if(font-&gt;set) {
+</a><a href="#h7-0-43" id="h7-0-43" class="d">-			XFreeFontSet(blitz-&gt;dpy, font-&gt;set);
+</a><a href="#h7-0-44" id="h7-0-44" class="d">-			font-&gt;set = nil;
+</a><a href="#h7-0-45" id="h7-0-45" class="d">-		}
+</a><a href="#h7-0-46" id="h7-0-46" class="d">-	}
+</a><a href="#h7-0-47" id="h7-0-47" class="d">-	if(font-&gt;set) {
+</a><a href="#h7-0-48" id="h7-0-48" class="d">-		XFontSetExtents *font_extents;
+</a><a href="#h7-0-49" id="h7-0-49" class="d">-		XFontStruct **xfonts;
+</a><a href="#h7-0-50" id="h7-0-50" class="d">-		char **font_names;
+</a><a href="#h7-0-51" id="h7-0-51" class="d">-		unsigned int i;
+</a><a href="#h7-0-52" id="h7-0-52" class="d">-
+</a><a href="#h7-0-53" id="h7-0-53" class="d">-		font-&gt;ascent = font-&gt;descent = 0;
+</a><a href="#h7-0-54" id="h7-0-54" class="d">-		font_extents = XExtentsOfFontSet(font-&gt;set);
+</a><a href="#h7-0-55" id="h7-0-55" class="d">-		n = XFontsOfFontSet(font-&gt;set, &amp;xfonts, &amp;font_names);
+</a><a href="#h7-0-56" id="h7-0-56" class="d">-		for(i = 0, font-&gt;ascent = 0, font-&gt;descent = 0; i &lt; n; i++) {
+</a><a href="#h7-0-57" id="h7-0-57" class="d">-			if(font-&gt;ascent &lt; (*xfonts)-&gt;ascent)
+</a><a href="#h7-0-58" id="h7-0-58" class="d">-				font-&gt;ascent = (*xfonts)-&gt;ascent;
+</a><a href="#h7-0-59" id="h7-0-59" class="d">-			if(font-&gt;descent &lt; (*xfonts)-&gt;descent)
+</a><a href="#h7-0-60" id="h7-0-60" class="d">-				font-&gt;descent = (*xfonts)-&gt;descent;
+</a><a href="#h7-0-61" id="h7-0-61" class="d">-			xfonts++;
+</a><a href="#h7-0-62" id="h7-0-62" class="d">-		}
+</a><a href="#h7-0-63" id="h7-0-63" class="d">-	}
+</a><a href="#h7-0-64" id="h7-0-64" class="d">-	else {
+</a><a href="#h7-0-65" id="h7-0-65" class="d">-		if(font-&gt;xfont)
+</a><a href="#h7-0-66" id="h7-0-66" class="d">-			XFreeFont(blitz-&gt;dpy, font-&gt;xfont);
+</a><a href="#h7-0-67" id="h7-0-67" class="d">-		font-&gt;xfont = nil;
+</a><a href="#h7-0-68" id="h7-0-68" class="d">-		font-&gt;xfont = XLoadQueryFont(blitz-&gt;dpy, fontname);
+</a><a href="#h7-0-69" id="h7-0-69" class="d">-		if (!font-&gt;xfont) {
+</a><a href="#h7-0-70" id="h7-0-70" class="d">-			fontname = &quot;fixed&quot;;
+</a><a href="#h7-0-71" id="h7-0-71" class="d">-			font-&gt;xfont = XLoadQueryFont(blitz-&gt;dpy, fontname);
+</a><a href="#h7-0-72" id="h7-0-72" class="d">-		}
+</a><a href="#h7-0-73" id="h7-0-73" class="d">-		if (!font-&gt;xfont) {
+</a><a href="#h7-0-74" id="h7-0-74" class="d">-			fprintf(stderr, &quot;%s&quot;, &quot;error, cannot load &#39;fixed&#39; font\n&quot;);
+</a><a href="#h7-0-75" id="h7-0-75" class="d">-			exit(1);
+</a><a href="#h7-0-76" id="h7-0-76" class="d">-		}
+</a><a href="#h7-0-77" id="h7-0-77" class="d">-		font-&gt;ascent = font-&gt;xfont-&gt;ascent;
+</a><a href="#h7-0-78" id="h7-0-78" class="d">-		font-&gt;descent = font-&gt;xfont-&gt;descent;
+</a><a href="#h7-0-79" id="h7-0-79" class="d">-	}
+</a><a href="#h7-0-80" id="h7-0-80" class="d">-}
+</a><b>diff --git a/<a id="h8" href="../file/menu.c.html">menu.c</a> b/<a href="../file/menu.c.html">menu.c</a></b>
+<a href="#h8-0" id="h8-0" class="h">@@ -31,7 +31,6 @@ struct Item {
+</a> static Display *dpy;
+ static Window root;
+ static Window win;
+<a href="#h8-0-3" id="h8-0-3" class="d">-static XRectangle rect;
+</a> static Bool done = False;
+ 
+ static Item *allitem = NULL;	/* first of all items */
+<a href="#h8-1" id="h8-1" class="h">@@ -41,14 +40,14 @@ static Item *nextoff = NULL;
+</a> static Item *prevoff = NULL;
+ static Item *curroff = NULL;
+ 
+<a href="#h8-1-3" id="h8-1-3" class="d">-static int screen;
+</a><a href="#h8-1-4" id="h8-1-4" class="i">+static int screen, mx, my, mw, mh;
+</a> static char *title = NULL;
+ static char text[4096];
+ static int ret = 0;
+ static int nitem = 0;
+ static unsigned int cmdw = 0;
+<a href="#h8-1-10" id="h8-1-10" class="d">-static unsigned int twidth = 0;
+</a><a href="#h8-1-11" id="h8-1-11" class="d">-static unsigned int cwidth = 0;
+</a><a href="#h8-1-12" id="h8-1-12" class="i">+static unsigned int tw = 0;
+</a><a href="#h8-1-13" id="h8-1-13" class="i">+static unsigned int cw = 0;
+</a> static const int seek = 30;		/* 30px */
+ 
+ static Brush brush = {0};
+<a href="#h8-2" id="h8-2" class="h">@@ -74,21 +73,21 @@ update_offsets()
+</a> 		return;
+ 
+ 	for(nextoff = curroff; nextoff; nextoff=nextoff-&gt;right) {
+<a href="#h8-2-3" id="h8-2-3" class="d">-		tw = textwidth(&amp;brush.font, nextoff-&gt;text);
+</a><a href="#h8-2-4" id="h8-2-4" class="d">-		if(tw &gt; rect.width / 3)
+</a><a href="#h8-2-5" id="h8-2-5" class="d">-			tw = rect.width / 3;
+</a><a href="#h8-2-6" id="h8-2-6" class="i">+		tw = textw(&amp;brush.font, nextoff-&gt;text);
+</a><a href="#h8-2-7" id="h8-2-7" class="i">+		if(tw &gt; mw / 3)
+</a><a href="#h8-2-8" id="h8-2-8" class="i">+			tw = mw / 3;
+</a> 		w += tw + brush.font.height;
+<a href="#h8-2-10" id="h8-2-10" class="d">-		if(w &gt; rect.width)
+</a><a href="#h8-2-11" id="h8-2-11" class="i">+		if(w &gt; mw)
+</a> 			break;
+ 	}
+ 
+ 	w = cmdw + 2 * seek;
+ 	for(prevoff = curroff; prevoff &amp;&amp; prevoff-&gt;left; prevoff=prevoff-&gt;left) {
+<a href="#h8-2-17" id="h8-2-17" class="d">-		tw = textwidth(&amp;brush.font, prevoff-&gt;left-&gt;text);
+</a><a href="#h8-2-18" id="h8-2-18" class="d">-		if(tw &gt; rect.width / 3)
+</a><a href="#h8-2-19" id="h8-2-19" class="d">-			tw = rect.width / 3;
+</a><a href="#h8-2-20" id="h8-2-20" class="i">+		tw = textw(&amp;brush.font, prevoff-&gt;left-&gt;text);
+</a><a href="#h8-2-21" id="h8-2-21" class="i">+		if(tw &gt; mw / 3)
+</a><a href="#h8-2-22" id="h8-2-22" class="i">+			tw = mw / 3;
+</a> 		w += tw + brush.font.height;
+<a href="#h8-2-24" id="h8-2-24" class="d">-		if(w &gt; rect.width)
+</a><a href="#h8-2-25" id="h8-2-25" class="i">+		if(w &gt; mw)
+</a> 			break;
+ 	}
+ }
+<a href="#h8-3" id="h8-3" class="h">@@ -103,9 +102,9 @@ update_items(char *pattern)
+</a> 		return;
+ 
+ 	if(!title || *pattern)
+<a href="#h8-3-3" id="h8-3-3" class="d">-		cmdw = cwidth;
+</a><a href="#h8-3-4" id="h8-3-4" class="i">+		cmdw = cw;
+</a> 	else
+<a href="#h8-3-6" id="h8-3-6" class="d">-		cmdw = twidth;
+</a><a href="#h8-3-7" id="h8-3-7" class="i">+		cmdw = tw;
+</a> 
+ 	item = j = NULL;
+ 	nitem = 0;
+<a href="#h8-4" id="h8-4" class="h">@@ -143,42 +142,40 @@ update_items(char *pattern)
+</a> static void
+ draw_menu()
+ {
+<a href="#h8-4-3" id="h8-4-3" class="d">-	unsigned int offx = 0;
+</a> 	Item *i;
+ 
+<a href="#h8-4-6" id="h8-4-6" class="d">-	brush.rect = rect;
+</a><a href="#h8-4-7" id="h8-4-7" class="d">-	brush.rect.x = 0;
+</a><a href="#h8-4-8" id="h8-4-8" class="d">-	brush.rect.y = 0;
+</a><a href="#h8-4-9" id="h8-4-9" class="i">+	brush.x = 0;
+</a><a href="#h8-4-10" id="h8-4-10" class="i">+	brush.y = 0;
+</a><a href="#h8-4-11" id="h8-4-11" class="i">+	brush.w = mw;
+</a><a href="#h8-4-12" id="h8-4-12" class="i">+	brush.h = mh;
+</a> 	draw(dpy, &amp;brush, False, 0);
+ 
+ 	/* print command */
+ 	if(!title || text[0]) {
+<a href="#h8-4-17" id="h8-4-17" class="d">-		cmdw = cwidth;
+</a><a href="#h8-4-18" id="h8-4-18" class="i">+		cmdw = cw;
+</a> 		if(cmdw &amp;&amp; item)
+<a href="#h8-4-20" id="h8-4-20" class="d">-			brush.rect.width = cmdw;
+</a><a href="#h8-4-21" id="h8-4-21" class="i">+			brush.w = cmdw;
+</a> 		draw(dpy, &amp;brush, False, text);
+ 	}
+ 	else {
+<a href="#h8-4-25" id="h8-4-25" class="d">-		cmdw = twidth;
+</a><a href="#h8-4-26" id="h8-4-26" class="d">-		brush.rect.width = cmdw;
+</a><a href="#h8-4-27" id="h8-4-27" class="i">+		cmdw = tw;
+</a><a href="#h8-4-28" id="h8-4-28" class="i">+		brush.w = cmdw;
+</a> 		draw(dpy, &amp;brush, False, title);
+ 	}
+<a href="#h8-4-31" id="h8-4-31" class="d">-	offx += brush.rect.width;
+</a><a href="#h8-4-32" id="h8-4-32" class="i">+	brush.x += brush.w;
+</a> 
+ 	if(curroff) {
+<a href="#h8-4-35" id="h8-4-35" class="d">-		brush.rect.x = offx;
+</a><a href="#h8-4-36" id="h8-4-36" class="d">-		brush.rect.width = seek;
+</a><a href="#h8-4-37" id="h8-4-37" class="d">-		offx += brush.rect.width;
+</a><a href="#h8-4-38" id="h8-4-38" class="i">+		brush.w = seek;
+</a> 		draw(dpy, &amp;brush, False, (curroff &amp;&amp; curroff-&gt;left) ? &quot;&lt;&quot; : 0);
+<a href="#h8-4-40" id="h8-4-40" class="i">+		brush.x += brush.w;
+</a> 
+ 		/* determine maximum items */
+ 		for(i = curroff; i != nextoff; i=i-&gt;right) {
+ 			brush.border = False;
+<a href="#h8-4-45" id="h8-4-45" class="d">-			brush.rect.x = offx;
+</a><a href="#h8-4-46" id="h8-4-46" class="d">-			brush.rect.width = textwidth(&amp;brush.font, i-&gt;text);
+</a><a href="#h8-4-47" id="h8-4-47" class="d">-			if(brush.rect.width &gt; rect.width / 3)
+</a><a href="#h8-4-48" id="h8-4-48" class="d">-				brush.rect.width = rect.width / 3;
+</a><a href="#h8-4-49" id="h8-4-49" class="d">-			brush.rect.width += brush.font.height;
+</a><a href="#h8-4-50" id="h8-4-50" class="i">+			brush.w = textw(&amp;brush.font, i-&gt;text);
+</a><a href="#h8-4-51" id="h8-4-51" class="i">+			if(brush.w &gt; mw / 3)
+</a><a href="#h8-4-52" id="h8-4-52" class="i">+				brush.w = mw / 3;
+</a><a href="#h8-4-53" id="h8-4-53" class="i">+			brush.w += brush.font.height;
+</a> 			if(sel == i) {
+ 				swap((void **)&amp;brush.fg, (void **)&amp;brush.bg);
+ 				draw(dpy, &amp;brush, True, i-&gt;text);
+<a href="#h8-5" id="h8-5" class="h">@@ -186,15 +183,14 @@ draw_menu()
+</a> 			}
+ 			else
+ 				draw(dpy, &amp;brush, False, i-&gt;text);
+<a href="#h8-5-3" id="h8-5-3" class="d">-			offx += brush.rect.width;
+</a><a href="#h8-5-4" id="h8-5-4" class="i">+			brush.x += brush.w;
+</a> 		}
+ 
+<a href="#h8-5-7" id="h8-5-7" class="d">-		brush.rect.x = rect.width - seek;
+</a><a href="#h8-5-8" id="h8-5-8" class="d">-		brush.rect.width = seek;
+</a><a href="#h8-5-9" id="h8-5-9" class="i">+		brush.x = mw - seek;
+</a><a href="#h8-5-10" id="h8-5-10" class="i">+		brush.w = seek;
+</a> 		draw(dpy, &amp;brush, False, nextoff ? &quot;&gt;&quot; : 0);
+ 	}
+<a href="#h8-5-13" id="h8-5-13" class="d">-	XCopyArea(dpy, brush.drawable, win, brush.gc, 0, 0, rect.width,
+</a><a href="#h8-5-14" id="h8-5-14" class="d">-			rect.height, 0, 0);
+</a><a href="#h8-5-15" id="h8-5-15" class="i">+	XCopyArea(dpy, brush.drawable, win, brush.gc, 0, 0, mw, mh, 0, 0);
+</a> 	XFlush(dpy);
+ }
+ 
+<a href="#h8-6" id="h8-6" class="h">@@ -399,36 +395,35 @@ main(int argc, char *argv[])
+</a> 	wa.background_pixmap = ParentRelative;
+ 	wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask;
+ 
+<a href="#h8-6-3" id="h8-6-3" class="d">-	rect.width = DisplayWidth(dpy, screen);
+</a><a href="#h8-6-4" id="h8-6-4" class="d">-	rect.height = labelheight(&amp;brush.font);
+</a><a href="#h8-6-5" id="h8-6-5" class="d">-	rect.y = DisplayHeight(dpy, screen) - rect.height;
+</a><a href="#h8-6-6" id="h8-6-6" class="d">-	rect.x = 0;
+</a><a href="#h8-6-7" id="h8-6-7" class="i">+	mx = my = 0;
+</a><a href="#h8-6-8" id="h8-6-8" class="i">+	mw = DisplayWidth(dpy, screen);
+</a><a href="#h8-6-9" id="h8-6-9" class="i">+	mh = texth(&amp;brush.font);
+</a> 
+<a href="#h8-6-11" id="h8-6-11" class="d">-	win = XCreateWindow(dpy, root, rect.x, rect.y,
+</a><a href="#h8-6-12" id="h8-6-12" class="d">-			rect.width, rect.height, 0, DefaultDepth(dpy, screen),
+</a><a href="#h8-6-13" id="h8-6-13" class="d">-			CopyFromParent, DefaultVisual(dpy, screen),
+</a><a href="#h8-6-14" id="h8-6-14" class="i">+	win = XCreateWindow(dpy, root, mx, my, mw, mh, 0,
+</a><a href="#h8-6-15" id="h8-6-15" class="i">+			DefaultDepth(dpy, screen), CopyFromParent,
+</a><a href="#h8-6-16" id="h8-6-16" class="i">+			DefaultVisual(dpy, screen),
+</a> 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+ 	XDefineCursor(dpy, win, XCreateFontCursor(dpy, XC_xterm));
+ 	XFlush(dpy);
+ 
+ 	/* pixmap */
+ 	brush.gc = XCreateGC(dpy, root, 0, 0);
+<a href="#h8-6-23" id="h8-6-23" class="d">-	brush.drawable = XCreatePixmap(dpy, win, rect.width, rect.height,
+</a><a href="#h8-6-24" id="h8-6-24" class="i">+	brush.drawable = XCreatePixmap(dpy, win, mw, mh,
+</a> 			DefaultDepth(dpy, screen));
+ 	XFlush(dpy);
+ 
+ 	if(maxname)
+<a href="#h8-6-29" id="h8-6-29" class="d">-		cwidth = textwidth(&amp;brush.font, maxname) + brush.font.height;
+</a><a href="#h8-6-30" id="h8-6-30" class="d">-	if(cwidth &gt; rect.width / 3)
+</a><a href="#h8-6-31" id="h8-6-31" class="d">-		cwidth = rect.width / 3;
+</a><a href="#h8-6-32" id="h8-6-32" class="i">+		cw = textw(&amp;brush.font, maxname) + brush.font.height;
+</a><a href="#h8-6-33" id="h8-6-33" class="i">+	if(cw &gt; mw / 3)
+</a><a href="#h8-6-34" id="h8-6-34" class="i">+		cw = mw / 3;
+</a> 
+ 	if(title) {
+<a href="#h8-6-37" id="h8-6-37" class="d">-		twidth = textwidth(&amp;brush.font, title) + brush.font.height;
+</a><a href="#h8-6-38" id="h8-6-38" class="d">-		if(twidth &gt; rect.width / 3)
+</a><a href="#h8-6-39" id="h8-6-39" class="d">-			twidth = rect.width / 3;
+</a><a href="#h8-6-40" id="h8-6-40" class="i">+		tw = textw(&amp;brush.font, title) + brush.font.height;
+</a><a href="#h8-6-41" id="h8-6-41" class="i">+		if(tw &gt; mw / 3)
+</a><a href="#h8-6-42" id="h8-6-42" class="i">+			tw = mw / 3;
+</a> 	}
+ 
+<a href="#h8-6-45" id="h8-6-45" class="d">-	cmdw = title ? twidth : cwidth;
+</a><a href="#h8-6-46" id="h8-6-46" class="i">+	cmdw = title ? tw : cw;
+</a> 
+ 	text[0] = 0;
+ 	update_items(text);
+<b>diff --git a/<a id="h9" href="../file/mouse.c.html">mouse.c</a> b/<a href="../file/mouse.c.html">mouse.c</a></b>
+<a href="#h9-0" id="h9-0" class="h">@@ -45,21 +45,21 @@ mresize(Client *c)
+</a> 	if(XGrabPointer(dpy, root, False, MouseMask, GrabModeAsync, GrabModeAsync,
+ 				None, cursor[CurResize], CurrentTime) != GrabSuccess)
+ 		return;
+<a href="#h9-0-3" id="h9-0-3" class="d">-	XGrabServer(dpy);
+</a> 	XWarpPointer(dpy, None, c-&gt;win, 0, 0, 0, 0, c-&gt;w, c-&gt;h);
+ 	for(;;) {
+<a href="#h9-0-6" id="h9-0-6" class="d">-		XMaskEvent(dpy, MouseMask, &amp;ev);
+</a><a href="#h9-0-7" id="h9-0-7" class="i">+		XMaskEvent(dpy, MouseMask | ExposureMask, &amp;ev);
+</a> 		switch(ev.type) {
+ 		default: break;
+<a href="#h9-0-10" id="h9-0-10" class="i">+		case Expose:
+</a><a href="#h9-0-11" id="h9-0-11" class="i">+			handler[Expose](&amp;ev);
+</a><a href="#h9-0-12" id="h9-0-12" class="i">+			break;
+</a> 		case MotionNotify:
+<a href="#h9-0-14" id="h9-0-14" class="d">-			XUngrabServer(dpy);
+</a><a href="#h9-0-15" id="h9-0-15" class="i">+			XFlush(dpy);
+</a> 			mmatch(c, old_cx, old_cy, ev.xmotion.x, ev.xmotion.y);
+ 			XResizeWindow(dpy, c-&gt;win, c-&gt;w, c-&gt;h);
+<a href="#h9-0-18" id="h9-0-18" class="d">-			XGrabServer(dpy);
+</a> 			break;
+ 		case ButtonRelease:
+ 			resize(c);
+<a href="#h9-0-22" id="h9-0-22" class="d">-			XUngrabServer(dpy);
+</a> 			XUngrabPointer(dpy, CurrentTime);
+ 			return;
+ 		}
+<a href="#h9-1" id="h9-1" class="h">@@ -80,21 +80,21 @@ mmove(Client *c)
+</a> 				None, cursor[CurMove], CurrentTime) != GrabSuccess)
+ 		return;
+ 	XQueryPointer(dpy, root, &amp;dummy, &amp;dummy, &amp;x1, &amp;y1, &amp;di, &amp;di, &amp;dui);
+<a href="#h9-1-3" id="h9-1-3" class="d">-	XGrabServer(dpy);
+</a> 	for(;;) {
+<a href="#h9-1-5" id="h9-1-5" class="d">-		XMaskEvent(dpy, MouseMask, &amp;ev);
+</a><a href="#h9-1-6" id="h9-1-6" class="i">+		XMaskEvent(dpy, MouseMask | ExposureMask, &amp;ev);
+</a> 		switch (ev.type) {
+ 		default: break;
+<a href="#h9-1-9" id="h9-1-9" class="i">+		case Expose:
+</a><a href="#h9-1-10" id="h9-1-10" class="i">+			handler[Expose](&amp;ev);
+</a><a href="#h9-1-11" id="h9-1-11" class="i">+			break;
+</a> 		case MotionNotify:
+<a href="#h9-1-13" id="h9-1-13" class="d">-			XUngrabServer(dpy);
+</a><a href="#h9-1-14" id="h9-1-14" class="i">+			XFlush(dpy);
+</a> 			c-&gt;x = old_cx + (ev.xmotion.x - x1);
+ 			c-&gt;y = old_cy + (ev.xmotion.y - y1);
+ 			XMoveResizeWindow(dpy, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+<a href="#h9-1-18" id="h9-1-18" class="d">-			XGrabServer(dpy);
+</a> 			break;
+ 		case ButtonRelease:
+ 			resize(c);
+<a href="#h9-1-22" id="h9-1-22" class="d">-			XUngrabServer(dpy);
+</a> 			XUngrabPointer(dpy, CurrentTime);
+ 			return;
+ 		}
+<b>diff --git a/<a id="h10" href="../file/wm.c.html">wm.c</a> b/<a href="../file/wm.c.html">wm.c</a></b>
+<a href="#h10-0" id="h10-0" class="h">@@ -23,12 +23,11 @@ Display *dpy;
+</a> Window root, barwin;
+ Atom wm_atom[WMLast], net_atom[NetLast];
+ Cursor cursor[CurLast];
+<a href="#h10-0-3" id="h10-0-3" class="d">-XRectangle rect, barrect;
+</a> Bool running = True;
+ Bool sel_screen;
+ 
+ char statustext[1024], tag[256];
+<a href="#h10-0-8" id="h10-0-8" class="d">-int screen;
+</a><a href="#h10-0-9" id="h10-0-9" class="i">+int screen, sx, sy, sw, sh, bx, by, bw, bh;
+</a> 
+ Brush brush = {0};
+ Client *clients = NULL;
+<a href="#h10-1" id="h10-1" class="h">@@ -39,7 +38,7 @@ static const char version[] = &quot;gridwm - &quot; VERSION &quot;, (C)opyright MMVI Anselm R. 
+</a> static int (*x_error_handler) (Display *, XErrorEvent *);
+ 
+ static const char *status[] = {
+<a href="#h10-1-3" id="h10-1-3" class="d">-	&quot;sh&quot;, &quot;-c&quot;, &quot;echo -n `date &#39;+%Y/%m/%d %H:%M&#39;`&quot; 
+</a><a href="#h10-1-4" id="h10-1-4" class="i">+	&quot;sh&quot;, &quot;-c&quot;, &quot;echo -n `date &#39;+%Y-%m-%d %H:%M&#39;`&quot; 
+</a> 	&quot; `uptime | sed &#39;s/.*://; s/,//g&#39;`&quot;
+ 	&quot; `acpi | awk &#39;{print $4}&#39; | sed &#39;s/,//&#39;`&quot;, 0
+ };
+<a href="#h10-2" id="h10-2" class="h">@@ -220,9 +219,9 @@ main(int argc, char *argv[])
+</a> 	if(other_wm_running)
+ 		error(&quot;gridwm: another window manager is already running\n&quot;);
+ 
+<a href="#h10-2-3" id="h10-2-3" class="d">-	rect.x = rect.y = 0;
+</a><a href="#h10-2-4" id="h10-2-4" class="d">-	rect.width = DisplayWidth(dpy, screen);
+</a><a href="#h10-2-5" id="h10-2-5" class="d">-	rect.height = DisplayHeight(dpy, screen);
+</a><a href="#h10-2-6" id="h10-2-6" class="i">+	sx = sy = 0;
+</a><a href="#h10-2-7" id="h10-2-7" class="i">+	sw = DisplayWidth(dpy, screen);
+</a><a href="#h10-2-8" id="h10-2-8" class="i">+	sh = DisplayHeight(dpy, screen);
+</a> 	sel_screen = XQueryPointer(dpy, root, &amp;w, &amp;w, &amp;i, &amp;i, &amp;i, &amp;i, &amp;mask);
+ 
+ 	XSetErrorHandler(0);
+<a href="#h10-3" id="h10-3" class="h">@@ -253,18 +252,16 @@ main(int argc, char *argv[])
+</a> 	wa.background_pixmap = ParentRelative;
+ 	wa.event_mask = ExposureMask;
+ 
+<a href="#h10-3-3" id="h10-3-3" class="d">-	barrect = rect;
+</a><a href="#h10-3-4" id="h10-3-4" class="d">-	barrect.height = labelheight(&amp;brush.font);
+</a><a href="#h10-3-5" id="h10-3-5" class="d">-	barrect.y = rect.height - barrect.height;
+</a><a href="#h10-3-6" id="h10-3-6" class="d">-	barwin = XCreateWindow(dpy, root, barrect.x, barrect.y,
+</a><a href="#h10-3-7" id="h10-3-7" class="d">-			barrect.width, barrect.height, 0, DefaultDepth(dpy, screen),
+</a><a href="#h10-3-8" id="h10-3-8" class="i">+	bx = by = 0;
+</a><a href="#h10-3-9" id="h10-3-9" class="i">+	bw = sw;
+</a><a href="#h10-3-10" id="h10-3-10" class="i">+	bh = texth(&amp;brush.font);
+</a><a href="#h10-3-11" id="h10-3-11" class="i">+	barwin = XCreateWindow(dpy, root, bx, by, bw, bh, 0, DefaultDepth(dpy, screen),
+</a> 			CopyFromParent, DefaultVisual(dpy, screen),
+ 			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+ 	XDefineCursor(dpy, barwin, cursor[CurNormal]);
+ 	XMapRaised(dpy, barwin);
+ 
+<a href="#h10-3-17" id="h10-3-17" class="d">-	brush.drawable = XCreatePixmap(dpy, root, rect.width, barrect.height,
+</a><a href="#h10-3-18" id="h10-3-18" class="d">-			DefaultDepth(dpy, screen));
+</a><a href="#h10-3-19" id="h10-3-19" class="i">+	brush.drawable = XCreatePixmap(dpy, root, sw, bh, DefaultDepth(dpy, screen));
+</a> 	brush.gc = XCreateGC(dpy, root, 0, 0);
+ 
+ 	pipe_spawn(statustext, sizeof(statustext), dpy, (char **)status);
+<b>diff --git a/<a id="h11" href="../file/wm.h.html">wm.h</a> b/<a href="../file/wm.h.html">wm.h</a></b>
+<a href="#h11-0" id="h11-0" class="h">@@ -46,11 +46,10 @@ extern Display *dpy;
+</a> extern Window root, barwin;
+ extern Atom wm_atom[WMLast], net_atom[NetLast];
+ extern Cursor cursor[CurLast];
+<a href="#h11-0-3" id="h11-0-3" class="d">-extern XRectangle rect, barrect;
+</a> extern Bool running, sel_screen, grid;
+ extern void (*handler[LASTEvent]) (XEvent *);
+ 
+<a href="#h11-0-7" id="h11-0-7" class="d">-extern int screen;
+</a><a href="#h11-0-8" id="h11-0-8" class="i">+extern int screen, sx, sy, sw, sh, bx, by, bw, bh;
+</a> extern char statustext[1024], tag[256];
+ 
+ extern Brush brush;
+<a href="#h11-1" id="h11-1" class="h">@@ -75,9 +74,11 @@ extern void draw_client(Client *c);
+</a> extern void resize(Client *c);
+ extern void update_size(Client *c);
+ extern Client *gettitle(Window w);
+<a href="#h11-1-3" id="h11-1-3" class="i">+extern void raise(Client *c);
+</a><a href="#h11-1-4" id="h11-1-4" class="i">+extern void lower(Client *c);
+</a> 
+ /* event.c */
+<a href="#h11-1-7" id="h11-1-7" class="d">-extern unsigned int discard_events(long even_mask);
+</a><a href="#h11-1-8" id="h11-1-8" class="i">+extern void discard_events(long even_mask);
+</a> 
+ /* key.c */
+ extern void update_keys();
+</pre>
+</div>
+</body>
+</html>

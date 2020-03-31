@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adapt zoom() - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/320e4e4388ff65318f6daed76f2ab16b87e20c7b.html">320e4e4388ff65318f6daed76f2ab16b87e20c7b</a>
+<b>parent</b> <a href="../commit/acec16e6854a46f8ead8edec87a8a1c0c1c18425.html">acec16e6854a46f8ead8edec87a8a1c0c1c18425</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Fri, 20 Nov 2015 01:03:32 +0100
+
+Adapt zoom()
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">27</td><td><span class="i">+++++++++++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -65,7 +65,7 @@ typedef struct Client {
+</a> 	const char *needle;
+ 	gint progress;
+ 	struct Client *next;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	gboolean zoomed, fullscreen;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	gboolean fullscreen;
+</a> } Client;
+ 
+ typedef struct {
+<a href="#h0-1" id="h0-1" class="h">@@ -182,7 +182,7 @@ static void togglestyle(Client *c, const Arg *arg);
+</a> static void updatetitle(Client *c);
+ static void updatewinid(Client *c);
+ static void usage(void);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void zoom(Client *c, const Arg *arg);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static void zoom(Client *c, const Arg *a);
+</a> 
+ /* configuration, allows nested code to access above variables */
+ #include &quot;config.h&quot;
+<a href="#h0-2" id="h0-2" class="h">@@ -996,7 +996,6 @@ showview(WebKitWebView *v, Client *c)
+</a> 	gdk_window_set_events(gwin, GDK_ALL_EVENTS_MASK);
+ 	gdk_window_add_filter(gwin, processx, c);
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-	/* This might conflict with _zoomto96dpi_. */
+</a> 	if (zoomlevel != 1.0)
+ 		webkit_web_view_set_zoom_level(c-&gt;view, zoomlevel);
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -1423,20 +1422,16 @@ usage(void)
+</a> }
+ 
+ void
+<a href="#h0-3-3" id="h0-3-3" class="d">-zoom(Client *c, const Arg *arg)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-{
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	c-&gt;zoomed = TRUE;
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-	if (arg-&gt;i &lt; 0) {
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-		/* zoom out */
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-		webkit_web_view_zoom_out(c-&gt;view);
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-	} else if (arg-&gt;i &gt; 0) {
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-		/* zoom in */
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-		webkit_web_view_zoom_in(c-&gt;view);
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-	} else {
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-		/* reset */
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-		c-&gt;zoomed = FALSE;
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+zoom(Client *c, const Arg *a)
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+{
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+	if (a-&gt;i &gt; 0)
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+		webkit_web_view_set_zoom_level(c-&gt;view, zoomlevel + 0.1);
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+	else if (a-&gt;i &lt; 0)
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+		webkit_web_view_set_zoom_level(c-&gt;view, zoomlevel - 0.1);
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+	else
+</a> 		webkit_web_view_set_zoom_level(c-&gt;view, 1.0);
+<a href="#h0-3-23" id="h0-3-23" class="d">-	}
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+	zoomlevel = webkit_web_view_get_zoom_level(c-&gt;view);
+</a> }
+ 
+ int
+</pre>
+</div>
+</body>
+</html>

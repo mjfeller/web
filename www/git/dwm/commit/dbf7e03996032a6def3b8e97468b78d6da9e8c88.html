@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>added gridmenu - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/dbf7e03996032a6def3b8e97468b78d6da9e8c88.html">dbf7e03996032a6def3b8e97468b78d6da9e8c88</a>
+<b>parent</b> <a href="../commit/1076f2b6b3d3751d5d5db6fcb9ac8c247e04e893.html">1076f2b6b3d3751d5d5db6fcb9ac8c247e04e893</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:garbeam@wmii.de">garbeam@wmii.de</a>&gt;
+<b>Date:</b>   Mon, 10 Jul 2006 16:49:43 +0200
+
+added gridmenu
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">38</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">gridmenu.1</a></td><td> | </td><td class="num">84</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h2">gridmenu.c</a></td><td> | </td><td class="num">498</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>3 files changed, 617 insertions(+), 3 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,12 +3,21 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC      = wm.c
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-OBJ      = ${SRC:.c=.o}
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+SRC = wm.c
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+OBJ = ${SRC:.c=.o}
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+MAN = gridwm.1
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+BIN = gridwm gridmenu     
+</a> 
+<a href="#h0-0-10" id="h0-0-10" class="d">-all: gridwm
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+all: config gridwm
+</a> 	@echo finished
+ 
+<a href="#h0-0-14" id="h0-0-14" class="i">+config:
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	@echo gridwm build options:
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	@echo &quot;LIBS     = ${LIBS}&quot;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	@echo &quot;CFLAGS   = ${CFLAGS}&quot;
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	@echo &quot;LDFLAGS  = ${LDFLAGS}&quot;
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	@echo &quot;CC       = ${CC}&quot;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+
+</a> .c.o:
+ 	@echo CC $&lt;
+ 	@${CC} -c ${CFLAGS} $&lt;
+<a href="#h0-1" id="h0-1" class="h">@@ -21,3 +30,26 @@ gridwm: ${OBJ}
+</a> 
+ clean:
+ 	rm -f gridwm *.o
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+dist: clean
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	mkdir -p gridwm-${VERSION}
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	cp -R Makefile README LICENSE config.mk ${SRC} ${MAN} gridwm-${VERSION}
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	tar -cf gridwm-${VERSION}.tar gridwm-${VERSION}
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	gzip gridwm-${VERSION}.tar
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	rm -rf gridwm-${VERSION}
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+install: all
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	@mkdir -p ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	@cp -f ${BIN} ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	@echo installed executable files to ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	@cp -f ${MAN1} ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	@echo installed manual pages to ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+uninstall:
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	for i in ${BIN}; do \
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+		rm -f ${DESTDIR}${PREFIX}/bin/`basename $$i`; \
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	done
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	for i in ${MAN1}; do \
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+		rm -f ${DESTDIR}${MANPREFIX}/man1/`basename $$i`; \
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	done
+</a><b>diff --git a/<a id="h1" href="../file/gridmenu.1.html">gridmenu.1</a> b/<a href="../file/gridmenu.1.html">gridmenu.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,84 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+.TH GRIDMENU 1 grid-0.0
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+.SH NAME
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+gridmenu \- grid window manager menu
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+.SH SYNOPSIS
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+.B gridmenu
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+.RB [ \-v ]
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+.RB [ \-t
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+.IR title ]
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+.SH DESCRIPTION
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+.SS Overview
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+.B gridmenu
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+is a generic, highly customizable, and efficient menu for the X Window System,
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+originally designed for
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+.BR grid (1).
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+It supports arbitrary, user defined menu contents.
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+.SS Options
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+.TP
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+.B \-v
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+prints version information to stdout, then exits.
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+.TP
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+.BI \-t &quot; title&quot;
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+displays
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+.I title
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+above the menu.
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+.SS Usage
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+.B gridmenu
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+reads a list of newline-separated items from stdin and creates a menu.
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+When the user selects an item or enters any text and presses Enter, his choice
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+is printed to stdout and
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+.B gridmenu
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+terminates.
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+.SS Keyboard Control 
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+.B gridmenu
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+is completely controlled by the keyboard.  The following keys are recognized:
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+.TP 2
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+Any printable character
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+appends the character to the text in the input field. This works as a filter:
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+only items containing this text will be displayed.
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+.TP 2
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+Left/Right (Control-p/Control-n)
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+select the previous/next item.
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+.TP 2
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+Tab (Control-i)
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+copy the selected item to the input field.
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+.TP 2
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+Enter (Control-j)
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+confirm selection and quit (print the selected item to stdout).
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+.TP 2
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+Shift-Enter (Shift-Control-j)
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+confirm selection and quit (print the text in the input field to stdout).
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+.TP 2
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+Escape (Control-[)
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+quit without selecting an item.
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+.TP 2
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+Backspace (Control-h)
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+remove enough characters from the input field to change its filtering effect.
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+.TP 2
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+Control-u
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+remove all characters from the input field.
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+.SS Exit codes
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+.B gridmenu
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+returns
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+.B 0
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+if Enter is pressed on termination,
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+.B 1
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+if Escape is pressed.
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+.SH ENVIRONMENT
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+.TP
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+GRID_FONT
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+The X11 font used to display each item in the menu.
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+.br
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+Default: fixed
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+.TP
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+GRID_NORMCOLORS
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+The foreground, background, and border colors of a label. Syntactically, three blank-separated color values of the form #RRGGBB are expected.
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+.br
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+Default: #222222 #eeeeee #666666
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+.TP
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+GRID_SELCOLORS
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+Like GRID_NORMCOLORS, but for the selected label.
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+.br
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+Default: #ffffff #335577 #447799
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+.SH SEE ALSO
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+.BR gridwm (1)
+</a><b>diff --git a/<a id="h2" href="../file/gridmenu.c.html">gridmenu.c</a> b/<a href="../file/gridmenu.c.html">gridmenu.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -0,0 +1,498 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="i">+/*
+</a><a href="#h2-0-1" id="h2-0-1" class="i">+ * (C)opyright MMVI Anselm R. Garbe &lt;garbeam at gmail dot com&gt;
+</a><a href="#h2-0-2" id="h2-0-2" class="i">+ * (C)opyright MMVI Sander van Dijk &lt;a dot h dot vandijk at gmail dot com&gt;
+</a><a href="#h2-0-3" id="h2-0-3" class="i">+ * See LICENSE file for license details.
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+ */
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+#include &lt;ctype.h&gt;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+#include &lt;string.h&gt;
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+#include &lt;sys/stat.h&gt;
+</a><a href="#h2-0-11" id="h2-0-11" class="i">+#include &lt;sys/wait.h&gt;
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+#include &lt;time.h&gt;
+</a><a href="#h2-0-13" id="h2-0-13" class="i">+#include &lt;unistd.h&gt;
+</a><a href="#h2-0-14" id="h2-0-14" class="i">+#include &lt;X11/Xlib.h&gt;
+</a><a href="#h2-0-15" id="h2-0-15" class="i">+#include &lt;X11/cursorfont.h&gt;
+</a><a href="#h2-0-16" id="h2-0-16" class="i">+#include &lt;X11/Xutil.h&gt;
+</a><a href="#h2-0-17" id="h2-0-17" class="i">+#include &lt;X11/keysym.h&gt;
+</a><a href="#h2-0-18" id="h2-0-18" class="i">+
+</a><a href="#h2-0-19" id="h2-0-19" class="i">+#include &lt;blitz.h&gt;
+</a><a href="#h2-0-20" id="h2-0-20" class="i">+#include &lt;cext.h&gt;
+</a><a href="#h2-0-21" id="h2-0-21" class="i">+
+</a><a href="#h2-0-22" id="h2-0-22" class="i">+typedef struct Item Item;
+</a><a href="#h2-0-23" id="h2-0-23" class="i">+
+</a><a href="#h2-0-24" id="h2-0-24" class="i">+struct Item {
+</a><a href="#h2-0-25" id="h2-0-25" class="i">+	Item *next;		/* traverses all items */
+</a><a href="#h2-0-26" id="h2-0-26" class="i">+	Item *left, *right;	/* traverses items matching current search pattern */
+</a><a href="#h2-0-27" id="h2-0-27" class="i">+	char *text;
+</a><a href="#h2-0-28" id="h2-0-28" class="i">+};
+</a><a href="#h2-0-29" id="h2-0-29" class="i">+
+</a><a href="#h2-0-30" id="h2-0-30" class="i">+static char *title = nil;
+</a><a href="#h2-0-31" id="h2-0-31" class="i">+static Bool done = False;
+</a><a href="#h2-0-32" id="h2-0-32" class="i">+static int ret = 0;
+</a><a href="#h2-0-33" id="h2-0-33" class="i">+static char text[4096];
+</a><a href="#h2-0-34" id="h2-0-34" class="i">+static BlitzColor selcolor;
+</a><a href="#h2-0-35" id="h2-0-35" class="i">+static BlitzColor normcolor;
+</a><a href="#h2-0-36" id="h2-0-36" class="i">+static Window win;
+</a><a href="#h2-0-37" id="h2-0-37" class="i">+static XRectangle mrect;
+</a><a href="#h2-0-38" id="h2-0-38" class="i">+static Item *allitem = nil;	/* first of all items */
+</a><a href="#h2-0-39" id="h2-0-39" class="i">+static Item *item = nil;	/* first of pattern matching items */
+</a><a href="#h2-0-40" id="h2-0-40" class="i">+static Item *sel = nil;
+</a><a href="#h2-0-41" id="h2-0-41" class="i">+static Item *nextoff = nil;
+</a><a href="#h2-0-42" id="h2-0-42" class="i">+static Item *prevoff = nil;
+</a><a href="#h2-0-43" id="h2-0-43" class="i">+static Item *curroff = nil;
+</a><a href="#h2-0-44" id="h2-0-44" class="i">+static int nitem = 0;
+</a><a href="#h2-0-45" id="h2-0-45" class="i">+static unsigned int cmdw = 0;
+</a><a href="#h2-0-46" id="h2-0-46" class="i">+static unsigned int twidth = 0;
+</a><a href="#h2-0-47" id="h2-0-47" class="i">+static unsigned int cwidth = 0;
+</a><a href="#h2-0-48" id="h2-0-48" class="i">+static Blitz blz = {0};
+</a><a href="#h2-0-49" id="h2-0-49" class="i">+static BlitzBrush brush = {0};
+</a><a href="#h2-0-50" id="h2-0-50" class="i">+static const int seek = 30;		/* 30px */
+</a><a href="#h2-0-51" id="h2-0-51" class="i">+
+</a><a href="#h2-0-52" id="h2-0-52" class="i">+static void draw_menu(void);
+</a><a href="#h2-0-53" id="h2-0-53" class="i">+static void handle_kpress(XKeyEvent * e);
+</a><a href="#h2-0-54" id="h2-0-54" class="i">+
+</a><a href="#h2-0-55" id="h2-0-55" class="i">+static char version[] = &quot;wmiimenu - &quot; VERSION &quot;, (C)opyright MMIV-MMVI Anselm R. Garbe\n&quot;;
+</a><a href="#h2-0-56" id="h2-0-56" class="i">+
+</a><a href="#h2-0-57" id="h2-0-57" class="i">+static void
+</a><a href="#h2-0-58" id="h2-0-58" class="i">+usage()
+</a><a href="#h2-0-59" id="h2-0-59" class="i">+{
+</a><a href="#h2-0-60" id="h2-0-60" class="i">+	fprintf(stderr, &quot;%s&quot;, &quot;usage: wmiimenu [-v] [-t &lt;title&gt;]\n&quot;);
+</a><a href="#h2-0-61" id="h2-0-61" class="i">+	exit(1);
+</a><a href="#h2-0-62" id="h2-0-62" class="i">+}
+</a><a href="#h2-0-63" id="h2-0-63" class="i">+
+</a><a href="#h2-0-64" id="h2-0-64" class="i">+static void
+</a><a href="#h2-0-65" id="h2-0-65" class="i">+update_offsets()
+</a><a href="#h2-0-66" id="h2-0-66" class="i">+{
+</a><a href="#h2-0-67" id="h2-0-67" class="i">+	unsigned int tw, w = cmdw + 2 * seek;
+</a><a href="#h2-0-68" id="h2-0-68" class="i">+
+</a><a href="#h2-0-69" id="h2-0-69" class="i">+	if(!curroff)
+</a><a href="#h2-0-70" id="h2-0-70" class="i">+		return;
+</a><a href="#h2-0-71" id="h2-0-71" class="i">+
+</a><a href="#h2-0-72" id="h2-0-72" class="i">+	for(nextoff = curroff; nextoff; nextoff=nextoff-&gt;right) {
+</a><a href="#h2-0-73" id="h2-0-73" class="i">+		tw = blitz_textwidth(brush.font, nextoff-&gt;text);
+</a><a href="#h2-0-74" id="h2-0-74" class="i">+		if(tw &gt; mrect.width / 3)
+</a><a href="#h2-0-75" id="h2-0-75" class="i">+			tw = mrect.width / 3;
+</a><a href="#h2-0-76" id="h2-0-76" class="i">+		w += tw + mrect.height;
+</a><a href="#h2-0-77" id="h2-0-77" class="i">+		if(w &gt; mrect.width)
+</a><a href="#h2-0-78" id="h2-0-78" class="i">+			break;
+</a><a href="#h2-0-79" id="h2-0-79" class="i">+	}
+</a><a href="#h2-0-80" id="h2-0-80" class="i">+
+</a><a href="#h2-0-81" id="h2-0-81" class="i">+	w = cmdw + 2 * seek;
+</a><a href="#h2-0-82" id="h2-0-82" class="i">+	for(prevoff = curroff; prevoff &amp;&amp; prevoff-&gt;left; prevoff=prevoff-&gt;left) {
+</a><a href="#h2-0-83" id="h2-0-83" class="i">+		tw = blitz_textwidth(brush.font, prevoff-&gt;left-&gt;text);
+</a><a href="#h2-0-84" id="h2-0-84" class="i">+		if(tw &gt; mrect.width / 3)
+</a><a href="#h2-0-85" id="h2-0-85" class="i">+			tw = mrect.width / 3;
+</a><a href="#h2-0-86" id="h2-0-86" class="i">+		w += tw + mrect.height;
+</a><a href="#h2-0-87" id="h2-0-87" class="i">+		if(w &gt; mrect.width)
+</a><a href="#h2-0-88" id="h2-0-88" class="i">+			break;
+</a><a href="#h2-0-89" id="h2-0-89" class="i">+	}
+</a><a href="#h2-0-90" id="h2-0-90" class="i">+}
+</a><a href="#h2-0-91" id="h2-0-91" class="i">+
+</a><a href="#h2-0-92" id="h2-0-92" class="i">+static void
+</a><a href="#h2-0-93" id="h2-0-93" class="i">+update_items(char *pattern)
+</a><a href="#h2-0-94" id="h2-0-94" class="i">+{
+</a><a href="#h2-0-95" id="h2-0-95" class="i">+	unsigned int plen = strlen(pattern);
+</a><a href="#h2-0-96" id="h2-0-96" class="i">+	Item *i, *j;
+</a><a href="#h2-0-97" id="h2-0-97" class="i">+
+</a><a href="#h2-0-98" id="h2-0-98" class="i">+	if(!pattern)
+</a><a href="#h2-0-99" id="h2-0-99" class="i">+		return;
+</a><a href="#h2-0-100" id="h2-0-100" class="i">+
+</a><a href="#h2-0-101" id="h2-0-101" class="i">+	if(!title || *pattern)
+</a><a href="#h2-0-102" id="h2-0-102" class="i">+		cmdw = cwidth;
+</a><a href="#h2-0-103" id="h2-0-103" class="i">+	else
+</a><a href="#h2-0-104" id="h2-0-104" class="i">+		cmdw = twidth;
+</a><a href="#h2-0-105" id="h2-0-105" class="i">+
+</a><a href="#h2-0-106" id="h2-0-106" class="i">+	item = j = nil;
+</a><a href="#h2-0-107" id="h2-0-107" class="i">+	nitem = 0;
+</a><a href="#h2-0-108" id="h2-0-108" class="i">+
+</a><a href="#h2-0-109" id="h2-0-109" class="i">+	for(i = allitem; i; i=i-&gt;next)
+</a><a href="#h2-0-110" id="h2-0-110" class="i">+		if(!plen || !strncmp(pattern, i-&gt;text, plen)) {
+</a><a href="#h2-0-111" id="h2-0-111" class="i">+			if(!j)
+</a><a href="#h2-0-112" id="h2-0-112" class="i">+				item = i;
+</a><a href="#h2-0-113" id="h2-0-113" class="i">+			else
+</a><a href="#h2-0-114" id="h2-0-114" class="i">+				j-&gt;right = i;
+</a><a href="#h2-0-115" id="h2-0-115" class="i">+			i-&gt;left = j;
+</a><a href="#h2-0-116" id="h2-0-116" class="i">+			i-&gt;right = nil;
+</a><a href="#h2-0-117" id="h2-0-117" class="i">+			j = i;
+</a><a href="#h2-0-118" id="h2-0-118" class="i">+			nitem++;
+</a><a href="#h2-0-119" id="h2-0-119" class="i">+		}
+</a><a href="#h2-0-120" id="h2-0-120" class="i">+	for(i = allitem; i; i=i-&gt;next)
+</a><a href="#h2-0-121" id="h2-0-121" class="i">+		if(plen &amp;&amp; strncmp(pattern, i-&gt;text, plen)
+</a><a href="#h2-0-122" id="h2-0-122" class="i">+				&amp;&amp; strstr(i-&gt;text, pattern)) {
+</a><a href="#h2-0-123" id="h2-0-123" class="i">+			if(!j)
+</a><a href="#h2-0-124" id="h2-0-124" class="i">+				item = i;
+</a><a href="#h2-0-125" id="h2-0-125" class="i">+			else
+</a><a href="#h2-0-126" id="h2-0-126" class="i">+				j-&gt;right = i;
+</a><a href="#h2-0-127" id="h2-0-127" class="i">+			i-&gt;left = j;
+</a><a href="#h2-0-128" id="h2-0-128" class="i">+			i-&gt;right = nil;
+</a><a href="#h2-0-129" id="h2-0-129" class="i">+			j = i;
+</a><a href="#h2-0-130" id="h2-0-130" class="i">+			nitem++;
+</a><a href="#h2-0-131" id="h2-0-131" class="i">+		}
+</a><a href="#h2-0-132" id="h2-0-132" class="i">+
+</a><a href="#h2-0-133" id="h2-0-133" class="i">+	curroff = prevoff = nextoff = sel = item;
+</a><a href="#h2-0-134" id="h2-0-134" class="i">+
+</a><a href="#h2-0-135" id="h2-0-135" class="i">+	update_offsets();
+</a><a href="#h2-0-136" id="h2-0-136" class="i">+}
+</a><a href="#h2-0-137" id="h2-0-137" class="i">+
+</a><a href="#h2-0-138" id="h2-0-138" class="i">+/* creates brush structs for brush mode drawing */
+</a><a href="#h2-0-139" id="h2-0-139" class="i">+static void
+</a><a href="#h2-0-140" id="h2-0-140" class="i">+draw_menu()
+</a><a href="#h2-0-141" id="h2-0-141" class="i">+{
+</a><a href="#h2-0-142" id="h2-0-142" class="i">+	unsigned int offx = 0;
+</a><a href="#h2-0-143" id="h2-0-143" class="i">+
+</a><a href="#h2-0-144" id="h2-0-144" class="i">+	Item *i;
+</a><a href="#h2-0-145" id="h2-0-145" class="i">+
+</a><a href="#h2-0-146" id="h2-0-146" class="i">+	brush.align = WEST;
+</a><a href="#h2-0-147" id="h2-0-147" class="i">+
+</a><a href="#h2-0-148" id="h2-0-148" class="i">+	brush.rect = mrect;
+</a><a href="#h2-0-149" id="h2-0-149" class="i">+	brush.rect.x = 0;
+</a><a href="#h2-0-150" id="h2-0-150" class="i">+	brush.rect.y = 0;
+</a><a href="#h2-0-151" id="h2-0-151" class="i">+	brush.color = normcolor;
+</a><a href="#h2-0-152" id="h2-0-152" class="i">+	brush.border = False;
+</a><a href="#h2-0-153" id="h2-0-153" class="i">+	blitz_draw_tile(&amp;brush);
+</a><a href="#h2-0-154" id="h2-0-154" class="i">+
+</a><a href="#h2-0-155" id="h2-0-155" class="i">+	/* print command */
+</a><a href="#h2-0-156" id="h2-0-156" class="i">+	if(!title || text[0]) {
+</a><a href="#h2-0-157" id="h2-0-157" class="i">+		brush.color = normcolor;
+</a><a href="#h2-0-158" id="h2-0-158" class="i">+		cmdw = cwidth;
+</a><a href="#h2-0-159" id="h2-0-159" class="i">+		if(cmdw &amp;&amp; item)
+</a><a href="#h2-0-160" id="h2-0-160" class="i">+			brush.rect.width = cmdw;
+</a><a href="#h2-0-161" id="h2-0-161" class="i">+		blitz_draw_label(&amp;brush, text);
+</a><a href="#h2-0-162" id="h2-0-162" class="i">+	}
+</a><a href="#h2-0-163" id="h2-0-163" class="i">+	else {
+</a><a href="#h2-0-164" id="h2-0-164" class="i">+		cmdw = twidth;
+</a><a href="#h2-0-165" id="h2-0-165" class="i">+		brush.color = selcolor;
+</a><a href="#h2-0-166" id="h2-0-166" class="i">+		brush.rect.width = cmdw;
+</a><a href="#h2-0-167" id="h2-0-167" class="i">+		blitz_draw_label(&amp;brush, title);
+</a><a href="#h2-0-168" id="h2-0-168" class="i">+	}
+</a><a href="#h2-0-169" id="h2-0-169" class="i">+	offx += brush.rect.width;
+</a><a href="#h2-0-170" id="h2-0-170" class="i">+
+</a><a href="#h2-0-171" id="h2-0-171" class="i">+	brush.align = CENTER;
+</a><a href="#h2-0-172" id="h2-0-172" class="i">+	if(curroff) {
+</a><a href="#h2-0-173" id="h2-0-173" class="i">+		brush.color = normcolor;
+</a><a href="#h2-0-174" id="h2-0-174" class="i">+		brush.rect.x = offx;
+</a><a href="#h2-0-175" id="h2-0-175" class="i">+		brush.rect.width = seek;
+</a><a href="#h2-0-176" id="h2-0-176" class="i">+		offx += brush.rect.width;
+</a><a href="#h2-0-177" id="h2-0-177" class="i">+		blitz_draw_label(&amp;brush, (curroff &amp;&amp; curroff-&gt;left) ? &quot;&lt;&quot; : nil);
+</a><a href="#h2-0-178" id="h2-0-178" class="i">+
+</a><a href="#h2-0-179" id="h2-0-179" class="i">+		/* determine maximum items */
+</a><a href="#h2-0-180" id="h2-0-180" class="i">+		for(i = curroff; i != nextoff; i=i-&gt;right) {
+</a><a href="#h2-0-181" id="h2-0-181" class="i">+			brush.color = normcolor;
+</a><a href="#h2-0-182" id="h2-0-182" class="i">+			brush.border = False;
+</a><a href="#h2-0-183" id="h2-0-183" class="i">+			brush.rect.x = offx;
+</a><a href="#h2-0-184" id="h2-0-184" class="i">+			brush.rect.width = blitz_textwidth(brush.font, i-&gt;text);
+</a><a href="#h2-0-185" id="h2-0-185" class="i">+			if(brush.rect.width &gt; mrect.width / 3)
+</a><a href="#h2-0-186" id="h2-0-186" class="i">+				brush.rect.width = mrect.width / 3;
+</a><a href="#h2-0-187" id="h2-0-187" class="i">+			brush.rect.width += mrect.height;
+</a><a href="#h2-0-188" id="h2-0-188" class="i">+			if(sel == i) {
+</a><a href="#h2-0-189" id="h2-0-189" class="i">+				brush.color = selcolor;
+</a><a href="#h2-0-190" id="h2-0-190" class="i">+				brush.border = True;
+</a><a href="#h2-0-191" id="h2-0-191" class="i">+			}
+</a><a href="#h2-0-192" id="h2-0-192" class="i">+			blitz_draw_label(&amp;brush, i-&gt;text);
+</a><a href="#h2-0-193" id="h2-0-193" class="i">+			offx += brush.rect.width;
+</a><a href="#h2-0-194" id="h2-0-194" class="i">+		}
+</a><a href="#h2-0-195" id="h2-0-195" class="i">+
+</a><a href="#h2-0-196" id="h2-0-196" class="i">+		brush.color = normcolor;
+</a><a href="#h2-0-197" id="h2-0-197" class="i">+		brush.border = False;
+</a><a href="#h2-0-198" id="h2-0-198" class="i">+		brush.rect.x = mrect.width - seek;
+</a><a href="#h2-0-199" id="h2-0-199" class="i">+		brush.rect.width = seek;
+</a><a href="#h2-0-200" id="h2-0-200" class="i">+		blitz_draw_label(&amp;brush, nextoff ? &quot;&gt;&quot; : nil);
+</a><a href="#h2-0-201" id="h2-0-201" class="i">+	}
+</a><a href="#h2-0-202" id="h2-0-202" class="i">+	XCopyArea(blz.dpy, brush.drawable, win, brush.gc, 0, 0, mrect.width,
+</a><a href="#h2-0-203" id="h2-0-203" class="i">+			mrect.height, 0, 0);
+</a><a href="#h2-0-204" id="h2-0-204" class="i">+	XSync(blz.dpy, False);
+</a><a href="#h2-0-205" id="h2-0-205" class="i">+}
+</a><a href="#h2-0-206" id="h2-0-206" class="i">+
+</a><a href="#h2-0-207" id="h2-0-207" class="i">+static void
+</a><a href="#h2-0-208" id="h2-0-208" class="i">+handle_kpress(XKeyEvent * e)
+</a><a href="#h2-0-209" id="h2-0-209" class="i">+{
+</a><a href="#h2-0-210" id="h2-0-210" class="i">+	KeySym ksym;
+</a><a href="#h2-0-211" id="h2-0-211" class="i">+	char buf[32];
+</a><a href="#h2-0-212" id="h2-0-212" class="i">+	int num, prev_nitem;
+</a><a href="#h2-0-213" id="h2-0-213" class="i">+	unsigned int i, len = strlen(text);
+</a><a href="#h2-0-214" id="h2-0-214" class="i">+
+</a><a href="#h2-0-215" id="h2-0-215" class="i">+	buf[0] = 0;
+</a><a href="#h2-0-216" id="h2-0-216" class="i">+	num = XLookupString(e, buf, sizeof(buf), &amp;ksym, 0);
+</a><a href="#h2-0-217" id="h2-0-217" class="i">+
+</a><a href="#h2-0-218" id="h2-0-218" class="i">+	if(IsFunctionKey(ksym) || IsKeypadKey(ksym)
+</a><a href="#h2-0-219" id="h2-0-219" class="i">+			|| IsMiscFunctionKey(ksym) || IsPFKey(ksym)
+</a><a href="#h2-0-220" id="h2-0-220" class="i">+			|| IsPrivateKeypadKey(ksym))
+</a><a href="#h2-0-221" id="h2-0-221" class="i">+		return;
+</a><a href="#h2-0-222" id="h2-0-222" class="i">+
+</a><a href="#h2-0-223" id="h2-0-223" class="i">+	/* first check if a control mask is omitted */
+</a><a href="#h2-0-224" id="h2-0-224" class="i">+	if(e-&gt;state &amp; ControlMask) {
+</a><a href="#h2-0-225" id="h2-0-225" class="i">+		switch (ksym) {
+</a><a href="#h2-0-226" id="h2-0-226" class="i">+		case XK_H:
+</a><a href="#h2-0-227" id="h2-0-227" class="i">+		case XK_h:
+</a><a href="#h2-0-228" id="h2-0-228" class="i">+			ksym = XK_BackSpace;
+</a><a href="#h2-0-229" id="h2-0-229" class="i">+			break;
+</a><a href="#h2-0-230" id="h2-0-230" class="i">+		case XK_I:
+</a><a href="#h2-0-231" id="h2-0-231" class="i">+		case XK_i:
+</a><a href="#h2-0-232" id="h2-0-232" class="i">+			ksym = XK_Tab;
+</a><a href="#h2-0-233" id="h2-0-233" class="i">+			break;
+</a><a href="#h2-0-234" id="h2-0-234" class="i">+		case XK_J:
+</a><a href="#h2-0-235" id="h2-0-235" class="i">+		case XK_j:
+</a><a href="#h2-0-236" id="h2-0-236" class="i">+			ksym = XK_Return;
+</a><a href="#h2-0-237" id="h2-0-237" class="i">+			break;
+</a><a href="#h2-0-238" id="h2-0-238" class="i">+		case XK_N:
+</a><a href="#h2-0-239" id="h2-0-239" class="i">+		case XK_n:
+</a><a href="#h2-0-240" id="h2-0-240" class="i">+			ksym = XK_Right;
+</a><a href="#h2-0-241" id="h2-0-241" class="i">+			break;
+</a><a href="#h2-0-242" id="h2-0-242" class="i">+		case XK_P:
+</a><a href="#h2-0-243" id="h2-0-243" class="i">+		case XK_p:
+</a><a href="#h2-0-244" id="h2-0-244" class="i">+			ksym = XK_Left;
+</a><a href="#h2-0-245" id="h2-0-245" class="i">+			break;
+</a><a href="#h2-0-246" id="h2-0-246" class="i">+		case XK_U:
+</a><a href="#h2-0-247" id="h2-0-247" class="i">+		case XK_u:
+</a><a href="#h2-0-248" id="h2-0-248" class="i">+			text[0] = 0;
+</a><a href="#h2-0-249" id="h2-0-249" class="i">+			update_items(text);
+</a><a href="#h2-0-250" id="h2-0-250" class="i">+			draw_menu();
+</a><a href="#h2-0-251" id="h2-0-251" class="i">+			return;
+</a><a href="#h2-0-252" id="h2-0-252" class="i">+			break;
+</a><a href="#h2-0-253" id="h2-0-253" class="i">+		case XK_bracketleft:
+</a><a href="#h2-0-254" id="h2-0-254" class="i">+			ksym = XK_Escape;
+</a><a href="#h2-0-255" id="h2-0-255" class="i">+			break;
+</a><a href="#h2-0-256" id="h2-0-256" class="i">+		default:	/* ignore other control sequences */
+</a><a href="#h2-0-257" id="h2-0-257" class="i">+			return;
+</a><a href="#h2-0-258" id="h2-0-258" class="i">+			break;
+</a><a href="#h2-0-259" id="h2-0-259" class="i">+		}
+</a><a href="#h2-0-260" id="h2-0-260" class="i">+	}
+</a><a href="#h2-0-261" id="h2-0-261" class="i">+	switch (ksym) {
+</a><a href="#h2-0-262" id="h2-0-262" class="i">+	case XK_Left:
+</a><a href="#h2-0-263" id="h2-0-263" class="i">+		if(!(sel &amp;&amp; sel-&gt;left))
+</a><a href="#h2-0-264" id="h2-0-264" class="i">+			return;
+</a><a href="#h2-0-265" id="h2-0-265" class="i">+		sel=sel-&gt;left;
+</a><a href="#h2-0-266" id="h2-0-266" class="i">+		if(sel-&gt;right == curroff) {
+</a><a href="#h2-0-267" id="h2-0-267" class="i">+			curroff = prevoff;
+</a><a href="#h2-0-268" id="h2-0-268" class="i">+			update_offsets();
+</a><a href="#h2-0-269" id="h2-0-269" class="i">+		}
+</a><a href="#h2-0-270" id="h2-0-270" class="i">+		break;
+</a><a href="#h2-0-271" id="h2-0-271" class="i">+	case XK_Tab:
+</a><a href="#h2-0-272" id="h2-0-272" class="i">+		if(!sel)
+</a><a href="#h2-0-273" id="h2-0-273" class="i">+			return;
+</a><a href="#h2-0-274" id="h2-0-274" class="i">+		cext_strlcpy(text, sel-&gt;text, sizeof(text));
+</a><a href="#h2-0-275" id="h2-0-275" class="i">+		update_items(text);
+</a><a href="#h2-0-276" id="h2-0-276" class="i">+		break;
+</a><a href="#h2-0-277" id="h2-0-277" class="i">+	case XK_Right:
+</a><a href="#h2-0-278" id="h2-0-278" class="i">+		if(!(sel &amp;&amp; sel-&gt;right))
+</a><a href="#h2-0-279" id="h2-0-279" class="i">+			return;
+</a><a href="#h2-0-280" id="h2-0-280" class="i">+		sel=sel-&gt;right;
+</a><a href="#h2-0-281" id="h2-0-281" class="i">+		if(sel == nextoff) {
+</a><a href="#h2-0-282" id="h2-0-282" class="i">+			curroff = nextoff;
+</a><a href="#h2-0-283" id="h2-0-283" class="i">+			update_offsets();
+</a><a href="#h2-0-284" id="h2-0-284" class="i">+		}
+</a><a href="#h2-0-285" id="h2-0-285" class="i">+		break;
+</a><a href="#h2-0-286" id="h2-0-286" class="i">+	case XK_Return:
+</a><a href="#h2-0-287" id="h2-0-287" class="i">+		if(e-&gt;state &amp; ShiftMask) {
+</a><a href="#h2-0-288" id="h2-0-288" class="i">+			if(text)
+</a><a href="#h2-0-289" id="h2-0-289" class="i">+				fprintf(stdout, &quot;%s&quot;, text);
+</a><a href="#h2-0-290" id="h2-0-290" class="i">+		}
+</a><a href="#h2-0-291" id="h2-0-291" class="i">+		else if(sel)
+</a><a href="#h2-0-292" id="h2-0-292" class="i">+			fprintf(stdout, &quot;%s&quot;, sel-&gt;text);
+</a><a href="#h2-0-293" id="h2-0-293" class="i">+		else if(text)
+</a><a href="#h2-0-294" id="h2-0-294" class="i">+			fprintf(stdout, &quot;%s&quot;, text);
+</a><a href="#h2-0-295" id="h2-0-295" class="i">+		fflush(stdout);
+</a><a href="#h2-0-296" id="h2-0-296" class="i">+		done = True;
+</a><a href="#h2-0-297" id="h2-0-297" class="i">+		break;
+</a><a href="#h2-0-298" id="h2-0-298" class="i">+	case XK_Escape:
+</a><a href="#h2-0-299" id="h2-0-299" class="i">+		ret = 1;
+</a><a href="#h2-0-300" id="h2-0-300" class="i">+		done = True;
+</a><a href="#h2-0-301" id="h2-0-301" class="i">+		break;
+</a><a href="#h2-0-302" id="h2-0-302" class="i">+	case XK_BackSpace:
+</a><a href="#h2-0-303" id="h2-0-303" class="i">+		if((i = len)) {
+</a><a href="#h2-0-304" id="h2-0-304" class="i">+			prev_nitem = nitem;
+</a><a href="#h2-0-305" id="h2-0-305" class="i">+			do {
+</a><a href="#h2-0-306" id="h2-0-306" class="i">+				text[--i] = 0;
+</a><a href="#h2-0-307" id="h2-0-307" class="i">+				update_items(text);
+</a><a href="#h2-0-308" id="h2-0-308" class="i">+			} while(i &amp;&amp; nitem &amp;&amp; prev_nitem == nitem);
+</a><a href="#h2-0-309" id="h2-0-309" class="i">+			update_items(text);
+</a><a href="#h2-0-310" id="h2-0-310" class="i">+		}
+</a><a href="#h2-0-311" id="h2-0-311" class="i">+		break;
+</a><a href="#h2-0-312" id="h2-0-312" class="i">+	default:
+</a><a href="#h2-0-313" id="h2-0-313" class="i">+		if((num == 1) &amp;&amp; !iscntrl((int) buf[0])) {
+</a><a href="#h2-0-314" id="h2-0-314" class="i">+			buf[num] = 0;
+</a><a href="#h2-0-315" id="h2-0-315" class="i">+			if(len &gt; 0)
+</a><a href="#h2-0-316" id="h2-0-316" class="i">+				cext_strlcat(text, buf, sizeof(text));
+</a><a href="#h2-0-317" id="h2-0-317" class="i">+			else
+</a><a href="#h2-0-318" id="h2-0-318" class="i">+				cext_strlcpy(text, buf, sizeof(text));
+</a><a href="#h2-0-319" id="h2-0-319" class="i">+			update_items(text);
+</a><a href="#h2-0-320" id="h2-0-320" class="i">+		}
+</a><a href="#h2-0-321" id="h2-0-321" class="i">+	}
+</a><a href="#h2-0-322" id="h2-0-322" class="i">+	draw_menu();
+</a><a href="#h2-0-323" id="h2-0-323" class="i">+}
+</a><a href="#h2-0-324" id="h2-0-324" class="i">+
+</a><a href="#h2-0-325" id="h2-0-325" class="i">+static char *
+</a><a href="#h2-0-326" id="h2-0-326" class="i">+read_allitems()
+</a><a href="#h2-0-327" id="h2-0-327" class="i">+{
+</a><a href="#h2-0-328" id="h2-0-328" class="i">+	static char *maxname = nil;
+</a><a href="#h2-0-329" id="h2-0-329" class="i">+	char *p, buf[1024];
+</a><a href="#h2-0-330" id="h2-0-330" class="i">+	unsigned int len = 0, max = 0;
+</a><a href="#h2-0-331" id="h2-0-331" class="i">+	Item *i, *new;
+</a><a href="#h2-0-332" id="h2-0-332" class="i">+
+</a><a href="#h2-0-333" id="h2-0-333" class="i">+	i = nil;
+</a><a href="#h2-0-334" id="h2-0-334" class="i">+	while(fgets(buf, sizeof(buf), stdin)) {
+</a><a href="#h2-0-335" id="h2-0-335" class="i">+		len = strlen(buf);
+</a><a href="#h2-0-336" id="h2-0-336" class="i">+		if (buf[len - 1] == &#39;\n&#39;)
+</a><a href="#h2-0-337" id="h2-0-337" class="i">+			buf[len - 1] = 0;
+</a><a href="#h2-0-338" id="h2-0-338" class="i">+		p = cext_estrdup(buf);
+</a><a href="#h2-0-339" id="h2-0-339" class="i">+		if(max &lt; len) {
+</a><a href="#h2-0-340" id="h2-0-340" class="i">+			maxname = p;
+</a><a href="#h2-0-341" id="h2-0-341" class="i">+			max = len;
+</a><a href="#h2-0-342" id="h2-0-342" class="i">+		}
+</a><a href="#h2-0-343" id="h2-0-343" class="i">+
+</a><a href="#h2-0-344" id="h2-0-344" class="i">+		new = cext_emalloc(sizeof(Item));
+</a><a href="#h2-0-345" id="h2-0-345" class="i">+		new-&gt;next = new-&gt;left = new-&gt;right = nil;
+</a><a href="#h2-0-346" id="h2-0-346" class="i">+		new-&gt;text = p;
+</a><a href="#h2-0-347" id="h2-0-347" class="i">+		if(!i)
+</a><a href="#h2-0-348" id="h2-0-348" class="i">+			allitem = new;
+</a><a href="#h2-0-349" id="h2-0-349" class="i">+		else 
+</a><a href="#h2-0-350" id="h2-0-350" class="i">+			i-&gt;next = new;
+</a><a href="#h2-0-351" id="h2-0-351" class="i">+		i = new;
+</a><a href="#h2-0-352" id="h2-0-352" class="i">+	}
+</a><a href="#h2-0-353" id="h2-0-353" class="i">+
+</a><a href="#h2-0-354" id="h2-0-354" class="i">+	return maxname;
+</a><a href="#h2-0-355" id="h2-0-355" class="i">+}
+</a><a href="#h2-0-356" id="h2-0-356" class="i">+
+</a><a href="#h2-0-357" id="h2-0-357" class="i">+int
+</a><a href="#h2-0-358" id="h2-0-358" class="i">+main(int argc, char *argv[])
+</a><a href="#h2-0-359" id="h2-0-359" class="i">+{
+</a><a href="#h2-0-360" id="h2-0-360" class="i">+	int i;
+</a><a href="#h2-0-361" id="h2-0-361" class="i">+	XSetWindowAttributes wa;
+</a><a href="#h2-0-362" id="h2-0-362" class="i">+	char *maxname, *p;
+</a><a href="#h2-0-363" id="h2-0-363" class="i">+	BlitzFont font = {0};
+</a><a href="#h2-0-364" id="h2-0-364" class="i">+	GC gc;
+</a><a href="#h2-0-365" id="h2-0-365" class="i">+	Drawable pmap;
+</a><a href="#h2-0-366" id="h2-0-366" class="i">+	XEvent ev;
+</a><a href="#h2-0-367" id="h2-0-367" class="i">+
+</a><a href="#h2-0-368" id="h2-0-368" class="i">+	/* command line args */
+</a><a href="#h2-0-369" id="h2-0-369" class="i">+	for(i = 1; i &lt; argc; i++) {
+</a><a href="#h2-0-370" id="h2-0-370" class="i">+		if (argv[i][0] == &#39;-&#39;)
+</a><a href="#h2-0-371" id="h2-0-371" class="i">+			switch (argv[i][1]) {
+</a><a href="#h2-0-372" id="h2-0-372" class="i">+			case &#39;v&#39;:
+</a><a href="#h2-0-373" id="h2-0-373" class="i">+				fprintf(stdout, &quot;%s&quot;, version);
+</a><a href="#h2-0-374" id="h2-0-374" class="i">+				exit(0);
+</a><a href="#h2-0-375" id="h2-0-375" class="i">+				break;
+</a><a href="#h2-0-376" id="h2-0-376" class="i">+			case &#39;t&#39;:
+</a><a href="#h2-0-377" id="h2-0-377" class="i">+				if(++i &lt; argc)
+</a><a href="#h2-0-378" id="h2-0-378" class="i">+					title = argv[i];
+</a><a href="#h2-0-379" id="h2-0-379" class="i">+				else
+</a><a href="#h2-0-380" id="h2-0-380" class="i">+					usage();
+</a><a href="#h2-0-381" id="h2-0-381" class="i">+				break;
+</a><a href="#h2-0-382" id="h2-0-382" class="i">+			default:
+</a><a href="#h2-0-383" id="h2-0-383" class="i">+				usage();
+</a><a href="#h2-0-384" id="h2-0-384" class="i">+				break;
+</a><a href="#h2-0-385" id="h2-0-385" class="i">+			}
+</a><a href="#h2-0-386" id="h2-0-386" class="i">+		else
+</a><a href="#h2-0-387" id="h2-0-387" class="i">+			usage();
+</a><a href="#h2-0-388" id="h2-0-388" class="i">+	}
+</a><a href="#h2-0-389" id="h2-0-389" class="i">+
+</a><a href="#h2-0-390" id="h2-0-390" class="i">+	blz.dpy = XOpenDisplay(0);
+</a><a href="#h2-0-391" id="h2-0-391" class="i">+	if(!blz.dpy) {
+</a><a href="#h2-0-392" id="h2-0-392" class="i">+		fprintf(stderr, &quot;%s&quot;, &quot;wmiimenu: cannot open dpy\n&quot;);
+</a><a href="#h2-0-393" id="h2-0-393" class="i">+		exit(1);
+</a><a href="#h2-0-394" id="h2-0-394" class="i">+	}
+</a><a href="#h2-0-395" id="h2-0-395" class="i">+	blz.screen = DefaultScreen(blz.dpy);
+</a><a href="#h2-0-396" id="h2-0-396" class="i">+	blz.root = RootWindow(blz.dpy, blz.screen);
+</a><a href="#h2-0-397" id="h2-0-397" class="i">+
+</a><a href="#h2-0-398" id="h2-0-398" class="i">+	maxname = read_allitems();
+</a><a href="#h2-0-399" id="h2-0-399" class="i">+
+</a><a href="#h2-0-400" id="h2-0-400" class="i">+	/* grab as early as possible, but after reading all items!!! */
+</a><a href="#h2-0-401" id="h2-0-401" class="i">+	while(XGrabKeyboard
+</a><a href="#h2-0-402" id="h2-0-402" class="i">+			(blz.dpy, blz.root, True, GrabModeAsync,
+</a><a href="#h2-0-403" id="h2-0-403" class="i">+			 GrabModeAsync, CurrentTime) != GrabSuccess)
+</a><a href="#h2-0-404" id="h2-0-404" class="i">+		usleep(1000);
+</a><a href="#h2-0-405" id="h2-0-405" class="i">+
+</a><a href="#h2-0-406" id="h2-0-406" class="i">+	font.fontstr = getenv(&quot;WMII_FONT&quot;);
+</a><a href="#h2-0-407" id="h2-0-407" class="i">+	if (!font.fontstr)
+</a><a href="#h2-0-408" id="h2-0-408" class="i">+		font.fontstr = cext_estrdup(BLITZ_FONT);
+</a><a href="#h2-0-409" id="h2-0-409" class="i">+	blitz_loadfont(&amp;blz, &amp;font);
+</a><a href="#h2-0-410" id="h2-0-410" class="i">+
+</a><a href="#h2-0-411" id="h2-0-411" class="i">+	if((p = getenv(&quot;WMII_NORMCOLORS&quot;)))
+</a><a href="#h2-0-412" id="h2-0-412" class="i">+		cext_strlcpy(normcolor.colstr, p, sizeof(normcolor.colstr));
+</a><a href="#h2-0-413" id="h2-0-413" class="i">+	if(strlen(normcolor.colstr) != 23)
+</a><a href="#h2-0-414" id="h2-0-414" class="i">+		cext_strlcpy(normcolor.colstr, BLITZ_NORMCOLORS, sizeof(normcolor.colstr));
+</a><a href="#h2-0-415" id="h2-0-415" class="i">+	blitz_loadcolor(&amp;blz, &amp;normcolor);
+</a><a href="#h2-0-416" id="h2-0-416" class="i">+
+</a><a href="#h2-0-417" id="h2-0-417" class="i">+	if((p = getenv(&quot;WMII_SELCOLORS&quot;)))
+</a><a href="#h2-0-418" id="h2-0-418" class="i">+		cext_strlcpy(selcolor.colstr, p, sizeof(selcolor.colstr));
+</a><a href="#h2-0-419" id="h2-0-419" class="i">+	if(strlen(selcolor.colstr) != 23)
+</a><a href="#h2-0-420" id="h2-0-420" class="i">+		cext_strlcpy(selcolor.colstr, BLITZ_SELCOLORS, sizeof(selcolor.colstr));
+</a><a href="#h2-0-421" id="h2-0-421" class="i">+	blitz_loadcolor(&amp;blz, &amp;selcolor);
+</a><a href="#h2-0-422" id="h2-0-422" class="i">+
+</a><a href="#h2-0-423" id="h2-0-423" class="i">+	wa.override_redirect = 1;
+</a><a href="#h2-0-424" id="h2-0-424" class="i">+	wa.background_pixmap = ParentRelative;
+</a><a href="#h2-0-425" id="h2-0-425" class="i">+	wa.event_mask = ExposureMask | ButtonPressMask | KeyPressMask
+</a><a href="#h2-0-426" id="h2-0-426" class="i">+		| SubstructureRedirectMask | SubstructureNotifyMask;
+</a><a href="#h2-0-427" id="h2-0-427" class="i">+
+</a><a href="#h2-0-428" id="h2-0-428" class="i">+	mrect.width = DisplayWidth(blz.dpy, blz.screen);
+</a><a href="#h2-0-429" id="h2-0-429" class="i">+	mrect.height = font.ascent + font.descent + 4;
+</a><a href="#h2-0-430" id="h2-0-430" class="i">+	mrect.y = DisplayHeight(blz.dpy, blz.screen) - mrect.height;
+</a><a href="#h2-0-431" id="h2-0-431" class="i">+	mrect.x = 0;
+</a><a href="#h2-0-432" id="h2-0-432" class="i">+
+</a><a href="#h2-0-433" id="h2-0-433" class="i">+	win = XCreateWindow(blz.dpy, blz.root, mrect.x, mrect.y,
+</a><a href="#h2-0-434" id="h2-0-434" class="i">+			mrect.width, mrect.height, 0, DefaultDepth(blz.dpy, blz.screen),
+</a><a href="#h2-0-435" id="h2-0-435" class="i">+			CopyFromParent, DefaultVisual(blz.dpy, blz.screen),
+</a><a href="#h2-0-436" id="h2-0-436" class="i">+			CWOverrideRedirect | CWBackPixmap | CWEventMask, &amp;wa);
+</a><a href="#h2-0-437" id="h2-0-437" class="i">+	XDefineCursor(blz.dpy, win, XCreateFontCursor(blz.dpy, XC_xterm));
+</a><a href="#h2-0-438" id="h2-0-438" class="i">+	XSync(blz.dpy, False);
+</a><a href="#h2-0-439" id="h2-0-439" class="i">+
+</a><a href="#h2-0-440" id="h2-0-440" class="i">+	/* pixmap */
+</a><a href="#h2-0-441" id="h2-0-441" class="i">+	gc = XCreateGC(blz.dpy, win, 0, 0);
+</a><a href="#h2-0-442" id="h2-0-442" class="i">+	pmap = XCreatePixmap(blz.dpy, win, mrect.width, mrect.height,
+</a><a href="#h2-0-443" id="h2-0-443" class="i">+			DefaultDepth(blz.dpy, blz.screen));
+</a><a href="#h2-0-444" id="h2-0-444" class="i">+
+</a><a href="#h2-0-445" id="h2-0-445" class="i">+	XSync(blz.dpy, False);
+</a><a href="#h2-0-446" id="h2-0-446" class="i">+
+</a><a href="#h2-0-447" id="h2-0-447" class="i">+	brush.blitz = &amp;blz;
+</a><a href="#h2-0-448" id="h2-0-448" class="i">+	brush.color = normcolor;
+</a><a href="#h2-0-449" id="h2-0-449" class="i">+	brush.drawable = pmap;
+</a><a href="#h2-0-450" id="h2-0-450" class="i">+	brush.gc = gc;
+</a><a href="#h2-0-451" id="h2-0-451" class="i">+	brush.font = &amp;font;
+</a><a href="#h2-0-452" id="h2-0-452" class="i">+
+</a><a href="#h2-0-453" id="h2-0-453" class="i">+	if(maxname)
+</a><a href="#h2-0-454" id="h2-0-454" class="i">+		cwidth = blitz_textwidth(brush.font, maxname) + mrect.height;
+</a><a href="#h2-0-455" id="h2-0-455" class="i">+	if(cwidth &gt; mrect.width / 3)
+</a><a href="#h2-0-456" id="h2-0-456" class="i">+		cwidth = mrect.width / 3;
+</a><a href="#h2-0-457" id="h2-0-457" class="i">+
+</a><a href="#h2-0-458" id="h2-0-458" class="i">+	if(title) {
+</a><a href="#h2-0-459" id="h2-0-459" class="i">+		twidth = blitz_textwidth(brush.font, title) + mrect.height;
+</a><a href="#h2-0-460" id="h2-0-460" class="i">+		if(twidth &gt; mrect.width / 3)
+</a><a href="#h2-0-461" id="h2-0-461" class="i">+			twidth = mrect.width / 3;
+</a><a href="#h2-0-462" id="h2-0-462" class="i">+	}
+</a><a href="#h2-0-463" id="h2-0-463" class="i">+
+</a><a href="#h2-0-464" id="h2-0-464" class="i">+	cmdw = title ? twidth : cwidth;
+</a><a href="#h2-0-465" id="h2-0-465" class="i">+
+</a><a href="#h2-0-466" id="h2-0-466" class="i">+	text[0] = 0;
+</a><a href="#h2-0-467" id="h2-0-467" class="i">+	update_items(text);
+</a><a href="#h2-0-468" id="h2-0-468" class="i">+	XMapRaised(blz.dpy, win);
+</a><a href="#h2-0-469" id="h2-0-469" class="i">+	draw_menu();
+</a><a href="#h2-0-470" id="h2-0-470" class="i">+	XSync(blz.dpy, False);
+</a><a href="#h2-0-471" id="h2-0-471" class="i">+
+</a><a href="#h2-0-472" id="h2-0-472" class="i">+	/* main event loop */
+</a><a href="#h2-0-473" id="h2-0-473" class="i">+	while(!XNextEvent(blz.dpy, &amp;ev)) {
+</a><a href="#h2-0-474" id="h2-0-474" class="i">+		switch (ev.type) {
+</a><a href="#h2-0-475" id="h2-0-475" class="i">+			case KeyPress:
+</a><a href="#h2-0-476" id="h2-0-476" class="i">+				handle_kpress(&amp;ev.xkey);
+</a><a href="#h2-0-477" id="h2-0-477" class="i">+				break;
+</a><a href="#h2-0-478" id="h2-0-478" class="i">+			case Expose:
+</a><a href="#h2-0-479" id="h2-0-479" class="i">+				if(ev.xexpose.count == 0) {
+</a><a href="#h2-0-480" id="h2-0-480" class="i">+					draw_menu();
+</a><a href="#h2-0-481" id="h2-0-481" class="i">+				}
+</a><a href="#h2-0-482" id="h2-0-482" class="i">+				break;
+</a><a href="#h2-0-483" id="h2-0-483" class="i">+			default:
+</a><a href="#h2-0-484" id="h2-0-484" class="i">+				break;
+</a><a href="#h2-0-485" id="h2-0-485" class="i">+		}
+</a><a href="#h2-0-486" id="h2-0-486" class="i">+		if(done)
+</a><a href="#h2-0-487" id="h2-0-487" class="i">+			break;
+</a><a href="#h2-0-488" id="h2-0-488" class="i">+	}
+</a><a href="#h2-0-489" id="h2-0-489" class="i">+
+</a><a href="#h2-0-490" id="h2-0-490" class="i">+	XUngrabKeyboard(blz.dpy, CurrentTime);
+</a><a href="#h2-0-491" id="h2-0-491" class="i">+	XFreePixmap(blz.dpy, pmap);
+</a><a href="#h2-0-492" id="h2-0-492" class="i">+	XFreeGC(blz.dpy, gc);
+</a><a href="#h2-0-493" id="h2-0-493" class="i">+	XDestroyWindow(blz.dpy, win);
+</a><a href="#h2-0-494" id="h2-0-494" class="i">+	XCloseDisplay(blz.dpy);
+</a><a href="#h2-0-495" id="h2-0-495" class="i">+
+</a><a href="#h2-0-496" id="h2-0-496" class="i">+	return ret;
+</a><a href="#h2-0-497" id="h2-0-497" class="i">+}
+</a></pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Use the surf user agent when downloading with wget. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/df96fe4171c525968a81c794dc534dfb628807e7.html">df96fe4171c525968a81c794dc534dfb628807e7</a>
+<b>parent</b> <a href="../commit/543d0c77ee1ec96f57966e06337eb0351adae017.html">543d0c77ee1ec96f57966e06337eb0351adae017</a>
+<b>Author:</b> Troels Henriksen &lt;<a href="mailto:athas@sigkill.dk">athas@sigkill.dk</a>&gt;
+<b>Date:</b>   Sat,  5 Nov 2011 11:43:46 +0100
+
+Use the surf user agent when downloading with wget.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">7</td><td><span class="i">++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">surf.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 5 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,10 +15,11 @@ static char *strictssl      = FALSE; /* Refuse untrusted SSL connections */
+</a> 	&quot;prop=\&quot;`xprop -id $2 $0 | cut -d &#39;\&quot;&#39; -f 2 | dmenu`\&quot; &amp;&amp;&quot; \
+ 	&quot;xprop -id $2 -f $1 8s -set $1 \&quot;$prop\&quot;&quot;, \
+ 	p, q, winid, NULL } }
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define DOWNLOAD(d) { \
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define DOWNLOAD(d, u) {                  \
+</a> 	.v = (char *[]){ &quot;/bin/sh&quot;, &quot;-c&quot;, \
+<a href="#h0-0-6" id="h0-0-6" class="d">-	&quot;xterm -e \&quot;wget --load-cookies ~/.surf/cookies.txt &#39;$0&#39;;\&quot;&quot;, \
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	d, NULL } }
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	&quot;xterm -e \&quot;wget &#39;$0&#39; \
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+--load-cookies ~/.surf/cookies.txt \
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+--user-agent &#39;$1&#39; ; sleep 5\&quot;&quot;, d, u, NULL } }
+</a> #define MODKEY GDK_CONTROL_MASK
+ static Key keys[] = {
+     /* modifier	            keyval      function    arg             Focus */
+<b>diff --git a/<a id="h1" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -345,7 +345,7 @@ initdownload(WebKitWebView *view, WebKitDownload *o, Client *c) {
+</a> 	Arg arg;
+ 
+ 	updatewinid(c);
+<a href="#h1-0-3" id="h1-0-3" class="d">-	arg = (Arg)DOWNLOAD((char *)webkit_download_get_uri(o));
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	arg = (Arg)DOWNLOAD((char *)webkit_download_get_uri(o), useragent);
+</a> 	spawn(c, &amp;arg);
+ 	return FALSE;
+ }
+</pre>
+</div>
+</body>
+</html>

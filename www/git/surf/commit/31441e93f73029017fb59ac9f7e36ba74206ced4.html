@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>adding autozoom lock when site is already zoomed. - surf - surf browser, a WebKit based browser
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="surf Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>surf</h1><span class="desc">surf browser, a WebKit based browser
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/31441e93f73029017fb59ac9f7e36ba74206ced4.html">31441e93f73029017fb59ac9f7e36ba74206ced4</a>
+<b>parent</b> <a href="../commit/92afa03d80ba077f7a5b1dc1bd44d82ab1d35b8f.html">92afa03d80ba077f7a5b1dc1bd44d82ab1d35b8f</a>
+<b>Author:</b> Enno Boland (tox) &lt;<a href="mailto:tox@s01.de">tox@s01.de</a>&gt;
+<b>Date:</b>   Tue, 20 Oct 2009 20:49:33 +0200
+
+adding autozoom lock when site is already zoomed.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">surf.c</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/surf.c.html">surf.c</a> b/<a href="../file/surf.c.html">surf.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -37,6 +37,7 @@ typedef struct Client {
+</a> 	char *title, *linkhover;
+ 	gint progress;
+ 	struct Client *next;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	gboolean zoomed;
+</a> } Client;
+ 
+ typedef struct {
+<a href="#h0-1" id="h0-1" class="h">@@ -680,8 +681,10 @@ void
+</a> resize(GtkWidget *w, GtkAllocation *a, Client *c) {
+ 	double zoom;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+	if(c-&gt;zoomed)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		return;
+</a> 	zoom = webkit_web_view_get_zoom_level(c-&gt;view);
+<a href="#h0-1-6" id="h0-1-6" class="d">-	if(a-&gt;width * a-&gt;height &lt; 300 * 300 &amp;&amp; zoom != 0.2)
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	if(a-&gt;width * a-&gt;height &lt; 300 * 400 &amp;&amp; zoom != 0.2)
+</a> 		webkit_web_view_set_zoom_level(c-&gt;view, 0.2);
+ 	else if(zoom != 1.0)
+ 		webkit_web_view_set_zoom_level(c-&gt;view, 1.0);
+<a href="#h0-2" id="h0-2" class="h">@@ -839,12 +842,15 @@ windowobjectcleared(GtkWidget *w, WebKitWebFrame *frame, JSContextRef js, JSObje
+</a> 
+ void
+ zoom(Client *c, const Arg *arg) {
+<a href="#h0-2-3" id="h0-2-3" class="i">+	c-&gt;zoomed = TRUE;
+</a> 	if(arg-&gt;i &lt; 0)		/* zoom out */
+ 		webkit_web_view_zoom_out(c-&gt;view);
+ 	else if(arg-&gt;i &gt; 0)	/* zoom in */
+ 		webkit_web_view_zoom_in(c-&gt;view);
+<a href="#h0-2-8" id="h0-2-8" class="d">-	else			/* reset */
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	else {			/* reset */
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+		c-&gt;zoomed = FALSE;
+</a> 		webkit_web_view_set_zoom_level(c-&gt;view, 1.0);
+<a href="#h0-2-12" id="h0-2-12" class="i">+	}
+</a> }
+ 
+ int main(int argc, char *argv[]) {
+</pre>
+</div>
+</body>
+</html>

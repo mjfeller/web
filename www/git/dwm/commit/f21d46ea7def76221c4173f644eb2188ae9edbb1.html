@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>continued with draw.c abstraction, also started util.{h,c} implementation, that will be used by draw.c as well - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f21d46ea7def76221c4173f644eb2188ae9edbb1.html">f21d46ea7def76221c4173f644eb2188ae9edbb1</a>
+<b>parent</b> <a href="../commit/c0ba635c50dc53f06e4fc96392415b3d19b25826.html">c0ba635c50dc53f06e4fc96392415b3d19b25826</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:anselm@garbe.us">anselm@garbe.us</a>&gt;
+<b>Date:</b>   Sat,  8 Dec 2012 10:13:01 +0100
+
+continued with draw.c abstraction, also started util.{h,c} implementation, that will be used by draw.c as well
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">draw.c</a></td><td> | </td><td class="num">60</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">draw.h</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">dwm.c</a></td><td> | </td><td class="num">14</td><td><span class="i">+</span><span class="d">-------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">util.c</a></td><td> | </td><td class="num">17</td><td><span class="i">+++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">util.h</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>6 files changed, 80 insertions(+), 29 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = draw.c dwm.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+SRC = util.c draw.c dwm.c
+</a> OBJ = ${SRC:.c=.o}
+ 
+ all: options dwm
+<b>diff --git a/<a id="h1" href="../file/draw.c.html">draw.c</a> b/<a href="../file/draw.c.html">draw.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,8 +1,10 @@
+</a> /* See LICENSE file for copyright and license details. */
+<a href="#h1-0-1" id="h1-0-1" class="i">+#include &lt;stdio.h&gt;
+</a> #include &lt;stdlib.h&gt;
+ #include &lt;X11/Xlib.h&gt;
+ 
+ #include &quot;draw.h&quot;
+<a href="#h1-0-6" id="h1-0-6" class="i">+#include &quot;util.h&quot;
+</a> 
+ Draw *
+ draw_create(Display *dpy, int screen, Window win, unsigned int w, unsigned int h) {
+<a href="#h1-1" id="h1-1" class="h">@@ -36,32 +38,70 @@ draw_free(Draw *draw) {
+</a> }
+ 
+ Fnt *
+<a href="#h1-1-3" id="h1-1-3" class="d">-font_create(const char *fontname) {
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	Fnt *font = (Fnt *)calloc(1, sizeof(Fnt));
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	/* TODO: allocate actual font */
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+draw_font_create(Draw *draw, const char *fontname) {
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+	Fnt *font;
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	char *def, **missing;
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+	int n;
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+	if(!draw)
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		return NULL;
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+	font = (Fnt *)calloc(1, sizeof(Fnt));
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+	font-&gt;set = XCreateFontSet(draw-&gt;dpy, fontname, &amp;missing, &amp;n, &amp;def);
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+	if(missing) {
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+		while(n--)
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+			fprintf(stderr, &quot;draw: missing fontset: %s\n&quot;, missing[n]);
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+		XFreeStringList(missing);
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+	}
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	if(font-&gt;set) {
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+		XFontStruct **xfonts;
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+		char **font_names;
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+		XExtentsOfFontSet(font-&gt;set);
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+		n = XFontsOfFontSet(font-&gt;set, &amp;xfonts, &amp;font_names);
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+		while(n--) {
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+			font-&gt;ascent = MAX(font-&gt;ascent, (*xfonts)-&gt;ascent);
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+			font-&gt;descent = MAX(font-&gt;descent,(*xfonts)-&gt;descent);
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+			xfonts++;
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+		}
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+	}
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+	else {
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+		if(!(font-&gt;xfont = XLoadQueryFont(draw-&gt;dpy, fontname))
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+		&amp;&amp; !(font-&gt;xfont = XLoadQueryFont(draw-&gt;dpy, &quot;fixed&quot;)))
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+			die(&quot;error, cannot load font: &#39;%s&#39;\n&quot;, fontname);
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+		font-&gt;ascent = font-&gt;xfont-&gt;ascent;
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+		font-&gt;descent = font-&gt;xfont-&gt;descent;
+</a><a href="#h1-1-38" id="h1-1-38" class="i">+	}
+</a><a href="#h1-1-39" id="h1-1-39" class="i">+	font-&gt;h = font-&gt;ascent + font-&gt;descent;
+</a> 	return font;
+ }
+ 
+ void
+<a href="#h1-1-44" id="h1-1-44" class="d">-font_free(Fnt *font) {
+</a><a href="#h1-1-45" id="h1-1-45" class="d">-	if(!font)
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+draw_font_free(Draw *draw, Fnt *font) {
+</a><a href="#h1-1-47" id="h1-1-47" class="i">+	if(!draw || !font)
+</a> 		return;
+<a href="#h1-1-49" id="h1-1-49" class="d">-	/* TODO: deallocate any font resources */
+</a><a href="#h1-1-50" id="h1-1-50" class="i">+	if(font-&gt;set)
+</a><a href="#h1-1-51" id="h1-1-51" class="i">+		XFreeFontSet(draw-&gt;dpy, font-&gt;set);
+</a><a href="#h1-1-52" id="h1-1-52" class="i">+	else
+</a><a href="#h1-1-53" id="h1-1-53" class="i">+		XFreeFont(draw-&gt;dpy, font-&gt;xfont);
+</a> 	free(font);
+ }
+ 
+ Col *
+<a href="#h1-1-58" id="h1-1-58" class="d">-col_create(const char *colname) {
+</a><a href="#h1-1-59" id="h1-1-59" class="i">+draw_col_create(Draw *draw, const char *colname) {
+</a> 	Col *col = (Col *)calloc(1, sizeof(Col));
+<a href="#h1-1-61" id="h1-1-61" class="d">-	/* TODO: allocate color */
+</a><a href="#h1-1-62" id="h1-1-62" class="i">+	Colormap cmap = DefaultColormap(draw-&gt;dpy, draw-&gt;screen);
+</a><a href="#h1-1-63" id="h1-1-63" class="i">+	XColor color;
+</a><a href="#h1-1-64" id="h1-1-64" class="i">+
+</a><a href="#h1-1-65" id="h1-1-65" class="i">+	if(!XAllocNamedColor(draw-&gt;dpy, cmap, colname, &amp;color, &amp;color))
+</a><a href="#h1-1-66" id="h1-1-66" class="i">+		die(&quot;error, cannot allocate color &#39;%s&#39;\n&quot;, colname);
+</a><a href="#h1-1-67" id="h1-1-67" class="i">+	col-&gt;rgb = color.pixel;
+</a> 	return col;
+ }
+ 
+ void
+<a href="#h1-1-72" id="h1-1-72" class="d">-col_free(Col *col) {
+</a><a href="#h1-1-73" id="h1-1-73" class="i">+draw_col_free(Draw *draw, Col *col) {
+</a> 	if(!col)
+ 		return;
+<a href="#h1-1-76" id="h1-1-76" class="d">-	/* TODO: deallocate any color resource */
+</a> 	free(col);
+ }
+ 
+<b>diff --git a/<a id="h2" href="../file/draw.h.html">draw.h</a> b/<a href="../file/draw.h.html">draw.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -8,7 +8,7 @@ typedef struct _XCol Col;
+</a> struct _XFont {
+ 	int ascent;
+ 	int descent;
+<a href="#h2-0-3" id="h2-0-3" class="d">-	unsigned int h, w;
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	unsigned int h;
+</a> 	XFontSet set;
+ 	XFontStruct *xfont;
+ };
+<a href="#h2-1" id="h2-1" class="h">@@ -45,12 +45,12 @@ void draw_resize(Draw *draw, unsigned int w, unsigned int h);
+</a> void draw_free(Draw *draw);
+ 
+ /* Fnt abstraction */
+<a href="#h2-1-3" id="h2-1-3" class="d">-Fnt *font_create(const char *fontname);
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-void font_free(Fnt *font);
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+Fnt *draw_font_create(Draw *draw, const char *fontname);
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+void draw_font_free(Draw *draw, Fnt *font);
+</a> 
+ /* Colour abstraction */
+<a href="#h2-1-9" id="h2-1-9" class="d">-Col *col_create(const char *colname);
+</a><a href="#h2-1-10" id="h2-1-10" class="d">-void col_free(Col *col);
+</a><a href="#h2-1-11" id="h2-1-11" class="i">+Col *draw_col_create(Draw *draw, const char *colname);
+</a><a href="#h2-1-12" id="h2-1-12" class="i">+void draw_col_free(Draw *draw, Col *col);
+</a> 
+ /* Drawing context manipulation */
+ void draw_setfont(Draw *draw, Fnt *font);
+<b>diff --git a/<a id="h3" href="../file/dwm.c.html">dwm.c</a> b/<a href="../file/dwm.c.html">dwm.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -41,6 +41,7 @@
+</a> #endif /* XINERAMA */
+ 
+ #include &quot;draw.h&quot;
+<a href="#h3-0-3" id="h3-0-3" class="i">+#include &quot;util.h&quot;
+</a> 
+ /* macros */
+ #define BUTTONMASK              (ButtonPressMask|ButtonReleaseMask)
+<a href="#h3-1" id="h3-1" class="h">@@ -49,8 +50,6 @@
+</a>                                * MAX(0, MIN((y)+(h),(m)-&gt;wy+(m)-&gt;wh) - MAX((y),(m)-&gt;wy)))
+ #define ISVISIBLE(C)            ((C-&gt;tags &amp; C-&gt;mon-&gt;tagset[C-&gt;mon-&gt;seltags]))
+ #define LENGTH(X)               (sizeof X / sizeof X[0])
+<a href="#h3-1-3" id="h3-1-3" class="d">-#define MAX(A, B)               ((A) &gt; (B) ? (A) : (B))
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-#define MIN(A, B)               ((A) &lt; (B) ? (A) : (B))
+</a> #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
+ #define WIDTH(X)                ((X)-&gt;w + 2 * (X)-&gt;bw)
+ #define HEIGHT(X)               ((X)-&gt;h + 2 * (X)-&gt;bw)
+<a href="#h3-2" id="h3-2" class="h">@@ -176,7 +175,6 @@ static Monitor *createmon(void);
+</a> static void destroynotify(XEvent *e);
+ static void detach(Client *c);
+ static void detachstack(Client *c);
+<a href="#h3-2-3" id="h3-2-3" class="d">-static void die(const char *errstr, ...);
+</a> static Monitor *dirtomon(int dir);
+ static void drawbar(Monitor *m);
+ static void drawbars(void);
+<a href="#h3-3" id="h3-3" class="h">@@ -695,16 +693,6 @@ detachstack(Client *c) {
+</a> 	}
+ }
+ 
+<a href="#h3-3-3" id="h3-3-3" class="d">-void
+</a><a href="#h3-3-4" id="h3-3-4" class="d">-die(const char *errstr, ...) {
+</a><a href="#h3-3-5" id="h3-3-5" class="d">-	va_list ap;
+</a><a href="#h3-3-6" id="h3-3-6" class="d">-
+</a><a href="#h3-3-7" id="h3-3-7" class="d">-	va_start(ap, errstr);
+</a><a href="#h3-3-8" id="h3-3-8" class="d">-	vfprintf(stderr, errstr, ap);
+</a><a href="#h3-3-9" id="h3-3-9" class="d">-	va_end(ap);
+</a><a href="#h3-3-10" id="h3-3-10" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h3-3-11" id="h3-3-11" class="d">-}
+</a><a href="#h3-3-12" id="h3-3-12" class="d">-
+</a> Monitor *
+ dirtomon(int dir) {
+ 	Monitor *m = NULL;
+<b>diff --git a/<a id="h4" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,17 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+#include &lt;stdarg.h&gt;
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+#include &quot;util.h&quot;
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+void
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+die(const char *errstr, ...) {
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+	va_list ap;
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+	va_start(ap, errstr);
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+	vfprintf(stderr, errstr, ap);
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+	va_end(ap);
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	exit(EXIT_FAILURE);
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+}
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+
+</a><b>diff --git a/<a id="h5" href="../file/util.h.html">util.h</a> b/<a href="../file/util.h.html">util.h</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,6 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+#define MAX(A, B)               ((A) &gt; (B) ? (A) : (B))
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+#define MIN(A, B)               ((A) &lt; (B) ? (A) : (B))
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+
+</a><a href="#h5-0-5" id="h5-0-5" class="i">+void die(const char *errstr, ...);
+</a></pre>
+</div>
+</body>
+</html>

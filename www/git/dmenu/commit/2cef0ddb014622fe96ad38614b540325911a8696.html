@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>removed emalloc, used only once so obsolete - dmenu - dynamic menu
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dmenu Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dmenu</h1><span class="desc">dynamic menu
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2cef0ddb014622fe96ad38614b540325911a8696.html">2cef0ddb014622fe96ad38614b540325911a8696</a>
+<b>parent</b> <a href="../commit/3f244b1d52d5409776467704ca95d561cdab78e9.html">3f244b1d52d5409776467704ca95d561cdab78e9</a>
+<b>Author:</b> Anselm R Garbe &lt;<a href="mailto:garbeam@gmail.com">garbeam@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 21 Jun 2008 16:43:12 +0100
+
+removed emalloc, used only once so obsolete
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">dmenu.c</a></td><td> | </td><td class="num">13</td><td><span class="i">++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/dmenu.c.html">dmenu.c</a> b/<a href="../file/dmenu.c.html">dmenu.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -52,7 +52,6 @@ static char *cistrstr(const char *s, const char *sub);
+</a> static void cleanup(void);
+ static void drawmenu(void);
+ static void drawtext(const char *text, ulong col[ColLast]);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void *emalloc(uint size);
+</a> static void eprint(const char *errstr, ...);
+ static ulong getcolor(const char *colstr);
+ static Bool grabkeyboard(void);
+<a href="#h0-1" id="h0-1" class="h">@@ -252,15 +251,6 @@ drawtext(const char *text, ulong col[ColLast]) {
+</a> 		XDrawString(dpy, dc.drawable, dc.gc, x, y, buf, len);
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-void *
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-emalloc(uint size) {
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	void *res = malloc(size);
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	if(!res)
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-		eprint(&quot;fatal: could not malloc() %u bytes\n&quot;, size);
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	return res;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-}
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-
+</a> void
+ eprint(const char *errstr, ...) {
+ 	va_list ap;
+<a href="#h0-2" id="h0-2" class="h">@@ -563,7 +553,8 @@ readstdin(void) {
+</a> 			maxname = p;
+ 			max = len;
+ 		}
+<a href="#h0-2-3" id="h0-2-3" class="d">-		new = emalloc(sizeof(Item));
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		if((new = (Item *)malloc(sizeof(Item))) == NULL)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+			eprint(&quot;fatal: could not malloc() %u bytes\n&quot;, sizeof(Item));
+</a> 		new-&gt;next = new-&gt;left = new-&gt;right = NULL;
+ 		new-&gt;text = p;
+ 		if(!i)
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixing c-&gt;weight handling - dwm - dynamic window manager
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="dwm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>dwm</h1><span class="desc">dynamic window manager
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1b3903d6e989ec3933b9f855b73fece050e54155.html">1b3903d6e989ec3933b9f855b73fece050e54155</a>
+<b>parent</b> <a href="../commit/cc05093b0dc2c760a6abfca2756d9c95bba81aa7.html">cc05093b0dc2c760a6abfca2756d9c95bba81aa7</a>
+<b>Author:</b> Anselm R. Garbe &lt;<a href="mailto:arg@10kloc.org">arg@10kloc.org</a>&gt;
+<b>Date:</b>   Tue,  5 Sep 2006 08:24:00 +0200
+
+fixing c-&gt;weight handling
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">tag.c</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 3 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/tag.c.html">tag.c</a> b/<a href="../file/tag.c.html">tag.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -106,8 +106,7 @@ settags(Client *c)
+</a> 	if(!matched)
+ 		for(i = 0; i &lt; ntags; i++)
+ 			c-&gt;tags[i] = seltag[i];
+<a href="#h0-0-3" id="h0-0-3" class="d">-	for(i = 0; i &lt; ntags &amp;&amp; !c-&gt;tags[i]; i++);
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	c-&gt;weight = i;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	for(c-&gt;weight = 0; c-&gt;weight &lt; ntags &amp;&amp; !c-&gt;tags[c-&gt;weight]; c-&gt;weight++);
+</a> }
+ 
+ void
+<a href="#h0-1" id="h0-1" class="h">@@ -121,6 +120,7 @@ tag(Arg *arg)
+</a> 	for(i = 0; i &lt; ntags; i++)
+ 		sel-&gt;tags[i] = False;
+ 	sel-&gt;tags[arg-&gt;i] = True;
+<a href="#h0-1-3" id="h0-1-3" class="i">+	sel-&gt;weight = arg-&gt;i;
+</a> 	arrange(NULL);
+ }
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -136,5 +136,6 @@ toggletag(Arg *arg)
+</a> 	for(i = 0; i &lt; ntags &amp;&amp; !sel-&gt;tags[i]; i++);
+ 	if(i == ntags)
+ 		sel-&gt;tags[arg-&gt;i] = True;
+<a href="#h0-2-3" id="h0-2-3" class="i">+	for(sel-&gt;weight = 0; sel-&gt;weight &lt; ntags &amp;&amp; !sel-&gt;tags[sel-&gt;weight]; sel-&gt;weight++);
+</a> 	arrange(NULL);
+ }
+</pre>
+</div>
+</body>
+</html>
