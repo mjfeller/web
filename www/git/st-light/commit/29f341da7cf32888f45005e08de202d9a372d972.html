@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix crash on resize - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/29f341da7cf32888f45005e08de202d9a372d972.html">29f341da7cf32888f45005e08de202d9a372d972</a>
+<b>parent</b> <a href="../commit/dc3b5babf1f8639a0d65cd347fc7879ac0461012.html">dc3b5babf1f8639a0d65cd347fc7879ac0461012</a>
+<b>Author:</b> Jules Maselbas &lt;<a href="mailto:jules.maselbas@grenoble-inp.org">jules.maselbas@grenoble-inp.org</a>&gt;
+<b>Date:</b>   Wed, 27 Jun 2018 17:08:30 +0200
+
+Fix crash on resize
+
+Prevent to realloc xw.specbuc with a negative number of col.
+Add proper hints for the minimal size, for one character.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">x.c</a></td><td> | </td><td class="num">12</td><td><span class="i">++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>1 file changed, 8 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -672,6 +672,8 @@ cresize(int width, int height)
+</a> 
+ 	col = (win.w - 2 * borderpx) / win.cw;
+ 	row = (win.h - 2 * borderpx) / win.ch;
+<a href="#h0-0-3" id="h0-0-3" class="i">+	col = MAX(1, col);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	row = MAX(1, row);
+</a> 
+ 	tresize(col, row);
+ 	xresize(col, row);
+<a href="#h0-1" id="h0-1" class="h">@@ -681,8 +683,8 @@ cresize(int width, int height)
+</a> void
+ xresize(int col, int row)
+ {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	win.tw = MAX(1, col * win.cw);
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	win.th = MAX(1, row * win.ch);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	win.tw = col * win.cw;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	win.th = row * win.ch;
+</a> 
+ 	XFreePixmap(xw.dpy, xw.buf);
+ 	xw.buf = XCreatePixmap(xw.dpy, xw.win, win.w, win.h,
+<a href="#h0-2" id="h0-2" class="h">@@ -788,15 +790,17 @@ xhints(void)
+</a> 
+ 	sizeh = XAllocSizeHints();
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-	sizeh-&gt;flags = PSize | PResizeInc | PBaseSize;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	sizeh-&gt;flags = PSize | PResizeInc | PBaseSize | PMinSize;
+</a> 	sizeh-&gt;height = win.h;
+ 	sizeh-&gt;width = win.w;
+ 	sizeh-&gt;height_inc = win.ch;
+ 	sizeh-&gt;width_inc = win.cw;
+ 	sizeh-&gt;base_height = 2 * borderpx;
+ 	sizeh-&gt;base_width = 2 * borderpx;
+<a href="#h0-2-11" id="h0-2-11" class="i">+	sizeh-&gt;min_height = win.ch + 2 * borderpx;
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	sizeh-&gt;min_width = win.cw + 2 * borderpx;
+</a> 	if (xw.isfixed) {
+<a href="#h0-2-14" id="h0-2-14" class="d">-		sizeh-&gt;flags |= PMaxSize | PMinSize;
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+		sizeh-&gt;flags |= PMaxSize;
+</a> 		sizeh-&gt;min_width = sizeh-&gt;max_width = win.w;
+ 		sizeh-&gt;min_height = sizeh-&gt;max_height = win.h;
+ 	}
+</pre>
+</div>
+</body>
+</html>

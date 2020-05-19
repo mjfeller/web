@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Do not use color when font attributes are supported - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8c99915608beee03eca3bae6ed92264a0da87e2f.html">8c99915608beee03eca3bae6ed92264a0da87e2f</a>
+<b>parent</b> <a href="../commit/7854fde1ff95ba85239ccfe1b59b555bd245d0db.html">7854fde1ff95ba85239ccfe1b59b555bd245d0db</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sat, 22 Oct 2016 16:36:10 +0200
+
+Do not use color when font attributes are supported
+
+If fontconfig gives us a font without the attributes we asked for,
+display an alternative color instead.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">8</td><td><span class="i">+++</span><span class="d">-----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">40</td><td><span class="i">++++++++++++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>2 files changed, 35 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -138,12 +138,10 @@ static unsigned int mousefg = 7;
+</a> static unsigned int mousebg = 0;
+ 
+ /*
+<a href="#h0-0-3" id="h0-0-3" class="d">- * Colors used, when the specific fg == defaultfg. So in reverse mode this
+</a><a href="#h0-0-4" id="h0-0-4" class="d">- * will reverse too. Another logic would only make the simple feature too
+</a><a href="#h0-0-5" id="h0-0-5" class="d">- * complex.
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+ * Color used to display font attributes when fontconfig selected a font which
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+ * doesn&#39;t match the ones requested.
+</a>  */
+<a href="#h0-0-9" id="h0-0-9" class="d">-static unsigned int defaultitalic = 11;
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-static unsigned int defaultunderline = 7;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+static unsigned int defaultattr = 11;
+</a> 
+ /*
+  * Internal mouse shortcuts.
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -354,6 +354,8 @@ typedef struct {
+</a> 	int width;
+ 	int ascent;
+ 	int descent;
+<a href="#h1-0-3" id="h1-0-3" class="i">+	int badslant;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	int badweight;
+</a> 	short lbearing;
+ 	short rbearing;
+ 	XftFont *match;
+<a href="#h1-1" id="h1-1" class="h">@@ -3373,6 +3375,7 @@ xloadfont(Font *f, FcPattern *pattern)
+</a> 	FcPattern *match;
+ 	FcResult result;
+ 	XGlyphInfo extents;
+<a href="#h1-1-3" id="h1-1-3" class="i">+	int wantattr, haveattr;
+</a> 
+ 	match = XftFontMatch(xw.dpy, xw.scr, pattern, &amp;result);
+ 	if (!match)
+<a href="#h1-2" id="h1-2" class="h">@@ -3383,6 +3386,28 @@ xloadfont(Font *f, FcPattern *pattern)
+</a> 		return 1;
+ 	}
+ 
+<a href="#h1-2-3" id="h1-2-3" class="i">+	if ((XftPatternGetInteger(pattern, &quot;slant&quot;, 0, &amp;wantattr) ==
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	    XftResultMatch)) {
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+		/*
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+		 * Check if xft was unable to find a font with the appropriate
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+		 * slant but gave us one anyway. Try to mitigate.
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+		 */
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+		if ((XftPatternGetInteger(f-&gt;match-&gt;pattern, &quot;slant&quot;, 0,
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+		    &amp;haveattr) != XftResultMatch) || haveattr &lt; wantattr) {
+</a><a href="#h1-2-11" id="h1-2-11" class="i">+			f-&gt;badslant = 1;
+</a><a href="#h1-2-12" id="h1-2-12" class="i">+			fputs(&quot;st: font slant does not match\n&quot;, stderr);
+</a><a href="#h1-2-13" id="h1-2-13" class="i">+		}
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+	}
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+	if ((XftPatternGetInteger(pattern, &quot;weight&quot;, 0, &amp;wantattr) ==
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+	    XftResultMatch)) {
+</a><a href="#h1-2-18" id="h1-2-18" class="i">+		if ((XftPatternGetInteger(f-&gt;match-&gt;pattern, &quot;weight&quot;, 0,
+</a><a href="#h1-2-19" id="h1-2-19" class="i">+		    &amp;haveattr) != XftResultMatch) || haveattr != wantattr) {
+</a><a href="#h1-2-20" id="h1-2-20" class="i">+			f-&gt;badweight = 1;
+</a><a href="#h1-2-21" id="h1-2-21" class="i">+			fputs(&quot;st: font weight does not match\n&quot;, stderr);
+</a><a href="#h1-2-22" id="h1-2-22" class="i">+		}
+</a><a href="#h1-2-23" id="h1-2-23" class="i">+	}
+</a><a href="#h1-2-24" id="h1-2-24" class="i">+
+</a> 	XftTextExtentsUtf8(xw.dpy, f-&gt;match,
+ 		(const FcChar8 *) ascii_printable,
+ 		strlen(ascii_printable), &amp;extents);
+<a href="#h1-3" id="h1-3" class="h">@@ -3780,14 +3805,13 @@ xdrawglyphfontspecs(const XftGlyphFontSpec *specs, Glyph base, int len, int x, i
+</a> 	XRenderColor colfg, colbg;
+ 	XRectangle r;
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-	/* Determine foreground and background colors based on mode. */
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-	if (base.fg == defaultfg) {
+</a><a href="#h1-3-5" id="h1-3-5" class="d">-		if (base.mode &amp; ATTR_ITALIC)
+</a><a href="#h1-3-6" id="h1-3-6" class="d">-			base.fg = defaultitalic;
+</a><a href="#h1-3-7" id="h1-3-7" class="d">-		else if ((base.mode &amp; ATTR_ITALIC) &amp;&amp; (base.mode &amp; ATTR_BOLD))
+</a><a href="#h1-3-8" id="h1-3-8" class="d">-			base.fg = defaultitalic;
+</a><a href="#h1-3-9" id="h1-3-9" class="d">-		else if (base.mode &amp; ATTR_UNDERLINE)
+</a><a href="#h1-3-10" id="h1-3-10" class="d">-			base.fg = defaultunderline;
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+	/* Fallback on color display for attributes not supported by the font */
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+	if (base.mode &amp; ATTR_ITALIC &amp;&amp; base.mode &amp; ATTR_BOLD) {
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+		if (dc.ibfont.badslant || dc.ibfont.badweight)
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+			base.fg = defaultattr;
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+	} else if ((base.mode &amp; ATTR_ITALIC &amp;&amp; dc.ifont.badslant) ||
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+	    (base.mode &amp; ATTR_BOLD &amp;&amp; dc.bfont.badweight)) {
+</a><a href="#h1-3-17" id="h1-3-17" class="i">+		base.fg = defaultattr;
+</a> 	}
+ 
+ 	if (IS_TRUECOL(base.fg)) {
+</pre>
+</div>
+</body>
+</html>

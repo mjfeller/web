@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Implement italic font support. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/462a966ee2c0f49f432bedaf8e6ebdff995262a9.html">462a966ee2c0f49f432bedaf8e6ebdff995262a9</a>
+<b>parent</b> <a href="../commit/56c551e4f4b5678ba770106bf8a679c044bcf57e.html">56c551e4f4b5678ba770106bf8a679c044bcf57e</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Wed,  5 Sep 2012 21:48:26 +0200
+
+Implement italic font support.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">TODO</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.def.h</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.c</a></td><td> | </td><td class="num">30</td><td><span class="i">++++++++++++++++++++</span><span class="d">----------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">st.info</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>4 files changed, 32 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/TODO.html">TODO</a> b/<a href="../file/TODO.html">TODO</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -4,7 +4,6 @@ vt emulation
+</a> * implement BCE right
+ * color definition in CSI
+ 	* implement CSI parsing
+<a href="#h0-0-3" id="h0-0-3" class="d">-* implement real italic
+</a> * make the keypad keys really work
+ 	* kf0 .. kf44
+ 	* kend, kel, kent, kfnd, ked, kext
+<b>diff --git a/<a id="h1" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,6 +1,8 @@
+</a> 
+ #define FONT &quot;-*-*-medium-r-*-*-*-120-75-75-*-60-*-*&quot;
+ #define BOLDFONT &quot;-*-*-bold-r-*-*-*-120-75-75-*-60-*-*&quot;
+<a href="#h1-0-3" id="h1-0-3" class="i">+/* If italic is not availbel, fall back to bold. */
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#define ITALICFONT &quot;-*-*-medium-o-*-*-*-120-75-75-*-60-*-*,&quot; BOLDFONT
+</a> 
+ /* Space in pixels around the terminal buffer */
+ #define BORDER 2
+<a href="#h1-1" id="h1-1" class="h">@@ -29,9 +31,9 @@ static const char *colorname[] = {
+</a> 	&quot;magenta&quot;,
+ 	&quot;cyan&quot;,
+ 	&quot;white&quot;,
+<a href="#h1-1-3" id="h1-1-3" class="d">-	
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+
+</a> 	[255] = 0,
+<a href="#h1-1-6" id="h1-1-6" class="d">-	
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+
+</a> 	/* more colors can be added after 255 to use with DefaultXX */
+ 	&quot;#cccccc&quot;,
+ 	&quot;#333333&quot;,
+<a href="#h1-2" id="h1-2" class="h">@@ -50,11 +52,11 @@ static const char *colorname[] = {
+</a>    Mask value:
+    * Use XK_ANY_MOD to match the key no matter modifiers state
+    * Use XK_NO_MOD to match the key alone (no modifiers)
+<a href="#h1-2-3" id="h1-2-3" class="d">-   
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+
+</a>       key,        mask,  output */
+ static Key key[] = {
+ 	{ XK_BackSpace, XK_NO_MOD, &quot;\177&quot; },
+<a href="#h1-2-8" id="h1-2-8" class="d">-   	{ XK_Insert,    XK_NO_MOD, &quot;\033[2~&quot; },
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+	{ XK_Insert,    XK_NO_MOD, &quot;\033[2~&quot; },
+</a> 	{ XK_Delete,    XK_NO_MOD, &quot;\033[3~&quot; },
+ 	{ XK_Home,      XK_NO_MOD, &quot;\033[1~&quot; },
+ 	{ XK_End,       XK_NO_MOD, &quot;\033[4~&quot; },
+<b>diff --git a/<a id="h2" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -76,6 +76,7 @@ enum glyph_attribute {
+</a> 	ATTR_UNDERLINE = 2,
+ 	ATTR_BOLD      = 4,
+ 	ATTR_GFX       = 8,
+<a href="#h2-0-3" id="h2-0-3" class="i">+	ATTR_ITALIC    = 16,
+</a> };
+ 
+ enum cursor_movement {
+<a href="#h2-1" id="h2-1" class="h">@@ -238,7 +239,7 @@ typedef struct {
+</a> 		short lbearing;
+ 		short rbearing;
+ 		XFontSet set;
+<a href="#h2-1-3" id="h2-1-3" class="d">-	} font, bfont;
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	} font, bfont, ifont;
+</a> } DC;
+ 
+ static void die(const char*, ...);
+<a href="#h2-2" id="h2-2" class="h">@@ -1122,8 +1123,8 @@ tsetattr(int *attr, int l) {
+</a> 		case 1:
+ 			term.c.attr.mode |= ATTR_BOLD;
+ 			break;
+<a href="#h2-2-3" id="h2-2-3" class="d">-		case 3: /* enter standout (highlight) mode TODO: make it italic */
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-			term.c.attr.mode |= ATTR_REVERSE;
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+		case 3: /* enter standout (highlight) */
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+			term.c.attr.mode |= ATTR_ITALIC;
+</a> 			break;
+ 		case 4:
+ 			term.c.attr.mode |= ATTR_UNDERLINE;
+<a href="#h2-3" id="h2-3" class="h">@@ -1134,8 +1135,8 @@ tsetattr(int *attr, int l) {
+</a> 		case 22:
+ 			term.c.attr.mode &amp;= ~ATTR_BOLD;
+ 			break;
+<a href="#h2-3-3" id="h2-3-3" class="d">-		case 23: /* leave standout (highlight) mode TODO: make it italic */
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-			term.c.attr.mode &amp;= ~ATTR_REVERSE;
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+		case 23: /* leave standout (highlight) mode */
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+			term.c.attr.mode &amp;= ~ATTR_ITALIC;
+</a> 			break;
+ 		case 24:
+ 			term.c.attr.mode &amp;= ~ATTR_UNDERLINE;
+<a href="#h2-4" id="h2-4" class="h">@@ -1886,14 +1887,20 @@ xgetfontinfo(XFontSet set, int *ascent, int *descent, short *lbearing, short *rb
+</a> }
+ 
+ void
+<a href="#h2-4-3" id="h2-4-3" class="d">-initfonts(char *fontstr, char *bfontstr) {
+</a><a href="#h2-4-4" id="h2-4-4" class="d">-	if((dc.font.set = xinitfont(fontstr)) == NULL ||
+</a><a href="#h2-4-5" id="h2-4-5" class="d">-	   (dc.bfont.set = xinitfont(bfontstr)) == NULL)
+</a><a href="#h2-4-6" id="h2-4-6" class="d">-		die(&quot;Can&#39;t load font %s\n&quot;, dc.font.set ? BOLDFONT : FONT);
+</a><a href="#h2-4-7" id="h2-4-7" class="i">+initfonts(char *fontstr, char *bfontstr, char *ifontstr) {
+</a><a href="#h2-4-8" id="h2-4-8" class="i">+	if((dc.font.set = xinitfont(fontstr)) == NULL)
+</a><a href="#h2-4-9" id="h2-4-9" class="i">+		die(&quot;Can&#39;t load font %s\n&quot;, fontstr);
+</a><a href="#h2-4-10" id="h2-4-10" class="i">+	if((dc.bfont.set = xinitfont(bfontstr)) == NULL)
+</a><a href="#h2-4-11" id="h2-4-11" class="i">+		die(&quot;Can&#39;t load bfont %s\n&quot;, bfontstr);
+</a><a href="#h2-4-12" id="h2-4-12" class="i">+	if((dc.ifont.set = xinitfont(ifontstr)) == NULL)
+</a><a href="#h2-4-13" id="h2-4-13" class="i">+		die(&quot;Can&#39;t load ifont %s\n&quot;, ifontstr);
+</a><a href="#h2-4-14" id="h2-4-14" class="i">+
+</a> 	xgetfontinfo(dc.font.set, &amp;dc.font.ascent, &amp;dc.font.descent,
+ 	    &amp;dc.font.lbearing, &amp;dc.font.rbearing);
+ 	xgetfontinfo(dc.bfont.set, &amp;dc.bfont.ascent, &amp;dc.bfont.descent,
+ 	    &amp;dc.bfont.lbearing, &amp;dc.bfont.rbearing);
+<a href="#h2-4-19" id="h2-4-19" class="i">+	xgetfontinfo(dc.ifont.set, &amp;dc.ifont.ascent, &amp;dc.ifont.descent,
+</a><a href="#h2-4-20" id="h2-4-20" class="i">+	    &amp;dc.ifont.lbearing, &amp;dc.ifont.rbearing);
+</a> }
+ 
+ void
+<a href="#h2-5" id="h2-5" class="h">@@ -1927,7 +1934,7 @@ xinit(void) {
+</a> 	}
+ 
+ 	/* font */
+<a href="#h2-5-3" id="h2-5-3" class="d">-	initfonts(FONT, BOLDFONT);
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+	initfonts(FONT, BOLDFONT, ITALICFONT);
+</a> 
+ 	/* XXX: Assuming same size for bold font */
+ 	xw.cw = dc.font.rbearing - dc.font.lbearing;
+<a href="#h2-6" id="h2-6" class="h">@@ -2002,6 +2009,9 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 		fontset = dc.bfont.set;
+ 	}
+ 
+<a href="#h2-6-3" id="h2-6-3" class="i">+	if(base.mode &amp; ATTR_ITALIC)
+</a><a href="#h2-6-4" id="h2-6-4" class="i">+		fontset = dc.ifont.set;
+</a><a href="#h2-6-5" id="h2-6-5" class="i">+
+</a> 	XSetBackground(xw.dpy, dc.gc, dc.col[bg]);
+ 	XSetForeground(xw.dpy, dc.gc, dc.col[fg]);
+ 
+<b>diff --git a/<a id="h3" href="../file/st.info.html">st.info</a> b/<a href="../file/st.info.html">st.info</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -83,15 +83,16 @@ st| simpleterm,
+</a> 	op=\E[39;49m,
+ 	pairs#64,
+ 	rc=\E8,
+<a href="#h3-0-3" id="h3-0-3" class="d">-	rs1=\Ec,
+</a><a href="#h3-0-4" id="h3-0-4" class="d">-	rs2=\E[4l\E&gt;,
+</a> 	rev=\E[7m,
+ 	ri=\EM,
+<a href="#h3-0-7" id="h3-0-7" class="i">+	ritm=\E[23m,
+</a> 	rmacs=\E(B,
+ 	rmcup=\E[?1049l,
+<a href="#h3-0-10" id="h3-0-10" class="d">-	rmkx=\E&gt;,
+</a><a href="#h3-0-11" id="h3-0-11" class="i">+#	rmkx=\E&gt;,
+</a> 	rmso=\E[23m,
+ 	rmul=\E[m,
+<a href="#h3-0-14" id="h3-0-14" class="i">+	rs1=\Ec,
+</a><a href="#h3-0-15" id="h3-0-15" class="i">+	rs2=\E[4l\E&gt;,
+</a> 	sc=\E7,
+ 	setab=\E[4%p1%dm,
+ 	setaf=\E[3%p1%dm,
+<a href="#h3-1" id="h3-1" class="h">@@ -99,9 +100,10 @@ st| simpleterm,
+</a> 	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
+ 	sgr0=\E[0m,
+ 	sgr=%?%p9%t\E(0%e\E(B%;\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m,
+<a href="#h3-1-3" id="h3-1-3" class="i">+	sitm=\E[3m,
+</a> 	smacs=\E(0,
+ 	smcup=\E[?1049h,
+<a href="#h3-1-6" id="h3-1-6" class="d">-	smkx=\E=,
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+#	smkx=\E=,
+</a> 	smso=\E[3m,
+ 	smul=\E[4m,
+ 	tbc=\E[3g,
+</pre>
+</div>
+</body>
+</html>

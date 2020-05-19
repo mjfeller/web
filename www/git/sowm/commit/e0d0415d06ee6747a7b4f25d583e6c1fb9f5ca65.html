@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix keybinds issue. Closes #15. - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e0d0415d06ee6747a7b4f25d583e6c1fb9f5ca65.html">e0d0415d06ee6747a7b4f25d583e6c1fb9f5ca65</a>
+<b>parent</b> <a href="../commit/ec79ff991a98a0d290feb03bfd7e6f55a425c788.html">ec79ff991a98a0d290feb03bfd7e6f55a425c788</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 20 Jan 2020 01:45:57 +0200
+
+Fix keybinds issue. Closes #15.
+
+This is rather verbose and I personally find it disgusting but
+it&#39;s required to make key bindings behave.
+
+A big thank you to DWM and other window managers for saving me
+a crippling headache.
+
+This increases the code an amount doesn&#39;t it?
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">46</td><td><span class="i">++++++++++++++++++++++++++++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>1 file changed, 34 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -49,7 +49,7 @@ static void ws_go(const Arg arg);
+</a> static int  xerror() { return 0;}
+ 
+ static client       *list = {0}, *ws_list[10] = {0}, *cur;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static int          ws = 1, sw, sh, wx, wy;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static int          ws = 1, sw, sh, wx, wy, numlock = 0;
+</a> static unsigned int ww, wh;
+ 
+ static Display      *d;
+<a href="#h0-1" id="h0-1" class="h">@@ -76,6 +76,10 @@ static void (*events[LASTEvent])(XEvent *e) = {
+</a>     XGetGeometry(d, W, &amp;(Window){0}, gx, gy, gw, gh, \
+                  &amp;(unsigned int){0}, &amp;(unsigned int){0})
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+// Taken from DWM. Many thanks. https://git.suckless.org/dwm
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+#define mod_clean(mask) (mask &amp; ~(numlock|LockMask) &amp; \
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+        (ShiftMask|ControlMask|Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask))
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+
+</a> void win_focus(client *c) {
+     cur = c;
+     XSetInputFocus(d, cur-&gt;w, RevertToParent, CurrentTime);
+<a href="#h0-2" id="h0-2" class="h">@@ -112,8 +116,8 @@ void key_press(XEvent *e) {
+</a>     KeySym keysym = XkbKeycodeToKeysym(d, e-&gt;xkey.keycode, 0, 0);
+ 
+     for (unsigned int i=0; i &lt; sizeof(keys)/sizeof(*keys); ++i)
+<a href="#h0-2-3" id="h0-2-3" class="d">-        if (keys[i].mod == e-&gt;xkey.state &amp;&amp;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-            keys[i].keysym == keysym)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+        if (keys[i].keysym == keysym &amp;&amp;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+            mod_clean(keys[i].mod) == mod_clean(e-&gt;xkey.state))
+</a>             keys[i].function(keys[i].arg);
+ }
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -274,6 +278,32 @@ void run(const Arg arg) {
+</a>     execvp((char*)arg.com[0], (char**)arg.com);
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+void input_grab(Window root) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+    unsigned int i, j, modifiers[] = {0, LockMask, numlock, numlock|LockMask};
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+    XModifierKeymap *modmap = XGetModifierMapping(d);
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+    KeyCode code;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+    for (i = 0; i &lt; 8; i++)
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+        for (j=0; j &lt; modmap-&gt;max_keypermod; j++)
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+            if (modmap-&gt;modifiermap[i * modmap-&gt;max_keypermod + j]
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+                == XKeysymToKeycode(d, 0xff7f))
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+                numlock = (1 &lt;&lt; i);
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+    for (i = 0; i &lt; sizeof(keys)/sizeof(*keys); i++)
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+        if ((code = XKeysymToKeycode(d, keys[i].keysym)))
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+            for (j = 0; j &lt; sizeof(modifiers)/sizeof(*modifiers); j++)
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+                XGrabKey(d, code, keys[i].mod | modifiers[j], root,
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+                        True, GrabModeAsync, GrabModeAsync);
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+    for (i = 1; i &lt; 4; i += 2)
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+        for (j = 0; j &lt; sizeof(modifiers)/sizeof(*modifiers); j++)
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+            XGrabButton(d, i, MOD | modifiers[j], root, True,
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+                ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+                GrabModeAsync, GrabModeAsync, 0, 0);
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+    XFreeModifiermap(modmap);
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+}
+</a><a href="#h0-3-28" id="h0-3-28" class="i">+
+</a> int main(void) {
+     XEvent ev;
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -289,15 +319,7 @@ int main(void) {
+</a> 
+     XSelectInput(d,  root, SubstructureRedirectMask);
+     XDefineCursor(d, root, XCreateFontCursor(d, 68));
+<a href="#h0-4-3" id="h0-4-3" class="d">-
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-    for (unsigned int i=0; i &lt; sizeof(keys)/sizeof(*keys); ++i)
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-        XGrabKey(d, XKeysymToKeycode(d, keys[i].keysym), keys[i].mod,
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-                 root, True, GrabModeAsync, GrabModeAsync);
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-    for (int i=1; i&lt;4; i+=2)
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-        XGrabButton(d, i, MOD, root, True,
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-            ButtonPressMask|ButtonReleaseMask|PointerMotionMask,
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-            GrabModeAsync, GrabModeAsync, 0, 0);
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+    input_grab(root);
+</a> 
+     while (1 &amp;&amp; !XNextEvent(d, &amp;ev))
+         if (events[ev.type]) events[ev.type](&amp;ev);
+</pre>
+</div>
+</body>
+</html>

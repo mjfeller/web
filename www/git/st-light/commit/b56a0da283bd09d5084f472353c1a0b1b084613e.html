@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Applying the tab expansion patch from koga. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b56a0da283bd09d5084f472353c1a0b1b084613e.html">b56a0da283bd09d5084f472353c1a0b1b084613e</a>
+<b>parent</b> <a href="../commit/71b09ec4f172da9a89be2add54b5b94da8af3bea.html">71b09ec4f172da9a89be2add54b5b94da8af3bea</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sun, 28 Oct 2012 13:35:00 +0100
+
+Applying the tab expansion patch from koga.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">22</td><td><span class="i">+++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 13 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -663,9 +663,9 @@ bpress(XEvent *e) {
+</a> 
+ void
+ selcopy(void) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	char *str, *ptr;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	char *str, *ptr, *p;
+</a> 	int x, y, bufsize, is_selected = 0, size;
+<a href="#h0-0-6" id="h0-0-6" class="d">-	Glyph *gp;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	Glyph *gp, *last;
+</a> 
+ 	if(sel.bx == -1) {
+ 		str = NULL;
+<a href="#h0-1" id="h0-1" class="h">@@ -675,15 +675,19 @@ selcopy(void) {
+</a> 
+ 		/* append every set &amp; selected glyph to the selection */
+ 		for(y = 0; y &lt; term.row; y++) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-			for(x = 0; x &lt; term.col; x++) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-				gp = &amp;term.line[y][x];
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+			gp = &amp;term.line[y][0];
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			last = gp + term.col;
+</a> 
+<a href="#h0-1-8" id="h0-1-8" class="d">-				if(!(is_selected = selected(x, y))
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-						|| !(gp-&gt;state &amp; GLYPH_SET)) {
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+			while(--last &gt;= gp &amp;&amp; !(last-&gt;state &amp; GLYPH_SET))
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+				/* nothing */;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+			for(x = 0; gp &lt;= last; x++, ++gp) {
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+				if(!(is_selected = selected(x, y)))
+</a> 					continue;
+<a href="#h0-1-16" id="h0-1-16" class="d">-				}
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-				size = utf8size(gp-&gt;c);
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-				memcpy(ptr, gp-&gt;c, size);
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+				p = (gp-&gt;state &amp; GLYPH_SET) ? gp-&gt;c : &quot; &quot;;
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+				size = utf8size(p);
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+				memcpy(ptr, p, size);
+</a> 				ptr += size;
+ 			}
+ 			/* \n at the end of every selected line except for the last one */
+</pre>
+</div>
+</body>
+</html>

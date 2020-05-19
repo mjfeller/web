@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fixing the return and keypad enter sent characters. Terminals produce \r. And - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d5640c772998de7bccd76c3f8e934fa685cb2bb4.html">d5640c772998de7bccd76c3f8e934fa685cb2bb4</a>
+<b>parent</b> <a href="../commit/801ea034b652025dc22d26f6e1b802de932346da.html">801ea034b652025dc22d26f6e1b802de932346da</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Thu, 15 Nov 2012 16:26:50 +0100
+
+Fixing the return and keypad enter sent characters. Terminals produce \r. And
+
+some minor style changes.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++++</span><span class="d">---</span></td></tr>
+</table></pre><pre>2 files changed, 10 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -109,7 +109,7 @@ static Key key[] = {
+</a> 	{ XK_KP_Multiply,   XK_ANY_MOD,     &quot;\033Oj&quot;,       +1,    0,    0},
+ 	{ XK_KP_Add,        XK_ANY_MOD,     &quot;\033Ok&quot;,       +1,    0,    0},
+ 	{ XK_KP_Enter,      XK_ANY_MOD,     &quot;\033OM&quot;,       +1,    0,    0},
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ XK_KP_Enter,      XK_ANY_MOD,     &quot;\n&quot;,           -1,    0,   -1},
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	{ XK_KP_Enter,      XK_ANY_MOD,     &quot;\r&quot;,           -1,    0,   -1},
+</a> 	{ XK_KP_Enter,      XK_ANY_MOD,     &quot;\r\n&quot;,         -1,    0,   +1},
+ 	{ XK_KP_Subtract,   XK_ANY_MOD,     &quot;\033Om&quot;,       +1,    0,    0},
+ 	{ XK_KP_Decimal,    XK_ANY_MOD,     &quot;\033On&quot;,       +1,    0,    0},
+<a href="#h0-1" id="h0-1" class="h">@@ -146,9 +146,9 @@ static Key key[] = {
+</a> 	{ XK_Right,         XK_ANY_MOD,     &quot;\033[C&quot;,        0,   -1,    0},
+ 	{ XK_Right,         XK_ANY_MOD,     &quot;\033OC&quot;,        0,   +1,    0},
+ 	{ XK_ISO_Left_Tab,  ShiftMask,      &quot;\033[Z&quot;,        0,    0,    0},
+<a href="#h0-1-3" id="h0-1-3" class="d">-	{ XK_Return,        Mod1Mask,       &quot;\033\n&quot;,        0,    0,   -1},
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	{ XK_Return,        Mod1Mask,       &quot;\033\r&quot;,        0,    0,   -1},
+</a> 	{ XK_Return,        Mod1Mask,       &quot;\033\r\n&quot;,      0,    0,   +1},
+<a href="#h0-1-6" id="h0-1-6" class="d">-	{ XK_Return,        XK_ANY_MOD,     &quot;\n&quot;,            0,    0,   -1},
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	{ XK_Return,        XK_ANY_MOD,     &quot;\r&quot;,            0,    0,   -1},
+</a> 	{ XK_Return,        XK_ANY_MOD,     &quot;\r\n&quot;,          0,    0,   +1},
+ 	{ XK_Insert,        ShiftMask,      &quot;\033[2;2~&quot;,     0,    0,    0},
+ 	{ XK_Insert,        XK_ANY_MOD,     &quot;\033[2~&quot;,       0,    0,    0},
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2100,15 +2100,19 @@ tputc(char *c, int len) {
+</a> 		sel.bx = -1;
+ 	if(IS_SET(MODE_WRAP) &amp;&amp; term.c.state &amp; CURSOR_WRAPNEXT)
+ 		tnewline(1); /* always go to first col */
+<a href="#h1-0-3" id="h1-0-3" class="d">-	if(IS_SET(MODE_INSERT) &amp;&amp; term.c.x+1 &lt; term.col)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	if(IS_SET(MODE_INSERT) &amp;&amp; term.c.x+1 &lt; term.col) {
+</a> 		memmove(&amp;term.line[term.c.y][term.c.x+1],
+ 			&amp;term.line[term.c.y][term.c.x],
+ 			(term.col - term.c.x - 1) * sizeof(Glyph));
+<a href="#h1-0-9" id="h1-0-9" class="i">+	}
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+
+</a> 	tsetchar(c, &amp;term.c.attr, term.c.x, term.c.y);
+<a href="#h1-0-12" id="h1-0-12" class="d">-	if(term.c.x+1 &lt; term.col)
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	if(term.c.x+1 &lt; term.col) {
+</a> 		tmoveto(term.c.x+1, term.c.y);
+<a href="#h1-0-15" id="h1-0-15" class="d">-	else
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	} else {
+</a> 		term.c.state |= CURSOR_WRAPNEXT;
+<a href="#h1-0-18" id="h1-0-18" class="i">+	}
+</a> }
+ 
+ int
+</pre>
+</div>
+</body>
+</html>

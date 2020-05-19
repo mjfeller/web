@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix selection bug - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d81250e5f96e96dd430a3fc61b5b47ffc04f98d8.html">d81250e5f96e96dd430a3fc61b5b47ffc04f98d8</a>
+<b>parent</b> <a href="../commit/c5a9b799d44be9c0fa4264dc34d9dd61321be795.html">c5a9b799d44be9c0fa4264dc34d9dd61321be795</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Sun, 16 Sep 2012 10:49:12 +0200
+
+Fix selection bug
+
+After the commit named &quot;Remove timeout in the main loop&quot;, selection is not
+working in the proper way. After selecting something, press mouse button in
+a line outside of selection causes an incorrect highlight. This patch fix
+the problem forcing a draw after the press event, but this is only a fast
+hack. Real solution means rewriting selection code.
+---
+ st.c |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 4 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -561,8 +561,11 @@ bpress(XEvent *e) {
+</a> 	if(IS_SET(MODE_MOUSE))
+ 		mousereport(e);
+ 	else if(e-&gt;xbutton.button == Button1) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-		if(sel.bx != -1)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		if(sel.bx != -1) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+			sel.bx = -1;
+</a> 			tsetdirt(sel.b.y, sel.e.y);
+<a href="#h0-0-7" id="h0-0-7" class="i">+			draw();
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+		}
+</a> 		sel.mode = 1;
+ 		sel.ex = sel.bx = X2COL(e-&gt;xbutton.x);
+ 		sel.ey = sel.by = Y2ROW(e-&gt;xbutton.y);
+</pre>
+</div>
+</body>
+</html>

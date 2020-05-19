@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>add dirty flag for lines - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0dbf9c8c12a5de35d1cef22349ab80e8f0a8f10e.html">0dbf9c8c12a5de35d1cef22349ab80e8f0a8f10e</a>
+<b>parent</b> <a href="../commit/907cb8bfa69926616639f9a19127117b37326029.html">907cb8bfa69926616639f9a19127117b37326029</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 20 Oct 2011 23:20:59 +0200
+
+add dirty flag for lines
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">43</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>1 file changed, 39 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -111,6 +111,7 @@ typedef struct {
+</a> 	int col;	/* nb col */
+ 	Line* line;	/* screen */
+ 	Line* alt;	/* alternate screen */
+<a href="#h0-0-3" id="h0-0-3" class="i">+	char* dirty; /* dirtyness of lines */
+</a> 	TCursor c;	/* cursor */
+ 	int top;	/* top    scroll limit */
+ 	int bot;	/* bottom scroll limit */
+<a href="#h0-1" id="h0-1" class="h">@@ -203,6 +204,7 @@ static void tsetattr(int*, int);
+</a> static void tsetchar(char*);
+ static void tsetscroll(int, int);
+ static void tswapscreen(void);
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void tfulldirt(void);
+</a> 
+ static void ttynew(void);
+ static void ttyread(void);
+<a href="#h0-2" id="h0-2" class="h">@@ -749,6 +751,14 @@ ttyresize(int x, int y) {
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="i">+tfulldirt(void)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+{
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	int i;
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+	for(i = 0; i &lt; term.row; i++)
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+		term.dirty[i] = 1;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+}
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+void
+</a> tcursor(int mode) {
+ 	static TCursor c;
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -777,9 +787,12 @@ tnew(int col, int row) {
+</a> 	term.row = row, term.col = col;
+ 	term.line = malloc(term.row * sizeof(Line));
+ 	term.alt  = malloc(term.row * sizeof(Line));
+<a href="#h0-3-3" id="h0-3-3" class="i">+	term.dirty = malloc(term.row * sizeof(*term.dirty));
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+
+</a> 	for(row = 0; row &lt; term.row; row++) {
+ 		term.line[row] = malloc(term.col * sizeof(Glyph));
+ 		term.alt [row] = malloc(term.col * sizeof(Glyph));
+<a href="#h0-3-8" id="h0-3-8" class="i">+		term.dirty[row] = 0;
+</a> 	}
+ 	/* setup screen */
+ 	treset();
+<a href="#h0-4" id="h0-4" class="h">@@ -791,6 +804,7 @@ tswapscreen(void) {
+</a> 	term.line = term.alt;
+ 	term.alt = tmp;
+ 	term.mode ^= MODE_ALTSCREEN;
+<a href="#h0-4-3" id="h0-4-3" class="i">+	tfulldirt();
+</a> }
+ 
+ void
+<a href="#h0-5" id="h0-5" class="h">@@ -806,6 +820,9 @@ tscrolldown(int orig, int n) {
+</a> 		temp = term.line[i];
+ 		term.line[i] = term.line[i-n];
+ 		term.line[i-n] = temp;
+<a href="#h0-5-3" id="h0-5-3" class="i">+
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		term.dirty[i] = 1;
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+		term.dirty[i-n] = 1;
+</a> 	}
+ 
+ 	selscroll(orig, n);
+<a href="#h0-6" id="h0-6" class="h">@@ -823,6 +840,9 @@ tscrollup(int orig, int n) {
+</a> 		 temp = term.line[i];
+ 		 term.line[i] = term.line[i+n];
+ 		 term.line[i+n] = temp;
+<a href="#h0-6-3" id="h0-6-3" class="i">+
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+		 term.dirty[i] = 1;
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+		 term.dirty[i+n] = 1;
+</a> 	}
+ 
+ 	selscroll(orig, -n);
+<a href="#h0-7" id="h0-7" class="h">@@ -896,6 +916,7 @@ tmoveto(int x, int y) {
+</a> 
+ void
+ tsetchar(char *c) {
+<a href="#h0-7-3" id="h0-7-3" class="i">+	term.dirty[term.c.y] = 1;
+</a> 	term.line[term.c.y][term.c.x] = term.c.attr;
+ 	memcpy(term.line[term.c.y][term.c.x].c, c, UTF_SIZ);
+ 	term.line[term.c.y][term.c.x].state |= GLYPH_SET;
+<a href="#h0-8" id="h0-8" class="h">@@ -915,9 +936,11 @@ tclearregion(int x1, int y1, int x2, int y2) {
+</a> 	LIMIT(y1, 0, term.row-1);
+ 	LIMIT(y2, 0, term.row-1);
+ 
+<a href="#h0-8-3" id="h0-8-3" class="d">-	for(y = y1; y &lt;= y2; y++)
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+	for(y = y1; y &lt;= y2; y++) {
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+		term.dirty[y] = 1;
+</a> 		for(x = x1; x &lt;= x2; x++)
+ 			term.line[y][x].state = 0;
+<a href="#h0-8-8" id="h0-8-8" class="i">+	}
+</a> }
+ 
+ void
+<a href="#h0-9" id="h0-9" class="h">@@ -925,6 +948,8 @@ tdeletechar(int n) {
+</a> 	int src = term.c.x + n;
+ 	int dst = term.c.x;
+ 	int size = term.col - src;
+<a href="#h0-9-3" id="h0-9-3" class="i">+	
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+	term.dirty[term.c.y] = 1;
+</a> 
+ 	if(src &gt;= term.col) {
+ 		tclearregion(term.c.x, term.c.y, term.col-1, term.c.y);
+<a href="#h0-10" id="h0-10" class="h">@@ -940,6 +965,8 @@ tinsertblank(int n) {
+</a> 	int dst = src + n;
+ 	int size = term.col - dst;
+ 
+<a href="#h0-10-3" id="h0-10-3" class="i">+	term.dirty[term.c.y] = 1;
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+
+</a> 	if(dst &gt;= term.col) {
+ 		tclearregion(term.c.x, term.c.y, term.col-1, term.c.y);
+ 		return;
+<a href="#h0-11" id="h0-11" class="h">@@ -1411,7 +1438,8 @@ tputc(char *c) {
+</a> 			}
+ 		}
+ 	} else {
+<a href="#h0-11-3" id="h0-11-3" class="d">-		if(sel.bx != -1 &amp;&amp; BETWEEN(term.c.y, sel.by, sel.ey)) sel.bx = -1;
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+		if(sel.bx != -1 &amp;&amp; BETWEEN(term.c.y, sel.by, sel.ey))
+</a><a href="#h0-11-5" id="h0-11-5" class="i">+			sel.bx = -1;
+</a> 		switch(ascii) {
+ 		case &#39;\t&#39;:
+ 			tputtab();
+<a href="#h0-12" id="h0-12" class="h">@@ -1479,9 +1507,11 @@ tresize(int col, int row) {
+</a> 	/* resize to new height */
+ 	term.line = realloc(term.line, row * sizeof(Line));
+ 	term.alt  = realloc(term.alt,  row * sizeof(Line));
+<a href="#h0-12-3" id="h0-12-3" class="i">+	term.dirty = realloc(term.dirty, row * sizeof(*term.dirty));
+</a> 
+ 	/* resize each row to new width, zero-pad if needed */
+ 	for(i = 0; i &lt; minrow; i++) {
+<a href="#h0-12-7" id="h0-12-7" class="i">+		term.dirty[i] = 1;
+</a> 		term.line[i] = realloc(term.line[i], col * sizeof(Glyph));
+ 		term.alt[i]  = realloc(term.alt[i],  col * sizeof(Glyph));
+ 		for(x = mincol; x &lt; col; x++) {
+<a href="#h0-13" id="h0-13" class="h">@@ -1492,6 +1522,7 @@ tresize(int col, int row) {
+</a> 
+ 	/* allocate any new rows */
+ 	for(/* i == minrow */; i &lt; row; i++) {
+<a href="#h0-13-3" id="h0-13-3" class="i">+		term.dirty[i] = 1;
+</a> 		term.line[i] = calloc(col, sizeof(Glyph));
+ 		term.alt [i] = calloc(col, sizeof(Glyph));
+ 	}
+<a href="#h0-14" id="h0-14" class="h">@@ -1502,6 +1533,7 @@ tresize(int col, int row) {
+</a> 	tmoveto(term.c.x, term.c.y);
+ 	/* reset scrolling region */
+ 	tsetscroll(0, row-1);
+<a href="#h0-14-3" id="h0-14-3" class="i">+
+</a> 	return (slide &gt; 0);
+ }
+ 
+<a href="#h0-15" id="h0-15" class="h">@@ -1792,8 +1824,11 @@ drawregion(int x1, int y1, int x2, int y2) {
+</a> 	if(!(xw.state &amp; WIN_VISIBLE))
+ 		return;
+ 
+<a href="#h0-15-3" id="h0-15-3" class="d">-	xclear(x1, y1, x2-1, y2-1);
+</a> 	for(y = y1; y &lt; y2; y++) {
+<a href="#h0-15-5" id="h0-15-5" class="i">+		if(!term.dirty[y])
+</a><a href="#h0-15-6" id="h0-15-6" class="i">+			continue;
+</a><a href="#h0-15-7" id="h0-15-7" class="i">+		xclear(0, y, term.col, y);
+</a><a href="#h0-15-8" id="h0-15-8" class="i">+		term.dirty[y] = 0;
+</a> 		base = term.line[y][0];
+ 		ic = ib = ox = 0;
+ 		for(x = x1; x &lt; x2; x++) {
+<a href="#h0-16" id="h0-16" class="h">@@ -1801,7 +1836,7 @@ drawregion(int x1, int y1, int x2, int y2) {
+</a> 			if(sel.bx != -1 &amp;&amp; *(new.c) &amp;&amp; selected(x, y))
+ 				new.mode ^= ATTR_REVERSE;
+ 			if(ib &gt; 0 &amp;&amp; (!(new.state &amp; GLYPH_SET) || ATTRCMP(base, new) ||
+<a href="#h0-16-3" id="h0-16-3" class="d">-					ib &gt;= DRAW_BUF_SIZ-UTF_SIZ)) {
+</a><a href="#h0-16-4" id="h0-16-4" class="i">+						  ib &gt;= DRAW_BUF_SIZ-UTF_SIZ)) {
+</a> 				xdraws(buf, base, ox, y, ic, ib);
+ 				ic = ib = 0;
+ 			}
+</pre>
+</div>
+</body>
+</html>

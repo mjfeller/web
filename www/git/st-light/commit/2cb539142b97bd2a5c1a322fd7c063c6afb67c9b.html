@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>x: do not instantiate a new nested list on each cursor move - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2cb539142b97bd2a5c1a322fd7c063c6afb67c9b.html">2cb539142b97bd2a5c1a322fd7c063c6afb67c9b</a>
+<b>parent</b> <a href="../commit/99de33395126fc9708f442d155e737b9182f6ef4.html">99de33395126fc9708f442d155e737b9182f6ef4</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Sun,  2 Feb 2020 15:38:08 +0100
+
+x: do not instantiate a new nested list on each cursor move
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">x.c</a></td><td> | </td><td class="num">16</td><td><span class="i">++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -97,6 +97,8 @@ typedef struct {
+</a> 	struct {
+ 		XIM xim;
+ 		XIC xic;
+<a href="#h0-0-3" id="h0-0-3" class="i">+		XPoint spot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		XVaNestedList spotlist;
+</a> 	} ime;
+ 	Draw draw;
+ 	Visual *vis;
+<a href="#h0-1" id="h0-1" class="h">@@ -1042,6 +1044,9 @@ ximopen(Display *dpy)
+</a> 	                   XNClientWindow, xw.win, XNFocusWindow, xw.win, NULL);
+ 	if (xw.xic == NULL)
+ 		die(&quot;XCreateIC failed. Could not obtain input method.\n&quot;);
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	xw.ime.spotlist = XVaCreateNestedList(0, XNSpotLocation, &amp;xw.ime.spot,
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	                                      NULL);
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -1058,6 +1063,7 @@ ximdestroy(XIM xim, XPointer client, XPointer call)
+</a> 	xw.ime.xim = NULL;
+ 	XRegisterIMInstantiateCallback(xw.dpy, NULL, NULL, NULL,
+ 					ximinstantiate, NULL);
+<a href="#h0-2-3" id="h0-2-3" class="i">+	XFree(xw.ime.spotlist);
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -1603,11 +1609,13 @@ xfinishdraw(void)
+</a> void
+ xximspot(int x, int y)
+ {
+<a href="#h0-3-3" id="h0-3-3" class="d">-	XPoint spot = { borderpx + x * win.cw, borderpx + (y + 1) * win.ch };
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	XVaNestedList attr = XVaCreateNestedList(0, XNSpotLocation, &amp;spot, NULL);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if (xw.ime.xic == NULL)
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		return;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	xw.ime.spot.x = borderpx + x * win.cw;
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+	xw.ime.spot.y = borderpx + (y + 1) * win.ch;
+</a> 
+<a href="#h0-3-11" id="h0-3-11" class="d">-	XSetICValues(xw.xic, XNPreeditAttributes, attr, NULL);
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-	XFree(attr);
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+	XSetICValues(xw.ime.xic, XNPreeditAttributes, xw.ime.spotlist, NULL);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

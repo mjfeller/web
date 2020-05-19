@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Using strtol with overflow checking. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/37863356b00cd41c24e10243121649473b98824f.html">37863356b00cd41c24e10243121649473b98824f</a>
+<b>parent</b> <a href="../commit/be7c6d7fb09ff50127332060d771b94a3bc8e44c.html">be7c6d7fb09ff50127332060d771b94a3bc8e44c</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Mon, 25 Feb 2013 13:23:56 +0100
+
+Using strtol with overflow checking.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">18</td><td><span class="i">++++++++++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 6 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1296,17 +1296,22 @@ tnewline(int first_col) {
+</a> void
+ csiparse(void) {
+ 	/* int noarg = 1; */
+<a href="#h0-0-3" id="h0-0-3" class="d">-	char *p = csiescseq.buf;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	char *p = csiescseq.buf, *np;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	long int v;
+</a> 
+ 	csiescseq.narg = 0;
+ 	if(*p == &#39;?&#39;)
+ 		csiescseq.priv = 1, p++;
+ 
+ 	while(p &lt; csiescseq.buf+csiescseq.len) {
+<a href="#h0-0-12" id="h0-0-12" class="d">-		while(isdigit(*p)) {
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-			csiescseq.arg[csiescseq.narg] *= 10;
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-			csiescseq.arg[csiescseq.narg] += *p++ - &#39;0&#39;/*, noarg = 0 */;
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-		}
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+		np = NULL;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		v = strtol(p, &amp;np, 10);
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+		if(v == LONG_MAX || v == LONG_MIN)
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+			v = -1;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		csiescseq.arg[csiescseq.narg] = v;
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+		if(np != NULL)
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+			p = np;
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+
+</a> 		if(*p == &#39;;&#39; &amp;&amp; csiescseq.narg+1 &lt; ESC_ARG_SIZ) {
+ 			csiescseq.narg++, p++;
+ 		} else {
+<a href="#h0-1" id="h0-1" class="h">@@ -2116,7 +2121,8 @@ tputc(char *c, int len) {
+</a> 			if(BETWEEN(ascii, 0x40, 0x7E)
+ 					|| csiescseq.len &gt;= ESC_BUF_SIZ) {
+ 				term.esc = 0;
+<a href="#h0-1-3" id="h0-1-3" class="d">-				csiparse(), csihandle();
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+				csiparse();
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+				csihandle();
+</a> 			}
+ 		} else if(term.esc &amp; ESC_STR_END) {
+ 			term.esc = 0;
+</pre>
+</div>
+</body>
+</html>

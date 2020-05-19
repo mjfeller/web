@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Reorder and extend glyph attributes - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/50e6355e0d6c9843b51ac4711980401205ce06c1.html">50e6355e0d6c9843b51ac4711980401205ce06c1</a>
+<b>parent</b> <a href="../commit/77569526c0166e6364bb635fceb8eeabd58ce683.html">77569526c0166e6364bb635fceb8eeabd58ce683</a>
+<b>Author:</b> Anders Eurenius &lt;<a href="mailto:aes@spotify.com">aes@spotify.com</a>&gt;
+<b>Date:</b>   Sat, 21 Jun 2014 20:29:36 +0200
+
+Reorder and extend glyph attributes
+
+Faint, invisible, struck and fast blink are added as glyph attributes.
+Since there&#39;s an edit here, let&#39;s take the opportunity to reorder them
+so that they correspond to the two&#39;s power of the corresponding escape
+code. (just for neatness, let&#39;s hope that property never gets used for
+anything.)
+
+Signed-off-by: Roberto E. Vargas Caballero &lt;k0ga@shike2.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">60</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 46 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -89,15 +89,19 @@ char *argv0;
+</a> #define VT102ID &quot;\033[?6c&quot;
+ 
+ enum glyph_attribute {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	ATTR_NULL      = 0,
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	ATTR_REVERSE   = 1,
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	ATTR_UNDERLINE = 2,
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	ATTR_BOLD      = 4,
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	ATTR_ITALIC    = 8,
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+        ATTR_NULL      = 0,
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	ATTR_BOLD      = 1,
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	ATTR_FAINT     = 2,
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	ATTR_ITALIC    = 4,
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	ATTR_UNDERLINE = 8,
+</a> 	ATTR_BLINK     = 16,
+<a href="#h0-0-14" id="h0-0-14" class="d">-	ATTR_WRAP      = 32,
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-	ATTR_WIDE      = 64,
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	ATTR_WDUMMY    = 128,
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+	ATTR_FASTBLINK = 32,
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+	ATTR_REVERSE   = 64,
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+	ATTR_INVISIBLE = 128,
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+	ATTR_STRUCK    = 256,
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+	ATTR_WRAP      = 512,
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	ATTR_WIDE      = 1024,
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+	ATTR_WDUMMY    = 2048,
+</a> };
+ 
+ enum cursor_movement {
+<a href="#h0-1" id="h0-1" class="h">@@ -1681,15 +1685,25 @@ tsetattr(int *attr, int l) {
+</a> 	for(i = 0; i &lt; l; i++) {
+ 		switch(attr[i]) {
+ 		case 0:
+<a href="#h0-1-3" id="h0-1-3" class="d">-			term.c.attr.mode &amp;= ~(ATTR_REVERSE | ATTR_UNDERLINE \
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-					| ATTR_BOLD | ATTR_ITALIC \
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-					| ATTR_BLINK);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+			term.c.attr.mode &amp;= ~(
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+				ATTR_BOLD       |
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+				ATTR_FAINT      |
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+				ATTR_ITALIC     |
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+				ATTR_UNDERLINE  |
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+				ATTR_BLINK      |
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+				ATTR_FASTBLINK  |
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+				ATTR_REVERSE    |
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+				ATTR_INVISIBLE  |
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+				ATTR_STRUCK     );
+</a> 			term.c.attr.fg = defaultfg;
+ 			term.c.attr.bg = defaultbg;
+ 			break;
+ 		case 1:
+ 			term.c.attr.mode |= ATTR_BOLD;
+ 			break;
+<a href="#h0-1-22" id="h0-1-22" class="i">+		case 2:
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+			term.c.attr.mode |= ATTR_FAINT;
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+			break;
+</a> 		case 3:
+ 			term.c.attr.mode |= ATTR_ITALIC;
+ 			break;
+<a href="#h0-2" id="h0-2" class="h">@@ -1697,16 +1711,26 @@ tsetattr(int *attr, int l) {
+</a> 			term.c.attr.mode |= ATTR_UNDERLINE;
+ 			break;
+ 		case 5: /* slow blink */
+<a href="#h0-2-3" id="h0-2-3" class="d">-		case 6: /* rapid blink */
+</a> 			term.c.attr.mode |= ATTR_BLINK;
+ 			break;
+<a href="#h0-2-6" id="h0-2-6" class="i">+		case 6: /* rapid blink */
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+			term.c.attr.mode |= ATTR_FASTBLINK;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+			break;
+</a> 		case 7:
+ 			term.c.attr.mode |= ATTR_REVERSE;
+ 			break;
+<a href="#h0-2-12" id="h0-2-12" class="i">+		case 8:
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+			term.c.attr.mode |= ATTR_INVISIBLE;
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+			break;
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+		case 9:
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+			term.c.attr.mode |= ATTR_STRUCK;
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+			break;
+</a> 		case 21:
+<a href="#h0-2-19" id="h0-2-19" class="d">-		case 22:
+</a> 			term.c.attr.mode &amp;= ~ATTR_BOLD;
+ 			break;
+<a href="#h0-2-22" id="h0-2-22" class="i">+		case 22:
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+			term.c.attr.mode &amp;= ~ATTR_FAINT;
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+			break;
+</a> 		case 23:
+ 			term.c.attr.mode &amp;= ~ATTR_ITALIC;
+ 			break;
+<a href="#h0-3" id="h0-3" class="h">@@ -1714,12 +1738,20 @@ tsetattr(int *attr, int l) {
+</a> 			term.c.attr.mode &amp;= ~ATTR_UNDERLINE;
+ 			break;
+ 		case 25:
+<a href="#h0-3-3" id="h0-3-3" class="d">-		case 26:
+</a> 			term.c.attr.mode &amp;= ~ATTR_BLINK;
+ 			break;
+<a href="#h0-3-6" id="h0-3-6" class="i">+		case 26:
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+			term.c.attr.mode &amp;= ~ATTR_FASTBLINK;
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+			break;
+</a> 		case 27:
+ 			term.c.attr.mode &amp;= ~ATTR_REVERSE;
+ 			break;
+<a href="#h0-3-12" id="h0-3-12" class="i">+		case 28:
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+			term.c.attr.mode &amp;= ~ATTR_INVISIBLE;
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+			break;
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+		case 29:
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+			term.c.attr.mode &amp;= ~ATTR_STRUCK;
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+			break;
+</a> 		case 38:
+ 			if ((idx = tdefcolor(attr, &amp;i, l)) &gt;= 0)
+ 				term.c.attr.fg = idx;
+</pre>
+</div>
+</body>
+</html>

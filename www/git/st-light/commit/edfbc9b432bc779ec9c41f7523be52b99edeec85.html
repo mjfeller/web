@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>redraw if we scroll on resize - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/edfbc9b432bc779ec9c41f7523be52b99edeec85.html">edfbc9b432bc779ec9c41f7523be52b99edeec85</a>
+<b>parent</b> <a href="../commit/638a30359d26c1f84a87f0f8df17df1765068029.html">638a30359d26c1f84a87f0f8df17df1765068029</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@djpohly.com">djpohly@djpohly.com</a>&gt;
+<b>Date:</b>   Mon, 25 Oct 2010 16:45:13 -0400
+
+redraw if we scroll on resize
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>1 file changed, 6 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -170,7 +170,7 @@ static void tputtab(void);
+</a> static void tputc(char);
+ static void tputs(char*, int);
+ static void treset(void);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void tresize(int, int);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static int tresize(int, int);
+</a> static void tscrollup(int, int);
+ static void tscrolldown(int, int);
+ static void tsetattr(int*, int);
+<a href="#h0-1" id="h0-1" class="h">@@ -1202,7 +1202,7 @@ tputs(char *s, int len) {
+</a> 		tputc(*s++);
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-void
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+int
+</a> tresize(int col, int row) {
+ 	int i, x;
+ 	int minrow = MIN(row, term.row);
+<a href="#h0-2" id="h0-2" class="h">@@ -1210,7 +1210,7 @@ tresize(int col, int row) {
+</a> 	int slide = term.c.y - row + 1;
+ 
+ 	if(col &lt; 1 || row &lt; 1)
+<a href="#h0-2-3" id="h0-2-3" class="d">-		return;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+		return 0;
+</a> 
+ 	/* free unneeded rows */
+ 	i = 0;
+<a href="#h0-3" id="h0-3" class="h">@@ -1256,6 +1256,7 @@ tresize(int col, int row) {
+</a> 	tmoveto(term.c.x, term.c.y);
+ 	/* reset scrolling region */
+ 	tsetscroll(0, row-1);
+<a href="#h0-3-3" id="h0-3-3" class="i">+	return (slide &gt; 0);
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -1650,7 +1651,8 @@ resize(XEvent *e) {
+</a> 	row = (xw.h - 2*BORDER) / xw.ch;
+ 	if(col == term.col &amp;&amp; row == term.row)
+ 		return;
+<a href="#h0-4-3" id="h0-4-3" class="d">-	tresize(col, row);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	if(tresize(col, row))
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+		draw(SCREEN_REDRAW);
+</a> 	ttyresize(col, row);
+ 	xresize(col, row);
+ }
+</pre>
+</div>
+</body>
+</html>

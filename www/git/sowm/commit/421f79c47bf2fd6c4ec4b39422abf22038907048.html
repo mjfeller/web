@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: rebase rounded corners - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/421f79c47bf2fd6c4ec4b39422abf22038907048.html">421f79c47bf2fd6c4ec4b39422abf22038907048</a>
+<b>parent</b> <a href="../commit/cb03ac96643b6cfcd97300d74dc9a38850d440ce.html">cb03ac96643b6cfcd97300d74dc9a38850d440ce</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 25 Oct 2019 22:42:26 +0300
+
+sowm: rebase rounded corners
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">patches/sowm-rounded-corners.patch</a></td><td> | </td><td class="num">43</td><td><span class="i">++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>1 file changed, 20 insertions(+), 23 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/patches/sowm-rounded-corners.patch.html">patches/sowm-rounded-corners.patch</a> b/<a href="../file/patches/sowm-rounded-corners.patch.html">patches/sowm-rounded-corners.patch</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,16 +1,16 @@
+</a> diff --git a/Makefile b/Makefile
+<a href="#h0-0-1" id="h0-0-1" class="d">-index 3154a2f..243b744 100644
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+index 8573837..738af94 100644
+</a> --- a/Makefile
+ +++ b/Makefile
+ @@ -1,5 +1,5 @@
+<a href="#h0-0-6" id="h0-0-6" class="d">- CFLAGS+= -std=c99 -Wall -Wextra -pedantic -Wno-deprecated-declarations
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+ CFLAGS+= -std=c99 -Wall -Wextra -pedantic
+</a> -LDADD+= -lX11
+ +LDADD+= -lX11 -lXext
+  LDFLAGS=
+  PREFIX?= /usr
+  BINDIR?= $(PREFIX)/bin
+ diff --git a/config.def.h b/config.def.h
+<a href="#h0-0-14" id="h0-0-14" class="d">-index 3cef34b..e7f1518 100644
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+index aaaf38d..b25dc08 100644
+</a> --- a/config.def.h
+ +++ b/config.def.h
+ @@ -2,6 +2,7 @@
+<a href="#h0-1" id="h0-1" class="h">@@ -22,18 +22,18 @@ index 3cef34b..e7f1518 100644
+</a>  const char* menu[]    = {&quot;dmenu_run&quot;,      0};
+  const char* term[]    = {&quot;st&quot;,             0};
+ diff --git a/sowm.c b/sowm.c
+<a href="#h0-1-3" id="h0-1-3" class="d">-index 126aca0..5c99c5c 100644
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+index d1b4c2a..f7b620f 100644
+</a> --- a/sowm.c
+ +++ b/sowm.c
+<a href="#h0-1-7" id="h0-1-7" class="d">-@@ -3,6 +3,7 @@
+</a><a href="#h0-1-8" id="h0-1-8" class="d">- #include &lt;X11/Xlib.h&gt;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+@@ -4,6 +4,7 @@
+</a>  #include &lt;X11/XF86keysym.h&gt;
+  #include &lt;X11/keysym.h&gt;
+<a href="#h0-1-12" id="h0-1-12" class="i">+ #include &lt;X11/XKBlib.h&gt;
+</a> +#include &lt;X11/extensions/shape.h&gt;
+  #include &lt;stdlib.h&gt;
+  #include &lt;signal.h&gt;
+  #include &lt;unistd.h&gt;
+<a href="#h0-1-17" id="h0-1-17" class="d">-@@ -41,6 +42,7 @@ static void win_del(Window w);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+@@ -43,6 +44,7 @@ static void win_del(Window w);
+</a>  static void win_fs();
+  static void win_kill();
+  static void win_next();
+<a href="#h0-2" id="h0-2" class="h">@@ -51,15 +51,14 @@ index 126aca0..5c99c5c 100644
+</a>  }
+  
+  void key_press(XEvent *e) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-@@ -201,9 +206,44 @@ void win_fs() {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+@@ -185,6 +190,41 @@ void win_fs() {
+</a>  
+<a href="#h0-2-6" id="h0-2-6" class="d">-         } else
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-             XMoveResizeWindow(d, cur, c-&gt;wx, c-&gt;wy, c-&gt;ww, c-&gt;wh);
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+     } else
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+         XMoveResizeWindow(d, cur-&gt;w, cur-&gt;wx, cur-&gt;wy, cur-&gt;ww, cur-&gt;wh);
+</a><a href="#h0-2-10" id="h0-2-10" class="i">++
+</a><a href="#h0-2-11" id="h0-2-11" class="i">++    win_round_corners(cur-&gt;w, cur-&gt;f ? 0 : ROUND_CORNERS);
+</a><a href="#h0-2-12" id="h0-2-12" class="i">++}
+</a> +
+<a href="#h0-2-14" id="h0-2-14" class="d">-+        win_round_corners(cur, c-&gt;f ? 0 : ROUND_CORNERS);
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-     }
+</a><a href="#h0-2-16" id="h0-2-16" class="d">- }
+</a><a href="#h0-2-17" id="h0-2-17" class="d">- 
+</a> +void win_round_corners(Window w, int rad) {
+ +    unsigned int ww, wh, dia = 2 * rad;
+ +
+<a href="#h0-3" id="h0-3" class="h">@@ -91,16 +90,14 @@ index 126aca0..5c99c5c 100644
+</a> +    XShapeCombineMask(d, w, ShapeBounding, 0, 0, mask, ShapeSet);
+ +    XFreePixmap(d, mask);
+ +    XFreeGC(d, shape_gc);
+<a href="#h0-3-3" id="h0-3-3" class="d">-+}
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-+
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+ }
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+ 
+</a>  void win_to_ws(const Arg arg) {
+<a href="#h0-3-8" id="h0-3-8" class="d">-     int tmp = ws;
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-     win_current();
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-@@ -275,6 +315,7 @@ void map_request(XEvent *e) {
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-     if (wx == 0 &amp;&amp; wy == 0) win_center((Arg){.i = w});
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+@@ -253,6 +293,7 @@ void map_request(XEvent *e) {
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+ 
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+     if (wx + wy == 0) win_center();
+</a>  
+<a href="#h0-3-16" id="h0-3-16" class="d">-     XMapWindow(d, w);
+</a> +    win_round_corners(w, ROUND_CORNERS);
+<a href="#h0-3-18" id="h0-3-18" class="d">-     win_focus(w);
+</a><a href="#h0-3-19" id="h0-3-19" class="d">-     win_add(w);
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+     XMapWindow(d, w);
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+     win_focus(list-&gt;prev);
+</a>  }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>move code into new xresize func, add early exit to resize - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/12435817723b44189bd412937403c401e5bbc136.html">12435817723b44189bd412937403c401e5bbc136</a>
+<b>parent</b> <a href="../commit/722688d989bae9ce5e71507be5656c9b78ae7834.html">722688d989bae9ce5e71507be5656c9b78ae7834</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@djpohly.com">djpohly@djpohly.com</a>&gt;
+<b>Date:</b>   Mon, 25 Oct 2010 15:10:41 -0400
+
+move code into new xresize func, add early exit to resize
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">22</td><td><span class="i">++++++++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 14 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -190,6 +190,7 @@ static void xdrawcursor(void);
+</a> static void xinit(void);
+ static void xloadcols(void);
+ static void xseturgency(int);
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void xresize(int, int);
+</a> 
+ static void expose(XEvent *);
+ static void visibility(XEvent *);
+<a href="#h0-1" id="h0-1" class="h">@@ -1258,6 +1259,14 @@ tresize(int col, int row) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="i">+xresize(int col, int row) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	xw.bufw = MAX(1, col * xw.cw);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	xw.bufh = MAX(1, row * xw.ch);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	XFreePixmap(xw.dis, xw.buf);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	xw.buf = XCreatePixmap(xw.dis, xw.win, xw.bufw, xw.bufh, XDefaultDepth(xw.dis, xw.scr));
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+}
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+void
+</a> xloadcols(void) {
+ 	int i, r, g, b;
+ 	XColor color;
+<a href="#h0-2" id="h0-2" class="h">@@ -1615,16 +1624,13 @@ resize(XEvent *e) {
+</a> 	
+ 	xw.w = e-&gt;xconfigure.width;
+ 	xw.h = e-&gt;xconfigure.height;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	xw.bufw = xw.w - 2*BORDER;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	xw.bufh = xw.h - 2*BORDER;
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	col = xw.bufw / xw.cw;
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-	row = xw.bufh / xw.ch;
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	col = (xw.w - 2*BORDER) / xw.cw;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	row = (xw.h - 2*BORDER) / xw.ch;
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	if(col == term.col &amp;&amp; row == term.row)
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+		return;
+</a> 	tresize(col, row);
+ 	ttyresize(col, row);
+<a href="#h0-2-13" id="h0-2-13" class="d">-	xw.bufh = MAX(1, xw.bufh);
+</a><a href="#h0-2-14" id="h0-2-14" class="d">-	xw.bufw = MAX(1, xw.bufw);
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-	XFreePixmap(xw.dis, xw.buf);
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-	xw.buf = XCreatePixmap(xw.dis, xw.win, xw.bufw, xw.bufh, XDefaultDepth(xw.dis, xw.scr));
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+	xresize(col, row);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

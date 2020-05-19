@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>simplify Makefile - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e0d0a2b96e84bba95f6f3e274131e3bbfb3a4f56.html">e0d0a2b96e84bba95f6f3e274131e3bbfb3a4f56</a>
+<b>parent</b> <a href="../commit/082d8bb82bc478bdd0b1470232ba52976a0c035d.html">082d8bb82bc478bdd0b1470232ba52976a0c035d</a>
+<b>Author:</b> Matthias-Christian Ott &lt;<a href="mailto:ott@enolink.de">ott@enolink.de</a>&gt;
+<b>Date:</b>   Mon, 21 Jul 2008 17:06:59 +0200
+
+simplify Makefile
+
+
+Due to consideration of POSIX compliance issues config.mk had
+to be removed. Configuration variables can be overridden by
+environment variables or specified via command line.
+
+Additionally all pretty-printed messages were removed and
+built-in rules are used. This also simplifies and purges
+the Makefile.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">83</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">------------------------------------------------</span></td></tr>
+<tr><td class="D">D</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">34</td><td><span class="i"></span><span class="d">----------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 32 insertions(+), 85 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,64 +1,45 @@
+</a> # st - simple terminal
+ # See LICENSE file for copyright and license details.
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-include config.mk
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+VERSION = 0.0
+</a> 
+<a href="#h0-0-6" id="h0-0-6" class="d">-SRC = st.c std.c pty.c
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-OBJ = ${SRC:.c=.o}
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+PREFIX = /usr/local
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+MANDIR = $(PREFIX)/share/man
+</a> 
+<a href="#h0-0-11" id="h0-0-11" class="d">-all: options st std
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+CFLAGS = -DVERSION=\&quot;0.0\&quot; -D_GNU_SOURCE
+</a> 
+<a href="#h0-0-14" id="h0-0-14" class="d">-options:
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-	@echo st build options:
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	@echo &quot;CFLAGS     = ${CFLAGS}&quot;
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	@echo &quot;LDFLAGS    = ${LDFLAGS}&quot;
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-	@echo &quot;X11LDFLAGS = ${X11LDFLAGS}&quot;
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-	@echo &quot;CC         = ${CC}&quot;
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-.c.o:
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-	@echo CC $&lt;
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-	@${CC} -c ${CFLAGS} $&lt;
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-${OBJ}: config.mk
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-st: st.o
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-	@echo CC -o $@
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-	@${CC} -o $@ $^ ${LDFLAGS} ${X11LDFLAGS}
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-std: std.o pty.o
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-	@echo CC -o $@
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-	@${CC} -o $@ $^ ${LDFLAGS}
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+all: st std
+</a> 
+ clean:
+<a href="#h0-0-37" id="h0-0-37" class="d">-	@echo cleaning
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-	@rm -f st std ${OBJ} st-${VERSION}.tar.gz
+</a><a href="#h0-0-39" id="h0-0-39" class="i">+	rm -f st std
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+	rm -f st.o std.o
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+	rm -f st-$(VERSION).tar.gz
+</a> 
+ dist: clean
+<a href="#h0-0-44" id="h0-0-44" class="d">-	@echo creating dist tarball
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-	@mkdir -p st-${VERSION}
+</a><a href="#h0-0-46" id="h0-0-46" class="d">-	@cp -R LICENSE Makefile README config.mk \
+</a><a href="#h0-0-47" id="h0-0-47" class="d">-		st.1 ${SRC} st-${VERSION}
+</a><a href="#h0-0-48" id="h0-0-48" class="d">-	@tar -cf st-${VERSION}.tar st-${VERSION}
+</a><a href="#h0-0-49" id="h0-0-49" class="d">-	@gzip st-${VERSION}.tar
+</a><a href="#h0-0-50" id="h0-0-50" class="d">-	@rm -rf st-${VERSION}
+</a><a href="#h0-0-51" id="h0-0-51" class="d">-
+</a><a href="#h0-0-52" id="h0-0-52" class="d">-install: all
+</a><a href="#h0-0-53" id="h0-0-53" class="d">-	@echo installing executable file to ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-54" id="h0-0-54" class="d">-	@mkdir -p ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-55" id="h0-0-55" class="d">-	@cp -f st ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-56" id="h0-0-56" class="d">-	@cp -f std ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-57" id="h0-0-57" class="d">-	@chmod 755 ${DESTDIR}${PREFIX}/bin/st
+</a><a href="#h0-0-58" id="h0-0-58" class="d">-	@echo installing manual page to ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-0-59" id="h0-0-59" class="d">-	@mkdir -p ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-0-60" id="h0-0-60" class="d">-	@sed &quot;s/VERSION/${VERSION}/g&quot; &lt; st.1 &gt; ${DESTDIR}${MANPREFIX}/man1/st.1
+</a><a href="#h0-0-61" id="h0-0-61" class="d">-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/st.1
+</a><a href="#h0-0-62" id="h0-0-62" class="d">-	@sed &quot;s/VERSION/${VERSION}/g&quot; &lt; std.1 &gt; ${DESTDIR}${MANPREFIX}/man1/std.1
+</a><a href="#h0-0-63" id="h0-0-63" class="d">-	@chmod 644 ${DESTDIR}${MANPREFIX}/man1/std.1
+</a><a href="#h0-0-64" id="h0-0-64" class="i">+	mkdir st-$(VERSION)
+</a><a href="#h0-0-65" id="h0-0-65" class="i">+	cp -f LICENSE README st-$(VERSION)
+</a><a href="#h0-0-66" id="h0-0-66" class="i">+	cp -f Makefile config.mk st-$(VERSION)
+</a><a href="#h0-0-67" id="h0-0-67" class="i">+	cp -f st.1 std.1 st-$(VERSION)
+</a><a href="#h0-0-68" id="h0-0-68" class="i">+	cp -f st.c std.c st-$(VERSION)
+</a><a href="#h0-0-69" id="h0-0-69" class="i">+	tar -czf st-$(VERSION).tar st-$(VERSION)
+</a><a href="#h0-0-70" id="h0-0-70" class="i">+	rm -rf st-$(VERSION)
+</a><a href="#h0-0-71" id="h0-0-71" class="i">+
+</a><a href="#h0-0-72" id="h0-0-72" class="i">+install:
+</a><a href="#h0-0-73" id="h0-0-73" class="i">+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-74" id="h0-0-74" class="i">+	cp -f st $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-75" id="h0-0-75" class="i">+	cp -f std $(DESTDIR)$(PREFIX)/bin
+</a><a href="#h0-0-76" id="h0-0-76" class="i">+	chmod 755 $(DESTDIR)$(PREFIX)/bin/st
+</a><a href="#h0-0-77" id="h0-0-77" class="i">+	chmod 755 $(DESTDIR)$(PREFIX)/bin/std
+</a><a href="#h0-0-78" id="h0-0-78" class="i">+	mkdir -p $(DESTDIR)$(MANDIR)/man1
+</a><a href="#h0-0-79" id="h0-0-79" class="i">+	sed &#39;s/VERSION/$(VERSION)/g&#39; &lt; st.1 &gt; $(DESTDIR)$(MANDIR)/man1/st.1
+</a><a href="#h0-0-80" id="h0-0-80" class="i">+	chmod 644 $(DESTDIR)$(MANDIR)/man1/st.1
+</a><a href="#h0-0-81" id="h0-0-81" class="i">+	sed &#39;s/VERSION/$(VERSION)/g&#39; &lt; std.1 &gt; $(DESTDIR)$(MANDIR)/man1/std.1
+</a><a href="#h0-0-82" id="h0-0-82" class="i">+	chmod 644 $(DESTDIR)$(MANDIR)/man1/std.1
+</a> 
+ uninstall:
+<a href="#h0-0-85" id="h0-0-85" class="d">-	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
+</a><a href="#h0-0-86" id="h0-0-86" class="d">-	@rm -f ${DESTDIR}${PREFIX}/bin/st
+</a><a href="#h0-0-87" id="h0-0-87" class="d">-	@echo removing manual page from ${DESTDIR}${MANPREFIX}/man1
+</a><a href="#h0-0-88" id="h0-0-88" class="d">-	@rm -f ${DESTDIR}${MANPREFIX}/man1/st.1
+</a><a href="#h0-0-89" id="h0-0-89" class="i">+	rm -f $(DESTDIR)$(PREFIX)/bin/st
+</a><a href="#h0-0-90" id="h0-0-90" class="i">+	rm -f $(DESTDIR)$(PREFIX)/bin/std
+</a><a href="#h0-0-91" id="h0-0-91" class="i">+	rm -f $(DESTDIR)$(MANDIR)/man1/st.1
+</a><a href="#h0-0-92" id="h0-0-92" class="i">+	rm -f $(DESTDIR)$(MANDIR)/man1/std.1
+</a> 
+<a href="#h0-0-94" id="h0-0-94" class="d">-.PHONY: all options clean dist install uninstall
+</a><a href="#h0-0-95" id="h0-0-95" class="i">+.PHONY: all clean dist install uninstall
+</a><b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,34 +0,0 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="d">-# st version
+</a><a href="#h1-0-1" id="h1-0-1" class="d">-VERSION = 0.0
+</a><a href="#h1-0-2" id="h1-0-2" class="d">-
+</a><a href="#h1-0-3" id="h1-0-3" class="d">-# Customize below to fit your system
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-# paths
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-PREFIX = /usr/local
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-MANPREFIX = ${PREFIX}/share/man
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-X11INC = /usr/X11R6/include
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-X11LIB = /usr/X11R6/lib
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-# includes and libs
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-INCS = -I. -I/usr/include -I${X11INC}
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-LIBS = -L/usr/lib -lc
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-X11LIBS =  -L${X11LIB} -lX11
+</a><a href="#h1-0-16" id="h1-0-16" class="d">-
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-# glibc
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; -D_GNU_SOURCE
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-# flags
+</a><a href="#h1-0-21" id="h1-0-21" class="d">-#CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-22" id="h1-0-22" class="d">-CFLAGS = -Os ${INCS} ${CPPFLAGS}
+</a><a href="#h1-0-23" id="h1-0-23" class="d">-LDFLAGS = -s ${LIBS}
+</a><a href="#h1-0-24" id="h1-0-24" class="d">-X11LDFLAGS = ${X11LIBS}
+</a><a href="#h1-0-25" id="h1-0-25" class="d">-#CFLAGS = -g -std=c99 -pedantic -Wall -O2 ${INCS} ${CPPFLAGS}
+</a><a href="#h1-0-26" id="h1-0-26" class="d">-#LDFLAGS = -g ${LIBS}
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-# Solaris
+</a><a href="#h1-0-29" id="h1-0-29" class="d">-#CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-30" id="h1-0-30" class="d">-#LDFLAGS = ${LIBS}
+</a><a href="#h1-0-31" id="h1-0-31" class="d">-
+</a><a href="#h1-0-32" id="h1-0-32" class="d">-# compiler and linker
+</a><a href="#h1-0-33" id="h1-0-33" class="d">-CC = cc
+</a></pre>
+</div>
+</body>
+</html>

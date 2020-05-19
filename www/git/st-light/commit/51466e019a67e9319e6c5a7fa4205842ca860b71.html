@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Change the behavior of word snapping on delimiters - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/51466e019a67e9319e6c5a7fa4205842ca860b71.html">51466e019a67e9319e6c5a7fa4205842ca860b71</a>
+<b>parent</b> <a href="../commit/c490a60b804f467490cd4d8275a181dc37edef9f.html">c490a60b804f467490cd4d8275a181dc37edef9f</a>
+<b>Author:</b> Ivan Delalande &lt;<a href="mailto:colona@ycc.fr">colona@ycc.fr</a>&gt;
+<b>Date:</b>   Wed, 20 Aug 2014 21:20:44 +0200
+
+Change the behavior of word snapping on delimiters
+
+This makes any sequence of identical delimiters be considered a single
+word in word-snapping mode. This seems more coherent for this mode and
+is similar to what xterm does.
+
+Signed-off-by: Roberto E. Vargas Caballero &lt;k0ga@shike2.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -709,7 +709,8 @@ selected(int x, int y) {
+</a> void
+ selsnap(int mode, int *x, int *y, int direction) {
+ 	int newx, newy, xt, yt;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	Glyph *gp;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	bool delim, prevdelim;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	Glyph *gp, *prevgp;
+</a> 
+ 	switch(mode) {
+ 	case SNAP_WORD:
+<a href="#h0-1" id="h0-1" class="h">@@ -717,6 +718,8 @@ selsnap(int mode, int *x, int *y, int direction) {
+</a> 		 * Snap around if the word wraps around at the end or
+ 		 * beginning of a line.
+ 		 */
+<a href="#h0-1-3" id="h0-1-3" class="i">+		prevgp = &amp;term.line[*y][*x];
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+		prevdelim = strchr(worddelimiters, prevgp-&gt;c[0]) != NULL;
+</a> 		for(;;) {
+ 			newx = *x + direction;
+ 			newy = *y;
+<a href="#h0-2" id="h0-2" class="h">@@ -738,11 +741,15 @@ selsnap(int mode, int *x, int *y, int direction) {
+</a> 				break;
+ 
+ 			gp = &amp;term.line[newy][newx];
+<a href="#h0-2-3" id="h0-2-3" class="d">-			if (!(gp-&gt;mode &amp; ATTR_WDUMMY) &amp;&amp; strchr(worddelimiters, gp-&gt;c[0]))
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			delim = strchr(worddelimiters, gp-&gt;c[0]) != NULL;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+			if(!(gp-&gt;mode &amp; ATTR_WDUMMY) &amp;&amp; (delim != prevdelim
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+					|| (delim &amp;&amp; gp-&gt;c[0] != prevgp-&gt;c[0])))
+</a> 				break;
+ 
+ 			*x = newx;
+ 			*y = newy;
+<a href="#h0-2-11" id="h0-2-11" class="i">+			prevgp = gp;
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+			prevdelim = delim;
+</a> 		}
+ 		break;
+ 	case SNAP_LINE:
+</pre>
+</div>
+</body>
+</html>

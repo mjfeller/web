@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix Backspace and Delete characters - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c46d929fe18e4a3c9c41101eafa7a9668c8c8830.html">c46d929fe18e4a3c9c41101eafa7a9668c8c8830</a>
+<b>parent</b> <a href="../commit/0baf2d8be57d93a86973c8363df4ea3f3e641925.html">0baf2d8be57d93a86973c8363df4ea3f3e641925</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Fri, 11 Apr 2014 15:08:37 +0200
+
+Fix Backspace and Delete characters
+
+Backspace key must generate the backspace character (\010) and
+Delete key must generate the delete character (\0177). In
+some systems the kernel configuration for erasing previous character
+is \0177, so some programs (for example cat, ed, mail, ...), can not
+understand the correct meaning of backspace. In this cases it is only
+needed this command:
+
+	stty erase 
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">3</td><td><span class="i"></span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.info</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 1 insertion(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -192,7 +192,6 @@ static Key key[] = {
+</a> 	{ XK_KP_Delete,     ControlMask,    &quot;\033[3;5~&quot;,    +1,    0,    0},
+ 	{ XK_KP_Delete,     ShiftMask,      &quot;\033[2K&quot;,      -1,    0,    0},
+ 	{ XK_KP_Delete,     ShiftMask,      &quot;\033[3;2~&quot;,    +1,    0,    0},
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ XK_KP_Delete,     XK_ANY_MOD,     &quot;\033[P&quot;,       -1,    0,    0},
+</a> 	{ XK_KP_Delete,     XK_ANY_MOD,     &quot;\033[3~&quot;,      +1,    0,    0},
+ 	{ XK_KP_Multiply,   XK_ANY_MOD,     &quot;\033Oj&quot;,       +2,    0,    0},
+ 	{ XK_KP_Add,        XK_ANY_MOD,     &quot;\033Ok&quot;,       +2,    0,    0},
+<a href="#h0-1" id="h0-1" class="h">@@ -212,7 +211,6 @@ static Key key[] = {
+</a> 	{ XK_KP_7,          XK_ANY_MOD,     &quot;\033Ow&quot;,       +2,    0,    0},
+ 	{ XK_KP_8,          XK_ANY_MOD,     &quot;\033Ox&quot;,       +2,    0,    0},
+ 	{ XK_KP_9,          XK_ANY_MOD,     &quot;\033Oy&quot;,       +2,    0,    0},
+<a href="#h0-1-3" id="h0-1-3" class="d">-	{ XK_BackSpace,     XK_NO_MOD,      &quot;\177&quot;,          0,    0,    0},
+</a> 	{ XK_Up,            ShiftMask,      &quot;\033[1;2A&quot;,     0,    0,    0},
+ 	{ XK_Up,            ControlMask,    &quot;\033[1;5A&quot;,     0,    0,    0},
+ 	{ XK_Up,            Mod1Mask,       &quot;\033[1;3A&quot;,     0,    0,    0},
+<a href="#h0-2" id="h0-2" class="h">@@ -248,7 +246,6 @@ static Key key[] = {
+</a> 	{ XK_Delete,        ControlMask,    &quot;\033[3;5~&quot;,    +1,    0,    0},
+ 	{ XK_Delete,        ShiftMask,      &quot;\033[2K&quot;,      -1,    0,    0},
+ 	{ XK_Delete,        ShiftMask,      &quot;\033[3;2~&quot;,    +1,    0,    0},
+<a href="#h0-2-3" id="h0-2-3" class="d">-	{ XK_Delete,        XK_ANY_MOD,     &quot;\033[P&quot;,       -1,    0,    0},
+</a> 	{ XK_Delete,        XK_ANY_MOD,     &quot;\033[3~&quot;,      +1,    0,    0},
+ 	{ XK_Home,          ShiftMask,      &quot;\033[2J&quot;,       0,   -1,    0},
+ 	{ XK_Home,          ShiftMask,      &quot;\033[1;2H&quot;,     0,   +1,    0},
+<b>diff --git a/<a id="h1" href="../file/st.info.html">st.info</a> b/<a href="../file/st.info.html">st.info</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -53,7 +53,7 @@ st| simpleterm,
+</a> 	ka3=\E[5~,
+ 	kc1=\E[4~,
+ 	kc3=\E[6~,
+<a href="#h1-0-3" id="h1-0-3" class="d">-	kbs=\177,
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	kbs=\010,
+</a> 	kcbt=\E[Z,
+ 	kb2=\EOu,
+ 	kcub1=\EOD,
+</pre>
+</div>
+</body>
+</html>

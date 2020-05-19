@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Removing dbe and introducing umlauts to titles. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e40d8da194cb02b400b09d2c8642f701c5c16821.html">e40d8da194cb02b400b09d2c8642f701c5c16821</a>
+<b>parent</b> <a href="../commit/efaf1c2a94ed9193c04c3a67f374d31f988b0e9a.html">efaf1c2a94ed9193c04c3a67f374d31f988b0e9a</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sat, 23 Feb 2013 21:44:06 +0100
+
+Removing dbe and introducing umlauts to titles.
+
+Thanks Alexander Sedov &lt;alex0player@gmail.com&gt; for the title patch!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">92</td><td><span class="i">++++++++++++++++++++++++++++++++++</span><span class="d">---------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 39 insertions(+), 53 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -25,7 +25,6 @@
+</a> #include &lt;X11/Xutil.h&gt;
+ #include &lt;X11/cursorfont.h&gt;
+ #include &lt;X11/keysym.h&gt;
+<a href="#h0-0-3" id="h0-0-3" class="d">-#include &lt;X11/extensions/Xdbe.h&gt;
+</a> #include &lt;X11/Xft/Xft.h&gt;
+ #include &lt;fontconfig/fontconfig.h&gt;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -351,6 +350,7 @@ static void xloadcols(void);
+</a> static int xsetcolorname(int, const char *);
+ static int xloadfont(Font *, FcPattern *);
+ static void xloadfonts(char *, int);
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void xsettitle(char *);
+</a> static void xresettitle(void);
+ static void xseturgency(int);
+ static void xsetsel(char*);
+<a href="#h0-2" id="h0-2" class="h">@@ -423,8 +423,6 @@ static char *opt_embed = NULL;
+</a> static char *opt_class = NULL;
+ static char *opt_font = NULL;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-bool usedbe = False;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-
+</a> static char *usedfont = NULL;
+ static int usedfontsize = 0;
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -1862,7 +1860,6 @@ void
+</a> strhandle(void) {
+ 	char *p = NULL;
+ 	int i, j, narg;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	XTextProperty prop;
+</a> 
+ 	strparse();
+ 	narg = strescseq.narg;
+<a href="#h0-4" id="h0-4" class="h">@@ -1873,12 +1870,8 @@ strhandle(void) {
+</a> 		case 0:
+ 		case 1:
+ 		case 2:
+<a href="#h0-4-3" id="h0-4-3" class="d">-			if(narg &gt; 1) {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-				p += 2;
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-				Xutf8TextListToTextProperty(xw.dpy, &amp;p, 1,
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-						XUTF8StringStyle, &amp;prop);
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-				XSetWMName(xw.dpy, xw.win, &amp;prop);
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-			}
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+			if(narg &gt; 1)
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+				xsettitle(strescseq.args[1]);
+</a> 			break;
+ 		case 4: /* color set */
+ 			if(narg &lt; 3)
+<a href="#h0-5" id="h0-5" class="h">@@ -1890,7 +1883,11 @@ strhandle(void) {
+</a> 			if (!xsetcolorname(j, p)) {
+ 				fprintf(stderr, &quot;erresc: invalid color %s\n&quot;, p);
+ 			} else {
+<a href="#h0-5-3" id="h0-5-3" class="d">-				redraw(0); /* TODO if defaultbg color is changed, borders are dirty */
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+				/*
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+				 * TODO if defaultbg color is changed, borders
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+				 * are dirty
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+				 */
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+				redraw(0);
+</a> 			}
+ 			break;
+ 		default:
+<a href="#h0-6" id="h0-6" class="h">@@ -1900,10 +1897,7 @@ strhandle(void) {
+</a> 		}
+ 		break;
+ 	case &#39;k&#39;: /* old title set compatibility */
+<a href="#h0-6-3" id="h0-6-3" class="d">-		p += 1;
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-		Xutf8TextListToTextProperty(xw.dpy, &amp;p, 1, XUTF8StringStyle,
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-				&amp;prop);
+</a><a href="#h0-6-6" id="h0-6-6" class="d">-		XSetWMName(xw.dpy, xw.win, &amp;prop);
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+		xsettitle(strescseq.args[0]);
+</a> 		break;
+ 	case &#39;P&#39;: /* DSC -- Device Control String */
+ 	case &#39;_&#39;: /* APC -- Application Program Command */
+<a href="#h0-7" id="h0-7" class="h">@@ -2338,13 +2332,11 @@ xresize(int col, int row) {
+</a> 	xw.tw = MAX(1, col * xw.cw);
+ 	xw.th = MAX(1, row * xw.ch);
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-	if(!usedbe) {
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-		XFreePixmap(xw.dpy, xw.buf);
+</a><a href="#h0-7-5" id="h0-7-5" class="d">-		xw.buf = XCreatePixmap(xw.dpy, xw.win, xw.w, xw.h,
+</a><a href="#h0-7-6" id="h0-7-6" class="d">-				DefaultDepth(xw.dpy, xw.scr));
+</a><a href="#h0-7-7" id="h0-7-7" class="d">-		XSetForeground(xw.dpy, dc.gc, dc.col[IS_SET(MODE_REVERSE) ? defaultfg : defaultbg].pixel);
+</a><a href="#h0-7-8" id="h0-7-8" class="d">-		XFillRectangle(xw.dpy, xw.buf, dc.gc, 0, 0, xw.w, xw.h);
+</a><a href="#h0-7-9" id="h0-7-9" class="d">-	}
+</a><a href="#h0-7-10" id="h0-7-10" class="i">+	XFreePixmap(xw.dpy, xw.buf);
+</a><a href="#h0-7-11" id="h0-7-11" class="i">+	xw.buf = XCreatePixmap(xw.dpy, xw.win, xw.w, xw.h,
+</a><a href="#h0-7-12" id="h0-7-12" class="i">+			DefaultDepth(xw.dpy, xw.scr));
+</a><a href="#h0-7-13" id="h0-7-13" class="i">+	XSetForeground(xw.dpy, dc.gc, dc.col[IS_SET(MODE_REVERSE) ? defaultfg : defaultbg].pixel);
+</a><a href="#h0-7-14" id="h0-7-14" class="i">+	XFillRectangle(xw.dpy, xw.buf, dc.gc, 0, 0, xw.w, xw.h);
+</a> 
+ 	XftDrawChange(xw.draw, xw.buf);
+ }
+<a href="#h0-8" id="h0-8" class="h">@@ -2606,7 +2598,7 @@ xinit(void) {
+</a> 	XGCValues gcvalues;
+ 	Cursor cursor;
+ 	Window parent;
+<a href="#h0-8-3" id="h0-8-3" class="d">-	int sw, sh, major, minor;
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+	int sw, sh;
+</a> 
+ 	if(!(xw.dpy = XOpenDisplay(NULL)))
+ 		die(&quot;Can&#39;t open display\n&quot;);
+<a href="#h0-9" id="h0-9" class="h">@@ -2661,26 +2653,14 @@ xinit(void) {
+</a> 			| CWColormap,
+ 			&amp;attrs);
+ 
+<a href="#h0-9-3" id="h0-9-3" class="d">-	/* double buffering */
+</a><a href="#h0-9-4" id="h0-9-4" class="d">-	/*
+</a><a href="#h0-9-5" id="h0-9-5" class="d">-	if(XdbeQueryExtension(xw.dpy, &amp;major, &amp;minor)) {
+</a><a href="#h0-9-6" id="h0-9-6" class="d">-		xw.buf = XdbeAllocateBackBufferName(xw.dpy, xw.win,
+</a><a href="#h0-9-7" id="h0-9-7" class="d">-				XdbeBackground);
+</a><a href="#h0-9-8" id="h0-9-8" class="d">-		usedbe = True;
+</a><a href="#h0-9-9" id="h0-9-9" class="d">-	} else {
+</a><a href="#h0-9-10" id="h0-9-10" class="d">-	*/
+</a><a href="#h0-9-11" id="h0-9-11" class="d">-		memset(&amp;gcvalues, 0, sizeof(gcvalues));
+</a><a href="#h0-9-12" id="h0-9-12" class="d">-		gcvalues.graphics_exposures = False;
+</a><a href="#h0-9-13" id="h0-9-13" class="d">-		dc.gc = XCreateGC(xw.dpy, parent, GCGraphicsExposures,
+</a><a href="#h0-9-14" id="h0-9-14" class="d">-				&amp;gcvalues);
+</a><a href="#h0-9-15" id="h0-9-15" class="d">-		xw.buf = XCreatePixmap(xw.dpy, xw.win, xw.w, xw.h,
+</a><a href="#h0-9-16" id="h0-9-16" class="d">-				DefaultDepth(xw.dpy, xw.scr));
+</a><a href="#h0-9-17" id="h0-9-17" class="d">-		XSetForeground(xw.dpy, dc.gc, dc.col[defaultbg].pixel);
+</a><a href="#h0-9-18" id="h0-9-18" class="d">-		XFillRectangle(xw.dpy, xw.buf, dc.gc, 0, 0, xw.w, xw.h);
+</a><a href="#h0-9-19" id="h0-9-19" class="d">-		//xw.buf = xw.win;
+</a><a href="#h0-9-20" id="h0-9-20" class="d">-	/*
+</a><a href="#h0-9-21" id="h0-9-21" class="d">-	}
+</a><a href="#h0-9-22" id="h0-9-22" class="d">-	*/
+</a><a href="#h0-9-23" id="h0-9-23" class="i">+	memset(&amp;gcvalues, 0, sizeof(gcvalues));
+</a><a href="#h0-9-24" id="h0-9-24" class="i">+	gcvalues.graphics_exposures = False;
+</a><a href="#h0-9-25" id="h0-9-25" class="i">+	dc.gc = XCreateGC(xw.dpy, parent, GCGraphicsExposures,
+</a><a href="#h0-9-26" id="h0-9-26" class="i">+			&amp;gcvalues);
+</a><a href="#h0-9-27" id="h0-9-27" class="i">+	xw.buf = XCreatePixmap(xw.dpy, xw.win, xw.w, xw.h,
+</a><a href="#h0-9-28" id="h0-9-28" class="i">+			DefaultDepth(xw.dpy, xw.scr));
+</a><a href="#h0-9-29" id="h0-9-29" class="i">+	XSetForeground(xw.dpy, dc.gc, dc.col[defaultbg].pixel);
+</a><a href="#h0-9-30" id="h0-9-30" class="i">+	XFillRectangle(xw.dpy, xw.buf, dc.gc, 0, 0, xw.w, xw.h);
+</a> 
+ 	/* Xft rendering context */
+ 	xw.draw = XftDrawCreate(xw.dpy, xw.buf, xw.vis, xw.cmap);
+<a href="#h0-10" id="h0-10" class="h">@@ -2971,9 +2951,19 @@ xdrawcursor(void) {
+</a> 	}
+ }
+ 
+<a href="#h0-10-3" id="h0-10-3" class="i">+
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+void
+</a><a href="#h0-10-5" id="h0-10-5" class="i">+xsettitle(char *p) {
+</a><a href="#h0-10-6" id="h0-10-6" class="i">+	XTextProperty prop;
+</a><a href="#h0-10-7" id="h0-10-7" class="i">+
+</a><a href="#h0-10-8" id="h0-10-8" class="i">+	Xutf8TextListToTextProperty(xw.dpy, &amp;p, 1, XUTF8StringStyle,
+</a><a href="#h0-10-9" id="h0-10-9" class="i">+			&amp;prop);
+</a><a href="#h0-10-10" id="h0-10-10" class="i">+	XSetWMName(xw.dpy, xw.win, &amp;prop);
+</a><a href="#h0-10-11" id="h0-10-11" class="i">+}
+</a><a href="#h0-10-12" id="h0-10-12" class="i">+
+</a> void
+ xresettitle(void) {
+<a href="#h0-10-15" id="h0-10-15" class="d">-	XStoreName(xw.dpy, xw.win, opt_title ? opt_title : &quot;st&quot;);
+</a><a href="#h0-10-16" id="h0-10-16" class="i">+	xsettitle(opt_title ? opt_title : &quot;st&quot;);
+</a> }
+ 
+ void
+<a href="#h0-11" id="h0-11" class="h">@@ -2991,16 +2981,12 @@ redraw(int timeout) {
+</a> 
+ void
+ draw(void) {
+<a href="#h0-11-3" id="h0-11-3" class="d">-	XdbeSwapInfo swpinfo[1] = {{xw.win, XdbeCopied}};
+</a><a href="#h0-11-4" id="h0-11-4" class="d">-
+</a> 	drawregion(0, 0, term.col, term.row);
+<a href="#h0-11-6" id="h0-11-6" class="d">-	if(usedbe) {
+</a><a href="#h0-11-7" id="h0-11-7" class="d">-		XdbeSwapBuffers(xw.dpy, swpinfo, 1);
+</a><a href="#h0-11-8" id="h0-11-8" class="d">-	} else {
+</a><a href="#h0-11-9" id="h0-11-9" class="d">-		XCopyArea(xw.dpy, xw.buf, xw.win, dc.gc, 0, 0, xw.w,
+</a><a href="#h0-11-10" id="h0-11-10" class="d">-				xw.h, 0, 0);
+</a><a href="#h0-11-11" id="h0-11-11" class="d">-		XSetForeground(xw.dpy, dc.gc, dc.col[IS_SET(MODE_REVERSE) ? defaultfg : defaultbg].pixel);
+</a><a href="#h0-11-12" id="h0-11-12" class="d">-	}
+</a><a href="#h0-11-13" id="h0-11-13" class="i">+	XCopyArea(xw.dpy, xw.buf, xw.win, dc.gc, 0, 0, xw.w,
+</a><a href="#h0-11-14" id="h0-11-14" class="i">+			xw.h, 0, 0);
+</a><a href="#h0-11-15" id="h0-11-15" class="i">+	XSetForeground(xw.dpy, dc.gc,
+</a><a href="#h0-11-16" id="h0-11-16" class="i">+			dc.col[IS_SET(MODE_REVERSE)?
+</a><a href="#h0-11-17" id="h0-11-17" class="i">+				defaultfg : defaultbg].pixel);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

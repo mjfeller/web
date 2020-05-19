@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: rounded corners patch, rebase - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d2f7d00b5ac1b4fa76ed79c00b587db7e956e1a9.html">d2f7d00b5ac1b4fa76ed79c00b587db7e956e1a9</a>
+<b>parent</b> <a href="../commit/b54620584a51a1724c245655f954d49a496116fb.html">b54620584a51a1724c245655f954d49a496116fb</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Mon, 14 Oct 2019 10:58:30 +0300
+
+sowm: rounded corners patch, rebase
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">patches/sowm-rounded-corners.patch</a></td><td> | </td><td class="num">50</td><td><span class="i">+++++++++++++++++++++++++</span><span class="d">-------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 25 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/patches/sowm-rounded-corners.patch.html">patches/sowm-rounded-corners.patch</a> b/<a href="../file/patches/sowm-rounded-corners.patch.html">patches/sowm-rounded-corners.patch</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -45,24 +45,24 @@ index 1618a65..29794cb 100644
+</a>  }
+ 
+  void notify_enter(XEvent *e) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-+    while(XCheckTypedEvent(dis, EnterNotify, e));
+</a><a href="#h0-0-4" id="h0-0-4" class="i">++    while(XCheckTypedEvent(d, EnterNotify, e));
+</a> +
+      if (e-&gt;xcrossing.window != root) FOC(e-&gt;xcrossing.window)
+  }
+ 
+ @@ -104,6 +108,8 @@ void notify_motion(XEvent *e) {
+<a href="#h0-0-10" id="h0-0-10" class="d">-             attr.y + (start.button==1 ? yd : 0),
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-             attr.width  + (start.button==3 ? xd : 0),
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-             attr.height + (start.button==3 ? yd : 0));
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+             attr.y + (mouse.button==1 ? yd : 0),
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+             attr.width  + (mouse.button==3 ? xd : 0),
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+             attr.height + (mouse.button==3 ? yd : 0));
+</a> +
+<a href="#h0-0-17" id="h0-0-17" class="d">-+        win_round_corners(start.subwindow, ROUND_CORNERS);
+</a><a href="#h0-0-18" id="h0-0-18" class="i">++        win_round_corners(mouse.subwindow, ROUND_CORNERS);
+</a>      }
+ 
+<a href="#h0-0-21" id="h0-0-21" class="d">-     for WIN if (c-&gt;win == start.subwindow) c-&gt;f = 0;
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+     for WIN if (c-&gt;w == mouse.subwindow) c-&gt;f = 0;
+</a> @@ -219,7 +225,45 @@ void win_fs(Window w) {
+ 
+          } else
+<a href="#h0-0-26" id="h0-0-26" class="d">-             XMoveResizeWindow(dis, w, c-&gt;a.x, c-&gt;a.y, c-&gt;a.width, c-&gt;a.height);
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+             XMoveResizeWindow(d, w, c-&gt;a.x, c-&gt;a.y, c-&gt;a.width, c-&gt;a.height);
+</a> +
+ +        win_round_corners(w, c-&gt;f ? 0 : ROUND_CORNERS);
+ +    }
+<a href="#h0-1" id="h0-1" class="h">@@ -70,7 +70,7 @@ index 1618a65..29794cb 100644
+</a> +
+ +void win_round_corners(Window w, int rad) {
+ +    XWindowAttributes attr2;
+<a href="#h0-1-3" id="h0-1-3" class="d">-+    XGetWindowAttributes(dis, w, &amp;attr2);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">++    XGetWindowAttributes(d, w, &amp;attr2);
+</a> +
+ +    int dia = 2 * rad;
+ +    int ww  = attr2.width;
+<a href="#h0-2" id="h0-2" class="h">@@ -78,37 +78,37 @@ index 1618a65..29794cb 100644
+</a> +
+ +    if (ww &lt; dia || wh &lt; dia) return;
+ +
+<a href="#h0-2-3" id="h0-2-3" class="d">-+    Pixmap mask = XCreatePixmap(dis, w, ww, wh, 1);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">++    Pixmap mask = XCreatePixmap(d, w, ww, wh, 1);
+</a> +
+ +    if (!mask) return;
+ +
+ +    XGCValues xgcv;
+<a href="#h0-2-9" id="h0-2-9" class="d">-+    GC shape_gc = XCreateGC(dis, mask, 0, &amp;xgcv);
+</a><a href="#h0-2-10" id="h0-2-10" class="i">++    GC shape_gc = XCreateGC(d, mask, 0, &amp;xgcv);
+</a> +
+ +    if (!shape_gc) {
+<a href="#h0-2-13" id="h0-2-13" class="d">-+        XFreePixmap(dis, mask);
+</a><a href="#h0-2-14" id="h0-2-14" class="i">++        XFreePixmap(d, mask);
+</a> +        return;
+      }
+ +
+<a href="#h0-2-18" id="h0-2-18" class="d">-+    XSetForeground(dis, shape_gc, 0);
+</a><a href="#h0-2-19" id="h0-2-19" class="d">-+    XFillRectangle(dis, mask, shape_gc, 0, 0, ww, wh);
+</a><a href="#h0-2-20" id="h0-2-20" class="d">-+    XSetForeground(dis, shape_gc, 1);
+</a><a href="#h0-2-21" id="h0-2-21" class="d">-+    XFillArc(dis, mask, shape_gc, 0, 0, dia, dia, 0, 23040);
+</a><a href="#h0-2-22" id="h0-2-22" class="d">-+    XFillArc(dis, mask, shape_gc, ww-dia-1, 0, dia, dia, 0, 23040);
+</a><a href="#h0-2-23" id="h0-2-23" class="d">-+    XFillArc(dis, mask, shape_gc, 0, wh-dia-1, dia, dia, 0, 23040);
+</a><a href="#h0-2-24" id="h0-2-24" class="d">-+    XFillArc(dis, mask, shape_gc, ww-dia-1, wh-dia-1, dia, dia, 0, 23040);
+</a><a href="#h0-2-25" id="h0-2-25" class="d">-+    XFillRectangle(dis, mask, shape_gc, rad, 0, ww-dia, wh);
+</a><a href="#h0-2-26" id="h0-2-26" class="d">-+    XFillRectangle(dis, mask, shape_gc, 0, rad, ww, wh-dia);
+</a><a href="#h0-2-27" id="h0-2-27" class="d">-+    XShapeCombineMask(dis, w, ShapeBounding, 0, 0, mask, ShapeSet);
+</a><a href="#h0-2-28" id="h0-2-28" class="d">-+    XFreePixmap(dis, mask);
+</a><a href="#h0-2-29" id="h0-2-29" class="d">-+    XFreeGC(dis, shape_gc);
+</a><a href="#h0-2-30" id="h0-2-30" class="i">++    XSetForeground(d, shape_gc, 0);
+</a><a href="#h0-2-31" id="h0-2-31" class="i">++    XFillRectangle(d, mask, shape_gc, 0, 0, ww, wh);
+</a><a href="#h0-2-32" id="h0-2-32" class="i">++    XSetForeground(d, shape_gc, 1);
+</a><a href="#h0-2-33" id="h0-2-33" class="i">++    XFillArc(d, mask, shape_gc, 0, 0, dia, dia, 0, 23040);
+</a><a href="#h0-2-34" id="h0-2-34" class="i">++    XFillArc(d, mask, shape_gc, ww-dia-1, 0, dia, dia, 0, 23040);
+</a><a href="#h0-2-35" id="h0-2-35" class="i">++    XFillArc(d, mask, shape_gc, 0, wh-dia-1, dia, dia, 0, 23040);
+</a><a href="#h0-2-36" id="h0-2-36" class="i">++    XFillArc(d, mask, shape_gc, ww-dia-1, wh-dia-1, dia, dia, 0, 23040);
+</a><a href="#h0-2-37" id="h0-2-37" class="i">++    XFillRectangle(d, mask, shape_gc, rad, 0, ww-dia, wh);
+</a><a href="#h0-2-38" id="h0-2-38" class="i">++    XFillRectangle(d, mask, shape_gc, 0, rad, ww, wh-dia);
+</a><a href="#h0-2-39" id="h0-2-39" class="i">++    XShapeCombineMask(d, w, ShapeBounding, 0, 0, mask, ShapeSet);
+</a><a href="#h0-2-40" id="h0-2-40" class="i">++    XFreePixmap(d, mask);
+</a><a href="#h0-2-41" id="h0-2-41" class="i">++    XFreeGC(d, shape_gc);
+</a>  }
+ 
+  void win_to_ws(const Arg arg) {
+<a href="#h0-2-45" id="h0-2-45" class="d">-@@ -310,6 +354,7 @@ void map_request(XEvent *e) {
+</a><a href="#h0-2-46" id="h0-2-46" class="i">+@@ -313,6 +357,7 @@ void map_request(XEvent *e) {
+</a>                           EnterWindowMask|FocusChangeMask);
+      win_center(w);
+<a href="#h0-2-49" id="h0-2-49" class="d">-     XMapWindow(dis, w);
+</a><a href="#h0-2-50" id="h0-2-50" class="i">+     XMapWindow(d, w);
+</a> +    win_round_corners(w, ROUND_CORNERS);
+      FOC(w);
+      win_add(w);
+</pre>
+</div>
+</body>
+</html>

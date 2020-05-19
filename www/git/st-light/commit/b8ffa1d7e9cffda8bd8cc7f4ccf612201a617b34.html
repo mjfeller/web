@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed the scrolling bug and cleaned some stuff. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b8ffa1d7e9cffda8bd8cc7f4ccf612201a617b34.html">b8ffa1d7e9cffda8bd8cc7f4ccf612201a617b34</a>
+<b>parent</b> <a href="../commit/d5f4554431f82424af40600ed6835672ab8e44ae.html">d5f4554431f82424af40600ed6835672ab8e44ae</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 17 Jun 2009 02:58:40 +0200
+
+fixed the scrolling bug and cleaned some stuff.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">129</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 68 insertions(+), 61 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -37,7 +37,7 @@
+</a> enum { ATnone=0 , ATreverse=1 , ATunderline=2, ATbold=4 };
+ enum { CSup, CSdown, CSright, CSleft, CShide, CSdraw, CSwrap, CSsave, CSload };
+ enum { CRset=1, CRupdate=2 };
+<a href="#h0-0-3" id="h0-0-3" class="d">-enum { TMwrap=1, TMinsert=2, TMaltcharset };
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+enum { TMwrap=1, TMinsert=2 };
+</a> enum { SCupdate, SCredraw };
+ 
+ typedef int Color;
+<a href="#h0-1" id="h0-1" class="h">@@ -154,6 +154,7 @@ void xdrawc(int, int, Glyph);
+</a> void xinit(void);
+ void xscroll(void);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+void cursor(int);
+</a> 
+ /* Globals */
+ DC dc;
+<a href="#h0-2" id="h0-2" class="h">@@ -201,7 +202,6 @@ sigchld(int a) {
+</a> 		exit(EXIT_FAILURE);
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-
+</a> void
+ ttynew(void) {
+ 	int m, s;
+<a href="#h0-3" id="h0-3" class="h">@@ -328,21 +328,19 @@ void
+</a> tscroll(void) {
+ 	Line temp = term.line[term.top];
+ 	int i;
+<a href="#h0-3-3" id="h0-3-3" class="d">-
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	/* X stuff _before_ the line swapping (results in wrong line index) */
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	xscroll();
+</a> 	for(i = term.top; i &lt; term.bot; i++)
+ 		term.line[i] = term.line[i+1];
+ 	memset(temp, 0, sizeof(Glyph) * term.col);
+ 	term.line[term.bot] = temp;
+<a href="#h0-3-10" id="h0-3-10" class="d">-	xscroll();	  
+</a> }
+ 
+ void
+ tnewline(void) {
+ 	int y = term.c.y + 1;
+<a href="#h0-3-16" id="h0-3-16" class="d">-
+</a><a href="#h0-3-17" id="h0-3-17" class="d">-	if(y &gt; term.bot) {
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+	if(y &gt; term.bot)
+</a> 		tscroll(), y = term.bot;
+<a href="#h0-3-20" id="h0-3-20" class="d">-	}
+</a> 	tmoveto(0, y);
+ }
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -477,6 +475,13 @@ tinsertblank(int n) {
+</a> }
+ 
+ void
+<a href="#h0-4-3" id="h0-4-3" class="i">+tsetlinestate(int n, int state) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	int i;
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	for(i = 0; i &lt; term.col; i++)
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		term.line[n][i].state |= state;
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+}
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+void
+</a> tinsertblankline (int n) {
+ 	int i;
+ 	Line blank;
+<a href="#h0-5" id="h0-5" class="h">@@ -497,10 +502,11 @@ tinsertblankline (int n) {
+</a> 		term.line[i-n] = blank;
+ 		/* blank it */
+ 		memset(blank, 0, term.col * sizeof(Glyph));
+<a href="#h0-5-3" id="h0-5-3" class="i">+		tsetlinestate(i, CRupdate);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		tsetlinestate(i-n, CRupdate);
+</a> 	}
+ }
+ 
+<a href="#h0-5-8" id="h0-5-8" class="d">-
+</a> void
+ tdeleteline(int n) {
+ 	int i;
+<a href="#h0-6" id="h0-6" class="h">@@ -522,6 +528,8 @@ tdeleteline(int n) {
+</a> 		term.line[i+n] = blank;
+ 		/* blank it */
+ 		memset(blank, 0, term.col * sizeof(Glyph));
+<a href="#h0-6-3" id="h0-6-3" class="i">+		tsetlinestate(i, CRupdate);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+		tsetlinestate(i-n, CRupdate);
+</a> 	}
+ }
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -529,48 +537,48 @@ void
+</a> tsetattr(int *attr, int l) {
+ 	int i;
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-		for(i = 0; i &lt; l; i++) {
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-			switch(attr[i]) {
+</a><a href="#h0-7-5" id="h0-7-5" class="d">-			case 0:
+</a><a href="#h0-7-6" id="h0-7-6" class="d">-				memset(&amp;term.c.attr, 0, sizeof(term.c.attr));
+</a><a href="#h0-7-7" id="h0-7-7" class="d">-				term.c.attr.fg = DefaultFG;
+</a><a href="#h0-7-8" id="h0-7-8" class="d">-				term.c.attr.bg = DefaultBG;
+</a><a href="#h0-7-9" id="h0-7-9" class="d">-				break;
+</a><a href="#h0-7-10" id="h0-7-10" class="d">-			case 1:
+</a><a href="#h0-7-11" id="h0-7-11" class="d">-				term.c.attr.mode |= ATbold;	 
+</a><a href="#h0-7-12" id="h0-7-12" class="d">-				break;
+</a><a href="#h0-7-13" id="h0-7-13" class="d">-			case 4: 
+</a><a href="#h0-7-14" id="h0-7-14" class="d">-				term.c.attr.mode |= ATunderline;
+</a><a href="#h0-7-15" id="h0-7-15" class="d">-				break;
+</a><a href="#h0-7-16" id="h0-7-16" class="d">-			case 7: 
+</a><a href="#h0-7-17" id="h0-7-17" class="d">-				term.c.attr.mode |= ATreverse;	
+</a><a href="#h0-7-18" id="h0-7-18" class="d">-				break;
+</a><a href="#h0-7-19" id="h0-7-19" class="d">-			case 8:
+</a><a href="#h0-7-20" id="h0-7-20" class="d">-				term.c.hidden = CShide;
+</a><a href="#h0-7-21" id="h0-7-21" class="d">-				break;
+</a><a href="#h0-7-22" id="h0-7-22" class="d">-			case 22: 
+</a><a href="#h0-7-23" id="h0-7-23" class="d">-				term.c.attr.mode &amp;= ~ATbold;  
+</a><a href="#h0-7-24" id="h0-7-24" class="d">-				break;
+</a><a href="#h0-7-25" id="h0-7-25" class="d">-			case 24: 
+</a><a href="#h0-7-26" id="h0-7-26" class="d">-				term.c.attr.mode &amp;= ~ATunderline;
+</a><a href="#h0-7-27" id="h0-7-27" class="d">-				break;
+</a><a href="#h0-7-28" id="h0-7-28" class="d">-			case 27: 
+</a><a href="#h0-7-29" id="h0-7-29" class="d">-				term.c.attr.mode &amp;= ~ATreverse;	 
+</a><a href="#h0-7-30" id="h0-7-30" class="d">-				break;
+</a><a href="#h0-7-31" id="h0-7-31" class="d">-			case 39:
+</a><a href="#h0-7-32" id="h0-7-32" class="d">-				term.c.attr.fg = DefaultFG;
+</a><a href="#h0-7-33" id="h0-7-33" class="d">-				break;
+</a><a href="#h0-7-34" id="h0-7-34" class="d">-			case 49:
+</a><a href="#h0-7-35" id="h0-7-35" class="d">-				term.c.attr.fg = DefaultBG;
+</a><a href="#h0-7-36" id="h0-7-36" class="d">-				break;
+</a><a href="#h0-7-37" id="h0-7-37" class="d">-			default:
+</a><a href="#h0-7-38" id="h0-7-38" class="d">-				if(BETWEEN(attr[i], 30, 37))
+</a><a href="#h0-7-39" id="h0-7-39" class="d">-					term.c.attr.fg = attr[i] - 30;
+</a><a href="#h0-7-40" id="h0-7-40" class="d">-				else if(BETWEEN(attr[i], 40, 47))
+</a><a href="#h0-7-41" id="h0-7-41" class="d">-					term.c.attr.bg = attr[i] - 40;
+</a><a href="#h0-7-42" id="h0-7-42" class="d">-				break;
+</a><a href="#h0-7-43" id="h0-7-43" class="d">-			}
+</a><a href="#h0-7-44" id="h0-7-44" class="i">+	for(i = 0; i &lt; l; i++) {
+</a><a href="#h0-7-45" id="h0-7-45" class="i">+		switch(attr[i]) {
+</a><a href="#h0-7-46" id="h0-7-46" class="i">+		case 0:
+</a><a href="#h0-7-47" id="h0-7-47" class="i">+			memset(&amp;term.c.attr, 0, sizeof(term.c.attr));
+</a><a href="#h0-7-48" id="h0-7-48" class="i">+			term.c.attr.fg = DefaultFG;
+</a><a href="#h0-7-49" id="h0-7-49" class="i">+			term.c.attr.bg = DefaultBG;
+</a><a href="#h0-7-50" id="h0-7-50" class="i">+			break;
+</a><a href="#h0-7-51" id="h0-7-51" class="i">+		case 1:
+</a><a href="#h0-7-52" id="h0-7-52" class="i">+			term.c.attr.mode |= ATbold;	 
+</a><a href="#h0-7-53" id="h0-7-53" class="i">+			break;
+</a><a href="#h0-7-54" id="h0-7-54" class="i">+		case 4: 
+</a><a href="#h0-7-55" id="h0-7-55" class="i">+			term.c.attr.mode |= ATunderline;
+</a><a href="#h0-7-56" id="h0-7-56" class="i">+			break;
+</a><a href="#h0-7-57" id="h0-7-57" class="i">+		case 7: 
+</a><a href="#h0-7-58" id="h0-7-58" class="i">+			term.c.attr.mode |= ATreverse;	
+</a><a href="#h0-7-59" id="h0-7-59" class="i">+			break;
+</a><a href="#h0-7-60" id="h0-7-60" class="i">+		case 8:
+</a><a href="#h0-7-61" id="h0-7-61" class="i">+			term.c.hidden = CShide;
+</a><a href="#h0-7-62" id="h0-7-62" class="i">+			break;
+</a><a href="#h0-7-63" id="h0-7-63" class="i">+		case 22: 
+</a><a href="#h0-7-64" id="h0-7-64" class="i">+			term.c.attr.mode &amp;= ~ATbold;  
+</a><a href="#h0-7-65" id="h0-7-65" class="i">+			break;
+</a><a href="#h0-7-66" id="h0-7-66" class="i">+		case 24: 
+</a><a href="#h0-7-67" id="h0-7-67" class="i">+			term.c.attr.mode &amp;= ~ATunderline;
+</a><a href="#h0-7-68" id="h0-7-68" class="i">+			break;
+</a><a href="#h0-7-69" id="h0-7-69" class="i">+		case 27: 
+</a><a href="#h0-7-70" id="h0-7-70" class="i">+			term.c.attr.mode &amp;= ~ATreverse;	 
+</a><a href="#h0-7-71" id="h0-7-71" class="i">+			break;
+</a><a href="#h0-7-72" id="h0-7-72" class="i">+		case 39:
+</a><a href="#h0-7-73" id="h0-7-73" class="i">+			term.c.attr.fg = DefaultFG;
+</a><a href="#h0-7-74" id="h0-7-74" class="i">+			break;
+</a><a href="#h0-7-75" id="h0-7-75" class="i">+		case 49:
+</a><a href="#h0-7-76" id="h0-7-76" class="i">+			term.c.attr.fg = DefaultBG;
+</a><a href="#h0-7-77" id="h0-7-77" class="i">+			break;
+</a><a href="#h0-7-78" id="h0-7-78" class="i">+		default:
+</a><a href="#h0-7-79" id="h0-7-79" class="i">+			if(BETWEEN(attr[i], 30, 37))
+</a><a href="#h0-7-80" id="h0-7-80" class="i">+				term.c.attr.fg = attr[i] - 30;
+</a><a href="#h0-7-81" id="h0-7-81" class="i">+			else if(BETWEEN(attr[i], 40, 47))
+</a><a href="#h0-7-82" id="h0-7-82" class="i">+				term.c.attr.bg = attr[i] - 40;
+</a><a href="#h0-7-83" id="h0-7-83" class="i">+			break;
+</a> 		}
+<a href="#h0-7-85" id="h0-7-85" class="i">+	}
+</a> }
+ 
+ void
+<a href="#h0-8" id="h0-8" class="h">@@ -588,9 +596,8 @@ tsetscroll(int t, int b) {
+</a> 	term.bot = b;	 
+ }
+ 
+<a href="#h0-8-3" id="h0-8-3" class="d">-
+</a> void
+<a href="#h0-8-5" id="h0-8-5" class="d">-eschandle(void) { 
+</a><a href="#h0-8-6" id="h0-8-6" class="i">+eschandle(void) {
+</a> 	switch(escseq.pre) {
+ 	default:
+ 		goto unknown_seq;
+<a href="#h0-9" id="h0-9" class="h">@@ -846,7 +853,6 @@ xgetcol(const char *s) {
+</a> 	return color.pixel;
+ }
+ 
+<a href="#h0-9-3" id="h0-9-3" class="d">-
+</a> void
+ xclear(int x1, int y1, int x2, int y2) {
+ 	XClearArea(xw.dis, xw.win, 
+<a href="#h0-10" id="h0-10" class="h">@@ -855,7 +861,6 @@ xclear(int x1, int y1, int x2, int y2) {
+</a> 			False);
+ }
+ 
+<a href="#h0-10-3" id="h0-10-3" class="d">-
+</a> void
+ xscroll(void) {
+ 	int srcy = (term.top+1) * xw.ch;
+<a href="#h0-11" id="h0-11" class="h">@@ -867,9 +872,6 @@ xscroll(void) {
+</a> 	xclear(0, term.bot, term.col-1, term.bot);
+ }
+ 
+<a href="#h0-11-3" id="h0-11-3" class="d">-
+</a><a href="#h0-11-4" id="h0-11-4" class="d">-
+</a><a href="#h0-11-5" id="h0-11-5" class="d">-
+</a> void
+ xinit(void) {
+ 	XGCValues values;
+<a href="#h0-12" id="h0-12" class="h">@@ -963,14 +965,15 @@ xcursor(int mode) {
+</a> 	/* remove the old cursor */
+ 	if(term.line[oldy][oldx].state &amp; CRset)
+ 		xdrawc(oldx, oldy, term.line[oldy][oldx]);
+<a href="#h0-12-3" id="h0-12-3" class="d">-	else xclear(oldx, oldy, oldx, oldy); /* XXX: maybe a bug */
+</a><a href="#h0-12-4" id="h0-12-4" class="d">-	if(mode == CSdraw &amp;&amp; !term.c.hidden) {
+</a><a href="#h0-12-5" id="h0-12-5" class="i">+	else 
+</a><a href="#h0-12-6" id="h0-12-6" class="i">+		xclear(oldx, oldy, oldx, oldy);
+</a><a href="#h0-12-7" id="h0-12-7" class="i">+	/* draw the new one */
+</a><a href="#h0-12-8" id="h0-12-8" class="i">+	if(mode == CSdraw) {
+</a> 		xdrawc(term.c.x, term.c.y, g);
+ 		oldx = term.c.x, oldy = term.c.y;
+ 	}
+ }
+ 
+<a href="#h0-12-14" id="h0-12-14" class="d">-
+</a> void
+ draw(int redraw_all) {
+ 	int x, y;
+<a href="#h0-13" id="h0-13" class="h">@@ -978,14 +981,18 @@ draw(int redraw_all) {
+</a> 
+ 	if(redraw_all)
+ 		XClearWindow(xw.dis, xw.win);
+<a href="#h0-13-3" id="h0-13-3" class="i">+
+</a> 	/* XXX: drawing could be optimised */
+ 	for(y = 0; y &lt; term.row; y++) {
+ 		for(x = 0; x &lt; term.col; x++) {
+ 			changed = term.line[y][x].state &amp; CRupdate;
+ 			set = term.line[y][x].state &amp; CRset;
+<a href="#h0-13-9" id="h0-13-9" class="d">-			if((changed &amp;&amp; set) || (redraw_all &amp;&amp; set)) {
+</a><a href="#h0-13-10" id="h0-13-10" class="i">+			if(redraw_all || changed) {
+</a> 				term.line[y][x].state &amp;= ~CRupdate;
+<a href="#h0-13-12" id="h0-13-12" class="d">-				xdrawc(x, y, term.line[y][x]);
+</a><a href="#h0-13-13" id="h0-13-13" class="i">+				if(set)
+</a><a href="#h0-13-14" id="h0-13-14" class="i">+					xdrawc(x, y, term.line[y][x]);
+</a><a href="#h0-13-15" id="h0-13-15" class="i">+				else
+</a><a href="#h0-13-16" id="h0-13-16" class="i">+					xclear(x, y, x, y);
+</a> 			}
+ 		}
+ 	}
+</pre>
+</div>
+</body>
+</html>

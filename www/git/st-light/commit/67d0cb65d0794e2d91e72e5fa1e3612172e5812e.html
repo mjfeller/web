@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Remove the ISO 14755 feature - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/67d0cb65d0794e2d91e72e5fa1e3612172e5812e.html">67d0cb65d0794e2d91e72e5fa1e3612172e5812e</a>
+<b>parent</b> <a href="../commit/4f4bccd1627c845330235721f593d2e93418723d.html">4f4bccd1627c845330235721f593d2e93418723d</a>
+<b>Author:</b> Quentin Rameau &lt;<a href="mailto:quinq@fifth.space">quinq@fifth.space</a>&gt;
+<b>Date:</b>   Tue, 11 Sep 2018 13:11:28 +0200
+
+Remove the ISO 14755 feature
+
+And move it to the patches section.
+Keeping it would force to add an exec pledge on OpenBSD, and some
+people think it&#39;s bloated, so bye!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.1</a></td><td> | </td><td class="num">4</td><td><span class="i"></span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.c</a></td><td> | </td><td class="num">26</td><td><span class="i"></span><span class="d">--------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">st.h</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+</table></pre><pre>4 files changed, 0 insertions(+), 32 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -177,7 +177,6 @@ static Shortcut shortcuts[] = {
+</a> 	{ TERMMOD,              XK_V,           clippaste,      {.i =  0} },
+ 	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },
+ 	{ TERMMOD,              XK_Num_Lock,    numlock,        {.i =  0} },
+<a href="#h0-0-3" id="h0-0-3" class="d">-	{ TERMMOD,              XK_I,           iso14755,       {.i =  0} },
+</a> };
+ 
+ /*
+<b>diff --git a/<a id="h1" href="../file/st.1.html">st.1</a> b/<a href="../file/st.1.html">st.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -159,10 +159,6 @@ Copy the selected text to the clipboard selection.
+</a> .TP
+ .B Ctrl-Shift-v
+ Paste from the clipboard selection.
+<a href="#h1-0-3" id="h1-0-3" class="d">-.TP
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-.B Ctrl-Shift-i
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-Launch dmenu to enter a unicode codepoint and send the corresponding glyph
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-to st.
+</a> .SH CUSTOMIZATION
+ .B st
+ can be customized by creating a custom config.h and (re)compiling the source
+<b>diff --git a/<a id="h2" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -38,15 +38,11 @@
+</a> 
+ /* macros */
+ #define IS_SET(flag)		((term.mode &amp; (flag)) != 0)
+<a href="#h2-0-3" id="h2-0-3" class="d">-#define NUMMAXLEN(x)		((int)(sizeof(x) * 2.56 + 0.5) + 1)
+</a> #define ISCONTROLC0(c)		(BETWEEN(c, 0, 0x1f) || (c) == &#39;\177&#39;)
+ #define ISCONTROLC1(c)		(BETWEEN(c, 0x80, 0x9f))
+ #define ISCONTROL(c)		(ISCONTROLC0(c) || ISCONTROLC1(c))
+ #define ISDELIM(u)		(utf8strchr(worddelimiters, u) != NULL)
+ 
+<a href="#h2-0-9" id="h2-0-9" class="d">-/* constants */
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-#define ISO14755CMD		&quot;dmenu -w \&quot;$WINDOWID\&quot; -p codepoint: &lt;/dev/null&quot;
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-
+</a> enum term_mode {
+ 	MODE_WRAP        = 1 &lt;&lt; 0,
+ 	MODE_INSERT      = 1 &lt;&lt; 1,
+<a href="#h2-1" id="h2-1" class="h">@@ -1982,28 +1978,6 @@ tprinter(char *s, size_t len)
+</a> }
+ 
+ void
+<a href="#h2-1-3" id="h2-1-3" class="d">-iso14755(const Arg *arg)
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-{
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-	FILE *p;
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-	char *us, *e, codepoint[9], uc[UTF_SIZ];
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-	unsigned long utf32;
+</a><a href="#h2-1-8" id="h2-1-8" class="d">-
+</a><a href="#h2-1-9" id="h2-1-9" class="d">-	if (!(p = popen(ISO14755CMD, &quot;r&quot;)))
+</a><a href="#h2-1-10" id="h2-1-10" class="d">-		return;
+</a><a href="#h2-1-11" id="h2-1-11" class="d">-
+</a><a href="#h2-1-12" id="h2-1-12" class="d">-	us = fgets(codepoint, sizeof(codepoint), p);
+</a><a href="#h2-1-13" id="h2-1-13" class="d">-	pclose(p);
+</a><a href="#h2-1-14" id="h2-1-14" class="d">-
+</a><a href="#h2-1-15" id="h2-1-15" class="d">-	if (!us || *us == &#39;\0&#39; || *us == &#39;-&#39; || strlen(us) &gt; 7)
+</a><a href="#h2-1-16" id="h2-1-16" class="d">-		return;
+</a><a href="#h2-1-17" id="h2-1-17" class="d">-	if ((utf32 = strtoul(us, &amp;e, 16)) == ULONG_MAX ||
+</a><a href="#h2-1-18" id="h2-1-18" class="d">-	    (*e != &#39;\n&#39; &amp;&amp; *e != &#39;\0&#39;))
+</a><a href="#h2-1-19" id="h2-1-19" class="d">-		return;
+</a><a href="#h2-1-20" id="h2-1-20" class="d">-
+</a><a href="#h2-1-21" id="h2-1-21" class="d">-	ttywrite(uc, utf8encode(utf32, uc), 1);
+</a><a href="#h2-1-22" id="h2-1-22" class="d">-}
+</a><a href="#h2-1-23" id="h2-1-23" class="d">-
+</a><a href="#h2-1-24" id="h2-1-24" class="d">-void
+</a> toggleprinter(const Arg *arg)
+ {
+ 	term.mode ^= MODE_PRINT;
+<b>diff --git a/<a id="h3" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -80,7 +80,6 @@ void die(const char *, ...);
+</a> void redraw(void);
+ void draw(void);
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-void iso14755(const Arg *);
+</a> void printscreen(const Arg *);
+ void printsel(const Arg *);
+ void sendbreak(const Arg *);
+</pre>
+</div>
+</body>
+</html>

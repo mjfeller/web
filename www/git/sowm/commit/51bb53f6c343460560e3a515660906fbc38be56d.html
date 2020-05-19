@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>docs: update - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/51bb53f6c343460560e3a515660906fbc38be56d.html">51bb53f6c343460560e3a515660906fbc38be56d</a>
+<b>parent</b> <a href="../commit/9fb183c11a3652f8e1b11eeb1c93a19a645ca084.html">9fb183c11a3652f8e1b11eeb1c93a19a645ca084</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 11 Oct 2019 20:35:56 +0300
+
+docs: update
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">catwm.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.h</a></td><td> | </td><td class="num">10</td><td><span class="i">+++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>2 files changed, 8 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/catwm.c.html">catwm.c</a> b/<a href="../file/catwm.c.html">catwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -18,7 +18,7 @@
+</a> #include &lt;signal.h&gt;
+ #include &lt;sys/wait.h&gt;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define TABLENGTH(X)    (sizeof(X)/sizeof(*X))
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define TABLENGTH(X) (sizeof(X)/sizeof(*X))
+</a> #define MAX(a, b) ((a) &gt; (b) ? (a) : (b))
+ 
+ typedef union {
+<a href="#h0-1" id="h0-1" class="h">@@ -71,7 +71,7 @@ static void select_desktop(int i);
+</a> static void send_kill_signal(Window w);
+ static void setup();
+ static void sigchld(int unused);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void sh(const Arg arg);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static void run(const Arg arg);
+</a> static void update_current();
+ 
+ #include &quot;config.h&quot;
+<a href="#h0-2" id="h0-2" class="h">@@ -435,7 +435,7 @@ void sigchld(int unused) {
+</a> 	while(0 &lt; waitpid(-1, NULL, WNOHANG));
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-void sh(const Arg arg) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+void run(const Arg arg) {
+</a>     if (fork() == 0) {
+         if (fork() == 0) {
+             if (dis) close(ConnectionNumber(dis));
+<b>diff --git a/<a id="h1" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -26,12 +26,12 @@ static struct key keys[] = {
+</a>     {MOD,      XK_q,   win_kill, {NULL}},
+     {MOD,      XK_c,   win_mid,  {NULL}},
+     {MOD,      XK_f,   win_fs,   {NULL}},
+<a href="#h1-0-3" id="h1-0-3" class="d">-    {Mod1Mask, XK_Tab, win_nex,  {NULL}},
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+    {Mod1Mask, XK_Tab, win_next, {NULL}},
+</a> 
+<a href="#h1-0-6" id="h1-0-6" class="d">-    {0,        XF86XK_AudioLowerVolume, sh, {.com = voldown}},
+</a><a href="#h1-0-7" id="h1-0-7" class="d">-    {0,        XF86XK_AudioRaiseVolume, sh, {.com = volup}},
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-    {MOD,      XK_d,                    sh, {.com = menu}},
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-    {MOD,      XK_Return,               sh, {.com = term}},
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+    {MOD, XK_d,                    run, {.com = menu}},
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+    {MOD, XK_Return,               run, {.com = term}},
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+    {0,   XF86XK_AudioLowerVolume, run, {.com = voldown}},
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+    {0,   XF86XK_AudioRaiseVolume, run, {.com = volup}},
+</a> 
+      DESKTOP( XK_0, 0)
+      DESKTOP( XK_1, 1)
+</pre>
+</div>
+</body>
+</html>

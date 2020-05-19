@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fixing the clipboard copying to st itself. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/57f39defaf3f84b5d9efb3e7a8494cc7ff09e7af.html">57f39defaf3f84b5d9efb3e7a8494cc7ff09e7af</a>
+<b>parent</b> <a href="../commit/3036051fb18addd8ac15eac9e0ef3ee6aeb8bbc6.html">3036051fb18addd8ac15eac9e0ef3ee6aeb8bbc6</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sun, 20 Jan 2013 17:12:41 +0100
+
+Fixing the clipboard copying to st itself.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">11</td><td><span class="i">+++++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 9 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -793,6 +793,7 @@ void selclear(XEvent *e) {
+</a> 
+ void
+ selrequest(XEvent *e) {
+<a href="#h0-0-3" id="h0-0-3" class="i">+	fprintf(stderr, &quot;selrequest\n&quot;);
+</a> 	XSelectionRequestEvent *xsre;
+ 	XSelectionEvent xev;
+ 	Atom xa_targets, string;
+<a href="#h0-1" id="h0-1" class="h">@@ -828,6 +829,7 @@ selrequest(XEvent *e) {
+</a> 
+ void
+ xsetsel(char *str) {
+<a href="#h0-1-3" id="h0-1-3" class="i">+	fprintf(stderr, &quot;xsetsel: %s\n&quot;, str);
+</a> 	/* register the selection for both the clipboard and the primary */
+ 	Atom clipboard;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -842,6 +844,7 @@ xsetsel(char *str) {
+</a> 
+ void
+ brelease(XEvent *e) {
+<a href="#h0-2-3" id="h0-2-3" class="i">+	fprintf(stderr, &quot;brelease\n&quot;);
+</a> 	struct timeval now;
+ 
+ 	if(IS_SET(MODE_MOUSE)) {
+<a href="#h0-3" id="h0-3" class="h">@@ -2479,6 +2482,7 @@ xzoom(const Arg *arg)
+</a> void
+ xinit(void) {
+ 	XSetWindowAttributes attrs;
+<a href="#h0-3-3" id="h0-3-3" class="i">+	XGCValues gcvalues;
+</a> 	Cursor cursor;
+ 	Window parent;
+ 	int sw, sh, major, minor;
+<a href="#h0-4" id="h0-4" class="h">@@ -2544,7 +2548,10 @@ xinit(void) {
+</a> 		usedbe = True;
+ 	} else {
+ 	*/
+<a href="#h0-4-3" id="h0-4-3" class="d">-		dc.gc = XCreateGC(xw.dpy, parent, 0, 0);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+		memset(&amp;gcvalues, 0, sizeof(gcvalues));
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+		gcvalues.graphics_exposures = False;
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		dc.gc = XCreateGC(xw.dpy, parent, GCGraphicsExposures,
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+				&amp;gcvalues);
+</a> 		xw.buf = XCreatePixmap(xw.dpy, xw.win, xw.w, xw.h,
+ 				DefaultDepth(xw.dpy, xw.scr));
+ 		XSetForeground(xw.dpy, dc.gc, 0);
+<a href="#h0-5" id="h0-5" class="h">@@ -2872,7 +2879,6 @@ draw(void) {
+</a> 		XCopyArea(xw.dpy, xw.buf, xw.win, dc.gc, 0, 0, xw.w,
+ 				xw.h, 0, 0);
+ 		XSetForeground(xw.dpy, dc.gc, 0);
+<a href="#h0-5-3" id="h0-5-3" class="d">-		XSync(xw.dpy, False);
+</a> 	}
+ }
+ 
+<a href="#h0-6" id="h0-6" class="h">@@ -3169,6 +3175,7 @@ run(void) {
+</a> 			XNextEvent(xw.dpy, &amp;ev);
+ 			if(XFilterEvent(&amp;ev, None))
+ 				continue;
+<a href="#h0-6-3" id="h0-6-3" class="i">+			fprintf(stderr, &quot;ev.type = %d\n&quot;, ev.type);
+</a> 			if(handler[ev.type])
+ 				(handler[ev.type])(&amp;ev);
+ 		}
+</pre>
+</div>
+</body>
+</html>

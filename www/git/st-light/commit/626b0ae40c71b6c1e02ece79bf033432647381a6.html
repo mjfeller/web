@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Move window urgency handling entirely into x.c - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/626b0ae40c71b6c1e02ece79bf033432647381a6.html">626b0ae40c71b6c1e02ece79bf033432647381a6</a>
+<b>parent</b> <a href="../commit/d5275012b45149a2a6e94679609aacca478221ad.html">d5275012b45149a2a6e94679609aacca478221ad</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 10 Oct 2017 12:01:18 -0500
+
+Move window urgency handling entirely into x.c
+
+This allows us to make xseturgency internal.
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">5</td><td><span class="i">+</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">win.h</a></td><td> | </td><td class="num">3</td><td><span class="i">+</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h4">x.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>5 files changed, 10 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -60,7 +60,7 @@ unsigned int cursorthickness = 2;
+</a>  * bell volume. It must be a value between -100 and 100. Use 0 for disabling
+  * it
+  */
+<a href="#h0-0-3" id="h0-0-3" class="d">-static int bellvolume = 0;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+int bellvolume = 0;
+</a> 
+ /* default TERM value */
+ char termname[] = &quot;st-256color&quot;;
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2176,10 +2176,7 @@ tcontrolcode(uchar ascii)
+</a> 			/* backwards compatibility to xterm */
+ 			strhandle();
+ 		} else {
+<a href="#h1-0-3" id="h1-0-3" class="d">-			if (!(win.state &amp; WIN_FOCUSED))
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-				xseturgency(1);
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-			if (bellvolume)
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-				xbell(bellvolume);
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+			xbell();
+</a> 		}
+ 		break;
+ 	case &#39;\033&#39;: /* ESC */
+<b>diff --git a/<a id="h2" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -246,6 +246,7 @@ extern int allowaltscreen;
+</a> extern unsigned int xfps;
+ extern unsigned int actionfps;
+ extern unsigned int cursorthickness;
+<a href="#h2-0-3" id="h2-0-3" class="i">+extern int bellvolume;
+</a> extern unsigned int blinktimeout;
+ extern char termname[];
+ extern const char *colorname[];
+<b>diff --git a/<a id="h3" href="../file/win.h.html">win.h</a> b/<a href="../file/win.h.html">win.h</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -8,7 +8,7 @@
+</a> void draw(void);
+ void drawregion(int, int, int, int);
+ 
+<a href="#h3-0-3" id="h3-0-3" class="d">-void xbell(int);
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+void xbell(void);
+</a> void xclipcopy(void);
+ void xclippaste(void);
+ void xhints(void);
+<a href="#h3-1" id="h3-1" class="h">@@ -16,7 +16,6 @@ void xloadcols(void);
+</a> int xsetcolorname(int, const char *);
+ void xsettitle(char *);
+ void xsetpointermotion(int);
+<a href="#h3-1-3" id="h3-1-3" class="d">-void xseturgency(int);
+</a> void xresize(int, int);
+ void xselpaste(void);
+ void xsetsel(char *, Time);
+<b>diff --git a/<a id="h4" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -94,6 +94,7 @@ static void xloadfonts(char *, double);
+</a> static void xunloadfont(Font *);
+ static void xunloadfonts(void);
+ static void xsetenv(void);
+<a href="#h4-0-3" id="h4-0-3" class="i">+static void xseturgency(int);
+</a> 
+ static void expose(XEvent *);
+ static void visibility(XEvent *);
+<a href="#h4-1" id="h4-1" class="h">@@ -1521,9 +1522,12 @@ xseturgency(int add)
+</a> }
+ 
+ void
+<a href="#h4-1-3" id="h4-1-3" class="d">-xbell(int vol)
+</a><a href="#h4-1-4" id="h4-1-4" class="i">+xbell(void)
+</a> {
+<a href="#h4-1-6" id="h4-1-6" class="d">-	XkbBell(xw.dpy, xw.win, vol, (Atom)NULL);
+</a><a href="#h4-1-7" id="h4-1-7" class="i">+	if (!(win.state &amp; WIN_FOCUSED))
+</a><a href="#h4-1-8" id="h4-1-8" class="i">+		xseturgency(1);
+</a><a href="#h4-1-9" id="h4-1-9" class="i">+	if (bellvolume)
+</a><a href="#h4-1-10" id="h4-1-10" class="i">+		XkbBell(xw.dpy, xw.win, bellvolume, (Atom)NULL);
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

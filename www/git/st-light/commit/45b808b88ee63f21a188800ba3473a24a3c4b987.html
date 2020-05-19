@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>new utf decoder - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/45b808b88ee63f21a188800ba3473a24a3c4b987.html">45b808b88ee63f21a188800ba3473a24a3c4b987</a>
+<b>parent</b> <a href="../commit/71328cbcdc88f4fdfbb62d8c0324938e245c8971.html">71328cbcdc88f4fdfbb62d8c0324938e245c8971</a>
+<b>Author:</b> Damian Okrasa &lt;<a href="mailto:dokrasa@gmail.com">dokrasa@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 25 Mar 2014 20:20:26 +0100
+
+new utf decoder
+
+This patch replaces current utf decoder with a new one, which is ~50
+lines shorter and should be easier to understand. Parsing 5 and 6
+sequences, if necessary, requires trivial modification of UTF_SIZ
+constant and utfbyte, utfmask, utfmin, utfmax arrays.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">214</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d">-------------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 81 insertions(+), 133 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -55,6 +55,7 @@ char *argv0;
+</a> #define XEMBED_FOCUS_OUT 5
+ 
+ /* Arbitrary sizes */
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define UTF_INVALID   0xFFFD
+</a> #define UTF_SIZ       4
+ #define ESC_BUF_SIZ   (128*UTF_SIZ)
+ #define ESC_ARG_SIZ   16
+<a href="#h0-1" id="h0-1" class="h">@@ -442,10 +443,12 @@ static void selcopy(void);
+</a> static void selscroll(int, int);
+ static void selsnap(int, int *, int *, int);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-static int utf8decode(char *, long *);
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-static int utf8encode(long *, char *);
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-static int utf8size(char *);
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-static int isfullutf8(char *, int);
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+static size_t utf8decode(char *, long *, size_t);
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+static long utf8decodebyte(char, size_t *);
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+static size_t utf8encode(long, char *, size_t);
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+static char utf8encodebyte(long, size_t);
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+static size_t utf8len(char *);
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+static size_t utf8validate(long *, size_t);
+</a> 
+ static ssize_t xwrite(int, char *, size_t);
+ static void *xmalloc(size_t);
+<a href="#h0-2" id="h0-2" class="h">@@ -490,6 +493,11 @@ static int oldbutton = 3; /* button event on startup: 3 = release */
+</a> static char *usedfont = NULL;
+ static double usedfontsize = 0;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+static uchar utfbyte[UTF_SIZ + 1] = {0x80,    0, 0xC0, 0xE0, 0xF0};
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+static uchar utfmask[UTF_SIZ + 1] = {0xC0, 0x80, 0xE0, 0xF0, 0xF8};
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+static long utfmin[UTF_SIZ + 1] = {       0,    0,  0x80,  0x800,  0x10000};
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+static long utfmax[UTF_SIZ + 1] = {0x10FFFF, 0x7F, 0x7FF, 0xFFFF, 0x10FFFF};
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+
+</a> /* Font Ring Cache */
+ enum {
+ 	FRC_NORMAL,
+<a href="#h0-3" id="h0-3" class="h">@@ -549,128 +557,69 @@ xstrdup(char *s) {
+</a> 	return p;
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-int
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-utf8decode(char *s, long *u) {
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	uchar c;
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-	int i, n, rtn;
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-	rtn = 1;
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-	c = *s;
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-	if(~c &amp; 0x80) { /* 0xxxxxxx */
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-		*u = c;
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-		return rtn;
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-	} else if((c &amp; 0xE0) == 0xC0) { /* 110xxxxx */
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-		*u = c &amp; 0x1F;
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-		n = 1;
+</a><a href="#h0-3-16" id="h0-3-16" class="d">-	} else if((c &amp; 0xF0) == 0xE0) { /* 1110xxxx */
+</a><a href="#h0-3-17" id="h0-3-17" class="d">-		*u = c &amp; 0x0F;
+</a><a href="#h0-3-18" id="h0-3-18" class="d">-		n = 2;
+</a><a href="#h0-3-19" id="h0-3-19" class="d">-	} else if((c &amp; 0xF8) == 0xF0) { /* 11110xxx */
+</a><a href="#h0-3-20" id="h0-3-20" class="d">-		*u = c &amp; 0x07;
+</a><a href="#h0-3-21" id="h0-3-21" class="d">-		n = 3;
+</a><a href="#h0-3-22" id="h0-3-22" class="d">-	} else {
+</a><a href="#h0-3-23" id="h0-3-23" class="d">-		goto invalid;
+</a><a href="#h0-3-24" id="h0-3-24" class="d">-	}
+</a><a href="#h0-3-25" id="h0-3-25" class="d">-
+</a><a href="#h0-3-26" id="h0-3-26" class="d">-	for(i = n, ++s; i &gt; 0; --i, ++rtn, ++s) {
+</a><a href="#h0-3-27" id="h0-3-27" class="d">-		c = *s;
+</a><a href="#h0-3-28" id="h0-3-28" class="d">-		if((c &amp; 0xC0) != 0x80) /* 10xxxxxx */
+</a><a href="#h0-3-29" id="h0-3-29" class="d">-			goto invalid;
+</a><a href="#h0-3-30" id="h0-3-30" class="d">-		*u &lt;&lt;= 6;
+</a><a href="#h0-3-31" id="h0-3-31" class="d">-		*u |= c &amp; 0x3F;
+</a><a href="#h0-3-32" id="h0-3-32" class="d">-	}
+</a><a href="#h0-3-33" id="h0-3-33" class="d">-
+</a><a href="#h0-3-34" id="h0-3-34" class="d">-	if((n == 1 &amp;&amp; *u &lt; 0x80) ||
+</a><a href="#h0-3-35" id="h0-3-35" class="d">-	   (n == 2 &amp;&amp; *u &lt; 0x800) ||
+</a><a href="#h0-3-36" id="h0-3-36" class="d">-	   (n == 3 &amp;&amp; *u &lt; 0x10000) ||
+</a><a href="#h0-3-37" id="h0-3-37" class="d">-	   (*u &gt;= 0xD800 &amp;&amp; *u &lt;= 0xDFFF)) {
+</a><a href="#h0-3-38" id="h0-3-38" class="d">-		goto invalid;
+</a><a href="#h0-3-39" id="h0-3-39" class="d">-	}
+</a><a href="#h0-3-40" id="h0-3-40" class="d">-
+</a><a href="#h0-3-41" id="h0-3-41" class="d">-	return rtn;
+</a><a href="#h0-3-42" id="h0-3-42" class="d">-invalid:
+</a><a href="#h0-3-43" id="h0-3-43" class="d">-	*u = 0xFFFD;
+</a><a href="#h0-3-44" id="h0-3-44" class="d">-
+</a><a href="#h0-3-45" id="h0-3-45" class="d">-	return rtn;
+</a><a href="#h0-3-46" id="h0-3-46" class="d">-}
+</a><a href="#h0-3-47" id="h0-3-47" class="i">+size_t
+</a><a href="#h0-3-48" id="h0-3-48" class="i">+utf8decode(char *c, long *u, size_t clen) {
+</a><a href="#h0-3-49" id="h0-3-49" class="i">+	size_t i, j, len, type;
+</a><a href="#h0-3-50" id="h0-3-50" class="i">+	long udecoded;
+</a> 
+<a href="#h0-3-52" id="h0-3-52" class="d">-int
+</a><a href="#h0-3-53" id="h0-3-53" class="d">-utf8encode(long *u, char *s) {
+</a><a href="#h0-3-54" id="h0-3-54" class="d">-	uchar *sp;
+</a><a href="#h0-3-55" id="h0-3-55" class="d">-	ulong uc;
+</a><a href="#h0-3-56" id="h0-3-56" class="d">-	int i, n;
+</a><a href="#h0-3-57" id="h0-3-57" class="d">-
+</a><a href="#h0-3-58" id="h0-3-58" class="d">-	sp = (uchar *)s;
+</a><a href="#h0-3-59" id="h0-3-59" class="d">-	uc = *u;
+</a><a href="#h0-3-60" id="h0-3-60" class="d">-	if(uc &lt; 0x80) {
+</a><a href="#h0-3-61" id="h0-3-61" class="d">-		*sp = uc; /* 0xxxxxxx */
+</a><a href="#h0-3-62" id="h0-3-62" class="i">+	*u = UTF_INVALID;
+</a><a href="#h0-3-63" id="h0-3-63" class="i">+	if(!clen)
+</a><a href="#h0-3-64" id="h0-3-64" class="i">+		return 0;
+</a><a href="#h0-3-65" id="h0-3-65" class="i">+	udecoded = utf8decodebyte(c[0], &amp;len);
+</a><a href="#h0-3-66" id="h0-3-66" class="i">+	if(!BETWEEN(len, 1, UTF_SIZ))
+</a> 		return 1;
+<a href="#h0-3-68" id="h0-3-68" class="d">-	} else if(*u &lt; 0x800) {
+</a><a href="#h0-3-69" id="h0-3-69" class="d">-		*sp = (uc &gt;&gt; 6) | 0xC0; /* 110xxxxx */
+</a><a href="#h0-3-70" id="h0-3-70" class="d">-		n = 1;
+</a><a href="#h0-3-71" id="h0-3-71" class="d">-	} else if(uc &lt; 0x10000) {
+</a><a href="#h0-3-72" id="h0-3-72" class="d">-		*sp = (uc &gt;&gt; 12) | 0xE0; /* 1110xxxx */
+</a><a href="#h0-3-73" id="h0-3-73" class="d">-		n = 2;
+</a><a href="#h0-3-74" id="h0-3-74" class="d">-	} else if(uc &lt;= 0x10FFFF) {
+</a><a href="#h0-3-75" id="h0-3-75" class="d">-		*sp = (uc &gt;&gt; 18) | 0xF0; /* 11110xxx */
+</a><a href="#h0-3-76" id="h0-3-76" class="d">-		n = 3;
+</a><a href="#h0-3-77" id="h0-3-77" class="d">-	} else {
+</a><a href="#h0-3-78" id="h0-3-78" class="d">-		goto invalid;
+</a><a href="#h0-3-79" id="h0-3-79" class="i">+	for(i = 1, j = 1; i &lt; clen &amp;&amp; j &lt; len; ++i, ++j) {
+</a><a href="#h0-3-80" id="h0-3-80" class="i">+		udecoded = (udecoded &lt;&lt; 6) | utf8decodebyte(c[i], &amp;type);
+</a><a href="#h0-3-81" id="h0-3-81" class="i">+		if(type != 0)
+</a><a href="#h0-3-82" id="h0-3-82" class="i">+			return j;
+</a> 	}
+<a href="#h0-3-84" id="h0-3-84" class="i">+	if(j &lt; len)
+</a><a href="#h0-3-85" id="h0-3-85" class="i">+		return 0;
+</a><a href="#h0-3-86" id="h0-3-86" class="i">+	*u = udecoded;
+</a><a href="#h0-3-87" id="h0-3-87" class="i">+	utf8validate(u, len);
+</a><a href="#h0-3-88" id="h0-3-88" class="i">+	return len;
+</a><a href="#h0-3-89" id="h0-3-89" class="i">+}
+</a> 
+<a href="#h0-3-91" id="h0-3-91" class="d">-	for(i=n,++sp; i&gt;0; --i,++sp)
+</a><a href="#h0-3-92" id="h0-3-92" class="d">-		*sp = ((uc &gt;&gt; 6*(i-1)) &amp; 0x3F) | 0x80; /* 10xxxxxx */
+</a><a href="#h0-3-93" id="h0-3-93" class="d">-
+</a><a href="#h0-3-94" id="h0-3-94" class="d">-	return n+1;
+</a><a href="#h0-3-95" id="h0-3-95" class="d">-invalid:
+</a><a href="#h0-3-96" id="h0-3-96" class="d">-	/* U+FFFD */
+</a><a href="#h0-3-97" id="h0-3-97" class="d">-	*s++ = &#39;\xEF&#39;;
+</a><a href="#h0-3-98" id="h0-3-98" class="d">-	*s++ = &#39;\xBF&#39;;
+</a><a href="#h0-3-99" id="h0-3-99" class="d">-	*s = &#39;\xBD&#39;;
+</a><a href="#h0-3-100" id="h0-3-100" class="d">-
+</a><a href="#h0-3-101" id="h0-3-101" class="d">-	return 3;
+</a><a href="#h0-3-102" id="h0-3-102" class="i">+long
+</a><a href="#h0-3-103" id="h0-3-103" class="i">+utf8decodebyte(char c, size_t *i) {
+</a><a href="#h0-3-104" id="h0-3-104" class="i">+	for(*i = 0; *i &lt; LEN(utfmask); ++(*i))
+</a><a href="#h0-3-105" id="h0-3-105" class="i">+		if(((uchar)c &amp; utfmask[*i]) == utfbyte[*i])
+</a><a href="#h0-3-106" id="h0-3-106" class="i">+			return (uchar)c &amp; ~utfmask[*i];
+</a><a href="#h0-3-107" id="h0-3-107" class="i">+	return 0;
+</a> }
+ 
+<a href="#h0-3-110" id="h0-3-110" class="d">-/* use this if your buffer is less than UTF_SIZ, it returns 1 if you can decode
+</a><a href="#h0-3-111" id="h0-3-111" class="d">-   UTF-8 otherwise return 0 */
+</a><a href="#h0-3-112" id="h0-3-112" class="d">-int
+</a><a href="#h0-3-113" id="h0-3-113" class="d">-isfullutf8(char *s, int b) {
+</a><a href="#h0-3-114" id="h0-3-114" class="d">-	uchar *c1, *c2, *c3;
+</a><a href="#h0-3-115" id="h0-3-115" class="i">+size_t
+</a><a href="#h0-3-116" id="h0-3-116" class="i">+utf8encode(long u, char *c, size_t clen) {
+</a><a href="#h0-3-117" id="h0-3-117" class="i">+	size_t len, i;
+</a> 
+<a href="#h0-3-119" id="h0-3-119" class="d">-	c1 = (uchar *)s;
+</a><a href="#h0-3-120" id="h0-3-120" class="d">-	c2 = (uchar *)++s;
+</a><a href="#h0-3-121" id="h0-3-121" class="d">-	c3 = (uchar *)++s;
+</a><a href="#h0-3-122" id="h0-3-122" class="d">-	if(b &lt; 1) {
+</a><a href="#h0-3-123" id="h0-3-123" class="i">+	len = utf8validate(&amp;u, 0);
+</a><a href="#h0-3-124" id="h0-3-124" class="i">+	if(clen &lt; len)
+</a> 		return 0;
+<a href="#h0-3-126" id="h0-3-126" class="d">-	} else if((*c1 &amp; 0xE0) == 0xC0 &amp;&amp; b == 1) {
+</a><a href="#h0-3-127" id="h0-3-127" class="d">-		return 0;
+</a><a href="#h0-3-128" id="h0-3-128" class="d">-	} else if((*c1 &amp; 0xF0) == 0xE0 &amp;&amp;
+</a><a href="#h0-3-129" id="h0-3-129" class="d">-	    ((b == 1) ||
+</a><a href="#h0-3-130" id="h0-3-130" class="d">-	    ((b == 2) &amp;&amp; (*c2 &amp; 0xC0) == 0x80))) {
+</a><a href="#h0-3-131" id="h0-3-131" class="d">-		return 0;
+</a><a href="#h0-3-132" id="h0-3-132" class="d">-	} else if((*c1 &amp; 0xF8) == 0xF0 &amp;&amp;
+</a><a href="#h0-3-133" id="h0-3-133" class="d">-	    ((b == 1) ||
+</a><a href="#h0-3-134" id="h0-3-134" class="d">-	    ((b == 2) &amp;&amp; (*c2 &amp; 0xC0) == 0x80) ||
+</a><a href="#h0-3-135" id="h0-3-135" class="d">-	    ((b == 3) &amp;&amp; (*c2 &amp; 0xC0) == 0x80 &amp;&amp; (*c3 &amp; 0xC0) == 0x80))) {
+</a><a href="#h0-3-136" id="h0-3-136" class="d">-		return 0;
+</a><a href="#h0-3-137" id="h0-3-137" class="d">-	} else {
+</a><a href="#h0-3-138" id="h0-3-138" class="d">-		return 1;
+</a><a href="#h0-3-139" id="h0-3-139" class="i">+	for(i = len - 1; i != 0; --i) {
+</a><a href="#h0-3-140" id="h0-3-140" class="i">+		c[i] = utf8encodebyte(u, 0);
+</a><a href="#h0-3-141" id="h0-3-141" class="i">+		u &gt;&gt;= 6;
+</a> 	}
+<a href="#h0-3-143" id="h0-3-143" class="i">+	c[0] = utf8encodebyte(u, len);
+</a><a href="#h0-3-144" id="h0-3-144" class="i">+	return len;
+</a> }
+ 
+<a href="#h0-3-147" id="h0-3-147" class="d">-int
+</a><a href="#h0-3-148" id="h0-3-148" class="d">-utf8size(char *s) {
+</a><a href="#h0-3-149" id="h0-3-149" class="d">-	uchar c = *s;
+</a><a href="#h0-3-150" id="h0-3-150" class="i">+char
+</a><a href="#h0-3-151" id="h0-3-151" class="i">+utf8encodebyte(long u, size_t i) {
+</a><a href="#h0-3-152" id="h0-3-152" class="i">+	return utfbyte[i] | (u &amp; ~utfmask[i]);
+</a><a href="#h0-3-153" id="h0-3-153" class="i">+}
+</a> 
+<a href="#h0-3-155" id="h0-3-155" class="d">-	if(~c &amp; 0x80) {
+</a><a href="#h0-3-156" id="h0-3-156" class="d">-		return 1;
+</a><a href="#h0-3-157" id="h0-3-157" class="d">-	} else if((c &amp; 0xE0) == 0xC0) {
+</a><a href="#h0-3-158" id="h0-3-158" class="d">-		return 2;
+</a><a href="#h0-3-159" id="h0-3-159" class="d">-	} else if((c &amp; 0xF0) == 0xE0) {
+</a><a href="#h0-3-160" id="h0-3-160" class="d">-		return 3;
+</a><a href="#h0-3-161" id="h0-3-161" class="d">-	} else {
+</a><a href="#h0-3-162" id="h0-3-162" class="d">-		return 4;
+</a><a href="#h0-3-163" id="h0-3-163" class="d">-	}
+</a><a href="#h0-3-164" id="h0-3-164" class="i">+size_t
+</a><a href="#h0-3-165" id="h0-3-165" class="i">+utf8len(char *c) {
+</a><a href="#h0-3-166" id="h0-3-166" class="i">+	return utf8decode(c, &amp;(long){0}, UTF_SIZ);
+</a><a href="#h0-3-167" id="h0-3-167" class="i">+}
+</a><a href="#h0-3-168" id="h0-3-168" class="i">+
+</a><a href="#h0-3-169" id="h0-3-169" class="i">+size_t
+</a><a href="#h0-3-170" id="h0-3-170" class="i">+utf8validate(long *u, size_t i) {
+</a><a href="#h0-3-171" id="h0-3-171" class="i">+	if(!BETWEEN(*u, utfmin[i], utfmax[i]) || BETWEEN(*u, 0xD800, 0xDFFF))
+</a><a href="#h0-3-172" id="h0-3-172" class="i">+		*u = UTF_INVALID;
+</a><a href="#h0-3-173" id="h0-3-173" class="i">+	for(i = 1; *u &gt; utfmax[i]; ++i)
+</a><a href="#h0-3-174" id="h0-3-174" class="i">+		;
+</a><a href="#h0-3-175" id="h0-3-175" class="i">+	return i;
+</a> }
+ 
+ static void
+<a href="#h0-4" id="h0-4" class="h">@@ -984,7 +933,7 @@ getsel(void) {
+</a> 				if(!selected(x, y) || (gp-&gt;mode &amp; ATTR_WDUMMY))
+ 					continue;
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-				size = utf8size(gp-&gt;c);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+				size = utf8len(gp-&gt;c);
+</a> 				memcpy(ptr, gp-&gt;c, size);
+ 				ptr += size;
+ 			}
+<a href="#h0-5" id="h0-5" class="h">@@ -1298,7 +1247,7 @@ ttyread(void) {
+</a> 	char *ptr;
+ 	char s[UTF_SIZ];
+ 	int charsize; /* size of utf8 char in bytes */
+<a href="#h0-5-3" id="h0-5-3" class="d">-	long utf8c;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	long unicodep;
+</a> 	int ret;
+ 
+ 	/* append read bytes to unprocessed bytes */
+<a href="#h0-6" id="h0-6" class="h">@@ -1308,9 +1257,8 @@ ttyread(void) {
+</a> 	/* process every complete utf8 char */
+ 	buflen += ret;
+ 	ptr = buf;
+<a href="#h0-6-3" id="h0-6-3" class="d">-	while(buflen &gt;= UTF_SIZ || isfullutf8(ptr,buflen)) {
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-		charsize = utf8decode(ptr, &amp;utf8c);
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-		utf8encode(&amp;utf8c, s);
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+	while(charsize = utf8decode(ptr, &amp;unicodep, buflen)) {
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+		utf8encode(unicodep, s, UTF_SIZ);
+</a> 		tputc(s, charsize);
+ 		ptr += charsize;
+ 		buflen -= charsize;
+<a href="#h0-7" id="h0-7" class="h">@@ -2414,14 +2362,14 @@ void
+</a> tputc(char *c, int len) {
+ 	uchar ascii = *c;
+ 	bool control = ascii &lt; &#39;\x20&#39; || ascii == 0177;
+<a href="#h0-7-3" id="h0-7-3" class="d">-	long u8char;
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	long unicodep;
+</a> 	int width;
+ 
+ 	if(len == 1) {
+ 		width = 1;
+ 	} else {
+<a href="#h0-7-10" id="h0-7-10" class="d">-		utf8decode(c, &amp;u8char);
+</a><a href="#h0-7-11" id="h0-7-11" class="d">-		width = wcwidth(u8char);
+</a><a href="#h0-7-12" id="h0-7-12" class="i">+		utf8decode(c, &amp;unicodep, UTF_SIZ);
+</a><a href="#h0-7-13" id="h0-7-13" class="i">+		width = wcwidth(unicodep);
+</a> 	}
+ 
+ 	if(IS_SET(MODE_PRINT))
+<a href="#h0-8" id="h0-8" class="h">@@ -3150,7 +3098,7 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 	int frcflags;
+ 	int u8fl, u8fblen, u8cblen, doesexist;
+ 	char *u8c, *u8fs;
+<a href="#h0-8-3" id="h0-8-3" class="d">-	long u8char;
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+	long unicodep;
+</a> 	Font *font = &amp;dc.font;
+ 	FcResult fcres;
+ 	FcPattern *fcpattern, *fontpattern;
+<a href="#h0-9" id="h0-9" class="h">@@ -3293,11 +3241,11 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 		oneatatime = font-&gt;width != xw.cw;
+ 		for(;;) {
+ 			u8c = s;
+<a href="#h0-9-3" id="h0-9-3" class="d">-			u8cblen = utf8decode(s, &amp;u8char);
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+			u8cblen = utf8decode(s, &amp;unicodep, UTF_SIZ);
+</a> 			s += u8cblen;
+ 			bytelen -= u8cblen;
+ 
+<a href="#h0-9-8" id="h0-9-8" class="d">-			doesexist = XftCharExists(xw.dpy, font-&gt;match, u8char);
+</a><a href="#h0-9-9" id="h0-9-9" class="i">+			doesexist = XftCharExists(xw.dpy, font-&gt;match, unicodep);
+</a> 			if(oneatatime || !doesexist || bytelen &lt;= 0) {
+ 				if(oneatatime || bytelen &lt;= 0) {
+ 					if(doesexist) {
+<a href="#h0-10" id="h0-10" class="h">@@ -3329,7 +3277,7 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 
+ 		/* Search the font cache. */
+ 		for(i = 0; i &lt; frclen; i++) {
+<a href="#h0-10-3" id="h0-10-3" class="d">-			if(XftCharExists(xw.dpy, frc[i].font, u8char)
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+			if(XftCharExists(xw.dpy, frc[i].font, unicodep)
+</a> 					&amp;&amp; frc[i].flags == frcflags) {
+ 				break;
+ 			}
+<a href="#h0-11" id="h0-11" class="h">@@ -3351,7 +3299,7 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 			fcpattern = FcPatternDuplicate(font-&gt;pattern);
+ 			fccharset = FcCharSetCreate();
+ 
+<a href="#h0-11-3" id="h0-11-3" class="d">-			FcCharSetAddChar(fccharset, u8char);
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+			FcCharSetAddChar(fccharset, unicodep);
+</a> 			FcPatternAddCharSet(fcpattern, FC_CHARSET,
+ 					fccharset);
+ 			FcPatternAddBool(fcpattern, FC_SCALABLE,
+<a href="#h0-12" id="h0-12" class="h">@@ -3387,7 +3335,7 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 				xp, winy + frc[i].font-&gt;ascent,
+ 				(FcChar8 *)u8c, u8cblen);
+ 
+<a href="#h0-12-3" id="h0-12-3" class="d">-		xp += xw.cw * wcwidth(u8char);
+</a><a href="#h0-12-4" id="h0-12-4" class="i">+		xp += xw.cw * wcwidth(unicodep);
+</a> 	}
+ 
+ 	/*
+<a href="#h0-13" id="h0-13" class="h">@@ -3430,7 +3378,7 @@ xdrawcursor(void) {
+</a> 	memcpy(g.c, term.line[term.c.y][term.c.x].c, UTF_SIZ);
+ 
+ 	/* remove the old cursor */
+<a href="#h0-13-3" id="h0-13-3" class="d">-	sl = utf8size(term.line[oldy][oldx].c);
+</a><a href="#h0-13-4" id="h0-13-4" class="i">+	sl = utf8len(term.line[oldy][oldx].c);
+</a> 	width = (term.line[oldy][oldx].mode &amp; ATTR_WIDE)? 2 : 1;
+ 	xdraws(term.line[oldy][oldx].c, term.line[oldy][oldx], oldx,
+ 			oldy, width, sl);
+<a href="#h0-14" id="h0-14" class="h">@@ -3444,7 +3392,7 @@ xdrawcursor(void) {
+</a> 				g.bg = defaultfg;
+ 			}
+ 
+<a href="#h0-14-3" id="h0-14-3" class="d">-			sl = utf8size(g.c);
+</a><a href="#h0-14-4" id="h0-14-4" class="i">+			sl = utf8len(g.c);
+</a> 			width = (term.line[term.c.y][curx].mode &amp; ATTR_WIDE)\
+ 				? 2 : 1;
+ 			xdraws(g.c, g, term.c.x, term.c.y, width, sl);
+<a href="#h0-15" id="h0-15" class="h">@@ -3516,7 +3464,7 @@ drawregion(int x1, int y1, int x2, int y2) {
+</a> 	Glyph base, new;
+ 	char buf[DRAW_BUF_SIZ];
+ 	bool ena_sel = sel.ob.x != -1;
+<a href="#h0-15-3" id="h0-15-3" class="d">-	long u8char;
+</a><a href="#h0-15-4" id="h0-15-4" class="i">+	long unicodep;
+</a> 
+ 	if(sel.alt ^ IS_SET(MODE_ALTSCREEN))
+ 		ena_sel = 0;
+<a href="#h0-16" id="h0-16" class="h">@@ -3548,7 +3496,7 @@ drawregion(int x1, int y1, int x2, int y2) {
+</a> 				base = new;
+ 			}
+ 
+<a href="#h0-16-3" id="h0-16-3" class="d">-			sl = utf8decode(new.c, &amp;u8char);
+</a><a href="#h0-16-4" id="h0-16-4" class="i">+			sl = utf8decode(new.c, &amp;unicodep, UTF_SIZ);
+</a> 			memcpy(buf+ib, new.c, sl);
+ 			ib += sl;
+ 			ic += (new.mode &amp; ATTR_WIDE)? 2 : 1;
+<a href="#h0-17" id="h0-17" class="h">@@ -3707,7 +3655,7 @@ kpress(XEvent *ev) {
+</a> 		if(IS_SET(MODE_8BIT)) {
+ 			if(*buf &lt; 0177) {
+ 				c = *buf | 0x80;
+<a href="#h0-17-3" id="h0-17-3" class="d">-				len = utf8encode(&amp;c, buf);
+</a><a href="#h0-17-4" id="h0-17-4" class="i">+				len = utf8encode(c, buf, UTF_SIZ);
+</a> 			}
+ 		} else {
+ 			buf[1] = buf[0];
+</pre>
+</div>
+</body>
+</html>

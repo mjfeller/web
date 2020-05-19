@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fixing the selection scrolling and the selection naming. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8f1bef05025c0052603f7ca30552a43395b4c13f.html">8f1bef05025c0052603f7ca30552a43395b4c13f</a>
+<b>parent</b> <a href="../commit/8f47c4a4dea7272d72833d2ae26eacc3896d8f5c.html">8f47c4a4dea7272d72833d2ae26eacc3896d8f5c</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sun, 26 May 2013 13:07:26 +0200
+
+Fixing the selection scrolling and the selection naming.
+
+Thanks p37sitdu@lavabit.com!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">174</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 89 insertions(+), 85 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -249,11 +249,17 @@ typedef struct {
+</a> 	int mode;
+ 	int type;
+ 	int snap;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	int bx, by;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	int ex, ey;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	/*
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	 * Selection variables:
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	 * nb – normalized coordinates of the beginning of the selection
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	 * ne – normalized coordinates of the end of the selection
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	 * ob – original coordinates of the beginning of the selection
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	 * oe – original coordinates of the end of the selection
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	 */
+</a> 	struct {
+ 		int x, y;
+<a href="#h0-0-14" id="h0-0-14" class="d">-	} b, e;
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+	} nb, ne, ob, oe;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+
+</a> 	char *clip;
+ 	Atom xtarget;
+ 	bool alt;
+<a href="#h0-1" id="h0-1" class="h">@@ -390,6 +396,7 @@ static void selclear(XEvent *);
+</a> static void selrequest(XEvent *);
+ 
+ static void selinit(void);
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void selsort(void);
+</a> static inline bool selected(int, int);
+ static void selcopy(void);
+ static void selscroll(int, int);
+<a href="#h0-2" id="h0-2" class="h">@@ -630,12 +637,12 @@ utf8size(char *s) {
+</a> 	}
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-void
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+static void
+</a> selinit(void) {
+ 	memset(&amp;sel.tclick1, 0, sizeof(sel.tclick1));
+ 	memset(&amp;sel.tclick2, 0, sizeof(sel.tclick2));
+ 	sel.mode = 0;
+<a href="#h0-2-9" id="h0-2-9" class="d">-	sel.bx = -1;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	sel.ob.x = -1;
+</a> 	sel.clip = NULL;
+ 	sel.xtarget = XInternAtom(xw.dpy, &quot;UTF8_STRING&quot;, 0);
+ 	if(sel.xtarget == None)
+<a href="#h0-3" id="h0-3" class="h">@@ -658,25 +665,28 @@ y2row(int y) {
+</a> 	return LIMIT(y, 0, term.row-1);
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+static void
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+selsort(void) {
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	sel.nb.x = sel.ob.y &lt; sel.oe.y ? sel.ob.x : sel.oe.x;
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	sel.nb.y = MIN(sel.ob.y, sel.oe.y);
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	sel.ne.x = sel.ob.y &lt; sel.oe.y ? sel.oe.x : sel.ob.x;
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	sel.ne.y = MAX(sel.ob.y, sel.oe.y);
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+}
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+
+</a> static inline bool
+ selected(int x, int y) {
+<a href="#h0-3-13" id="h0-3-13" class="d">-	int bx, ex;
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-	if(sel.ey == y &amp;&amp; sel.by == y) {
+</a><a href="#h0-3-16" id="h0-3-16" class="d">-		bx = MIN(sel.bx, sel.ex);
+</a><a href="#h0-3-17" id="h0-3-17" class="d">-		ex = MAX(sel.bx, sel.ex);
+</a><a href="#h0-3-18" id="h0-3-18" class="d">-
+</a><a href="#h0-3-19" id="h0-3-19" class="d">-		return BETWEEN(x, bx, ex);
+</a><a href="#h0-3-20" id="h0-3-20" class="d">-	}
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+	if(sel.ne.y == y &amp;&amp; sel.nb.y == y)
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+		return BETWEEN(x, sel.nb.x, sel.ne.y);
+</a> 
+ 	if(sel.type == SEL_RECTANGULAR) {
+<a href="#h0-3-25" id="h0-3-25" class="d">-		return ((sel.b.y &lt;= y &amp;&amp; y &lt;= sel.e.y)
+</a><a href="#h0-3-26" id="h0-3-26" class="d">-			&amp;&amp; (sel.b.x &lt;= x &amp;&amp; x &lt;= sel.e.x));
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+		return ((sel.nb.y &lt;= y &amp;&amp; y &lt;= sel.ne.y)
+</a><a href="#h0-3-28" id="h0-3-28" class="i">+			&amp;&amp; (sel.nb.x &lt;= x &amp;&amp; x &lt;= sel.ne.x));
+</a> 	}
+<a href="#h0-3-30" id="h0-3-30" class="d">-	return ((sel.b.y &lt; y &amp;&amp; y &lt; sel.e.y)
+</a><a href="#h0-3-31" id="h0-3-31" class="d">-		|| (y == sel.e.y &amp;&amp; x &lt;= sel.e.x))
+</a><a href="#h0-3-32" id="h0-3-32" class="d">-		|| (y == sel.b.y &amp;&amp; x &gt;= sel.b.x
+</a><a href="#h0-3-33" id="h0-3-33" class="d">-			&amp;&amp; (x &lt;= sel.e.x || sel.b.y != sel.e.y));
+</a><a href="#h0-3-34" id="h0-3-34" class="i">+
+</a><a href="#h0-3-35" id="h0-3-35" class="i">+	return ((sel.nb.y &lt; y &amp;&amp; y &lt; sel.ne.y)
+</a><a href="#h0-3-36" id="h0-3-36" class="i">+		|| (y == sel.ne.y &amp;&amp; x &lt;= sel.ne.x))
+</a><a href="#h0-3-37" id="h0-3-37" class="i">+		|| (y == sel.nb.y &amp;&amp; x &gt;= sel.nb.x
+</a><a href="#h0-3-38" id="h0-3-38" class="i">+			&amp;&amp; (x &lt;= sel.ne.x || sel.nb.y != sel.ne.y));
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -762,22 +772,19 @@ getbuttoninfo(XEvent *e) {
+</a> 
+ 	sel.alt = IS_SET(MODE_ALTSCREEN);
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-	sel.ex = x2col(e-&gt;xbutton.x);
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	sel.ey = y2row(e-&gt;xbutton.y);
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	sel.oe.x = x2col(e-&gt;xbutton.x);
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+	sel.oe.y = y2row(e-&gt;xbutton.y);
+</a> 
+<a href="#h0-4-8" id="h0-4-8" class="d">-	if (sel.by &lt; sel.ey
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-			|| (sel.by == sel.ey &amp;&amp; sel.bx &lt; sel.ex)) {
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-		selsnap(sel.snap, &amp;sel.bx, &amp;sel.by, -1);
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-		selsnap(sel.snap, &amp;sel.ex, &amp;sel.ey, +1);
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+	if (sel.ob.y &lt; sel.oe.y
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+			|| (sel.ob.y == sel.oe.y &amp;&amp; sel.ob.x &lt; sel.oe.x)) {
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+		selsnap(sel.snap, &amp;sel.ob.x, &amp;sel.ob.y, -1);
+</a><a href="#h0-4-15" id="h0-4-15" class="i">+		selsnap(sel.snap, &amp;sel.oe.x, &amp;sel.oe.y, +1);
+</a> 	} else {
+<a href="#h0-4-17" id="h0-4-17" class="d">-		selsnap(sel.snap, &amp;sel.ex, &amp;sel.ey, -1);
+</a><a href="#h0-4-18" id="h0-4-18" class="d">-		selsnap(sel.snap, &amp;sel.bx, &amp;sel.by, +1);
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+		selsnap(sel.snap, &amp;sel.oe.x, &amp;sel.oe.y, -1);
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+		selsnap(sel.snap, &amp;sel.ob.x, &amp;sel.ob.y, +1);
+</a> 	}
+ 
+<a href="#h0-4-23" id="h0-4-23" class="d">-	sel.b.x = sel.by &lt; sel.ey ? sel.bx : sel.ex;
+</a><a href="#h0-4-24" id="h0-4-24" class="d">-	sel.b.y = MIN(sel.by, sel.ey);
+</a><a href="#h0-4-25" id="h0-4-25" class="d">-	sel.e.x = sel.by &lt; sel.ey ? sel.ex : sel.bx;
+</a><a href="#h0-4-26" id="h0-4-26" class="d">-	sel.e.y = MAX(sel.by, sel.ey);
+</a><a href="#h0-4-27" id="h0-4-27" class="i">+	selsort();
+</a> 
+ 	sel.type = SEL_REGULAR;
+ 	for(type = 1; type &lt; LEN(selmasks); ++type) {
+<a href="#h0-5" id="h0-5" class="h">@@ -801,7 +808,8 @@ mousereport(XEvent *e) {
+</a> 		if(!IS_SET(MODE_MOUSEMOTION) || (x == ox &amp;&amp; y == oy))
+ 			return;
+ 		button = ob + 32;
+<a href="#h0-5-3" id="h0-5-3" class="d">-		ox = x, oy = y;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		ox = x;
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+		oy = y;
+</a> 	} else if(!IS_SET(MODE_MOUSESGR)
+ 			&amp;&amp; (e-&gt;xbutton.type == ButtonRelease
+ 				|| button == AnyButton)) {
+<a href="#h0-6" id="h0-6" class="h">@@ -812,7 +820,8 @@ mousereport(XEvent *e) {
+</a> 			button += 64 - 3;
+ 		if(e-&gt;xbutton.type == ButtonPress) {
+ 			ob = button;
+<a href="#h0-6-3" id="h0-6-3" class="d">-			ox = x, oy = y;
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+			ox = x;
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+			oy = y;
+</a> 		}
+ 	}
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -859,15 +868,15 @@ bpress(XEvent *e) {
+</a> 		gettimeofday(&amp;now, NULL);
+ 
+ 		/* Clear previous selection, logically and visually. */
+<a href="#h0-7-3" id="h0-7-3" class="d">-		if(sel.bx != -1) {
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-			sel.bx = -1;
+</a><a href="#h0-7-5" id="h0-7-5" class="d">-			tsetdirt(sel.b.y, sel.e.y);
+</a><a href="#h0-7-6" id="h0-7-6" class="i">+		if(sel.ob.x != -1) {
+</a><a href="#h0-7-7" id="h0-7-7" class="i">+			sel.ob.x = -1;
+</a><a href="#h0-7-8" id="h0-7-8" class="i">+			tsetdirt(sel.nb.y, sel.ne.y);
+</a> 			draw();
+ 		}
+ 		sel.mode = 1;
+ 		sel.type = SEL_REGULAR;
+<a href="#h0-7-13" id="h0-7-13" class="d">-		sel.ex = sel.bx = x2col(e-&gt;xbutton.x);
+</a><a href="#h0-7-14" id="h0-7-14" class="d">-		sel.ey = sel.by = y2row(e-&gt;xbutton.y);
+</a><a href="#h0-7-15" id="h0-7-15" class="i">+		sel.oe.x = sel.ob.x = x2col(e-&gt;xbutton.x);
+</a><a href="#h0-7-16" id="h0-7-16" class="i">+		sel.oe.y = sel.ob.y = y2row(e-&gt;xbutton.y);
+</a> 
+ 		/*
+ 		 * If the user clicks below predefined timeouts specific
+<a href="#h0-8" id="h0-8" class="h">@@ -880,12 +889,9 @@ bpress(XEvent *e) {
+</a> 		} else {
+ 			sel.snap = 0;
+ 		}
+<a href="#h0-8-3" id="h0-8-3" class="d">-		selsnap(sel.snap, &amp;sel.bx, &amp;sel.by, -1);
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-		selsnap(sel.snap, &amp;sel.ex, &amp;sel.ey, +1);
+</a><a href="#h0-8-5" id="h0-8-5" class="d">-		sel.b.x = sel.bx;
+</a><a href="#h0-8-6" id="h0-8-6" class="d">-		sel.b.y = sel.by;
+</a><a href="#h0-8-7" id="h0-8-7" class="d">-		sel.e.x = sel.ex;
+</a><a href="#h0-8-8" id="h0-8-8" class="d">-		sel.e.y = sel.ey;
+</a><a href="#h0-8-9" id="h0-8-9" class="i">+		selsnap(sel.snap, &amp;sel.ob.x, &amp;sel.ob.y, -1);
+</a><a href="#h0-8-10" id="h0-8-10" class="i">+		selsnap(sel.snap, &amp;sel.oe.x, &amp;sel.oe.y, +1);
+</a><a href="#h0-8-11" id="h0-8-11" class="i">+		selsort();
+</a> 
+ 		/*
+ 		 * Draw selection, unless it&#39;s regular and we don&#39;t want to
+<a href="#h0-9" id="h0-9" class="h">@@ -893,7 +899,7 @@ bpress(XEvent *e) {
+</a> 		 */
+ 		if(sel.snap != 0) {
+ 			sel.mode++;
+<a href="#h0-9-3" id="h0-9-3" class="d">-			tsetdirt(sel.b.y, sel.e.y);
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+			tsetdirt(sel.nb.y, sel.ne.y);
+</a> 			draw();
+ 		}
+ 		sel.tclick2 = sel.tclick1;
+<a href="#h0-10" id="h0-10" class="h">@@ -907,14 +913,14 @@ selcopy(void) {
+</a> 	int x, y, bufsize, size, i, ex;
+ 	Glyph *gp, *last;
+ 
+<a href="#h0-10-3" id="h0-10-3" class="d">-	if(sel.bx == -1) {
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+	if(sel.ob.x == -1) {
+</a> 		str = NULL;
+ 	} else {
+<a href="#h0-10-7" id="h0-10-7" class="d">-		bufsize = (term.col+1) * (sel.e.y-sel.b.y+1) * UTF_SIZ;
+</a><a href="#h0-10-8" id="h0-10-8" class="i">+		bufsize = (term.col+1) * (sel.ne.y-sel.nb.y+1) * UTF_SIZ;
+</a> 		ptr = str = xmalloc(bufsize);
+ 
+ 		/* append every set &amp; selected glyph to the selection */
+<a href="#h0-10-12" id="h0-10-12" class="d">-		for(y = sel.b.y; y &lt; sel.e.y + 1; y++) {
+</a><a href="#h0-10-13" id="h0-10-13" class="i">+		for(y = sel.nb.y; y &lt; sel.ne.y + 1; y++) {
+</a> 			gp = &amp;term.line[y][0];
+ 			last = gp + term.col;
+ 
+<a href="#h0-11" id="h0-11" class="h">@@ -940,20 +946,20 @@ selcopy(void) {
+</a> 			 * st.
+ 			 * FIXME: Fix the computer world.
+ 			 */
+<a href="#h0-11-3" id="h0-11-3" class="d">-			if(y &lt; sel.e.y &amp;&amp; !((gp-1)-&gt;mode &amp; ATTR_WRAP))
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+			if(y &lt; sel.ne.y &amp;&amp; !((gp-1)-&gt;mode &amp; ATTR_WRAP))
+</a> 				*ptr++ = &#39;\n&#39;;
+ 
+ 			/*
+ 			 * If the last selected line expands in the selection
+ 			 * after the visible text &#39;\n&#39; is appended.
+ 			 */
+<a href="#h0-11-11" id="h0-11-11" class="d">-			if(y == sel.e.y) {
+</a><a href="#h0-11-12" id="h0-11-12" class="i">+			if(y == sel.ne.y) {
+</a> 				i = term.col;
+ 				while(--i &gt; 0 &amp;&amp; term.line[y][i].c[0] == &#39; &#39;)
+ 					/* nothing */;
+<a href="#h0-11-16" id="h0-11-16" class="d">-				ex = sel.e.x;
+</a><a href="#h0-11-17" id="h0-11-17" class="d">-				if(sel.b.y == sel.e.y &amp;&amp; sel.e.x &lt; sel.b.x)
+</a><a href="#h0-11-18" id="h0-11-18" class="d">-					ex = sel.b.x;
+</a><a href="#h0-11-19" id="h0-11-19" class="i">+				ex = sel.ne.x;
+</a><a href="#h0-11-20" id="h0-11-20" class="i">+				if(sel.nb.y == sel.ne.y &amp;&amp; sel.ne.x &lt; sel.nb.x)
+</a><a href="#h0-11-21" id="h0-11-21" class="i">+					ex = sel.nb.x;
+</a> 				if(i &lt; ex)
+ 					*ptr++ = &#39;\n&#39;;
+ 			}
+<a href="#h0-12" id="h0-12" class="h">@@ -1016,10 +1022,10 @@ clippaste(const Arg *dummy) {
+</a> 
+ void
+ selclear(XEvent *e) {
+<a href="#h0-12-3" id="h0-12-3" class="d">-	if(sel.bx == -1)
+</a><a href="#h0-12-4" id="h0-12-4" class="i">+	if(sel.ob.x == -1)
+</a> 		return;
+<a href="#h0-12-6" id="h0-12-6" class="d">-	sel.bx = -1;
+</a><a href="#h0-12-7" id="h0-12-7" class="d">-	tsetdirt(sel.b.y, sel.e.y);
+</a><a href="#h0-12-8" id="h0-12-8" class="i">+	sel.ob.x = -1;
+</a><a href="#h0-12-9" id="h0-12-9" class="i">+	tsetdirt(sel.nb.y, sel.ne.y);
+</a> }
+ 
+ void
+<a href="#h0-13" id="h0-13" class="h">@@ -1082,13 +1088,13 @@ brelease(XEvent *e) {
+</a> 		selpaste(NULL);
+ 	} else if(e-&gt;xbutton.button == Button1) {
+ 		if(sel.mode &lt; 2) {
+<a href="#h0-13-3" id="h0-13-3" class="d">-			sel.bx = -1;
+</a><a href="#h0-13-4" id="h0-13-4" class="i">+			sel.ob.x = -1;
+</a> 		} else {
+ 			getbuttoninfo(e);
+ 			selcopy();
+ 		}
+ 		sel.mode = 0;
+<a href="#h0-13-10" id="h0-13-10" class="d">-		term.dirty[sel.ey] = 1;
+</a><a href="#h0-13-11" id="h0-13-11" class="i">+		term.dirty[sel.oe.y] = 1;
+</a> 	}
+ }
+ 
+<a href="#h0-14" id="h0-14" class="h">@@ -1105,15 +1111,14 @@ bmotion(XEvent *e) {
+</a> 		return;
+ 
+ 	sel.mode++;
+<a href="#h0-14-3" id="h0-14-3" class="d">-	oldey = sel.ey;
+</a><a href="#h0-14-4" id="h0-14-4" class="d">-	oldex = sel.ex;
+</a><a href="#h0-14-5" id="h0-14-5" class="d">-	oldsby = sel.b.y;
+</a><a href="#h0-14-6" id="h0-14-6" class="d">-	oldsey = sel.e.y;
+</a><a href="#h0-14-7" id="h0-14-7" class="i">+	oldey = sel.oe.y;
+</a><a href="#h0-14-8" id="h0-14-8" class="i">+	oldex = sel.oe.x;
+</a><a href="#h0-14-9" id="h0-14-9" class="i">+	oldsby = sel.nb.y;
+</a><a href="#h0-14-10" id="h0-14-10" class="i">+	oldsey = sel.ne.y;
+</a> 	getbuttoninfo(e);
+ 
+<a href="#h0-14-13" id="h0-14-13" class="d">-	if(oldey != sel.ey || oldex != sel.ex) {
+</a><a href="#h0-14-14" id="h0-14-14" class="d">-		tsetdirt(MIN(sel.b.y, oldsby), MAX(sel.e.y, oldsey));
+</a><a href="#h0-14-15" id="h0-14-15" class="d">-	}
+</a><a href="#h0-14-16" id="h0-14-16" class="i">+	if(oldey != sel.oe.y || oldex != sel.oe.x)
+</a><a href="#h0-14-17" id="h0-14-17" class="i">+		tsetdirt(MIN(sel.nb.y, oldsby), MAX(sel.ne.y, oldsey));
+</a> }
+ 
+ void
+<a href="#h0-15" id="h0-15" class="h">@@ -1411,31 +1416,30 @@ tscrollup(int orig, int n) {
+</a> 
+ void
+ selscroll(int orig, int n) {
+<a href="#h0-15-3" id="h0-15-3" class="d">-	if(sel.bx == -1)
+</a><a href="#h0-15-4" id="h0-15-4" class="i">+	if(sel.ob.x == -1)
+</a> 		return;
+ 
+<a href="#h0-15-7" id="h0-15-7" class="d">-	if(BETWEEN(sel.by, orig, term.bot) || BETWEEN(sel.ey, orig, term.bot)) {
+</a><a href="#h0-15-8" id="h0-15-8" class="d">-		if((sel.by += n) &gt; term.bot || (sel.ey += n) &lt; term.top) {
+</a><a href="#h0-15-9" id="h0-15-9" class="d">-			sel.bx = -1;
+</a><a href="#h0-15-10" id="h0-15-10" class="i">+	if(BETWEEN(sel.ob.y, orig, term.bot) || BETWEEN(sel.oe.y, orig, term.bot)) {
+</a><a href="#h0-15-11" id="h0-15-11" class="i">+		if((sel.ob.y += n) &gt; term.bot || (sel.oe.y += n) &lt; term.top) {
+</a><a href="#h0-15-12" id="h0-15-12" class="i">+			sel.ob.x = -1;
+</a> 			return;
+ 		}
+ 		if(sel.type == SEL_RECTANGULAR) {
+<a href="#h0-15-16" id="h0-15-16" class="d">-			if(sel.by &lt; term.top)
+</a><a href="#h0-15-17" id="h0-15-17" class="d">-				sel.by = term.top;
+</a><a href="#h0-15-18" id="h0-15-18" class="d">-			if(sel.ey &gt; term.bot)
+</a><a href="#h0-15-19" id="h0-15-19" class="d">-				sel.ey = term.bot;
+</a><a href="#h0-15-20" id="h0-15-20" class="i">+			if(sel.ob.y &lt; term.top)
+</a><a href="#h0-15-21" id="h0-15-21" class="i">+				sel.ob.y = term.top;
+</a><a href="#h0-15-22" id="h0-15-22" class="i">+			if(sel.oe.y &gt; term.bot)
+</a><a href="#h0-15-23" id="h0-15-23" class="i">+				sel.oe.y = term.bot;
+</a> 		} else {
+<a href="#h0-15-25" id="h0-15-25" class="d">-			if(sel.by &lt; term.top) {
+</a><a href="#h0-15-26" id="h0-15-26" class="d">-				sel.by = term.top;
+</a><a href="#h0-15-27" id="h0-15-27" class="d">-				sel.bx = 0;
+</a><a href="#h0-15-28" id="h0-15-28" class="i">+			if(sel.ob.y &lt; term.top) {
+</a><a href="#h0-15-29" id="h0-15-29" class="i">+				sel.ob.y = term.top;
+</a><a href="#h0-15-30" id="h0-15-30" class="i">+				sel.ob.x = 0;
+</a> 			}
+<a href="#h0-15-32" id="h0-15-32" class="d">-			if(sel.ey &gt; term.bot) {
+</a><a href="#h0-15-33" id="h0-15-33" class="d">-				sel.ey = term.bot;
+</a><a href="#h0-15-34" id="h0-15-34" class="d">-				sel.ex = term.col;
+</a><a href="#h0-15-35" id="h0-15-35" class="i">+			if(sel.oe.y &gt; term.bot) {
+</a><a href="#h0-15-36" id="h0-15-36" class="i">+				sel.oe.y = term.bot;
+</a><a href="#h0-15-37" id="h0-15-37" class="i">+				sel.oe.x = term.col;
+</a> 			}
+ 		}
+<a href="#h0-15-40" id="h0-15-40" class="d">-		sel.b.y = sel.by, sel.b.x = sel.bx;
+</a><a href="#h0-15-41" id="h0-15-41" class="d">-		sel.e.y = sel.ey, sel.e.x = sel.ex;
+</a><a href="#h0-15-42" id="h0-15-42" class="i">+		selsort();
+</a> 	}
+ }
+ 
+<a href="#h0-16" id="h0-16" class="h">@@ -1905,7 +1909,7 @@ csihandle(void) {
+</a> 			tputtab(1);
+ 		break;
+ 	case &#39;J&#39;: /* ED -- Clear screen */
+<a href="#h0-16-3" id="h0-16-3" class="d">-		sel.bx = -1;
+</a><a href="#h0-16-4" id="h0-16-4" class="i">+		sel.ob.x = -1;
+</a> 		switch(csiescseq.arg[0]) {
+ 		case 0: /* below */
+ 			tclearregion(term.c.x, term.c.y, term.col-1, term.c.y);
+<a href="#h0-17" id="h0-17" class="h">@@ -2401,8 +2405,8 @@ tputc(char *c, int len) {
+</a> 	 */
+ 	if(control &amp;&amp; !(term.c.attr.mode &amp; ATTR_GFX))
+ 		return;
+<a href="#h0-17-3" id="h0-17-3" class="d">-	if(sel.bx != -1 &amp;&amp; BETWEEN(term.c.y, sel.by, sel.ey))
+</a><a href="#h0-17-4" id="h0-17-4" class="d">-		sel.bx = -1;
+</a><a href="#h0-17-5" id="h0-17-5" class="i">+	if(sel.ob.x != -1 &amp;&amp; BETWEEN(term.c.y, sel.ob.y, sel.oe.y))
+</a><a href="#h0-17-6" id="h0-17-6" class="i">+		sel.ob.x = -1;
+</a> 	if(IS_SET(MODE_WRAP) &amp;&amp; (term.c.state &amp; CURSOR_WRAPNEXT)) {
+ 		term.line[term.c.y][term.c.x].mode |= ATTR_WRAP;
+ 		tnewline(1);
+<a href="#h0-18" id="h0-18" class="h">@@ -3212,7 +3216,7 @@ drawregion(int x1, int y1, int x2, int y2) {
+</a> 	int ic, ib, x, y, ox, sl;
+ 	Glyph base, new;
+ 	char buf[DRAW_BUF_SIZ];
+<a href="#h0-18-3" id="h0-18-3" class="d">-	bool ena_sel = sel.bx != -1;
+</a><a href="#h0-18-4" id="h0-18-4" class="i">+	bool ena_sel = sel.ob.x != -1;
+</a> 
+ 	if(sel.alt ^ IS_SET(MODE_ALTSCREEN))
+ 		ena_sel = 0;
+</pre>
+</div>
+</body>
+</html>

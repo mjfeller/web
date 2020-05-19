@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>catwm: rm next/prev desktop - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0323e115cec6ea3d403ebdb9358988138a6c19b8.html">0323e115cec6ea3d403ebdb9358988138a6c19b8</a>
+<b>parent</b> <a href="../commit/a071d7c03e57e0da06424914f577c3fc7dcf5898.html">a071d7c03e57e0da06424914f577c3fc7dcf5898</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 11 Oct 2019 14:55:52 +0300
+
+catwm: rm next/prev desktop
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">catwm.c</a></td><td> | </td><td class="num">24</td><td><span class="i"></span><span class="d">------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.h</a></td><td> | </td><td class="num">2</td><td><span class="i"></span><span class="d">--</span></td></tr>
+</table></pre><pre>2 files changed, 0 insertions(+), 26 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/catwm.c.html">catwm.c</a> b/<a href="../file/catwm.c.html">catwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -89,9 +89,7 @@ static void kill_client();
+</a> static void maprequest(XEvent *e);
+ static void move_down();
+ static void move_up();
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void next_desktop();
+</a> static void next_win();
+<a href="#h0-0-5" id="h0-0-5" class="d">-static void prev_desktop();
+</a> static void prev_win();
+ static void quit();
+ static void remove_window(Window w);
+<a href="#h0-1" id="h0-1" class="h">@@ -358,17 +356,6 @@ void move_up() {
+</a>     update_current();
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-void next_desktop() {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-    int tmp = current_desktop;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-    if(tmp== 9)
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-        tmp = 0;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-    else
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-        tmp++;
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-    Arg a = {.i = tmp};
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-    change_desktop(a);
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-}
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-
+</a> void next_win() {
+     client *c;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -383,17 +370,6 @@ void next_win() {
+</a>     }
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-void prev_desktop() {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-    int tmp = current_desktop;
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-    if(tmp == 0)
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-        tmp = 9;
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-    else
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-        tmp--;
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-    Arg a = {.i = tmp};
+</a><a href="#h0-2-11" id="h0-2-11" class="d">-    change_desktop(a);
+</a><a href="#h0-2-12" id="h0-2-12" class="d">-}
+</a><a href="#h0-2-13" id="h0-2-13" class="d">-
+</a> void prev_win() {
+     client *c;
+ 
+<b>diff --git a/<a id="h1" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -75,8 +75,6 @@ static struct key keys[] = {
+</a>     {  0,               XF86XK_AudioRaiseVolume,    spawn,          {.com = volup}},
+     {  MOD,             XK_p,                       spawn,          {.com = dmenucmd}},
+     {  MOD|ShiftMask,   XK_Return,                  spawn,          {.com = urxvtcmd}},
+<a href="#h1-0-3" id="h1-0-3" class="d">-    {  MOD,             XK_Right,                   next_desktop,   {NULL}},
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-    {  MOD,             XK_Left,                    prev_desktop,   {NULL}},
+</a>        DESKTOPCHANGE(   XK_0,                                       0)
+        DESKTOPCHANGE(   XK_1,                                       1)
+        DESKTOPCHANGE(   XK_2,                                       2)
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: simpler del - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/522defba1ee671c15c5767166b8152539e883714.html">522defba1ee671c15c5767166b8152539e883714</a>
+<b>parent</b> <a href="../commit/e0bd38091a5b224a1f19a85bd499dcfeed7d3ac9.html">e0bd38091a5b224a1f19a85bd499dcfeed7d3ac9</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 18 Oct 2019 12:05:13 +0300
+
+sowm: simpler del
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">README.md</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">sowm.c</a></td><td> | </td><td class="num">41</td><td><span class="i">++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 16 insertions(+), 27 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/README.md.html">README.md</a> b/<a href="../file/README.md.html">README.md</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,3 +1,5 @@
+</a><a href="#h0-0-0" id="h0-0-0" class="i">+Note: Stick to tagged releases as master isn&#39;t currently in a stable state*!*
+</a><a href="#h0-0-1" id="h0-0-1" class="i">+
+</a> # sowm
+ 
+ &lt;a href=&quot;https://user-images.githubusercontent.com/6799467/66687576-9747c200-ec72-11e9-947d-5b96753eab03.jpg&quot;&gt;&lt;img src=&quot;https://user-images.githubusercontent.com/6799467/66687576-9747c200-ec72-11e9-947d-5b96753eab03.jpg&quot; width=&quot;43%&quot; align=&quot;right&quot;&gt;&lt;/a&gt;
+<b>diff --git a/<a id="h1" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -37,7 +37,7 @@ static void notify_motion(XEvent *e);
+</a> static void run(const Arg arg);
+ static void win_add(Window w);
+ static void win_center(const Arg arg);
+<a href="#h1-0-3" id="h1-0-3" class="d">-static void win_del(Window w);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+static void win_del(client *c);
+</a> static void win_fs();
+ static void win_kill();
+ static void win_next();
+<a href="#h1-1" id="h1-1" class="h">@@ -81,7 +81,7 @@ void win_focus(Window w) {
+</a> }
+ 
+ void notify_destroy(XEvent *e) {
+<a href="#h1-1-3" id="h1-1-3" class="d">-    win_del(e-&gt;xdestroywindow.window);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+    for win if (c-&gt;w == e-&gt;xdestroywindow.window) win_del(c);
+</a> 
+     if (list) win_focus(list-&gt;w);
+ }
+<a href="#h1-2" id="h1-2" class="h">@@ -152,31 +152,18 @@ void win_add(Window w) {
+</a>     ws_save(ws);
+ }
+ 
+<a href="#h1-2-3" id="h1-2-3" class="d">-void win_del(Window w) {
+</a><a href="#h1-2-4" id="h1-2-4" class="d">-    for win if (c-&gt;w == w) {
+</a><a href="#h1-2-5" id="h1-2-5" class="d">-        if (!c-&gt;prev &amp;&amp; !c-&gt;next) {
+</a><a href="#h1-2-6" id="h1-2-6" class="d">-            free(list);
+</a><a href="#h1-2-7" id="h1-2-7" class="d">-            list = 0;
+</a><a href="#h1-2-8" id="h1-2-8" class="d">-            ws_save(ws);
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-            return;
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-        }
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-        if (!c-&gt;prev) {
+</a><a href="#h1-2-13" id="h1-2-13" class="d">-            list = c-&gt;next;
+</a><a href="#h1-2-14" id="h1-2-14" class="d">-            c-&gt;next-&gt;prev = 0;
+</a><a href="#h1-2-15" id="h1-2-15" class="d">-
+</a><a href="#h1-2-16" id="h1-2-16" class="d">-        } else if (!c-&gt;next) {
+</a><a href="#h1-2-17" id="h1-2-17" class="d">-            c-&gt;prev-&gt;next = 0;
+</a><a href="#h1-2-18" id="h1-2-18" class="d">-
+</a><a href="#h1-2-19" id="h1-2-19" class="d">-        } else {
+</a><a href="#h1-2-20" id="h1-2-20" class="d">-            c-&gt;prev-&gt;next = c-&gt;next;
+</a><a href="#h1-2-21" id="h1-2-21" class="d">-            c-&gt;next-&gt;prev = c-&gt;prev;
+</a><a href="#h1-2-22" id="h1-2-22" class="d">-        }
+</a><a href="#h1-2-23" id="h1-2-23" class="d">-
+</a><a href="#h1-2-24" id="h1-2-24" class="d">-        free(c);
+</a><a href="#h1-2-25" id="h1-2-25" class="d">-        ws_save(ws);
+</a><a href="#h1-2-26" id="h1-2-26" class="d">-        return;
+</a><a href="#h1-2-27" id="h1-2-27" class="i">+void win_del(client *c) {
+</a><a href="#h1-2-28" id="h1-2-28" class="i">+    if (c == list) {
+</a><a href="#h1-2-29" id="h1-2-29" class="i">+        list = list-&gt;next ? list-&gt;next : 0;
+</a><a href="#h1-2-30" id="h1-2-30" class="i">+        goto del;
+</a>     }
+<a href="#h1-2-32" id="h1-2-32" class="i">+
+</a><a href="#h1-2-33" id="h1-2-33" class="i">+    if (c-&gt;prev) c-&gt;prev-&gt;next = c-&gt;next;
+</a><a href="#h1-2-34" id="h1-2-34" class="i">+    if (c-&gt;next) c-&gt;next-&gt;prev = c-&gt;prev;
+</a><a href="#h1-2-35" id="h1-2-35" class="i">+
+</a><a href="#h1-2-36" id="h1-2-36" class="i">+del:
+</a><a href="#h1-2-37" id="h1-2-37" class="i">+    free(c);
+</a><a href="#h1-2-38" id="h1-2-38" class="i">+    ws_save(ws);
+</a> }
+ 
+ void win_kill() {
+<a href="#h1-3" id="h1-3" class="h">@@ -214,7 +201,7 @@ void win_to_ws(const Arg arg) {
+</a>     ws_save(arg.i);
+ 
+     ws_sel(tmp);
+<a href="#h1-3-3" id="h1-3-3" class="d">-    win_del(cur-&gt;w);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+    win_del(cur);
+</a>     XUnmapWindow(d, cur-&gt;w);
+     ws_save(tmp);
+ 
+</pre>
+</div>
+</body>
+</html>

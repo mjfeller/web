@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: Remove need for _current functions. - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cc3ee24a019b6bdf95ec4ebf19d6cf8d1a4b6ccc.html">cc3ee24a019b6bdf95ec4ebf19d6cf8d1a4b6ccc</a>
+<b>parent</b> <a href="../commit/bb59bd4f87daa2ed1f919fa125280a731419b677.html">bb59bd4f87daa2ed1f919fa125280a731419b677</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 15 Oct 2019 14:49:12 +0300
+
+sowm: Remove need for _current functions.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.h</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">sowm.c</a></td><td> | </td><td class="num">55</td><td><span class="i">++++++++++++++++</span><span class="d">---------------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 20 insertions(+), 43 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -14,10 +14,10 @@ const char* volmute[] = {&quot;amixer&quot;, &quot;sset&quot;, &quot;Master&quot;, &quot;toggle&quot;,      0};
+</a> const char* colors[]  = {&quot;bud&quot;, &quot;/home/goldie/Pictures/Wallpapers&quot;, 0};
+ 
+ static struct key keys[] = {
+<a href="#h0-0-3" id="h0-0-3" class="d">-    {MOD,      XK_q,   win_kill,           {0}},
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-    {MOD,      XK_c,   win_center_current, {0}},
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-    {MOD,      XK_f,   win_fs_current,     {0}},
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-    {Mod1Mask, XK_Tab, win_next,           {0}},
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+    {MOD,      XK_q,   win_kill,   {0}},
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+    {MOD,      XK_c,   win_center, {.i = 0}},
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+    {MOD,      XK_f,   win_fs,     {0}},
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+    {Mod1Mask, XK_Tab, win_next,   {0}},
+</a> 
+     {MOD, XK_d,      run, {.com = menu}},
+     {MOD, XK_w,      run, {.com = colors}},
+<b>diff --git a/<a id="h1" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -54,11 +54,9 @@ static void notify_enter(XEvent *e);
+</a> static void notify_motion(XEvent *e);
+ static void run(const Arg arg);
+ static void win_add(Window w);
+<a href="#h1-0-3" id="h1-0-3" class="d">-static void win_center(Window w);
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-static void win_center_current();
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+static void win_center(const Arg arg);
+</a> static void win_del(Window w);
+<a href="#h1-0-7" id="h1-0-7" class="d">-static void win_fs(Window w);
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-static void win_fs_current();
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+static void win_fs();
+</a> static void win_kill();
+ static void win_next();
+ static void win_to_ws(const Arg arg);
+<a href="#h1-1" id="h1-1" class="h">@@ -333,9 +331,12 @@ void win_kill() {
+</a> 
+ /*
+    This function simply centers the window passed as
+<a href="#h1-1-3" id="h1-1-3" class="d">-   an argument. Nothing special going on here.
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+   an argument. If the argument is &#39;0&#39;, use the
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+   currently focused window.
+</a> */
+<a href="#h1-1-7" id="h1-1-7" class="d">-void win_center(Window w) {
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+void win_center(const Arg arg) {
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+    Window w = arg.i ? arg.i : win_current();
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+
+</a>     XGetWindowAttributes(d, w, &amp;attr);
+ 
+     XMoveWindow(d, w, sw / 2 - attr.width  / 2,
+<a href="#h1-2" id="h1-2" class="h">@@ -343,7 +344,7 @@ void win_center(Window w) {
+</a> }
+ 
+ /*
+<a href="#h1-2-3" id="h1-2-3" class="d">-   This function toggles the fullscreen stte for the
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+   This function toggles the fullscreen state for the
+</a>    window passed as an argument.
+ 
+    The window&#39;s data stucture holds an integer which
+<a href="#h1-3" id="h1-3" class="h">@@ -354,16 +355,18 @@ void win_center(Window w) {
+</a>    positioning is stored so it can be restored when
+    the window is un-fullscreened.
+ */
+<a href="#h1-3-3" id="h1-3-3" class="d">-void win_fs(Window w) {
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+void win_fs() {
+</a>     client *c;
+ 
+<a href="#h1-3-7" id="h1-3-7" class="d">-    for WIN if (c-&gt;w == w) {
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+    win_current();
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+
+</a><a href="#h1-3-10" id="h1-3-10" class="i">+    for WIN if (c-&gt;w == cur) {
+</a>         if ((c-&gt;f = c-&gt;f == 0 ? 1 : 0)) {
+<a href="#h1-3-12" id="h1-3-12" class="d">-            XGetWindowAttributes(d, w, &amp;c-&gt;a);
+</a><a href="#h1-3-13" id="h1-3-13" class="d">-            XMoveResizeWindow(d, w, 0, 0, sw, sh);
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+            XGetWindowAttributes(d, cur, &amp;c-&gt;a);
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+            XMoveResizeWindow(d, cur, 0, 0, sw, sh);
+</a> 
+         } else
+<a href="#h1-3-18" id="h1-3-18" class="d">-            XMoveResizeWindow(d, w, c-&gt;a.x, c-&gt;a.y, c-&gt;a.width, c-&gt;a.height);
+</a><a href="#h1-3-19" id="h1-3-19" class="i">+            XMoveResizeWindow(d, cur, c-&gt;a.x, c-&gt;a.y, c-&gt;a.width, c-&gt;a.height);
+</a>     }
+ }
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -422,32 +425,6 @@ void win_next() {
+</a> }
+ 
+ /*
+<a href="#h1-4-3" id="h1-4-3" class="d">-   This is a wrapper around the real function
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-   to operate directly on the currently focused
+</a><a href="#h1-4-5" id="h1-4-5" class="d">-   window.
+</a><a href="#h1-4-6" id="h1-4-6" class="d">-
+</a><a href="#h1-4-7" id="h1-4-7" class="d">-   I&#39;d rather this function not exist but it&#39;s
+</a><a href="#h1-4-8" id="h1-4-8" class="d">-   the simplest method of allowing its use in a
+</a><a href="#h1-4-9" id="h1-4-9" class="d">-   &#39;config.h&#39; defined keybinding.
+</a><a href="#h1-4-10" id="h1-4-10" class="d">-*/
+</a><a href="#h1-4-11" id="h1-4-11" class="d">-void win_fs_current() {
+</a><a href="#h1-4-12" id="h1-4-12" class="d">-   win_fs(win_current());
+</a><a href="#h1-4-13" id="h1-4-13" class="d">-}
+</a><a href="#h1-4-14" id="h1-4-14" class="d">-
+</a><a href="#h1-4-15" id="h1-4-15" class="d">-/*
+</a><a href="#h1-4-16" id="h1-4-16" class="d">-   This is a wrapper around the real function
+</a><a href="#h1-4-17" id="h1-4-17" class="d">-   to operate directly on the currently focused
+</a><a href="#h1-4-18" id="h1-4-18" class="d">-   window.
+</a><a href="#h1-4-19" id="h1-4-19" class="d">-
+</a><a href="#h1-4-20" id="h1-4-20" class="d">-   I&#39;d rather this function not exist but it&#39;s
+</a><a href="#h1-4-21" id="h1-4-21" class="d">-   the simplest method of allowing its use in a
+</a><a href="#h1-4-22" id="h1-4-22" class="d">-   &#39;config.h&#39; defined keybinding.
+</a><a href="#h1-4-23" id="h1-4-23" class="d">-*/
+</a><a href="#h1-4-24" id="h1-4-24" class="d">-void win_center_current() {
+</a><a href="#h1-4-25" id="h1-4-25" class="d">-   win_center(win_current());
+</a><a href="#h1-4-26" id="h1-4-26" class="d">-}
+</a><a href="#h1-4-27" id="h1-4-27" class="d">-
+</a><a href="#h1-4-28" id="h1-4-28" class="d">-/*
+</a>     This function changes the focus to another desktop.
+ 
+     To make this operation invisible the destination
+<a href="#h1-5" id="h1-5" class="h">@@ -531,7 +508,7 @@ void map_request(XEvent *e) {
+</a> 
+     XSelectInput(d, w, PropertyChangeMask|StructureNotifyMask|
+                        EnterWindowMask|FocusChangeMask);
+<a href="#h1-5-3" id="h1-5-3" class="d">-    win_center(w);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+    win_center((Arg){.i = w});
+</a>     XMapWindow(d, w);
+     FOC(w);
+     win_add(w);
+</pre>
+</div>
+</body>
+</html>

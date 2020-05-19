@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add tty line support - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/215bdb2da3eca77ba01b70503c527baaad67c359.html">215bdb2da3eca77ba01b70503c527baaad67c359</a>
+<b>parent</b> <a href="../commit/56abffb4b67f235d20de30f29ba027ab34c171e3.html">56abffb4b67f235d20de30f29ba027ab34c171e3</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Mon, 13 Apr 2015 19:03:53 +0200
+
+Add tty line support
+
+Not always is desirable to create a pseudo terminal, and some times
+we want to open a terminal emulator over a tty line. With this new
+patch is possible to do someting like:
+
+	$ st -l /dev/ttyS0 115200
+
+Without this option was needed to launch another terminal emulator
+over st (for example minicom, picocom, cu, ...).
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.1</a></td><td> | </td><td class="num">37</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.c</a></td><td> | </td><td class="num">66</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>3 files changed, 91 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -9,6 +9,7 @@ static char font[] = &quot;Liberation Mono:pixelsize=12:antialias=false:autohint=fals
+</a> static int borderpx = 2;
+ static char shell[] = &quot;/bin/sh&quot;;
+ static char *utmp = NULL;
+<a href="#h0-0-3" id="h0-0-3" class="i">+static char stty_args[] = &quot;stty raw -echo -iexten echonl&quot;;
+</a> 
+ /* identification sequence returned in DA and DECID */
+ static char vtiden[] = &quot;\033[?6c&quot;;
+<b>diff --git a/<a id="h1" href="../file/st.1.html">st.1</a> b/<a href="../file/st.1.html">st.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -15,11 +15,36 @@ st \- simple terminal
+</a> .IR file ]
+ .RB [ \-t 
+ .IR title ]
+<a href="#h1-0-3" id="h1-0-3" class="i">+.RB [ \-l
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+.IR line ]
+</a> .RB [ \-w 
+ .IR windowid ]
+ .RB [ \-v ]
+ .RB [ \-e
+ .IR command ...]
+<a href="#h1-0-10" id="h1-0-10" class="i">+.RI [ commands ...]
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+.PP
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+.B st
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+.RB [ \-a ]
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+.RB [ \-c
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+.IR class ]
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+.RB [ \-f
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+.IR font ]
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+.RB [ \-g
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+.IR geometry ]
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+.RB [ \-i ]
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+.RB [ \-o
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+.IR file ]
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+.RB [ \-t
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+.IR title ]
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+.RB [ \-l
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+.IR line ]
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+.RB [ \-w
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+.IR windowid ]
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+.RB [ \-v ]
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+.RB [ \-l
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+.IR line ]
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+.RI [ stty_args ...]
+</a> .SH DESCRIPTION
+ .B st
+ is a simple terminal emulator.
+<a href="#h1-1" id="h1-1" class="h">@@ -58,6 +83,11 @@ defines the window title (default &#39;st&#39;).
+</a> embeds st within the window identified by 
+ .I windowid
+ .TP
+<a href="#h1-1-3" id="h1-1-3" class="i">+.BI \-l &quot; line&quot;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+use a tty line instead of a pseudo terminal.
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+When this flag is used
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+remaining arguments are used as flags for stty.
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+.TP
+</a> .B \-v
+ prints version information to stderr, then exits.
+ .TP
+<a href="#h1-2" id="h1-2" class="h">@@ -67,6 +97,9 @@ st executes
+</a> instead of the shell.  If this is used it
+ .B must be the last option
+ on the command line, as in xterm / rxvt.
+<a href="#h1-2-3" id="h1-2-3" class="i">+This option is only intended for compability,
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+and all the remaining arguments are used as a command
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+even without it.
+</a> .SH SHORTCUTS
+ .TP
+ .B Ctrl-Print Screen
+<a href="#h1-3" id="h1-3" class="h">@@ -110,7 +143,9 @@ See the LICENSE file for the authors.
+</a> .SH LICENSE
+ See the LICENSE file for the terms of redistribution.
+ .SH SEE ALSO
+<a href="#h1-3-3" id="h1-3-3" class="d">-.BR tabbed (1)
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+.BR tabbed (1),
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+.BR utmp (1),
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+.BR stty (1)
+</a> .SH BUGS
+ See the TODO file in the distribution.
+ 
+<b>diff --git a/<a id="h2" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -352,6 +352,7 @@ static void draw(void);
+</a> static void redraw(void);
+ static void drawregion(int, int, int, int);
+ static void execsh(void);
+<a href="#h2-0-3" id="h2-0-3" class="i">+static void stty(void);
+</a> static void sigchld(int);
+ static void run(void);
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -508,6 +509,7 @@ static char *opt_title = NULL;
+</a> static char *opt_embed = NULL;
+ static char *opt_class = NULL;
+ static char *opt_font = NULL;
+<a href="#h2-1-3" id="h2-1-3" class="i">+static char *opt_line = NULL;
+</a> static int oldbutton = 3; /* button event on startup: 3 = release */
+ 
+ static char *usedfont = NULL;
+<a href="#h2-2" id="h2-2" class="h">@@ -1253,11 +1255,55 @@ sigchld(int a) {
+</a> 	exit(EXIT_SUCCESS);
+ }
+ 
+<a href="#h2-2-3" id="h2-2-3" class="i">+
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+void
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+stty(void)
+</a><a href="#h2-2-6" id="h2-2-6" class="i">+{
+</a><a href="#h2-2-7" id="h2-2-7" class="i">+	char cmd[_POSIX_ARG_MAX], **p, *q, *s;
+</a><a href="#h2-2-8" id="h2-2-8" class="i">+	size_t n, siz;
+</a><a href="#h2-2-9" id="h2-2-9" class="i">+
+</a><a href="#h2-2-10" id="h2-2-10" class="i">+	if((n = strlen(stty_args)) &gt; sizeof(cmd)-1)
+</a><a href="#h2-2-11" id="h2-2-11" class="i">+		die(&quot;incorrect stty parameters\n&quot;);
+</a><a href="#h2-2-12" id="h2-2-12" class="i">+	memcpy(cmd, stty_args, n);
+</a><a href="#h2-2-13" id="h2-2-13" class="i">+	q = cmd + n;
+</a><a href="#h2-2-14" id="h2-2-14" class="i">+	siz = sizeof(cmd) - n;
+</a><a href="#h2-2-15" id="h2-2-15" class="i">+	for(p = opt_cmd; p &amp;&amp; (s = *p); ++p) {
+</a><a href="#h2-2-16" id="h2-2-16" class="i">+		if((n = strlen(s)) &gt; siz-1)
+</a><a href="#h2-2-17" id="h2-2-17" class="i">+			die(&quot;stty parameter length too long\n&quot;);
+</a><a href="#h2-2-18" id="h2-2-18" class="i">+		*q++ = &#39; &#39;;
+</a><a href="#h2-2-19" id="h2-2-19" class="i">+		q = memcpy(q, s, n);
+</a><a href="#h2-2-20" id="h2-2-20" class="i">+		q += n;
+</a><a href="#h2-2-21" id="h2-2-21" class="i">+		siz-= n + 1;
+</a><a href="#h2-2-22" id="h2-2-22" class="i">+	}
+</a><a href="#h2-2-23" id="h2-2-23" class="i">+	*q = &#39;\0&#39;;
+</a><a href="#h2-2-24" id="h2-2-24" class="i">+	system(cmd);
+</a><a href="#h2-2-25" id="h2-2-25" class="i">+}
+</a><a href="#h2-2-26" id="h2-2-26" class="i">+
+</a> void
+ ttynew(void) {
+ 	int m, s;
+ 	struct winsize w = {term.row, term.col, 0, 0};
+ 
+<a href="#h2-2-32" id="h2-2-32" class="i">+	if(opt_io) {
+</a><a href="#h2-2-33" id="h2-2-33" class="i">+		term.mode |= MODE_PRINT;
+</a><a href="#h2-2-34" id="h2-2-34" class="i">+		iofd = (!strcmp(opt_io, &quot;-&quot;)) ?
+</a><a href="#h2-2-35" id="h2-2-35" class="i">+			  STDOUT_FILENO :
+</a><a href="#h2-2-36" id="h2-2-36" class="i">+			  open(opt_io, O_WRONLY | O_CREAT, 0666);
+</a><a href="#h2-2-37" id="h2-2-37" class="i">+		if(iofd &lt; 0) {
+</a><a href="#h2-2-38" id="h2-2-38" class="i">+			fprintf(stderr, &quot;Error opening %s:%s\n&quot;,
+</a><a href="#h2-2-39" id="h2-2-39" class="i">+				opt_io, strerror(errno));
+</a><a href="#h2-2-40" id="h2-2-40" class="i">+		}
+</a><a href="#h2-2-41" id="h2-2-41" class="i">+	}
+</a><a href="#h2-2-42" id="h2-2-42" class="i">+
+</a><a href="#h2-2-43" id="h2-2-43" class="i">+	if (opt_line) {
+</a><a href="#h2-2-44" id="h2-2-44" class="i">+		if((cmdfd = open(opt_line, O_RDWR)) &lt; 0)
+</a><a href="#h2-2-45" id="h2-2-45" class="i">+			die(&quot;open line failed: %s\n&quot;, strerror(errno));
+</a><a href="#h2-2-46" id="h2-2-46" class="i">+		close(STDIN_FILENO);
+</a><a href="#h2-2-47" id="h2-2-47" class="i">+		dup(cmdfd);
+</a><a href="#h2-2-48" id="h2-2-48" class="i">+		stty();
+</a><a href="#h2-2-49" id="h2-2-49" class="i">+		return;
+</a><a href="#h2-2-50" id="h2-2-50" class="i">+	}
+</a><a href="#h2-2-51" id="h2-2-51" class="i">+
+</a> 	/* seems to work fine on linux, openbsd and freebsd */
+ 	if(openpty(&amp;m, &amp;s, NULL, NULL, &amp;w) &lt; 0)
+ 		die(&quot;openpty failed: %s\n&quot;, strerror(errno));
+<a href="#h2-3" id="h2-3" class="h">@@ -1267,6 +1313,7 @@ ttynew(void) {
+</a> 		die(&quot;fork failed\n&quot;);
+ 		break;
+ 	case 0:
+<a href="#h2-3-3" id="h2-3-3" class="i">+		close(iofd);
+</a> 		setsid(); /* create a new process group */
+ 		dup2(s, STDIN_FILENO);
+ 		dup2(s, STDOUT_FILENO);
+<a href="#h2-4" id="h2-4" class="h">@@ -1281,16 +1328,6 @@ ttynew(void) {
+</a> 		close(s);
+ 		cmdfd = m;
+ 		signal(SIGCHLD, sigchld);
+<a href="#h2-4-3" id="h2-4-3" class="d">-		if(opt_io) {
+</a><a href="#h2-4-4" id="h2-4-4" class="d">-			term.mode |= MODE_PRINT;
+</a><a href="#h2-4-5" id="h2-4-5" class="d">-			iofd = (!strcmp(opt_io, &quot;-&quot;)) ?
+</a><a href="#h2-4-6" id="h2-4-6" class="d">-				  STDOUT_FILENO :
+</a><a href="#h2-4-7" id="h2-4-7" class="d">-				  open(opt_io, O_WRONLY | O_CREAT, 0666);
+</a><a href="#h2-4-8" id="h2-4-8" class="d">-			if(iofd &lt; 0) {
+</a><a href="#h2-4-9" id="h2-4-9" class="d">-				fprintf(stderr, &quot;Error opening %s:%s\n&quot;,
+</a><a href="#h2-4-10" id="h2-4-10" class="d">-					opt_io, strerror(errno));
+</a><a href="#h2-4-11" id="h2-4-11" class="d">-			}
+</a><a href="#h2-4-12" id="h2-4-12" class="d">-		}
+</a> 		break;
+ 	}
+ }
+<a href="#h2-5" id="h2-5" class="h">@@ -4009,9 +4046,11 @@ run(void) {
+</a> 
+ void
+ usage(void) {
+<a href="#h2-5-3" id="h2-5-3" class="d">-	die(&quot;%s &quot; VERSION &quot; (c) 2010-2015 st engineers\n&quot; \
+</a><a href="#h2-5-4" id="h2-5-4" class="i">+	die(&quot;%s &quot; VERSION &quot; (c) 2010-2015 st engineers\n&quot;
+</a> 	&quot;usage: st [-a] [-v] [-c class] [-f font] [-g geometry] [-o file]\n&quot;
+<a href="#h2-5-6" id="h2-5-6" class="d">-	&quot;          [-i] [-t title] [-w windowid] [-e command ...] [command ...]\n&quot;,
+</a><a href="#h2-5-7" id="h2-5-7" class="i">+	&quot;          [-i] [-t title] [-w windowid] [-e command ...] [command ...]\n&quot;
+</a><a href="#h2-5-8" id="h2-5-8" class="i">+	&quot;       st [-a] [-v] [-c class] [-f font] [-g geometry] [-o file]\n&quot;
+</a><a href="#h2-5-9" id="h2-5-9" class="i">+	&quot;          [-i] [-t title] [-w windowid] [-l line] [stty_args ...]\n&quot;,
+</a> 	argv0);
+ }
+ 
+<a href="#h2-6" id="h2-6" class="h">@@ -4047,6 +4086,9 @@ main(int argc, char *argv[]) {
+</a> 	case &#39;o&#39;:
+ 		opt_io = EARGF(usage());
+ 		break;
+<a href="#h2-6-3" id="h2-6-3" class="i">+	case &#39;l&#39;:
+</a><a href="#h2-6-4" id="h2-6-4" class="i">+		opt_line = EARGF(usage());
+</a><a href="#h2-6-5" id="h2-6-5" class="i">+		break;
+</a> 	case &#39;t&#39;:
+ 		opt_title = EARGF(usage());
+ 		break;
+</pre>
+</div>
+</body>
+</html>

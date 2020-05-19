@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Call xsetenv() in main process instead of child - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3e44ee5569a81ba6f06e1ecd19bf0ceb1e97f18d.html">3e44ee5569a81ba6f06e1ecd19bf0ceb1e97f18d</a>
+<b>parent</b> <a href="../commit/1f24bde82b19912c080fbb4a0b153a248cd6c6ea.html">1f24bde82b19912c080fbb4a0b153a248cd6c6ea</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 10 Oct 2017 10:30:23 -0500
+
+Call xsetenv() in main process instead of child
+
+This makes xsetenv internal to x.c, and allows iso14755&#39;s external
+command to use $WINDOWID instead of having to snprintf it again.  (The
+same benefit will apply to the externalpipe patch.)  The xwinid function
+is no longer needed.
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">win.h</a></td><td> | </td><td class="num">2</td><td><span class="i"></span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">x.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++</span><span class="d">------</span></td></tr>
+</table></pre><pre>3 files changed, 4 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -60,7 +60,7 @@ char *argv0;
+</a> #define ISDELIM(u)		(utf8strchr(worddelimiters, u) != NULL)
+ 
+ /* constants */
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define ISO14755CMD		&quot;dmenu -w %lu -p codepoint: &lt;/dev/null&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define ISO14755CMD		&quot;dmenu -w \&quot;$WINDOWID\&quot; -p codepoint: &lt;/dev/null&quot;
+</a> 
+ enum cursor_movement {
+ 	CURSOR_SAVE,
+<a href="#h0-1" id="h0-1" class="h">@@ -706,7 +706,6 @@ execsh(void)
+</a> 	setenv(&quot;SHELL&quot;, sh, 1);
+ 	setenv(&quot;HOME&quot;, pw-&gt;pw_dir, 1);
+ 	setenv(&quot;TERM&quot;, termname, 1);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	xsetenv();
+</a> 
+ 	signal(SIGCHLD, SIG_DFL);
+ 	signal(SIGHUP, SIG_DFL);
+<a href="#h0-2" id="h0-2" class="h">@@ -1993,14 +1992,11 @@ tprinter(char *s, size_t len)
+</a> void
+ iso14755(const Arg *arg)
+ {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	unsigned long id = xwinid();
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	char cmd[sizeof(ISO14755CMD) + NUMMAXLEN(id)];
+</a> 	FILE *p;
+ 	char *us, *e, codepoint[9], uc[UTF_SIZ];
+ 	unsigned long utf32;
+ 
+<a href="#h0-2-9" id="h0-2-9" class="d">-	snprintf(cmd, sizeof(cmd), ISO14755CMD, id);
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-	if (!(p = popen(cmd, &quot;r&quot;)))
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	if (!(p = popen(ISO14755CMD, &quot;r&quot;)))
+</a> 		return;
+ 
+ 	us = fgets(codepoint, sizeof(codepoint), p);
+<b>diff --git a/<a id="h1" href="../file/win.h.html">win.h</a> b/<a href="../file/win.h.html">win.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -19,12 +19,10 @@ void xinit(void);
+</a> void xloadcols(void);
+ int xsetcolorname(int, const char *);
+ void xloadfonts(char *, double);
+<a href="#h1-0-3" id="h1-0-3" class="d">-void xsetenv(void);
+</a> void xsettitle(char *);
+ void xsetpointermotion(int);
+ void xseturgency(int);
+ void xunloadfonts(void);
+ void xresize(int, int);
+ void xselpaste(void);
+<a href="#h1-0-10" id="h1-0-10" class="d">-unsigned long xwinid(void);
+</a> void xsetsel(char *, Time);
+<b>diff --git a/<a id="h2" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -89,6 +89,7 @@ static void xdrawcursor(void);
+</a> static int xgeommasktogravity(int);
+ static int xloadfont(Font *, FcPattern *);
+ static void xunloadfont(Font *);
+<a href="#h2-0-3" id="h2-0-3" class="i">+static void xsetenv(void);
+</a> 
+ static void expose(XEvent *);
+ static void visibility(XEvent *);
+<a href="#h2-1" id="h2-1" class="h">@@ -1487,12 +1488,6 @@ xbell(int vol)
+</a> 	XkbBell(xw.dpy, xw.win, vol, (Atom)NULL);
+ }
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-unsigned long
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-xwinid(void)
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-{
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-	return xw.win;
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-}
+</a><a href="#h2-1-8" id="h2-1-8" class="d">-
+</a> void
+ focus(XEvent *ev)
+ {
+<a href="#h2-2" id="h2-2" class="h">@@ -1765,6 +1760,7 @@ run:
+</a> 	XSetLocaleModifiers(&quot;&quot;);
+ 	tnew(MAX(cols, 1), MAX(rows, 1));
+ 	xinit();
+<a href="#h2-2-3" id="h2-2-3" class="i">+	xsetenv();
+</a> 	selinit();
+ 	run();
+ 
+</pre>
+</div>
+</body>
+</html>

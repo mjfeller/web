@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix crash due to wide characters - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4d14d97547d335974e98aa612ac5b4fcfc25e1d9.html">4d14d97547d335974e98aa612ac5b4fcfc25e1d9</a>
+<b>parent</b> <a href="../commit/708b697ed77e1ba4e96399ed6cb0f73a37565321.html">708b697ed77e1ba4e96399ed6cb0f73a37565321</a>
+<b>Author:</b> Rian Hunter &lt;<a href="mailto:rian+suckless-dev@thelig.ht">rian+suckless-dev@thelig.ht</a>&gt;
+<b>Date:</b>   Thu, 29 Jan 2015 15:06:43 -0800
+
+Fix crash due to wide characters
+
+In tputc(), when a character wasn&#39;t large enough to fit
+on the current line, we would call tnewline() to place it on
+the next line. Unfortunately, we weren&#39;t resetting our glyph
+pointer and this caused memory corruption when a
+wide character (width == 2) was being written. This patch
+resets our glyph pointer after calls to tnewline().
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 4 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2673,13 +2673,16 @@ tputc(char *c, int len) {
+</a> 	if(IS_SET(MODE_WRAP) &amp;&amp; (term.c.state &amp; CURSOR_WRAPNEXT)) {
+ 		gp-&gt;mode |= ATTR_WRAP;
+ 		tnewline(1);
+<a href="#h0-0-3" id="h0-0-3" class="i">+		gp = &amp;term.line[term.c.y][term.c.x];
+</a> 	}
+ 
+ 	if(IS_SET(MODE_INSERT) &amp;&amp; term.c.x+1 &lt; term.col)
+ 		memmove(gp+1, gp, (term.col - term.c.x - 1) * sizeof(Glyph));
+ 
+<a href="#h0-0-9" id="h0-0-9" class="d">-	if(term.c.x+width &gt; term.col)
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	if(term.c.x+width &gt; term.col) {
+</a> 		tnewline(1);
+<a href="#h0-0-12" id="h0-0-12" class="i">+		gp = &amp;term.line[term.c.y][term.c.x];
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	}
+</a> 
+ 	tsetchar(c, &amp;term.c.attr, term.c.x, term.c.y);
+ 
+</pre>
+</div>
+</body>
+</html>

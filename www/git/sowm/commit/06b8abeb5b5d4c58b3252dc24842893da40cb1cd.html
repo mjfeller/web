@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Merge pull request #2 from dylanaraps/rewrite - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/06b8abeb5b5d4c58b3252dc24842893da40cb1cd.html">06b8abeb5b5d4c58b3252dc24842893da40cb1cd</a>
+<b>parent</b> <a href="../commit/7d3636e9955bf6e889ac8d9b524b66582ebe25e2.html">7d3636e9955bf6e889ac8d9b524b66582ebe25e2</a>
+<b>Author:</b> dylan &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 12 Oct 2019 15:05:33 +0000
+
+Merge pull request #2 from dylanaraps/rewrite
+
+Rewrite
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.h</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">sowm.c</a></td><td> | </td><td class="num">163</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 83 insertions(+), 88 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -24,10 +24,10 @@ const char* volmute[] = {&quot;amixer&quot;, &quot;sset&quot;, &quot;Master&quot;, &quot;toggle&quot;,      NULL};
+</a> const char* colors[]  = {&quot;bud&quot;, &quot;/home/goldie/Pictures/Wallpapers&quot;, NULL};
+ 
+ static struct key keys[] = {
+<a href="#h0-0-3" id="h0-0-3" class="d">-    {MOD,      XK_q,   win_kill,   {NULL}},
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-    {MOD,      XK_c,   win_center, {NULL}},
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-    {MOD,      XK_f,   win_fs,     {NULL}},
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-    {Mod1Mask, XK_Tab, win_next,   {NULL}},
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+    {MOD,      XK_q,   win_kill,           {NULL}},
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+    {MOD,      XK_c,   win_center_current, {NULL}},
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+    {MOD,      XK_f,   win_fs_current,     {NULL}},
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+    {Mod1Mask, XK_Tab, win_next,           {NULL}},
+</a> 
+     {MOD, XK_d,      run, {.com = menu}},
+     {MOD, XK_w,      run, {.com = colors}},
+<b>diff --git a/<a id="h1" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -33,10 +33,7 @@ struct client{
+</a> };
+ 
+ typedef struct desktop desktop;
+<a href="#h1-0-3" id="h1-0-3" class="d">-struct desktop{
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-    client *head, *current;
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-    int mode;
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-};
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+struct desktop{client *head;};
+</a> 
+ static void notify_motion(XEvent *e);
+ static void notify_destroy(XEvent *e);
+<a href="#h1-1" id="h1-1" class="h">@@ -50,12 +47,14 @@ static void button_release();
+</a> 
+ static void win_add(Window w);
+ static void win_del(Window w);
+<a href="#h1-1-3" id="h1-1-3" class="d">-static void win_fs();
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+static void win_fs(Window w);
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+static void win_fs_current();
+</a> static void win_kill();
+<a href="#h1-1-7" id="h1-1-7" class="d">-static void win_center();
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+static void win_center(Window w);
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+static void win_center_current();
+</a> static void win_next();
+ static void win_to_ws(const Arg arg);
+<a href="#h1-1-12" id="h1-1-12" class="d">-static void win_update();
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+static void win_update(Window w);
+</a> 
+ static void ws_go(const Arg arg);
+ static void ws_save(int i);
+<a href="#h1-2" id="h1-2" class="h">@@ -68,10 +67,10 @@ static void run(const Arg arg);
+</a> static void wm_init();
+ static void wm_setup();
+ 
+<a href="#h1-2-3" id="h1-2-3" class="d">-static client  *cur, *head;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+static client  *head;
+</a> static desktop desktops[10];
+ 
+<a href="#h1-2-7" id="h1-2-7" class="d">-static int curr_desk, mode, screen, sh, sw;
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+static int curr_desk, screen, sh, sw;
+</a> 
+ static Display *dis;
+ static Window  root;
+<a href="#h1-3" id="h1-3" class="h">@@ -99,23 +98,22 @@ void win_add(Window w) {
+</a>         exit(1);
+ 
+     if (head == NULL) {
+<a href="#h1-3-3" id="h1-3-3" class="i">+        c-&gt;next = NULL;
+</a>         c-&gt;prev = NULL;
+<a href="#h1-3-5" id="h1-3-5" class="i">+        c-&gt;win  = w;
+</a>         head    = c;
+     }
+ 
+     else {
+         for (t=head;t-&gt;next;t=t-&gt;next);
+ 
+<a href="#h1-3-12" id="h1-3-12" class="i">+        c-&gt;next = NULL;
+</a>         c-&gt;prev = t;
+<a href="#h1-3-14" id="h1-3-14" class="i">+        c-&gt;win  = w;
+</a>         t-&gt;next = c;
+     }
+ 
+<a href="#h1-3-18" id="h1-3-18" class="d">-    c-&gt;next = NULL;
+</a><a href="#h1-3-19" id="h1-3-19" class="d">-    c-&gt;win  = w;
+</a><a href="#h1-3-20" id="h1-3-20" class="d">-    cur     = c;
+</a><a href="#h1-3-21" id="h1-3-21" class="d">-
+</a><a href="#h1-3-22" id="h1-3-22" class="d">-    XSelectInput(dis, w, PropertyChangeMask|StructureNotifyMask|
+</a><a href="#h1-3-23" id="h1-3-23" class="d">-                         EnterWindowMask|FocusChangeMask);
+</a><a href="#h1-3-24" id="h1-3-24" class="i">+    ws_save(curr_desk);
+</a> }
+ 
+ void ws_go(const Arg arg) {
+<a href="#h1-4" id="h1-4" class="h">@@ -125,66 +123,82 @@ void ws_go(const Arg arg) {
+</a>         return;
+ 
+     if (head != NULL)
+<a href="#h1-4-3" id="h1-4-3" class="d">-        for(c=head;c;c=c-&gt;next) XUnmapWindow(dis,c-&gt;win);
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+        for(c=head;c;c=c-&gt;next) XUnmapWindow(dis, c-&gt;win);
+</a> 
+     ws_save(curr_desk);
+     ws_sel(arg.i);
+ 
+     if (head != NULL)
+<a href="#h1-4-10" id="h1-4-10" class="d">-        for(c=head;c;c=c-&gt;next) XMapWindow(dis,c-&gt;win);
+</a><a href="#h1-4-11" id="h1-4-11" class="i">+        for(c=head;c;c=c-&gt;next) XMapWindow(dis, c-&gt;win);
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+}
+</a> 
+<a href="#h1-4-14" id="h1-4-14" class="d">-    win_update();
+</a><a href="#h1-4-15" id="h1-4-15" class="i">+Window win_current() {
+</a><a href="#h1-4-16" id="h1-4-16" class="i">+    Window focused;
+</a><a href="#h1-4-17" id="h1-4-17" class="i">+    int revert_to;
+</a><a href="#h1-4-18" id="h1-4-18" class="i">+
+</a><a href="#h1-4-19" id="h1-4-19" class="i">+    XGetInputFocus(dis, &amp;focused, &amp;revert_to);
+</a><a href="#h1-4-20" id="h1-4-20" class="i">+    return focused;
+</a> }
+ 
+<a href="#h1-4-23" id="h1-4-23" class="d">-void win_center() {
+</a><a href="#h1-4-24" id="h1-4-24" class="d">-    XGetWindowAttributes(dis, cur-&gt;win, &amp;attr);
+</a><a href="#h1-4-25" id="h1-4-25" class="i">+void win_center(Window w) {
+</a><a href="#h1-4-26" id="h1-4-26" class="i">+    XGetWindowAttributes(dis, w, &amp;attr);
+</a> 
+     int x = (sw / 2) - (attr.width  / 2);
+     int y = (sh / 2) - (attr.height / 2);
+ 
+<a href="#h1-4-31" id="h1-4-31" class="d">-    XMoveWindow(dis, cur-&gt;win, x, y);
+</a><a href="#h1-4-32" id="h1-4-32" class="i">+    XMoveWindow(dis, w, x, y);
+</a><a href="#h1-4-33" id="h1-4-33" class="i">+}
+</a><a href="#h1-4-34" id="h1-4-34" class="i">+
+</a><a href="#h1-4-35" id="h1-4-35" class="i">+void win_center_current() {
+</a><a href="#h1-4-36" id="h1-4-36" class="i">+   win_center(win_current());
+</a> }
+ 
+<a href="#h1-4-39" id="h1-4-39" class="d">-void win_fs() {
+</a><a href="#h1-4-40" id="h1-4-40" class="d">-    if (cur == NULL) return;
+</a><a href="#h1-4-41" id="h1-4-41" class="i">+void win_fs_current() {
+</a><a href="#h1-4-42" id="h1-4-42" class="i">+   win_fs(win_current());
+</a><a href="#h1-4-43" id="h1-4-43" class="i">+}
+</a><a href="#h1-4-44" id="h1-4-44" class="i">+
+</a><a href="#h1-4-45" id="h1-4-45" class="i">+void win_fs(Window w) {
+</a><a href="#h1-4-46" id="h1-4-46" class="i">+    client *c;
+</a><a href="#h1-4-47" id="h1-4-47" class="i">+
+</a><a href="#h1-4-48" id="h1-4-48" class="i">+    for(c=head;c;c=c-&gt;next)
+</a><a href="#h1-4-49" id="h1-4-49" class="i">+        if (c-&gt;win == w) break;
+</a><a href="#h1-4-50" id="h1-4-50" class="i">+
+</a><a href="#h1-4-51" id="h1-4-51" class="i">+    if (c == NULL) return;
+</a> 
+<a href="#h1-4-53" id="h1-4-53" class="d">-    if (cur-&gt;f != 1) {
+</a><a href="#h1-4-54" id="h1-4-54" class="d">-        XGetWindowAttributes(dis, cur-&gt;win, &amp;attr);
+</a><a href="#h1-4-55" id="h1-4-55" class="i">+    if (c-&gt;f != 1) {
+</a><a href="#h1-4-56" id="h1-4-56" class="i">+        XGetWindowAttributes(dis, w, &amp;attr);
+</a> 
+<a href="#h1-4-58" id="h1-4-58" class="d">-        cur-&gt;f = 1;
+</a><a href="#h1-4-59" id="h1-4-59" class="d">-        cur-&gt;x = attr.x;
+</a><a href="#h1-4-60" id="h1-4-60" class="d">-        cur-&gt;y = attr.y;
+</a><a href="#h1-4-61" id="h1-4-61" class="d">-        cur-&gt;w = attr.width;
+</a><a href="#h1-4-62" id="h1-4-62" class="d">-        cur-&gt;h = attr.height;
+</a><a href="#h1-4-63" id="h1-4-63" class="i">+        c-&gt;f = 1;
+</a><a href="#h1-4-64" id="h1-4-64" class="i">+        c-&gt;x = attr.x;
+</a><a href="#h1-4-65" id="h1-4-65" class="i">+        c-&gt;y = attr.y;
+</a><a href="#h1-4-66" id="h1-4-66" class="i">+        c-&gt;w = attr.width;
+</a><a href="#h1-4-67" id="h1-4-67" class="i">+        c-&gt;h = attr.height;
+</a> 
+<a href="#h1-4-69" id="h1-4-69" class="d">-        XMoveResizeWindow(dis, cur-&gt;win, 0, 0, sw, sh);
+</a><a href="#h1-4-70" id="h1-4-70" class="i">+        XMoveResizeWindow(dis, w, 0, 0, sw, sh);
+</a>     }
+ 
+     else {
+<a href="#h1-4-74" id="h1-4-74" class="d">-        cur-&gt;f = 0;
+</a><a href="#h1-4-75" id="h1-4-75" class="i">+        c-&gt;f = 0;
+</a> 
+<a href="#h1-4-77" id="h1-4-77" class="d">-        XMoveResizeWindow(dis, cur-&gt;win, cur-&gt;x, cur-&gt;y, cur-&gt;w, cur-&gt;h);
+</a><a href="#h1-4-78" id="h1-4-78" class="i">+        XMoveResizeWindow(dis, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+</a>     }
+ }
+ 
+ void win_to_ws(const Arg arg) {
+<a href="#h1-4-83" id="h1-4-83" class="d">-    client *tmp = cur;
+</a><a href="#h1-4-84" id="h1-4-84" class="d">-    int    tmp2 = curr_desk;
+</a><a href="#h1-4-85" id="h1-4-85" class="i">+    int       tmp  = curr_desk;
+</a><a href="#h1-4-86" id="h1-4-86" class="i">+    Window current = win_current();
+</a> 
+<a href="#h1-4-88" id="h1-4-88" class="d">-    if (arg.i == tmp2 || cur == NULL)
+</a><a href="#h1-4-89" id="h1-4-89" class="i">+    if (arg.i == tmp)
+</a>         return;
+ 
+<a href="#h1-4-92" id="h1-4-92" class="d">-    // Add client to desktop
+</a>     ws_sel(arg.i);
+<a href="#h1-4-94" id="h1-4-94" class="d">-    win_add(tmp-&gt;win);
+</a><a href="#h1-4-95" id="h1-4-95" class="i">+    win_add(current);
+</a>     ws_save(arg.i);
+ 
+<a href="#h1-4-98" id="h1-4-98" class="d">-    // Remove client from current desktop
+</a><a href="#h1-4-99" id="h1-4-99" class="d">-    ws_sel(tmp2);
+</a><a href="#h1-4-100" id="h1-4-100" class="d">-    XUnmapWindow(dis,tmp-&gt;win);
+</a><a href="#h1-4-101" id="h1-4-101" class="d">-    win_del(tmp-&gt;win);
+</a><a href="#h1-4-102" id="h1-4-102" class="d">-    ws_save(tmp2);
+</a><a href="#h1-4-103" id="h1-4-103" class="d">-    win_update();
+</a><a href="#h1-4-104" id="h1-4-104" class="i">+    ws_sel(tmp);
+</a><a href="#h1-4-105" id="h1-4-105" class="i">+    XUnmapWindow(dis, current);
+</a><a href="#h1-4-106" id="h1-4-106" class="i">+    win_del(current);
+</a><a href="#h1-4-107" id="h1-4-107" class="i">+    ws_save(tmp);
+</a> }
+ 
+ void notify_destroy(XEvent *e) {
+<a href="#h1-5" id="h1-5" class="h">@@ -200,7 +214,6 @@ void notify_destroy(XEvent *e) {
+</a>         return;
+ 
+     win_del(ev-&gt;window);
+<a href="#h1-5-3" id="h1-5-3" class="d">-    win_update();
+</a> }
+ 
+ void configure_request(XEvent *e) {
+<a href="#h1-6" id="h1-6" class="h">@@ -217,12 +230,8 @@ void configure_request(XEvent *e) {
+</a>     XConfigureWindow(dis, ev-&gt;window, ev-&gt;value_mask, &amp;wc);
+ }
+ 
+<a href="#h1-6-3" id="h1-6-3" class="d">-void win_update() {
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-    client *c;
+</a><a href="#h1-6-5" id="h1-6-5" class="d">-
+</a><a href="#h1-6-6" id="h1-6-6" class="d">-    for(c=head;c;c=c-&gt;next)
+</a><a href="#h1-6-7" id="h1-6-7" class="d">-        if (cur == c)
+</a><a href="#h1-6-8" id="h1-6-8" class="d">-            XSetInputFocus(dis, c-&gt;win, RevertToParent, CurrentTime);
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+void win_update(Window w) {
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+    XSetInputFocus(dis, w, RevertToParent, CurrentTime);
+</a> }
+ 
+ void notify_enter(XEvent *e) {
+<a href="#h1-7" id="h1-7" class="h">@@ -269,8 +278,6 @@ void notify_motion(XEvent *e) {
+</a>             attr.y + (start.button==1 ? ydiff : 0),
+             MAX(1, attr.width + (start.button==3 ? xdiff : 0)),
+             MAX(1, attr.height + (start.button==3 ? ydiff : 0)));
+<a href="#h1-7-3" id="h1-7-3" class="d">-
+</a><a href="#h1-7-4" id="h1-7-4" class="d">-        cur-&gt;f = 0;
+</a>     }
+ }
+ 
+<a href="#h1-8" id="h1-8" class="h">@@ -279,36 +286,36 @@ void button_release() {
+</a> }
+ 
+ void win_kill() {
+<a href="#h1-8-3" id="h1-8-3" class="d">-	if (cur != NULL) XKillClient(dis, cur-&gt;win);
+</a><a href="#h1-8-4" id="h1-8-4" class="i">+    Window current = win_current();
+</a><a href="#h1-8-5" id="h1-8-5" class="i">+
+</a><a href="#h1-8-6" id="h1-8-6" class="i">+    if (current != root)
+</a><a href="#h1-8-7" id="h1-8-7" class="i">+        XKillClient(dis, current);
+</a> }
+ 
+ void map_request(XEvent *e) {
+     XMapRequestEvent *ev = &amp;e-&gt;xmaprequest;
+<a href="#h1-8-12" id="h1-8-12" class="d">-    client *c;
+</a><a href="#h1-8-13" id="h1-8-13" class="d">-
+</a><a href="#h1-8-14" id="h1-8-14" class="d">-    // For fullscreen mplayer (and maybe some other program)
+</a><a href="#h1-8-15" id="h1-8-15" class="d">-    for (c=head;c;c=c-&gt;next)
+</a><a href="#h1-8-16" id="h1-8-16" class="d">-        if(ev-&gt;window == c-&gt;win) {
+</a><a href="#h1-8-17" id="h1-8-17" class="d">-            XMapWindow(dis,ev-&gt;window);
+</a><a href="#h1-8-18" id="h1-8-18" class="d">-            return;
+</a><a href="#h1-8-19" id="h1-8-19" class="d">-        }
+</a> 
+<a href="#h1-8-21" id="h1-8-21" class="i">+    XSelectInput(dis, ev-&gt;window, PropertyChangeMask|StructureNotifyMask|
+</a><a href="#h1-8-22" id="h1-8-22" class="i">+                                  EnterWindowMask|FocusChangeMask);
+</a><a href="#h1-8-23" id="h1-8-23" class="i">+    win_center(ev-&gt;window);
+</a><a href="#h1-8-24" id="h1-8-24" class="i">+    XMapWindow(dis, ev-&gt;window);
+</a><a href="#h1-8-25" id="h1-8-25" class="i">+    win_update(ev-&gt;window);
+</a>     win_add(ev-&gt;window);
+<a href="#h1-8-27" id="h1-8-27" class="d">-    win_center();
+</a><a href="#h1-8-28" id="h1-8-28" class="d">-    XMapWindow(dis,ev-&gt;window);
+</a><a href="#h1-8-29" id="h1-8-29" class="d">-    win_update();
+</a> }
+ 
+ void win_next() {
+<a href="#h1-8-33" id="h1-8-33" class="i">+    Window current = win_current();
+</a>     client *c;
+ 
+<a href="#h1-8-36" id="h1-8-36" class="d">-    if (cur != NULL &amp;&amp; head != NULL) {
+</a><a href="#h1-8-37" id="h1-8-37" class="d">-        c = cur-&gt;next;
+</a><a href="#h1-8-38" id="h1-8-38" class="i">+    if (head != NULL) {
+</a><a href="#h1-8-39" id="h1-8-39" class="i">+        for(c=head;c;c=c-&gt;next)
+</a><a href="#h1-8-40" id="h1-8-40" class="i">+            if (c-&gt;win == current) break;
+</a><a href="#h1-8-41" id="h1-8-41" class="i">+
+</a><a href="#h1-8-42" id="h1-8-42" class="i">+        c = c-&gt;next;
+</a> 
+         if (c == NULL) c = head;
+ 
+<a href="#h1-8-46" id="h1-8-46" class="d">-        cur = c;
+</a><a href="#h1-8-47" id="h1-8-47" class="d">-        win_update();
+</a><a href="#h1-8-48" id="h1-8-48" class="i">+        win_update(c-&gt;win);
+</a>         XRaiseWindow(dis, c-&gt;win);
+     }
+ }
+<a href="#h1-9" id="h1-9" class="h">@@ -323,7 +330,6 @@ void win_del(Window w) {
+</a>             free(head);
+ 
+             head = NULL;
+<a href="#h1-9-3" id="h1-9-3" class="d">-            cur  = NULL;
+</a> 
+             ws_save(curr_desk);
+             return;
+<a href="#h1-10" id="h1-10" class="h">@@ -332,37 +338,29 @@ void win_del(Window w) {
+</a>         if (c-&gt;prev == NULL) {
+             head          = c-&gt;next;
+             c-&gt;next-&gt;prev = NULL;
+<a href="#h1-10-3" id="h1-10-3" class="d">-            cur           = c-&gt;next;
+</a>         }
+ 
+         else if (c-&gt;next == NULL) {
+             c-&gt;prev-&gt;next = NULL;
+<a href="#h1-10-8" id="h1-10-8" class="d">-            cur           = c-&gt;prev;
+</a>         }
+ 
+         else {
+             c-&gt;prev-&gt;next = c-&gt;next;
+             c-&gt;next-&gt;prev = c-&gt;prev;
+<a href="#h1-10-14" id="h1-10-14" class="d">-            cur           = c-&gt;prev;
+</a>         }
+ 
+         free(c);
+         ws_save(curr_desk);
+<a href="#h1-10-19" id="h1-10-19" class="d">-        win_update();
+</a>         return;
+     }
+ }
+ 
+ void ws_save(int i) {
+<a href="#h1-10-25" id="h1-10-25" class="d">-    desktops[i].mode    = mode;
+</a><a href="#h1-10-26" id="h1-10-26" class="d">-    desktops[i].head    = head;
+</a><a href="#h1-10-27" id="h1-10-27" class="d">-    desktops[i].current = cur;
+</a><a href="#h1-10-28" id="h1-10-28" class="i">+    desktops[i].head = head;
+</a> }
+ 
+ void ws_sel(int i) {
+     head = desktops[i].head;
+<a href="#h1-10-33" id="h1-10-33" class="d">-    cur  = desktops[i].current;
+</a><a href="#h1-10-34" id="h1-10-34" class="d">-    mode = desktops[i].mode;
+</a> 
+     curr_desk = i;
+ }
+<a href="#h1-11" id="h1-11" class="h">@@ -377,11 +375,8 @@ void wm_setup() {
+</a> 
+     key_grab();
+ 
+<a href="#h1-11-3" id="h1-11-3" class="d">-    for(int i=0; i &lt; TABLENGTH(desktops); ++i) {
+</a><a href="#h1-11-4" id="h1-11-4" class="d">-        desktops[i].mode    = 0;
+</a><a href="#h1-11-5" id="h1-11-5" class="d">-        desktops[i].head    = NULL;
+</a><a href="#h1-11-6" id="h1-11-6" class="d">-        desktops[i].current = NULL;
+</a><a href="#h1-11-7" id="h1-11-7" class="d">-    }
+</a><a href="#h1-11-8" id="h1-11-8" class="i">+    for(int i=0; i &lt; TABLENGTH(desktops); ++i)
+</a><a href="#h1-11-9" id="h1-11-9" class="i">+        desktops[i].head = NULL;
+</a> 
+     const Arg arg = {.i = 1};
+     curr_desk     = arg.i;
+</pre>
+</div>
+</body>
+</html>

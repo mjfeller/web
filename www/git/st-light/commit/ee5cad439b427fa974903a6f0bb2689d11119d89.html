@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding mouse colour/shape settings - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ee5cad439b427fa974903a6f0bb2689d11119d89.html">ee5cad439b427fa974903a6f0bb2689d11119d89</a>
+<b>parent</b> <a href="../commit/dc33d1d66e89ee974cc6d7cfa2efb693ce67aa86.html">dc33d1d66e89ee974cc6d7cfa2efb693ce67aa86</a>
+<b>Author:</b> Alex Kozadaev &lt;<a href="mailto:akozadaev at yahoo com">akozadaev at yahoo com</a>&gt;
+<b>Date:</b>   Tue, 28 Jul 2015 10:30:14 +0100
+
+Adding mouse colour/shape settings
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">20</td><td><span class="i">++++++++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 24 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -105,6 +105,14 @@ static unsigned int defaultfg = 7;
+</a> static unsigned int defaultbg = 0;
+ static unsigned int defaultcs = 256;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+/*
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+ * Default colour and shape of the mouse cursor
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+ */
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+static unsigned int mouseshape = XC_xterm;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+static unsigned int mousefg = 7;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+static unsigned int mousebg = 0;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a> /*
+  * Colors used, when the specific fg == defaultfg. So in reverse mode this
+  * will reverse too. Another logic would only make the simple feature too
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -3411,6 +3411,7 @@ xinit(void)
+</a> 	Cursor cursor;
+ 	Window parent;
+ 	pid_t thispid = getpid();
+<a href="#h1-0-3" id="h1-0-3" class="i">+	XColor xmousefg, xmousebg;
+</a> 
+ 	if (!(xw.dpy = XOpenDisplay(NULL)))
+ 		die(&quot;Can&#39;t open display\n&quot;);
+<a href="#h1-1" id="h1-1" class="h">@@ -3483,11 +3484,22 @@ xinit(void)
+</a> 		die(&quot;XCreateIC failed. Could not obtain input method.\n&quot;);
+ 
+ 	/* white cursor, black outline */
+<a href="#h1-1-3" id="h1-1-3" class="d">-	cursor = XCreateFontCursor(xw.dpy, XC_xterm);
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	cursor = XCreateFontCursor(xw.dpy, mouseshape);
+</a> 	XDefineCursor(xw.dpy, xw.win, cursor);
+<a href="#h1-1-6" id="h1-1-6" class="d">-	XRecolorCursor(xw.dpy, cursor,
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-		&amp;(XColor){.red = 0xffff, .green = 0xffff, .blue = 0xffff},
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-		&amp;(XColor){.red = 0x0000, .green = 0x0000, .blue = 0x0000});
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+	if (XParseColor(xw.dpy, xw.cmap, colorname[mousefg], &amp;xmousefg) == 0) {
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+		xmousefg.red   = 0xffff;
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		xmousefg.green = 0xffff;
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+		xmousefg.blue  = 0xffff;
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+	}
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+	if (XParseColor(xw.dpy, xw.cmap, colorname[mousebg], &amp;xmousebg) == 0) {
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+		xmousebg.red   = 0x0000;
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+		xmousebg.green = 0x0000;
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+		xmousebg.blue  = 0x0000;
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+	}
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+	XRecolorCursor(xw.dpy, cursor, &amp;xmousefg, &amp;xmousebg);
+</a> 
+ 	xw.xembed = XInternAtom(xw.dpy, &quot;_XEMBED&quot;, False);
+ 	xw.wmdeletewin = XInternAtom(xw.dpy, &quot;WM_DELETE_WINDOW&quot;, False);
+</pre>
+</div>
+</body>
+</html>

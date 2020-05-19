@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>use one global struct instead of many vars for selection. Cleanup. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ee858b4805aec3e12bff48cf27433ebcd3f6ac34.html">ee858b4805aec3e12bff48cf27433ebcd3f6ac34</a>
+<b>parent</b> <a href="../commit/80f70f1c224ec6fb10f04c29ea2205f47ae553ff.html">80f70f1c224ec6fb10f04c29ea2205f47ae553ff</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 31 Aug 2010 15:36:13 +0200
+
+use one global struct instead of many vars for selection. Cleanup.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">74</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 38 insertions(+), 36 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -125,6 +125,14 @@ typedef struct {
+</a> 	GC gc;
+ } DC;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+typedef struct {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	int mode;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	int bx, by;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	int ex, ey;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	int b[2], e[2];
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	char *clip;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+} Selection;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a> #include &quot;config.h&quot;
+ 
+ static void die(const char *errstr, ...);
+<a href="#h0-1" id="h0-1" class="h">@@ -200,23 +208,18 @@ static Term term;
+</a> static CSIEscape escseq;
+ static int cmdfd;
+ static pid_t pid;
+<a href="#h0-1-3" id="h0-1-3" class="i">+static Selection sel;
+</a> 
+<a href="#h0-1-5" id="h0-1-5" class="d">-/* selection */
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-// TODO: use X11 clipboard
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-static int selmode = 0;
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-static int selbx = -1, selby;
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-static int selex, seley;
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-int sb[2], se[2];
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-static const char *clipboard = NULL;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+/* TODO: use X11 clipboard */
+</a> 
+ static inline int selected(int x, int y) {
+<a href="#h0-1-15" id="h0-1-15" class="d">-	if ((seley==y &amp;&amp; selby==y)) {
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-		int bx = MIN(selbx, selex);
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-		int ex = MAX(selbx, selex);
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	if ((sel.ey==y &amp;&amp; sel.by==y)) {
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+		int bx = MIN(sel.bx, sel.ex);
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+		int ex = MAX(sel.bx, sel.ex);
+</a> 		return (x&gt;=bx &amp;&amp; x&lt;=ex);
+ 	}
+<a href="#h0-1-23" id="h0-1-23" class="d">-	return (((y&gt;sb[1] &amp;&amp; y&lt;se[1]) || (y==se[1] &amp;&amp; x&lt;=se[0])) || \
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-		(y==sb[1] &amp;&amp; x&gt;=sb[0] &amp;&amp; (x&lt;=se[0] || sb[1]!=se[1])));
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	return (((y&gt;sel.b[1] &amp;&amp; y&lt;sel.e[1]) || (y==sel.e[1] &amp;&amp; x&lt;=sel.e[0])) || \
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+		(y==sel.b[1] &amp;&amp; x&gt;=sel.b[0] &amp;&amp; (x&lt;=sel.e[0] || sel.b[1]!=sel.e[1])));
+</a> }
+ 
+ static void getbuttoninfo(XEvent *e, int *b, int *x, int *y) {
+<a href="#h0-2" id="h0-2" class="h">@@ -224,24 +227,24 @@ static void getbuttoninfo(XEvent *e, int *b, int *x, int *y) {
+</a> 		*b=*b==4096?5:*b==2048?4:*b==1024?3:*b==512?2:*b==256?1:-1;
+ 	*x = e-&gt;xbutton.x/xw.cw;
+ 	*y = e-&gt;xbutton.y/xw.ch;
+<a href="#h0-2-3" id="h0-2-3" class="d">-	sb[0] = selby&lt;seley?selbx:selex;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-	sb[1] = MIN(selby, seley);
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-	se[0] = selby&lt;seley?selex:selbx;
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-	se[1] = MAX(selby, seley);
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+	sel.b[0] = sel.by&lt;sel.ey?sel.bx:sel.ex;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	sel.b[1] = MIN(sel.by, sel.ey);
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	sel.e[0] = sel.by&lt;sel.ey?sel.ex:sel.bx;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	sel.e[1] = MAX(sel.by, sel.ey);
+</a> }
+ 
+ static void bpress(XEvent *e) {
+<a href="#h0-2-14" id="h0-2-14" class="d">-	selmode = 1;
+</a><a href="#h0-2-15" id="h0-2-15" class="d">-	selex = selbx = e-&gt;xbutton.x/xw.cw;
+</a><a href="#h0-2-16" id="h0-2-16" class="d">-	seley = selby = e-&gt;xbutton.y/xw.ch;
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+	sel.mode = 1;
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+	sel.ex = sel.bx = e-&gt;xbutton.x/xw.cw;
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+	sel.ey = sel.by = e-&gt;xbutton.y/xw.ch;
+</a> }
+ 
+ static char *getseltext() {
+ 	char *str, *ptr;
+ 	int ls, x, y, sz;
+<a href="#h0-2-25" id="h0-2-25" class="d">-	if(selbx==-1)
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+	if(sel.bx==-1)
+</a> 		return NULL;
+<a href="#h0-2-28" id="h0-2-28" class="d">-	sz = ((xw.w/xw.ch) * (se[1]-sb[1]+2));
+</a><a href="#h0-2-29" id="h0-2-29" class="i">+	sz = ((xw.w/xw.ch) * (sel.e[1]-sel.b[1]+2));
+</a> 	ptr = str = malloc (sz);
+ 	for(y = 0; y &lt; term.row; y++) {
+ 		for(x = 0; x &lt; term.col; x++) {
+<a href="#h0-3" id="h0-3" class="h">@@ -259,29 +262,29 @@ static char *getseltext() {
+</a> 	return str;
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-static void clipboard_copy(const char *str) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	free((void *)clipboard);
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-	clipboard = str;
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+static void clipboard_copy(char *str) {
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+	free(sel.clip);
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	sel.clip = str;
+</a> }
+ 
+ static void clipboard_paste() {
+<a href="#h0-3-12" id="h0-3-12" class="d">-	if(clipboard)
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-		ttywrite(clipboard, strlen(clipboard));
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+	if(sel.clip)
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+		ttywrite(sel.clip, strlen(sel.clip));
+</a> }
+ 
+ // TODO: doubleclick to select word
+ static void brelease(XEvent *e) {
+ 	int b;
+<a href="#h0-3-21" id="h0-3-21" class="d">-	selmode = 0;
+</a><a href="#h0-3-22" id="h0-3-22" class="d">-	getbuttoninfo(e, &amp;b, &amp;selex, &amp;seley);
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+	sel.mode = 0;
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+	getbuttoninfo(e, &amp;b, &amp;sel.ex, &amp;sel.ey);
+</a> 	if(b==4)
+ 		tscrollup(1);
+ 	else
+ 	if(b==5)
+ 		tscrolldown(1);
+ 	else
+<a href="#h0-3-31" id="h0-3-31" class="d">-	if(selbx==selex &amp;&amp; selby==seley) {
+</a><a href="#h0-3-32" id="h0-3-32" class="d">-		selbx = -1;
+</a><a href="#h0-3-33" id="h0-3-33" class="i">+	if(sel.bx==sel.ex &amp;&amp; sel.by==sel.ey) {
+</a><a href="#h0-3-34" id="h0-3-34" class="i">+		sel.bx = -1;
+</a> 		if(b==2)
+ 			clipboard_paste();
+ 	} else {
+<a href="#h0-4" id="h0-4" class="h">@@ -292,8 +295,8 @@ static void brelease(XEvent *e) {
+</a> }
+ 
+ static void bmotion(XEvent *e) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-	if (selmode) {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		getbuttoninfo(e, NULL, &amp;selex, &amp;seley);
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	if (sel.mode) {
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		getbuttoninfo(e, NULL, &amp;sel.ex, &amp;sel.ey);
+</a> 		draw(1);
+ 	}
+ }
+<a href="#h0-5" id="h0-5" class="h">@@ -784,7 +787,6 @@ csihandle(void) {
+</a> 		case 2: /* all */
+ 			tclearregion(0, 0, term.col-1, term.row-1);
+ 			break;
+<a href="#h0-5-3" id="h0-5-3" class="d">-		case 3: /* XXX: erase saved lines (xterm) */
+</a> 		default:
+ 			goto unknown;
+ 		}
+<a href="#h0-6" id="h0-6" class="h">@@ -1025,7 +1027,7 @@ tputc(char c) {
+</a> 				term.mode &amp;= ~MODE_APPKEYPAD;
+ 				term.esc = 0;
+ 				break;
+<a href="#h0-6-3" id="h0-6-3" class="d">-			case &#39;7&#39;: /* DECSC -- Save Cursor*/
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+			case &#39;7&#39;: /* DECSC -- Save Cursor */
+</a> 				tcursor(CURSOR_SAVE);
+ 				term.esc = 0;
+ 				break;
+<a href="#h0-7" id="h0-7" class="h">@@ -1096,7 +1098,7 @@ tresize(int col, int row) {
+</a> 
+ 	/* resize to new height */
+ 	term.line = realloc(term.line, row * sizeof(Line));
+<a href="#h0-7-3" id="h0-7-3" class="d">-	term.alt = realloc(term.alt,  row * sizeof(Line));
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	term.alt  = realloc(term.alt,  row * sizeof(Line));
+</a> 
+ 	/* resize each row to new width, zero-pad if needed */
+ 	for(i = 0; i &lt; minrow; i++) {
+<a href="#h0-8" id="h0-8" class="h">@@ -1312,7 +1314,7 @@ draw(int redraw_all) {
+</a> 		i = ox = 0;
+ 		for(x = 0; x &lt; term.col; x++) {
+ 			new = term.line[y][x];
+<a href="#h0-8-3" id="h0-8-3" class="d">-			if(selbx!=-1 &amp;&amp; new.c &amp;&amp; selected(x, y))
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+			if(sel.bx!=-1 &amp;&amp; new.c &amp;&amp; selected(x, y))
+</a> 				new.mode ^= ATTR_REVERSE;
+ 			if(i &gt; 0 &amp;&amp; (!(new.state &amp; GLYPH_SET) || ATTRCMP(base, new) ||
+ 					i &gt;= DRAW_BUF_SIZ)) {
+</pre>
+</div>
+</body>
+</html>

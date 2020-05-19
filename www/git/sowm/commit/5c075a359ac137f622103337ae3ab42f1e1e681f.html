@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: simpler center - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5c075a359ac137f622103337ae3ab42f1e1e681f.html">5c075a359ac137f622103337ae3ab42f1e1e681f</a>
+<b>parent</b> <a href="../commit/b48c9b6add7d059b2b2e0816d6f90c2d2f38fc48.html">b48c9b6add7d059b2b2e0816d6f90c2d2f38fc48</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 19 Oct 2019 08:14:03 +0300
+
+sowm: simpler center
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">sowm.c</a></td><td> | </td><td class="num">16</td><td><span class="i">+++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>2 files changed, 8 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,7 +15,7 @@ const char* colors[]  = {&quot;bud&quot;, &quot;/home/goldie/Pictures/Wallpapers&quot;, 0};
+</a> 
+ static struct key keys[] = {
+     {MOD,      XK_q,   win_kill,   {0}},
+<a href="#h0-0-3" id="h0-0-3" class="d">-    {MOD,      XK_c,   win_center, {.w = 0}},
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+    {MOD,      XK_c,   win_center, {0}},
+</a>     {MOD,      XK_f,   win_fs,     {0}},
+     {Mod1Mask, XK_Tab, win_next,   {0}},
+ 
+<b>diff --git a/<a id="h1" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -36,7 +36,7 @@ static void notify_enter(XEvent *e);
+</a> static void notify_motion(XEvent *e);
+ static void run(const Arg arg);
+ static void win_add(Window w);
+<a href="#h1-0-3" id="h1-0-3" class="d">-static void win_center(const Arg arg);
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+static void win_center();
+</a> static void win_del(Window w);
+ static void win_fs();
+ static void win_kill();
+<a href="#h1-1" id="h1-1" class="h">@@ -168,14 +168,12 @@ void win_kill() {
+</a>     if (cur) XKillClient(d, cur-&gt;w);
+ }
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-void win_center(const Arg arg) {
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-    Window w = arg.w ? arg.w : cur-&gt;w;
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-    if (!w) return;
+</a><a href="#h1-1-7" id="h1-1-7" class="i">+void win_center() {
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+    if (!cur) return;
+</a> 
+<a href="#h1-1-10" id="h1-1-10" class="d">-    win_size(w, &amp;(int){0}, &amp;(int){0}, &amp;ww, &amp;wh);
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+    win_size(cur-&gt;w, &amp;(int){0}, &amp;(int){0}, &amp;ww, &amp;wh);
+</a> 
+<a href="#h1-1-13" id="h1-1-13" class="d">-    XMoveWindow(d, w, (sw - ww) / 2, (sh - wh) / 2);
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+    XMoveWindow(d, cur-&gt;w, (sw - ww) / 2, (sh - wh) / 2);
+</a> }
+ 
+ void win_fs() {
+<a href="#h1-2" id="h1-2" class="h">@@ -251,11 +249,11 @@ void map_request(XEvent *e) {
+</a>     XSelectInput(d, w, StructureNotifyMask|EnterWindowMask);
+     win_size(w, &amp;wx, &amp;wy, &amp;ww, &amp;wh);
+     win_add(w);
+<a href="#h1-2-3" id="h1-2-3" class="i">+    win_focus(list-&gt;prev);
+</a> 
+<a href="#h1-2-5" id="h1-2-5" class="d">-    if (wx + wy == 0) win_center((Arg){.i = w});
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+    if (wx + wy == 0) win_center();
+</a> 
+     XMapWindow(d, w);
+<a href="#h1-2-9" id="h1-2-9" class="d">-    win_focus(list-&gt;prev);
+</a> }
+ 
+ void run(const Arg arg) {
+</pre>
+</div>
+</body>
+</html>

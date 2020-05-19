@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Remove insane *_FILENO and EXIT_* usage - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/abfad4c4fc69ebb22febfe32677aadd112ce375a.html">abfad4c4fc69ebb22febfe32677aadd112ce375a</a>
+<b>parent</b> <a href="../commit/92e092efe6c6b2a6b6ec9da33170317d4426cab0.html">92e092efe6c6b2a6b6ec9da33170317d4426cab0</a>
+<b>Author:</b> FRIGN &lt;<a href="mailto:dev@frign.de">dev@frign.de</a>&gt;
+<b>Date:</b>   Wed,  8 Jul 2015 23:49:25 +0200
+
+Remove insane *_FILENO and EXIT_* usage
+
+Any system having different assignments than the usual 0, 1, 2 for
+the standard file numbers and 0, 1 for the exit-statuses is broken
+beyond repair.
+Let&#39;s keep it simple and just use the numbers, no reason to fall
+out of the window here and bend down for POSIX.
+In one occasion, the ret-variable was not necessary. The check was
+rewritten.
+
+Signed-off-by: Christoph Lohmann &lt;20h@r-36.net&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">26</td><td><span class="i">++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 12 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -513,7 +513,7 @@ static STREscape strescseq;
+</a> static int cmdfd;
+ static pid_t pid;
+ static Selection sel;
+<a href="#h0-0-3" id="h0-0-3" class="d">-static int iofd = STDOUT_FILENO;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static int iofd = 1;
+</a> static char **opt_cmd = NULL;
+ static char *opt_io = NULL;
+ static char *opt_title = NULL;
+<a href="#h0-1" id="h0-1" class="h">@@ -1207,7 +1207,7 @@ die(const char *errstr, ...) {
+</a> 	va_start(ap, errstr);
+ 	vfprintf(stderr, errstr, ap);
+ 	va_end(ap);
+<a href="#h0-1-3" id="h0-1-3" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	exit(1);
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -1256,12 +1256,12 @@ execsh(void) {
+</a> 	signal(SIGALRM, SIG_DFL);
+ 
+ 	execvp(prog, args);
+<a href="#h0-2-3" id="h0-2-3" class="d">-	_exit(EXIT_FAILURE);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	_exit(1);
+</a> }
+ 
+ void
+ sigchld(int a) {
+<a href="#h0-2-9" id="h0-2-9" class="d">-	int stat, ret;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+	int stat;
+</a> 	pid_t p;
+ 
+ 	if((p = waitpid(pid, &amp;stat, WNOHANG)) &lt; 0)
+<a href="#h0-3" id="h0-3" class="h">@@ -1270,10 +1270,9 @@ sigchld(int a) {
+</a> 	if(pid != p)
+ 		return;
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	ret = WIFEXITED(stat) ? WEXITSTATUS(stat) : EXIT_FAILURE;
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-	if (ret != EXIT_SUCCESS)
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if (!WIFEXITED(stat) || WEXITSTATUS(stat))
+</a> 		die(&quot;child finished with error &#39;%d&#39;\n&quot;, stat);
+<a href="#h0-3-7" id="h0-3-7" class="d">-	exit(EXIT_SUCCESS);
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	exit(0);
+</a> }
+ 
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -1309,8 +1308,7 @@ ttynew(void) {
+</a> 	if(opt_io) {
+ 		term.mode |= MODE_PRINT;
+ 		iofd = (!strcmp(opt_io, &quot;-&quot;)) ?
+<a href="#h0-4-3" id="h0-4-3" class="d">-			  STDOUT_FILENO :
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-			  open(opt_io, O_WRONLY | O_CREAT, 0666);
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+			  1 : open(opt_io, O_WRONLY | O_CREAT, 0666);
+</a> 		if(iofd &lt; 0) {
+ 			fprintf(stderr, &quot;Error opening %s:%s\n&quot;,
+ 				opt_io, strerror(errno));
+<a href="#h0-5" id="h0-5" class="h">@@ -1320,7 +1318,7 @@ ttynew(void) {
+</a> 	if (opt_line) {
+ 		if((cmdfd = open(opt_line, O_RDWR)) &lt; 0)
+ 			die(&quot;open line failed: %s\n&quot;, strerror(errno));
+<a href="#h0-5-3" id="h0-5-3" class="d">-		close(STDIN_FILENO);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+		close(0);
+</a> 		dup(cmdfd);
+ 		stty();
+ 		return;
+<a href="#h0-6" id="h0-6" class="h">@@ -1337,9 +1335,9 @@ ttynew(void) {
+</a> 	case 0:
+ 		close(iofd);
+ 		setsid(); /* create a new process group */
+<a href="#h0-6-3" id="h0-6-3" class="d">-		dup2(s, STDIN_FILENO);
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-		dup2(s, STDOUT_FILENO);
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-		dup2(s, STDERR_FILENO);
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+		dup2(s, 0);
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+		dup2(s, 1);
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+		dup2(s, 2);
+</a> 		if(ioctl(s, TIOCSCTTY, NULL) &lt; 0)
+ 			die(&quot;ioctl TIOCSCTTY failed: %s\n&quot;, strerror(errno));
+ 		close(s);
+<a href="#h0-7" id="h0-7" class="h">@@ -3871,7 +3869,7 @@ cmessage(XEvent *e) {
+</a> 	} else if(e-&gt;xclient.data.l[0] == xw.wmdeletewin) {
+ 		/* Send SIGHUP to shell */
+ 		kill(pid, SIGHUP);
+<a href="#h0-7-3" id="h0-7-3" class="d">-		exit(EXIT_SUCCESS);
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+		exit(0);
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Remove timeout in the main loop - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/85849ce72aa4e9cee307a031b97777e9eba2d453.html">85849ce72aa4e9cee307a031b97777e9eba2d453</a>
+<b>parent</b> <a href="../commit/15cc8754c2e272ebac6e86845859816e881da000.html">15cc8754c2e272ebac6e86845859816e881da000</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Sun, 16 Sep 2012 10:47:21 +0200
+
+Remove timeout in the main loop
+
+The main loop waits until there is some data to read in file descriptors of
+the X server or the pseudo tty. But it uses a timeout in select(), which
+causes that st awake each 20 ms, even it doesn&#39;t have something to do. This
+patch removes this problem removing the timeout, which is not needed.
+---
+ TODO |    1 -
+ st.c |   27 +++------------------------
+ 2 files changed, 3 insertions(+), 25 deletions(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">TODO</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">27</td><td><span class="i">+++</span><span class="d">------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 3 insertions(+), 25 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/TODO.html">TODO</a> b/<a href="../file/TODO.html">TODO</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,7 +15,6 @@ code &amp; interface
+</a> 
+ * clean selection code
+ * clean and complete terminfo entry
+<a href="#h0-0-3" id="h0-0-3" class="d">-* remove the timeouts in the main loop
+</a> 
+ bugs
+ ----
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -53,8 +53,6 @@
+</a> #define XK_NO_MOD     UINT_MAX
+ #define XK_ANY_MOD    0
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define SELECT_TIMEOUT (20*1000) /* 20 ms */
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-#define DRAW_TIMEOUT  (20*1000) /* 20 ms */
+</a> #define REDRAW_TIMEOUT (80*1000) /* 80 ms */
+ 
+ #define SERRNO strerror(errno)
+<a href="#h1-1" id="h1-1" class="h">@@ -205,7 +203,6 @@ typedef struct {
+</a> 	int ch; /* char height */
+ 	int cw; /* char width  */
+ 	char state; /* focus, redraw, visible */
+<a href="#h1-1-3" id="h1-1-3" class="d">-	struct timeval lastdraw;
+</a> } XWindow;
+ 
+ typedef struct {
+<a href="#h1-2" id="h1-2" class="h">@@ -250,7 +247,6 @@ static void drawregion(int, int, int, int);
+</a> static void execsh(void);
+ static void sigchld(int);
+ static void run(void);
+<a href="#h1-2-3" id="h1-2-3" class="d">-static bool last_draw_too_old(void);
+</a> 
+ static void csidump(void);
+ static void csihandle(void);
+<a href="#h1-3" id="h1-3" class="h">@@ -2158,7 +2154,6 @@ void
+</a> draw() {
+ 	drawregion(0, 0, term.col, term.row);
+ 	xcopy();
+<a href="#h1-3-3" id="h1-3-3" class="d">-	gettimeofday(&amp;xw.lastdraw, NULL);
+</a> }
+ 
+ void
+<a href="#h1-4" id="h1-4" class="h">@@ -2345,41 +2340,25 @@ resize(XEvent *e) {
+</a> 	ttyresize(col, row);
+ }
+ 
+<a href="#h1-4-3" id="h1-4-3" class="d">-bool
+</a><a href="#h1-4-4" id="h1-4-4" class="d">-last_draw_too_old(void) {
+</a><a href="#h1-4-5" id="h1-4-5" class="d">-	struct timeval now;
+</a><a href="#h1-4-6" id="h1-4-6" class="d">-	gettimeofday(&amp;now, NULL);
+</a><a href="#h1-4-7" id="h1-4-7" class="d">-	return TIMEDIFF(now, xw.lastdraw) &gt;= DRAW_TIMEOUT/1000;
+</a><a href="#h1-4-8" id="h1-4-8" class="d">-}
+</a><a href="#h1-4-9" id="h1-4-9" class="d">-
+</a> void
+ run(void) {
+ 	XEvent ev;
+ 	fd_set rfd;
+ 	int xfd = XConnectionNumber(xw.dpy);
+<a href="#h1-4-15" id="h1-4-15" class="d">-	struct timeval timeout = {0};
+</a><a href="#h1-4-16" id="h1-4-16" class="d">-	bool stuff_to_print = 0;
+</a> 
+ 	for(;;) {
+ 		FD_ZERO(&amp;rfd);
+ 		FD_SET(cmdfd, &amp;rfd);
+ 		FD_SET(xfd, &amp;rfd);
+<a href="#h1-4-22" id="h1-4-22" class="d">-		timeout.tv_sec  = 0;
+</a><a href="#h1-4-23" id="h1-4-23" class="d">-		timeout.tv_usec = SELECT_TIMEOUT;
+</a><a href="#h1-4-24" id="h1-4-24" class="d">-		if(select(MAX(xfd, cmdfd)+1, &amp;rfd, NULL, NULL, &amp;timeout) &lt; 0) {
+</a><a href="#h1-4-25" id="h1-4-25" class="i">+		if(select(MAX(xfd, cmdfd)+1, &amp;rfd, NULL, NULL, NULL) &lt; 0) {
+</a> 			if(errno == EINTR)
+ 				continue;
+ 			die(&quot;select failed: %s\n&quot;, SERRNO);
+ 		}
+<a href="#h1-4-30" id="h1-4-30" class="d">-		if(FD_ISSET(cmdfd, &amp;rfd)) {
+</a><a href="#h1-4-31" id="h1-4-31" class="i">+		if(FD_ISSET(cmdfd, &amp;rfd))
+</a> 			ttyread();
+<a href="#h1-4-33" id="h1-4-33" class="d">-			stuff_to_print = 1;
+</a><a href="#h1-4-34" id="h1-4-34" class="d">-		}
+</a> 
+<a href="#h1-4-36" id="h1-4-36" class="d">-		if(stuff_to_print &amp;&amp; last_draw_too_old()) {
+</a><a href="#h1-4-37" id="h1-4-37" class="d">-			stuff_to_print = 0;
+</a><a href="#h1-4-38" id="h1-4-38" class="d">-			draw();
+</a><a href="#h1-4-39" id="h1-4-39" class="d">-		}
+</a><a href="#h1-4-40" id="h1-4-40" class="i">+		draw();
+</a> 
+ 		while(XPending(xw.dpy)) {
+ 			XNextEvent(xw.dpy, &amp;ev);
+</pre>
+</div>
+</body>
+</html>

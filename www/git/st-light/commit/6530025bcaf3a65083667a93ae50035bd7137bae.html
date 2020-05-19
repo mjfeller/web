@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix portability problem in techo() - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6530025bcaf3a65083667a93ae50035bd7137bae.html">6530025bcaf3a65083667a93ae50035bd7137bae</a>
+<b>parent</b> <a href="../commit/d4a17316d33f3c5a0017d7fe6e7e174883ccaa97.html">d4a17316d33f3c5a0017d7fe6e7e174883ccaa97</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Fri, 15 Aug 2014 14:48:16 +0200
+
+Fix portability problem in techo()
+
+ISCONTROL chechks if a value is between 0 and 0x1f or
+between 0x80 and 0x9f. Char signess depends of architecture
+and compiler, so in some environment the second case is
+always false (and wrong), Techo() calls ISCONTROL with a
+char variable, whose type cannot be changed because tpuc()
+expects a pointer to char, so the solution is to insert a
+cast in the call to ISCONTROL.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2311,13 +2311,13 @@ techo(char *buf, int len) {
+</a> 	for(; len &gt; 0; buf++, len--) {
+ 		char c = *buf;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-		if(ISCONTROL(c)) { /* control code */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		if(ISCONTROL((uchar) c)) { /* control code */
+</a> 			if(c &amp; 0x80) {
+ 				c &amp;= 0x7f;
+ 				tputc(&quot;^&quot;, 1);
+ 				tputc(&quot;[&quot;, 1);
+ 			} else if(c != &#39;\n&#39; &amp;&amp; c != &#39;\r&#39; &amp;&amp; c != &#39;\t&#39;) {
+<a href="#h0-0-10" id="h0-0-10" class="d">-				c ^= &#39;\x40&#39;;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+				c ^= 0x40;
+</a> 				tputc(&quot;^&quot;, 1);
+ 			}
+ 			tputc(&amp;c, 1);
+</pre>
+</div>
+</body>
+</html>

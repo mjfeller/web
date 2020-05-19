@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>docs: update - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b0f8c600473b5f69a48bd6e8450e8491c1199397.html">b0f8c600473b5f69a48bd6e8450e8491c1199397</a>
+<b>parent</b> <a href="../commit/abbea300aca1703ef96a37f5bee259451b4eb990.html">abbea300aca1703ef96a37f5bee259451b4eb990</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 15 Oct 2019 14:24:53 +0300
+
+docs: update
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">60</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 60 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -433,6 +433,16 @@ void win_center_current() {
+</a>    win_center(win_current());
+ }
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+/*
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+    This function changes the focus to another desktop.
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+    To make this operation invisible the destination
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+    desktop&#39;s windows are mapped first and the previous
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+    desktop&#39;s windows are then unmapped afterwards.
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+    Finally, focus is shifted to the first window on the
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+    destination desktop&#39;s window list.
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+*/
+</a> void ws_go(const Arg arg) {
+     client *c;
+     int tmp = ws;
+<a href="#h0-1" id="h0-1" class="h">@@ -453,15 +463,30 @@ void ws_go(const Arg arg) {
+</a>     if (list) FOC(list-&gt;w);
+ }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+/*
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+    This function saves the current desktop&#39;s window list.
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+    Simple, nothing to see here.
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+*/
+</a> void ws_save(int i) {
+     ws_list[i].list = list;
+ }
+ 
+<a href="#h0-1-11" id="h0-1-11" class="i">+/*
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+    This function restores a saved desktop&#39;s window list.
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+    Simple, nothing to see here.
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+*/
+</a> void ws_sel(int i) {
+     list = ws_list[i].list;
+     ws = i;
+ }
+ 
+<a href="#h0-1-20" id="h0-1-20" class="i">+/*
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+   This function allows a window to request a size,
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+   position and other attributes.
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+   This is required so programs like Firefox or MPV
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+   are able to display and function correctly.
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+*/
+</a> void configure_request(XEvent *e) {
+     XConfigureRequestEvent *ev = &amp;e-&gt;xconfigurerequest;
+     XWindowChanges wc;
+<a href="#h0-2" id="h0-2" class="h">@@ -476,6 +501,17 @@ void configure_request(XEvent *e) {
+</a>     XConfigureWindow(d, ev-&gt;window, ev-&gt;value_mask, &amp;wc);
+ }
+ 
+<a href="#h0-2-3" id="h0-2-3" class="i">+/*
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+   This function is executed whenever a window is mapped to
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+   the screen.
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+   The window is centered, mapped to the screen, focused and
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+   finally added to the current desktop&#39;s window list.
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+   &#39;XSelectInput&#39; is called to subscribe to various events
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+   related to the window. For example, this is used to get
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+   focus-follows-cursor to work.
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+*/
+</a> void map_request(XEvent *e) {
+     Window w = e-&gt;xmaprequest.window;
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -487,6 +523,10 @@ void map_request(XEvent *e) {
+</a>     win_add(w);
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+/*
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+    This function is executed by keybindings to run the
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+    specified program. Simple enough.
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+*/
+</a> void run(const Arg arg) {
+     if (fork()) return;
+     if (d) close(ConnectionNumber(d));
+<a href="#h0-4" id="h0-4" class="h">@@ -495,10 +535,30 @@ void run(const Arg arg) {
+</a>     execvp((char*)arg.com[0], (char**)arg.com);
+ }
+ 
+<a href="#h0-4-3" id="h0-4-3" class="i">+/*
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+    This window manager ignores all Xorg related errors.
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+    The window manager either crashes (due to Xorg or
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+    itself) or it continues on its merry way.
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+    The only errors which are handled are failed memory
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+    allocations or a failure to open the display on start.
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+*/
+</a> int xerror(Display *d, XErrorEvent *e) {
+     return 0;
+ }
+ 
+<a href="#h0-4-16" id="h0-4-16" class="i">+/*
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+    Initialize the window manager by registering all
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+    keybindings, setting some globals and starting the
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+    event loop.
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+    There&#39;s no &#39;XClosDisplay&#39; or clean up as the only way
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+    to exit this window manager is to kill the process.
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+
+</a><a href="#h0-4-24" id="h0-4-24" class="i">+    This fires up Xorg&#39;s internal clean up which covers
+</a><a href="#h0-4-25" id="h0-4-25" class="i">+    everything allocated and executed here. It&#39;s free!
+</a><a href="#h0-4-26" id="h0-4-26" class="i">+*/
+</a> int main(void) {
+     XEvent ev;
+ 
+</pre>
+</div>
+</body>
+</html>

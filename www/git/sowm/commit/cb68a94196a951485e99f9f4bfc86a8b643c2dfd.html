@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: start adding comments. - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cb68a94196a951485e99f9f4bfc86a8b643c2dfd.html">cb68a94196a951485e99f9f4bfc86a8b643c2dfd</a>
+<b>parent</b> <a href="../commit/c71c704a14fdcd047aaa118814da47c673002da9.html">c71c704a14fdcd047aaa118814da47c673002da9</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 15 Oct 2019 13:21:58 +0300
+
+sowm: start adding comments.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">47</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----</span></td></tr>
+</table></pre><pre>1 file changed, 42 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -78,18 +78,58 @@ static void (*events[LASTEvent])(XEvent *e) = {
+</a>     [MotionNotify]     = notify_motion
+ };
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+/*
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+   &#39;sowm&#39; doesn&#39;t keep track of the currently focused window
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+   and instead grabs window under the cursor when needed.
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+   This is a super lazy way of handling current focus, however
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+   it aligns perfectly with mouse-follows-focus.
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+   Logic below will select a real window if this function
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+   returns the &#39;root&#39; window.
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+   This function returns the current window while at the same
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+   time defining a global variable to contain its value. This
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+   allows for stupidily simple usage.
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+   Example: if (win_current() != root) XKillClient(d, cur);
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+   The value can be used as function output and then
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+   the same value can be used as a variable directly afterwards.
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+*/
+</a> Window win_current() {
+     XGetInputFocus(d, &amp;cur, &amp;j);
+     return cur;
+ }
+ 
+<a href="#h0-0-27" id="h0-0-27" class="i">+/*
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+    When a window is destroyed it is first removed from the
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+    current desktop&#39;s window list and finally focus is shifted.
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+    Focus goes to the window under the cursor if it is *not*
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+    the root window. If it is the root window, focus goes to
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+    the first window in the desktop.
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+*/
+</a> void notify_destroy(XEvent *e) {
+     win_del(e-&gt;xdestroywindow.window);
+<a href="#h0-0-37" id="h0-0-37" class="d">-    win_current();
+</a> 
+<a href="#h0-0-39" id="h0-0-39" class="d">-    if (list) FOC(cur == root ? list-&gt;w : cur);
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+    if (list) FOC(win_current() == root ? list-&gt;w : cur);
+</a> }
+ 
+<a href="#h0-0-43" id="h0-0-43" class="i">+/*
+</a><a href="#h0-0-44" id="h0-0-44" class="i">+    When the mouse enters or leaves a window this function
+</a><a href="#h0-0-45" id="h0-0-45" class="i">+    handles which window shall be focused next.
+</a><a href="#h0-0-46" id="h0-0-46" class="i">+
+</a><a href="#h0-0-47" id="h0-0-47" class="i">+    The while loop firstly compresses all &#39;EnterNotify&#39;
+</a><a href="#h0-0-48" id="h0-0-48" class="i">+    events down to only the latest which is an optimization
+</a><a href="#h0-0-49" id="h0-0-49" class="i">+    when focus changes very quickly (e.g a desktop focus).
+</a><a href="#h0-0-50" id="h0-0-50" class="i">+
+</a><a href="#h0-0-51" id="h0-0-51" class="i">+    There&#39;s no use in computing each and every event as we
+</a><a href="#h0-0-52" id="h0-0-52" class="i">+    only really care about the newest one.
+</a><a href="#h0-0-53" id="h0-0-53" class="i">+
+</a><a href="#h0-0-54" id="h0-0-54" class="i">+    Focus is only then changed if the mouse has entered a
+</a><a href="#h0-0-55" id="h0-0-55" class="i">+    window which is *not* the root window.
+</a><a href="#h0-0-56" id="h0-0-56" class="i">+*/
+</a> void notify_enter(XEvent *e) {
+     while(XCheckTypedEvent(d, EnterNotify, e));
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -342,9 +382,6 @@ int main(void) {
+</a> 
+     key_grab();
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-    for (int i=0; i &lt; sizeof(ws_list)/sizeof(*ws_list); ++i)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-        ws_list[i].list = 0;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-
+</a>     ws_go((Arg){.i = 1});
+ 
+     XSelectInput(d, root, SubstructureNotifyMask|
+</pre>
+</div>
+</body>
+</html>

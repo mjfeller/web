@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: more broken (for now) - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/d1e8ee5e67079a690547550ad27642bad7091098.html">d1e8ee5e67079a690547550ad27642bad7091098</a>
+<b>parent</b> <a href="../commit/ef61316b5f6edb57b615c5fd1d037f152959fa44.html">ef61316b5f6edb57b615c5fd1d037f152959fa44</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 18 Oct 2019 19:55:26 +0300
+
+sowm: more broken (for now)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">sowm.c</a></td><td> | </td><td class="num">38</td><td><span class="i">+++++++++++++++++++</span><span class="d">-------------------</span></td></tr>
+</table></pre><pre>2 files changed, 20 insertions(+), 20 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -15,7 +15,7 @@ const char* colors[]  = {&quot;bud&quot;, &quot;/home/goldie/Pictures/Wallpapers&quot;, 0};
+</a> 
+ static struct key keys[] = {
+     {MOD,      XK_q,   win_kill,   {0}},
+<a href="#h0-0-3" id="h0-0-3" class="d">-    {MOD,      XK_c,   win_center, {0}},
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+    {MOD,      XK_c,   win_center, {.w = 0}},
+</a>     {MOD,      XK_f,   win_fs,     {0}},
+     {Mod1Mask, XK_Tab, win_next,   {0}},
+ 
+<b>diff --git a/<a id="h1" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -66,25 +66,23 @@ static void (*events[LASTEvent])(XEvent *e) = {
+</a> 
+ #include &quot;config.h&quot;
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-#define win (client *t=0, *c=list; t!=list-&gt;prev; t=c, c=c-&gt;next)
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-
+</a><a href="#h1-0-5" id="h1-0-5" class="d">-#define ws_save(W)   ws_list[W] = list
+</a><a href="#h1-0-6" id="h1-0-6" class="d">-#define ws_sel(W)    list = ws_list[ws = W]
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+#define win        (client *t=0, *c=list; t!=list-&gt;prev; t=c, c=c-&gt;next)
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#define ws_save(W) ws_list[W] = list
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+#define ws_sel(W)  list = ws_list[ws = W]
+</a> 
+ #define win_size(W, gx, gy, gw, gh) \
+     XGetGeometry(d, W, &amp;(Window){0}, gx, gy, gw, gh, \
+                  &amp;(unsigned int){0}, &amp;(unsigned int){0})
+ 
+ void win_focus(Window w) {
+<a href="#h1-0-16" id="h1-0-16" class="d">-    XSetInputFocus(d, w, RevertToParent, CurrentTime);
+</a><a href="#h1-0-17" id="h1-0-17" class="d">-
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-    for win if (c-&gt;w == w) cur = c;
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+    if (list) for win if (c-&gt;w == w) {
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+        cur = c;
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+        XSetInputFocus(d, w, RevertToParent, CurrentTime);
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+    }
+</a> }
+ 
+ void notify_destroy(XEvent *e) {
+<a href="#h1-0-26" id="h1-0-26" class="d">-    for win if (c-&gt;w == e-&gt;xdestroywindow.window) win_del(c);
+</a><a href="#h1-0-27" id="h1-0-27" class="d">-
+</a><a href="#h1-0-28" id="h1-0-28" class="d">-    if (list) win_focus(list-&gt;w);
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+    if (list) for win if (c-&gt;w == e-&gt;xdestroywindow.window) win_del(c);
+</a> }
+ 
+ void notify_enter(XEvent *e) {
+<a href="#h1-1" id="h1-1" class="h">@@ -125,7 +123,7 @@ void button_press(XEvent *e) {
+</a> }
+ 
+ void button_release() {
+<a href="#h1-1-3" id="h1-1-3" class="d">-    for win if (c-&gt;w == mouse.subwindow) c-&gt;f = 0;
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+    if (list) for win if (c-&gt;w == mouse.subwindow) c-&gt;f = 0;
+</a> 
+     mouse.subwindow = 0;
+ }
+<a href="#h1-2" id="h1-2" class="h">@@ -148,15 +146,15 @@ void win_add(Window w) {
+</a>         list = c;
+         list-&gt;prev = list-&gt;next = list;
+     }
+<a href="#h1-2-3" id="h1-2-3" class="i">+
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+    ws_save(ws);
+</a> }
+ 
+ void win_del(client *c) {
+<a href="#h1-2-8" id="h1-2-8" class="d">-    struct client **head = &amp;list;
+</a><a href="#h1-2-9" id="h1-2-9" class="d">-
+</a><a href="#h1-2-10" id="h1-2-10" class="d">-    if (!*head || !c) return;
+</a><a href="#h1-2-11" id="h1-2-11" class="d">-    if (*head == c)   *head = c-&gt;next;
+</a><a href="#h1-2-12" id="h1-2-12" class="d">-    if (c-&gt;next)      c-&gt;next-&gt;prev = c-&gt;prev;
+</a><a href="#h1-2-13" id="h1-2-13" class="d">-    if (c-&gt;prev)      c-&gt;prev-&gt;next = c-&gt;next;
+</a><a href="#h1-2-14" id="h1-2-14" class="i">+    if (list || !c) return;
+</a><a href="#h1-2-15" id="h1-2-15" class="i">+    if (list == c)  list = c-&gt;next;
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+    if (c-&gt;next)    c-&gt;next-&gt;prev = c-&gt;prev;
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+    if (c-&gt;prev)    c-&gt;prev-&gt;next = c-&gt;next;
+</a> 
+     free(c);
+     ws_save(ws);
+<a href="#h1-3" id="h1-3" class="h">@@ -198,10 +196,12 @@ void win_to_ws(const Arg arg) {
+</a>     XUnmapWindow(d, cur-&gt;w);
+     ws_save(tmp);
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-    if (list) win_focus(list-&gt;w);
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+    if (list) win_focus(list-&gt;prev-&gt;w);
+</a> }
+ 
+ void win_next() {
+<a href="#h1-3-8" id="h1-3-8" class="i">+    if (!list) return;
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+
+</a>     win_focus(cur-&gt;next-&gt;w);
+     XRaiseWindow(d, cur-&gt;next-&gt;w);
+ }
+<a href="#h1-4" id="h1-4" class="h">@@ -222,7 +222,7 @@ void ws_go(const Arg arg) {
+</a> 
+     ws_sel(arg.i);
+ 
+<a href="#h1-4-3" id="h1-4-3" class="d">-    if (list) win_focus(list-&gt;w);
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+    if (list) win_focus(list-&gt;prev-&gt;w);
+</a> }
+ 
+ void configure_request(XEvent *e) {
+</pre>
+</div>
+</body>
+</html>

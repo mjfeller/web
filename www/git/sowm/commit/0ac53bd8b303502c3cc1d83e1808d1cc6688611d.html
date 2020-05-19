@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>catwm: Add mouse support. - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0ac53bd8b303502c3cc1d83e1808d1cc6688611d.html">0ac53bd8b303502c3cc1d83e1808d1cc6688611d</a>
+<b>parent</b> <a href="../commit/cc230ed5033f903efb951f065ced5ecbc34b0fe2.html">cc230ed5033f903efb951f065ced5ecbc34b0fe2</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 11 Oct 2019 18:00:00 +0300
+
+catwm: Add mouse support.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">catwm.c</a></td><td> | </td><td class="num">127</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 84 insertions(+), 43 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/catwm.c.html">catwm.c</a> b/<a href="../file/catwm.c.html">catwm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -40,6 +40,7 @@
+</a> #include &lt;sys/wait.h&gt;
+ 
+ #define TABLENGTH(X)    (sizeof(X)/sizeof(*X))
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define MAX(a, b) ((a) &gt; (b) ? (a) : (b))
+</a> 
+ typedef union {
+     const char** com;
+<a href="#h0-1" id="h0-1" class="h">@@ -56,11 +57,9 @@ struct key {
+</a> 
+ typedef struct client client;
+ struct client{
+<a href="#h0-1-3" id="h0-1-3" class="d">-    // Prev and next client
+</a>     client *next;
+     client *prev;
+ 
+<a href="#h0-1-7" id="h0-1-7" class="d">-    // The window
+</a>     Window win;
+ };
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -74,9 +73,10 @@ struct desktop{
+</a> 
+ // Functions
+ static void add_window(Window w);
+<a href="#h0-2-3" id="h0-2-3" class="i">+static void buttonpress(XEvent *e);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+static void buttonrelease(XEvent *e);
+</a> static void change_desktop(const Arg arg);
+ static void client_to_desktop(const Arg arg);
+<a href="#h0-2-7" id="h0-2-7" class="d">-static void configurenotify(XEvent *e);
+</a> static void configurerequest(XEvent *e);
+ static void destroynotify(XEvent *e);
+ static void die(const char* e);
+<a href="#h0-3" id="h0-3" class="h">@@ -84,6 +84,7 @@ static void grabkeys();
+</a> static void keypress(XEvent *e);
+ static void kill_client();
+ static void maprequest(XEvent *e);
+<a href="#h0-3-3" id="h0-3-3" class="i">+static void motionnotify(XEvent *e);
+</a> static void next_win();
+ static void remove_window(Window w);
+ static void save_desktop(int i);
+<a href="#h0-4" id="h0-4" class="h">@@ -92,7 +93,8 @@ static void send_kill_signal(Window w);
+</a> static void setup();
+ static void sigchld(int unused);
+ static void spawn(const Arg arg);
+<a href="#h0-4-3" id="h0-4-3" class="d">-static void start();
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+static void init();
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+static void update_current();
+</a> 
+ // Include configuration file (need struct key)
+ #include &quot;config.h&quot;
+<a href="#h0-5" id="h0-5" class="h">@@ -109,14 +111,18 @@ static int screen;
+</a> static Window root;
+ static client *head;
+ static client *current;
+<a href="#h0-5-3" id="h0-5-3" class="i">+static XWindowAttributes attr;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+static XButtonEvent start;
+</a> 
+ // Events array
+ static void (*events[LASTEvent])(XEvent *e) = {
+<a href="#h0-5-8" id="h0-5-8" class="d">-    [KeyPress] = keypress,
+</a><a href="#h0-5-9" id="h0-5-9" class="d">-    [MapRequest] = maprequest,
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-    [DestroyNotify] = destroynotify,
+</a><a href="#h0-5-11" id="h0-5-11" class="d">-    [ConfigureNotify] = configurenotify,
+</a><a href="#h0-5-12" id="h0-5-12" class="d">-    [ConfigureRequest] = configurerequest
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+    [KeyPress]         = keypress,
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+    [MapRequest]       = maprequest,
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+    [DestroyNotify]    = destroynotify,
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+    [ConfigureRequest] = configurerequest,
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+    [ButtonPress]      = buttonpress,
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+    [ButtonRelease]    = buttonrelease,
+</a><a href="#h0-5-19" id="h0-5-19" class="i">+    [MotionNotify]     = motionnotify
+</a> };
+ 
+ // Desktop array
+<a href="#h0-6" id="h0-6" class="h">@@ -168,13 +174,15 @@ void change_desktop(const Arg arg) {
+</a>     if(head != NULL)
+         for(c=head;c;c=c-&gt;next)
+             XMapWindow(dis,c-&gt;win);
+<a href="#h0-6-3" id="h0-6-3" class="i">+
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+    update_current();
+</a> }
+ 
+ void client_to_desktop(const Arg arg) {
+     client *tmp = current;
+     int tmp2 = current_desktop;
+ 
+<a href="#h0-6-11" id="h0-6-11" class="d">-    if(arg.i == current_desktop || current == NULL)
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+    if (arg.i == current_desktop || current == NULL)
+</a>         return;
+ 
+     // Add client to desktop
+<a href="#h0-7" id="h0-7" class="h">@@ -185,10 +193,8 @@ void client_to_desktop(const Arg arg) {
+</a>     // Remove client from current desktop
+     select_desktop(tmp2);
+     remove_window(current-&gt;win);
+<a href="#h0-7-3" id="h0-7-3" class="d">-}
+</a> 
+<a href="#h0-7-5" id="h0-7-5" class="d">-void configurenotify(XEvent *e) {
+</a><a href="#h0-7-6" id="h0-7-6" class="d">-    // Do nothing for the moment
+</a><a href="#h0-7-7" id="h0-7-7" class="i">+    update_current();
+</a> }
+ 
+ void configurerequest(XEvent *e) {
+<a href="#h0-8" id="h0-8" class="h">@@ -220,6 +226,18 @@ void destroynotify(XEvent *e) {
+</a>         return;
+ 
+     remove_window(ev-&gt;window);
+<a href="#h0-8-3" id="h0-8-3" class="i">+    update_current();
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+}
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+
+</a><a href="#h0-8-6" id="h0-8-6" class="i">+void update_current() {
+</a><a href="#h0-8-7" id="h0-8-7" class="i">+    client *c;
+</a><a href="#h0-8-8" id="h0-8-8" class="i">+
+</a><a href="#h0-8-9" id="h0-8-9" class="i">+    for(c=head;c;c=c-&gt;next)
+</a><a href="#h0-8-10" id="h0-8-10" class="i">+        if(current == c) {
+</a><a href="#h0-8-11" id="h0-8-11" class="i">+            XSetWindowBorderWidth(dis,c-&gt;win,1);
+</a><a href="#h0-8-12" id="h0-8-12" class="i">+            XSetInputFocus(dis,c-&gt;win,RevertToParent,CurrentTime);
+</a><a href="#h0-8-13" id="h0-8-13" class="i">+            XRaiseWindow(dis,c-&gt;win);
+</a><a href="#h0-8-14" id="h0-8-14" class="i">+        }
+</a> }
+ 
+ void die(const char* e) {
+<a href="#h0-9" id="h0-9" class="h">@@ -251,6 +269,34 @@ void keypress(XEvent *e) {
+</a>     }
+ }
+ 
+<a href="#h0-9-3" id="h0-9-3" class="i">+void buttonpress(XEvent *e) {
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+    XButtonEvent bu = e-&gt;xbutton;
+</a><a href="#h0-9-5" id="h0-9-5" class="i">+
+</a><a href="#h0-9-6" id="h0-9-6" class="i">+    if (bu.subwindow != None) {
+</a><a href="#h0-9-7" id="h0-9-7" class="i">+        XGetWindowAttributes(dis, bu.subwindow, &amp;attr);
+</a><a href="#h0-9-8" id="h0-9-8" class="i">+        start = bu;
+</a><a href="#h0-9-9" id="h0-9-9" class="i">+    }
+</a><a href="#h0-9-10" id="h0-9-10" class="i">+}
+</a><a href="#h0-9-11" id="h0-9-11" class="i">+
+</a><a href="#h0-9-12" id="h0-9-12" class="i">+void motionnotify(XEvent *e) {
+</a><a href="#h0-9-13" id="h0-9-13" class="i">+    XButtonEvent bu = e-&gt;xbutton;
+</a><a href="#h0-9-14" id="h0-9-14" class="i">+
+</a><a href="#h0-9-15" id="h0-9-15" class="i">+    if (start.subwindow != None) {
+</a><a href="#h0-9-16" id="h0-9-16" class="i">+        int xdiff = bu.x_root - start.x_root;
+</a><a href="#h0-9-17" id="h0-9-17" class="i">+        int ydiff = bu.y_root - start.y_root;
+</a><a href="#h0-9-18" id="h0-9-18" class="i">+
+</a><a href="#h0-9-19" id="h0-9-19" class="i">+        XMoveResizeWindow(dis, start.subwindow,
+</a><a href="#h0-9-20" id="h0-9-20" class="i">+            attr.x + (start.button==1 ? xdiff : 0),
+</a><a href="#h0-9-21" id="h0-9-21" class="i">+            attr.y + (start.button==1 ? ydiff : 0),
+</a><a href="#h0-9-22" id="h0-9-22" class="i">+            MAX(1, attr.width + (start.button==3 ? xdiff : 0)),
+</a><a href="#h0-9-23" id="h0-9-23" class="i">+            MAX(1, attr.height + (start.button==3 ? ydiff : 0)));
+</a><a href="#h0-9-24" id="h0-9-24" class="i">+    }
+</a><a href="#h0-9-25" id="h0-9-25" class="i">+}
+</a><a href="#h0-9-26" id="h0-9-26" class="i">+
+</a><a href="#h0-9-27" id="h0-9-27" class="i">+void buttonrelease(XEvent *e) {
+</a><a href="#h0-9-28" id="h0-9-28" class="i">+    start.subwindow = None;
+</a><a href="#h0-9-29" id="h0-9-29" class="i">+}
+</a><a href="#h0-9-30" id="h0-9-30" class="i">+
+</a> void kill_client() {
+ 	if(current != NULL) {
+ 		//send delete signal to window
+<a href="#h0-10" id="h0-10" class="h">@@ -279,6 +325,7 @@ void maprequest(XEvent *e) {
+</a> 
+     add_window(ev-&gt;window);
+     XMapWindow(dis,ev-&gt;window);
+<a href="#h0-10-3" id="h0-10-3" class="i">+    update_current();
+</a> }
+ 
+ void next_win() {
+<a href="#h0-11" id="h0-11" class="h">@@ -291,6 +338,7 @@ void next_win() {
+</a>             c = current-&gt;next;
+ 
+         current = c;
+<a href="#h0-11-3" id="h0-11-3" class="i">+        update_current();
+</a>     }
+ }
+ 
+<a href="#h0-12" id="h0-12" class="h">@@ -356,34 +404,22 @@ void send_kill_signal(Window w) {
+</a> }
+ 
+ void setup() {
+<a href="#h0-12-3" id="h0-12-3" class="d">-    // Install a signal
+</a>     sigchld(0);
+ 
+<a href="#h0-12-6" id="h0-12-6" class="d">-    // Screen and root window
+</a>     screen = DefaultScreen(dis);
+<a href="#h0-12-8" id="h0-12-8" class="d">-    root = RootWindow(dis,screen);
+</a><a href="#h0-12-9" id="h0-12-9" class="d">-
+</a><a href="#h0-12-10" id="h0-12-10" class="d">-    // Screen width and height
+</a><a href="#h0-12-11" id="h0-12-11" class="d">-    sw = XDisplayWidth(dis,screen);
+</a><a href="#h0-12-12" id="h0-12-12" class="d">-    sh = XDisplayHeight(dis,screen);
+</a><a href="#h0-12-13" id="h0-12-13" class="i">+    root   = RootWindow(dis,screen);
+</a><a href="#h0-12-14" id="h0-12-14" class="i">+    sw     = XDisplayWidth(dis,screen);
+</a><a href="#h0-12-15" id="h0-12-15" class="i">+    sh     = XDisplayHeight(dis,screen);
+</a> 
+<a href="#h0-12-17" id="h0-12-17" class="d">-    // Shortcuts
+</a>     grabkeys();
+ 
+<a href="#h0-12-20" id="h0-12-20" class="d">-    // Vertical stack
+</a><a href="#h0-12-21" id="h0-12-21" class="d">-    mode = 0;
+</a><a href="#h0-12-22" id="h0-12-22" class="d">-
+</a><a href="#h0-12-23" id="h0-12-23" class="d">-    // For exiting
+</a><a href="#h0-12-24" id="h0-12-24" class="i">+    mode      = 0;
+</a>     bool_quit = 0;
+<a href="#h0-12-26" id="h0-12-26" class="i">+    head      = NULL;
+</a><a href="#h0-12-27" id="h0-12-27" class="i">+    current   = NULL;
+</a> 
+<a href="#h0-12-29" id="h0-12-29" class="d">-    // List of client
+</a><a href="#h0-12-30" id="h0-12-30" class="d">-    head = NULL;
+</a><a href="#h0-12-31" id="h0-12-31" class="d">-    current = NULL;
+</a><a href="#h0-12-32" id="h0-12-32" class="d">-
+</a><a href="#h0-12-33" id="h0-12-33" class="d">-    // Master size
+</a>     master_size = sw*MASTER_SIZE;
+ 
+<a href="#h0-12-36" id="h0-12-36" class="d">-    // Set up all desktop
+</a>     int i;
+     for(i=0;i&lt;TABLENGTH(desktops);++i) {
+         desktops[i].master_size = master_size;
+<a href="#h0-13" id="h0-13" class="h">@@ -392,27 +428,24 @@ void setup() {
+</a>         desktops[i].current = current;
+     }
+ 
+<a href="#h0-13-3" id="h0-13-3" class="d">-    // Select first dekstop by default
+</a>     const Arg arg = {.i = 1};
+     current_desktop = arg.i;
+     change_desktop(arg);
+ 
+<a href="#h0-13-8" id="h0-13-8" class="d">-    // To catch maprequest and destroynotify (if other wm running)
+</a>     XSelectInput(dis,root,SubstructureNotifyMask|SubstructureRedirectMask);
+ }
+ 
+ void sigchld(int unused) {
+<a href="#h0-13-13" id="h0-13-13" class="d">-    // Again, thx to dwm ;)
+</a> 	if(signal(SIGCHLD, sigchld) == SIG_ERR)
+ 		die(&quot;Can&#39;t install SIGCHLD handler&quot;);
+<a href="#h0-13-16" id="h0-13-16" class="i">+
+</a> 	while(0 &lt; waitpid(-1, NULL, WNOHANG));
+ }
+ 
+ void spawn(const Arg arg) {
+     if(fork() == 0) {
+         if(fork() == 0) {
+<a href="#h0-13-23" id="h0-13-23" class="d">-            if(dis)
+</a><a href="#h0-13-24" id="h0-13-24" class="d">-                close(ConnectionNumber(dis));
+</a><a href="#h0-13-25" id="h0-13-25" class="i">+            if(dis) close(ConnectionNumber(dis));
+</a> 
+             setsid();
+             execvp((char*)arg.com[0],(char**)arg.com);
+<a href="#h0-14" id="h0-14" class="h">@@ -421,14 +454,22 @@ void spawn(const Arg arg) {
+</a>     }
+ }
+ 
+<a href="#h0-14-3" id="h0-14-3" class="d">-void start() {
+</a><a href="#h0-14-4" id="h0-14-4" class="i">+void init() {
+</a>     XEvent ev;
+ 
+<a href="#h0-14-7" id="h0-14-7" class="d">-    // Main loop, just dispatch events (thx to dwm ;)
+</a><a href="#h0-14-8" id="h0-14-8" class="d">-    while(!bool_quit &amp;&amp; !XNextEvent(dis,&amp;ev)) {
+</a><a href="#h0-14-9" id="h0-14-9" class="d">-        if(events[ev.type])
+</a><a href="#h0-14-10" id="h0-14-10" class="d">-            events[ev.type](&amp;ev);
+</a><a href="#h0-14-11" id="h0-14-11" class="d">-    }
+</a><a href="#h0-14-12" id="h0-14-12" class="i">+    XGrabKey(dis, XKeysymToKeycode(dis, XStringToKeysym(&quot;F1&quot;)), Mod4Mask,
+</a><a href="#h0-14-13" id="h0-14-13" class="i">+            DefaultRootWindow(dis), True, GrabModeAsync, GrabModeAsync);
+</a><a href="#h0-14-14" id="h0-14-14" class="i">+
+</a><a href="#h0-14-15" id="h0-14-15" class="i">+    XGrabButton(dis, 1, Mod4Mask, DefaultRootWindow(dis), True,
+</a><a href="#h0-14-16" id="h0-14-16" class="i">+            ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+</a><a href="#h0-14-17" id="h0-14-17" class="i">+
+</a><a href="#h0-14-18" id="h0-14-18" class="i">+    XGrabButton(dis, 3, Mod4Mask, DefaultRootWindow(dis), True,
+</a><a href="#h0-14-19" id="h0-14-19" class="i">+            ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+</a><a href="#h0-14-20" id="h0-14-20" class="i">+
+</a><a href="#h0-14-21" id="h0-14-21" class="i">+    start.subwindow = None;
+</a><a href="#h0-14-22" id="h0-14-22" class="i">+
+</a><a href="#h0-14-23" id="h0-14-23" class="i">+    while(!bool_quit &amp;&amp; !XNextEvent(dis,&amp;ev))
+</a><a href="#h0-14-24" id="h0-14-24" class="i">+        if (events[ev.type]) events[ev.type](&amp;ev);
+</a> }
+ 
+ int main(int argc, char **argv) {
+<a href="#h0-15" id="h0-15" class="h">@@ -436,7 +477,7 @@ int main(int argc, char **argv) {
+</a>         die(&quot;Cannot open display!&quot;);
+ 
+     setup();
+<a href="#h0-15-3" id="h0-15-3" class="d">-    start();
+</a><a href="#h0-15-4" id="h0-15-4" class="i">+    init();
+</a>     XCloseDisplay(dis);
+ 
+     return 0;
+</pre>
+</div>
+</body>
+</html>

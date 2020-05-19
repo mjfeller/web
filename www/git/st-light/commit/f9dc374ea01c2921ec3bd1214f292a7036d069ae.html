@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix techo handling of control and multibyte characters. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f9dc374ea01c2921ec3bd1214f292a7036d069ae.html">f9dc374ea01c2921ec3bd1214f292a7036d069ae</a>
+<b>parent</b> <a href="../commit/fa19f241a34deddf6e089ab462cbd9cb02f61b3d.html">fa19f241a34deddf6e089ab462cbd9cb02f61b3d</a>
+<b>Author:</b> noname &lt;<a href="mailto:noname@inventati.org">noname@inventati.org</a>&gt;
+<b>Date:</b>   Wed, 23 Apr 2014 00:26:07 +0400
+
+Fix techo handling of control and multibyte characters.
+
+techo compares signed char to &#39;\x20&#39;. Any character with code less then
+&#39;\x20&#39; is treated as control character.  This way characters with MSB
+set to 1 are considered control characters too.
+
+Also this patch makes techo display DEL character as ^?.
+
+To reprocuce the bug, enable echo mode using printf &#39;\e[12l&#39;,
+then type DEL character or any non-ASCII character.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2308,9 +2308,9 @@ techo(char *buf, int len) {
+</a> 	for(; len &gt; 0; buf++, len--) {
+ 		char c = *buf;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-		if(c &lt; &#39;\x20&#39;) { /* control code */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		if(c &lt; 0x20 || c == 0177) { /* control code */
+</a> 			if(c != &#39;\n&#39; &amp;&amp; c != &#39;\r&#39; &amp;&amp; c != &#39;\t&#39;) {
+<a href="#h0-0-6" id="h0-0-6" class="d">-				c |= &#39;\x40&#39;;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+				c ^= &#39;\x40&#39;;
+</a> 				tputc(&quot;^&quot;, 1);
+ 			}
+ 			tputc(&amp;c, 1);
+</pre>
+</div>
+</body>
+</html>

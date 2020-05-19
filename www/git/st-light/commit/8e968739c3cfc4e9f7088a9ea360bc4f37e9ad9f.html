@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Allow more complex delimiters for word selections. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8e968739c3cfc4e9f7088a9ea360bc4f37e9ad9f.html">8e968739c3cfc4e9f7088a9ea360bc4f37e9ad9f</a>
+<b>parent</b> <a href="../commit/0c2b513d01697aea20bb4a2a144b55e72c625e86.html">0c2b513d01697aea20bb4a2a144b55e72c625e86</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sat,  4 May 2013 19:04:20 +0200
+
+Allow more complex delimiters for word selections.
+
+Thanks Alexander Rezinsky &lt;alexrez@gmail.com&gt;!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">9</td><td><span class="i">++++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">4</td><td><span class="i">+++</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 11 insertions(+), 2 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -9,7 +9,14 @@ static char font[] = &quot;Liberation Mono:pixelsize=12:antialias=false:autohint=fals
+</a> static int borderpx = 2;
+ static char shell[] = &quot;/bin/sh&quot;;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-/* timeouts (in milliseconds) */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+/*
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+ * word delimiter string
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+ *
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+ * More advanced example: &quot; `&#39;\&quot;()[]{}&quot;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+ */
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+static char worddelimiters[] = &quot; &quot;;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+/* selection timeouts (in milliseconds) */
+</a> static unsigned int doubleclicktimeout = 300;
+ static unsigned int tripleclicktimeout = 600;
+ 
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -707,8 +707,10 @@ selsnap(int mode, int *x, int *y, int direction) {
+</a> 				}
+ 			}
+ 
+<a href="#h1-0-3" id="h1-0-3" class="d">-			if(term.line[*y][*x + direction].c[0] == &#39; &#39;)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+			if(strchr(worddelimiters,
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+					term.line[*y][*x + direction].c[0])) {
+</a> 				break;
+<a href="#h1-0-7" id="h1-0-7" class="i">+			}
+</a> 
+ 			*x += direction;
+ 		}
+</pre>
+</div>
+</body>
+</html>

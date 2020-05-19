@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Pledge on OpenBSD - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/30ce2cc002585409b36c630512c6ca4db8f88f15.html">30ce2cc002585409b36c630512c6ca4db8f88f15</a>
+<b>parent</b> <a href="../commit/041912a791e8c2f4d5d2415b16210d29d7e701c5.html">041912a791e8c2f4d5d2415b16210d29d7e701c5</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Fri, 25 May 2018 11:59:28 +0200
+
+Pledge on OpenBSD
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">6</td><td><span class="i">++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 14 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -23,6 +23,12 @@ CPPFLAGS = -DVERSION=\&quot;$(VERSION)\&quot; -D_XOPEN_SOURCE=600
+</a> STCFLAGS = $(INCS) $(CPPFLAGS) $(CFLAGS)
+ STLDFLAGS = $(LIBS) $(LDFLAGS)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+# OpenBSD:
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#CPPFLAGS = -DVERSION=\&quot;$(VERSION)\&quot; -D_XOPEN_SOURCE=600 -D_BSD_SOURCE
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#LIBS = -L$(X11LIB) -lm -lX11 -lutil -lXft \
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#       `pkg-config --libs fontconfig` \
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+#       `pkg-config --libs freetype2`
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+
+</a> # compiler and linker
+ # CC = c99
+ 
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -28,6 +28,10 @@
+</a>  #include &lt;libutil.h&gt;
+ #endif
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+#ifndef __OpenBSD__
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#define pledge(a,b) 0
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+#endif
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a> /* Arbitrary sizes */
+ #define UTF_INVALID   0xFFFD
+ #define UTF_SIZ       4
+<a href="#h1-1" id="h1-1" class="h">@@ -806,9 +810,13 @@ ttynew(char *line, char *cmd, char *out, char **args)
+</a> 			die(&quot;ioctl TIOCSCTTY failed: %s\n&quot;, strerror(errno));
+ 		close(s);
+ 		close(m);
+<a href="#h1-1-3" id="h1-1-3" class="i">+		if (pledge(&quot;stdio getpw proc exec&quot;, NULL) == -1)
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+			die(&quot;pledge\n&quot;);
+</a> 		execsh(cmd, args);
+ 		break;
+ 	default:
+<a href="#h1-1-8" id="h1-1-8" class="i">+		if (pledge(&quot;stdio rpath tty proc&quot;, NULL) == -1)
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+			die(&quot;pledge\n&quot;);
+</a> 		close(s);
+ 		cmdfd = m;
+ 		signal(SIGCHLD, sigchld);
+</pre>
+</div>
+</body>
+</html>

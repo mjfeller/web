@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: move tiny tiny functions to macros. - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0ae4e7918f199adf0473c9c44f60bcd44bb8ba16.html">0ae4e7918f199adf0473c9c44f60bcd44bb8ba16</a>
+<b>parent</b> <a href="../commit/1248c93bcda92e9f10bc0a06955661754108c9fa.html">1248c93bcda92e9f10bc0a06955661754108c9fa</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 17 Oct 2019 18:10:22 +0300
+
+sowm: move tiny tiny functions to macros.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">22</td><td><span class="i">++++++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>1 file changed, 6 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -48,8 +48,6 @@ static void win_kill();
+</a> static void win_next();
+ static void win_to_ws(const Arg arg);
+ static void ws_go(const Arg arg);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void ws_save(int i);
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-static void ws_sel(int i);
+</a> static int  xerror() { return 0;}
+ 
+ static client       *list = {0};
+<a href="#h0-1" id="h0-1" class="h">@@ -74,13 +72,14 @@ static void (*events[LASTEvent])(XEvent *e) = {
+</a> 
+ #include &quot;config.h&quot;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-#define win (client *c=list;c;c=c-&gt;next)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-#define win_focus(W) XSetInputFocus(d, W, RevertToParent, CurrentTime);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+#define win          (client *c=list;c;c=c-&gt;next)
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+#define win_focus(W) XSetInputFocus(d, W, RevertToParent, CurrentTime)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+#define ws_save(W)   ws_list[W].list = list
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+#define ws_sel(W)    list = ws_list[ws = W].list
+</a> 
+ #define win_size(W, gx, gy, gw, gh) \
+     XGetGeometry(d, W, &amp;(Window){0}, gx, gy, gw, gh, \
+<a href="#h0-1-13" id="h0-1-13" class="d">-                 &amp;(unsigned int){0}, &amp;(unsigned int){0});
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+                 &amp;(unsigned int){0}, &amp;(unsigned int){0})
+</a> 
+ Window win_current() {
+     XGetInputFocus(d, &amp;cur, (int[]){1});
+<a href="#h0-2" id="h0-2" class="h">@@ -96,7 +95,7 @@ void notify_destroy(XEvent *e) {
+</a> void notify_enter(XEvent *e) {
+     while(XCheckTypedEvent(d, EnterNotify, e));
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-    win_focus(e-&gt;xcrossing.window)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+    win_focus(e-&gt;xcrossing.window);
+</a> }
+ 
+ void notify_motion(XEvent *e) {
+<a href="#h0-3" id="h0-3" class="h">@@ -260,15 +259,6 @@ void ws_go(const Arg arg) {
+</a>     if (list) win_focus(list-&gt;w);
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-void ws_save(int i) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-    ws_list[i].list = list;
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-}
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-void ws_sel(int i) {
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-    list = ws_list[i].list;
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-    ws   = i;
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-}
+</a><a href="#h0-3-11" id="h0-3-11" class="d">-
+</a> void configure_request(XEvent *e) {
+     XConfigureRequestEvent *ev = &amp;e-&gt;xconfigurerequest;
+ 
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Enable blinking in st. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1e09726518b84091e80dfaf96632c122f6f446a6.html">1e09726518b84091e80dfaf96632c122f6f446a6</a>
+<b>parent</b> <a href="../commit/1b2751f5c24ca06afbb68e41e73fc9fce6c6b521.html">1b2751f5c24ca06afbb68e41e73fc9fce6c6b521</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Fri, 26 Apr 2013 18:41:54 +0200
+
+Enable blinking in st.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">83</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.info</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>3 files changed, 74 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -20,6 +20,9 @@ static bool allowaltscreen = true;
+</a> static unsigned int xfps = 60;
+ static unsigned int actionfps = 30;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+/* blinking timeout (set to 0 to disable blinking) */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static unsigned int blinktimeout = 800;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a> /* TERM value */
+ static char termname[] = &quot;st-256color&quot;;
+ 
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -116,6 +116,8 @@ enum term_mode {
+</a> 	MODE_APPCURSOR	 = 2048,
+ 	MODE_MOUSESGR    = 4096,
+ 	MODE_8BIT	 = 8192,
+<a href="#h1-0-3" id="h1-0-3" class="i">+	MODE_BLINK	 = 16384,
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	MODE_FBLINK	 = 32768,
+</a> };
+ 
+ enum escape_state {
+<a href="#h1-1" id="h1-1" class="h">@@ -313,6 +315,7 @@ static void strhandle(void);
+</a> static void strparse(void);
+ static void strreset(void);
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+static int tattrset(int);
+</a> static void tclearregion(int, int, int, int);
+ static void tcursor(int);
+ static void tdeletechar(int);
+<a href="#h1-2" id="h1-2" class="h">@@ -334,6 +337,7 @@ static void tsetchar(char *, Glyph *, int, int);
+</a> static void tsetscroll(int, int);
+ static void tswapscreen(void);
+ static void tsetdirt(int, int);
+<a href="#h1-2-3" id="h1-2-3" class="i">+static void tsetdirtattr(int);
+</a> static void tsetmode(bool, bool, int *, int);
+ static void tfulldirt(void);
+ static void techo(char *, int);
+<a href="#h1-3" id="h1-3" class="h">@@ -1175,6 +1179,20 @@ ttyresize(void) {
+</a> 		fprintf(stderr, &quot;Couldn&#39;t set window size: %s\n&quot;, SERRNO);
+ }
+ 
+<a href="#h1-3-3" id="h1-3-3" class="i">+int
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+tattrset(int attr) {
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+	int i, j;
+</a><a href="#h1-3-6" id="h1-3-6" class="i">+
+</a><a href="#h1-3-7" id="h1-3-7" class="i">+	for(i = 0; i &lt; term.row-1; i++) {
+</a><a href="#h1-3-8" id="h1-3-8" class="i">+		for(j = 0; j &lt; term.col-1; j++) {
+</a><a href="#h1-3-9" id="h1-3-9" class="i">+			if(term.line[i][j].mode &amp; attr)
+</a><a href="#h1-3-10" id="h1-3-10" class="i">+				return 1;
+</a><a href="#h1-3-11" id="h1-3-11" class="i">+		}
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+	}
+</a><a href="#h1-3-13" id="h1-3-13" class="i">+
+</a><a href="#h1-3-14" id="h1-3-14" class="i">+	return 0;
+</a><a href="#h1-3-15" id="h1-3-15" class="i">+}
+</a><a href="#h1-3-16" id="h1-3-16" class="i">+
+</a> void
+ tsetdirt(int top, int bot) {
+ 	int i;
+<a href="#h1-4" id="h1-4" class="h">@@ -1187,6 +1205,20 @@ tsetdirt(int top, int bot) {
+</a> }
+ 
+ void
+<a href="#h1-4-3" id="h1-4-3" class="i">+tsetdirtattr(int attr) {
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+	int i, j;
+</a><a href="#h1-4-5" id="h1-4-5" class="i">+
+</a><a href="#h1-4-6" id="h1-4-6" class="i">+	for(i = 0; i &lt; term.row-1; i++) {
+</a><a href="#h1-4-7" id="h1-4-7" class="i">+		for(j = 0; j &lt; term.col-1; j++) {
+</a><a href="#h1-4-8" id="h1-4-8" class="i">+			if(term.line[i][j].mode &amp; attr) {
+</a><a href="#h1-4-9" id="h1-4-9" class="i">+				tsetdirt(i, i);
+</a><a href="#h1-4-10" id="h1-4-10" class="i">+				break;
+</a><a href="#h1-4-11" id="h1-4-11" class="i">+			}
+</a><a href="#h1-4-12" id="h1-4-12" class="i">+		}
+</a><a href="#h1-4-13" id="h1-4-13" class="i">+	}
+</a><a href="#h1-4-14" id="h1-4-14" class="i">+}
+</a><a href="#h1-4-15" id="h1-4-15" class="i">+
+</a><a href="#h1-4-16" id="h1-4-16" class="i">+void
+</a> tfulldirt(void) {
+ 	tsetdirt(0, term.row-1);
+ }
+<a href="#h1-5" id="h1-5" class="h">@@ -2838,6 +2870,9 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 		bg = temp;
+ 	}
+ 
+<a href="#h1-5-3" id="h1-5-3" class="i">+	if(base.mode &amp; ATTR_BLINK &amp;&amp; term.mode &amp; MODE_BLINK)
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+		fg = bg;
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+
+</a> 	/* Intelligent cleaning up of the borders. */
+ 	if(x == 0) {
+ 		xclear(0, (y == 0)? 0 : winy, borderpx,
+<a href="#h1-6" id="h1-6" class="h">@@ -3345,34 +3380,55 @@ void
+</a> run(void) {
+ 	XEvent ev;
+ 	fd_set rfd;
+<a href="#h1-6-3" id="h1-6-3" class="d">-	int xfd = XConnectionNumber(xw.dpy), xev;
+</a><a href="#h1-6-4" id="h1-6-4" class="d">-	struct timeval drawtimeout, *tv = NULL, now, last;
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+	int xfd = XConnectionNumber(xw.dpy), xev, blinkset = 0, dodraw = 0;
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+	struct timeval drawtimeout, *tv = NULL, now, last, lastblink;
+</a> 
+<a href="#h1-6-8" id="h1-6-8" class="i">+	gettimeofday(&amp;lastblink, NULL);
+</a> 	gettimeofday(&amp;last, NULL);
+ 
+ 	for(xev = actionfps;;) {
+ 		FD_ZERO(&amp;rfd);
+ 		FD_SET(cmdfd, &amp;rfd);
+ 		FD_SET(xfd, &amp;rfd);
+<a href="#h1-6-15" id="h1-6-15" class="d">-		if(select(MAX(xfd, cmdfd)+1, &amp;rfd, NULL, NULL, tv) &lt; 0) {
+</a><a href="#h1-6-16" id="h1-6-16" class="i">+
+</a><a href="#h1-6-17" id="h1-6-17" class="i">+		switch(select(MAX(xfd, cmdfd)+1, &amp;rfd, NULL, NULL, tv) &lt; 0) {
+</a><a href="#h1-6-18" id="h1-6-18" class="i">+		case -1:
+</a> 			if(errno == EINTR)
+ 				continue;
+ 			die(&quot;select failed: %s\n&quot;, SERRNO);
+<a href="#h1-6-22" id="h1-6-22" class="d">-		}
+</a><a href="#h1-6-23" id="h1-6-23" class="i">+		default:
+</a><a href="#h1-6-24" id="h1-6-24" class="i">+			if(FD_ISSET(cmdfd, &amp;rfd)) {
+</a><a href="#h1-6-25" id="h1-6-25" class="i">+				ttyread();
+</a><a href="#h1-6-26" id="h1-6-26" class="i">+				if(blinktimeout) {
+</a><a href="#h1-6-27" id="h1-6-27" class="i">+					blinkset = tattrset(ATTR_BLINK);
+</a><a href="#h1-6-28" id="h1-6-28" class="i">+					if(!blinkset &amp;&amp; term.mode &amp; ATTR_BLINK)
+</a><a href="#h1-6-29" id="h1-6-29" class="i">+						term.mode &amp;= ~(MODE_BLINK);
+</a><a href="#h1-6-30" id="h1-6-30" class="i">+				}
+</a><a href="#h1-6-31" id="h1-6-31" class="i">+			}
+</a> 
+<a href="#h1-6-33" id="h1-6-33" class="i">+			if(FD_ISSET(xfd, &amp;rfd))
+</a><a href="#h1-6-34" id="h1-6-34" class="i">+				xev = actionfps;
+</a><a href="#h1-6-35" id="h1-6-35" class="i">+			break;
+</a><a href="#h1-6-36" id="h1-6-36" class="i">+		}
+</a> 		gettimeofday(&amp;now, NULL);
+ 		drawtimeout.tv_sec = 0;
+ 		drawtimeout.tv_usec = (1000/xfps) * 1000;
+ 		tv = &amp;drawtimeout;
+ 
+<a href="#h1-6-42" id="h1-6-42" class="d">-		if(FD_ISSET(cmdfd, &amp;rfd))
+</a><a href="#h1-6-43" id="h1-6-43" class="d">-			ttyread();
+</a><a href="#h1-6-44" id="h1-6-44" class="d">-
+</a><a href="#h1-6-45" id="h1-6-45" class="d">-		if(FD_ISSET(xfd, &amp;rfd))
+</a><a href="#h1-6-46" id="h1-6-46" class="d">-			xev = actionfps;
+</a><a href="#h1-6-47" id="h1-6-47" class="i">+		dodraw = 0;
+</a><a href="#h1-6-48" id="h1-6-48" class="i">+		if(blinktimeout &amp;&amp; TIMEDIFF(now, lastblink) &gt; blinktimeout) {
+</a><a href="#h1-6-49" id="h1-6-49" class="i">+			tsetdirtattr(ATTR_BLINK);
+</a><a href="#h1-6-50" id="h1-6-50" class="i">+			term.mode ^= MODE_BLINK;
+</a><a href="#h1-6-51" id="h1-6-51" class="i">+			gettimeofday(&amp;lastblink, NULL);
+</a><a href="#h1-6-52" id="h1-6-52" class="i">+			dodraw = 1;
+</a><a href="#h1-6-53" id="h1-6-53" class="i">+		}
+</a><a href="#h1-6-54" id="h1-6-54" class="i">+		if(TIMEDIFF(now, last) \
+</a><a href="#h1-6-55" id="h1-6-55" class="i">+				&gt; (xev? (1000/xfps) : (1000/actionfps))) {
+</a><a href="#h1-6-56" id="h1-6-56" class="i">+			dodraw = 1;
+</a><a href="#h1-6-57" id="h1-6-57" class="i">+			last = now;
+</a><a href="#h1-6-58" id="h1-6-58" class="i">+		}
+</a> 
+<a href="#h1-6-60" id="h1-6-60" class="d">-		if(TIMEDIFF(now, last) &gt; \
+</a><a href="#h1-6-61" id="h1-6-61" class="d">-				(xev ? (1000/xfps) : (1000/actionfps))) {
+</a><a href="#h1-6-62" id="h1-6-62" class="i">+		if(dodraw) {
+</a> 			while(XPending(xw.dpy)) {
+ 				XNextEvent(xw.dpy, &amp;ev);
+ 				if(XFilterEvent(&amp;ev, None))
+<a href="#h1-7" id="h1-7" class="h">@@ -3383,12 +3439,13 @@ run(void) {
+</a> 
+ 			draw();
+ 			XFlush(xw.dpy);
+<a href="#h1-7-3" id="h1-7-3" class="d">-			last = now;
+</a> 
+ 			if(xev &amp;&amp; !FD_ISSET(xfd, &amp;rfd))
+ 				xev--;
+<a href="#h1-7-7" id="h1-7-7" class="d">-			if(!FD_ISSET(cmdfd, &amp;rfd) &amp;&amp; !FD_ISSET(xfd, &amp;rfd))
+</a><a href="#h1-7-8" id="h1-7-8" class="i">+			if(!FD_ISSET(cmdfd, &amp;rfd) &amp;&amp; !FD_ISSET(xfd, &amp;rfd) \
+</a><a href="#h1-7-9" id="h1-7-9" class="i">+					&amp;&amp; !blinkset) {
+</a> 				tv = NULL;
+<a href="#h1-7-11" id="h1-7-11" class="i">+			}
+</a> 		}
+ 	}
+ }
+<b>diff --git a/<a id="h2" href="../file/st.info.html">st.info</a> b/<a href="../file/st.info.html">st.info</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -5,7 +5,7 @@ st| simpleterm,
+</a> 	am,
+ 	bce,
+ 	bel=^G,
+<a href="#h2-0-3" id="h2-0-3" class="d">-#	blink=\E[5m,
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	blink=\E[5m,
+</a> 	bold=\E[1m,
+ 	cbt=\E[Z,
+ 	cvvis=\E[?25h,
+</pre>
+</div>
+</body>
+</html>

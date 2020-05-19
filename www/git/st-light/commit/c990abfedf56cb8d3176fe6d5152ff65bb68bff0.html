@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix empty selection highlighting bug. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c990abfedf56cb8d3176fe6d5152ff65bb68bff0.html">c990abfedf56cb8d3176fe6d5152ff65bb68bff0</a>
+<b>parent</b> <a href="../commit/3cb7f27afe89c33c74b51c5460b7fb16413f786b.html">3cb7f27afe89c33c74b51c5460b7fb16413f786b</a>
+<b>Author:</b> noname &lt;<a href="mailto:noname@inventati.org">noname@inventati.org</a>&gt;
+<b>Date:</b>   Sun,  3 May 2015 19:28:10 +0000
+
+Fix empty selection highlighting bug.
+
+When user clicks LMB, one character is selected, but will not be copied
+to selection until the user moves cursor a bit. Therefore, the character
+should not be highlighted as selected yet.
+
+Before the patch, the trick was not to mark line as dirty to avoid
+highlighting it. However, if user has already selected something and
+clicks in line that contains selection, selclear sets the line as dirty
+and one character is highlighted when it should not.
+
+This patch replaces dirty trick with explicit check for sel.mode inside
+selected().
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">12</td><td><span class="i">+++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -716,6 +716,9 @@ selnormalize(void) {
+</a> 
+ bool
+ selected(int x, int y) {
+<a href="#h0-0-3" id="h0-0-3" class="i">+	if(sel.mode == SEL_EMPTY)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		return false;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a> 	if(sel.type == SEL_RECTANGULAR)
+ 		return BETWEEN(y, sel.nb.y, sel.ne.y)
+ 		    &amp;&amp; BETWEEN(x, sel.nb.x, sel.ne.x);
+<a href="#h0-1" id="h0-1" class="h">@@ -921,14 +924,9 @@ bpress(XEvent *e) {
+</a> 		}
+ 		selnormalize();
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-		/*
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		 * Draw selection, unless it&#39;s regular and we don&#39;t want to
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		 * make clicks visible
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-		 */
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-		if(sel.snap != 0) {
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+		if(sel.snap != 0)
+</a> 			sel.mode = SEL_READY;
+<a href="#h0-1-10" id="h0-1-10" class="d">-			tsetdirt(sel.nb.y, sel.ne.y);
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-		}
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		tsetdirt(sel.nb.y, sel.ne.y);
+</a> 		sel.tclick2 = sel.tclick1;
+ 		sel.tclick1 = now;
+ 	}
+</pre>
+</div>
+</body>
+</html>

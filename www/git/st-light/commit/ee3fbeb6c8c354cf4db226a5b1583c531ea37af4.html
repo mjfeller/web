@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add error control to iofile - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ee3fbeb6c8c354cf4db226a5b1583c531ea37af4.html">ee3fbeb6c8c354cf4db226a5b1583c531ea37af4</a>
+<b>parent</b> <a href="../commit/2e38ab7afdc56e3853751918f1b7705362bea01c.html">2e38ab7afdc56e3853751918f1b7705362bea01c</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Sun, 28 Oct 2012 06:27:42 +0100
+
+Add error control to iofile
+
+write can write less bytes than we request, so it is necessary check the
+return value, in case of error print a message and don&#39;t continnue writing
+in the file.
+---
+ st.c |   39 ++++++++++++++++++++++++++++++---------
+ 1 file changed, 30 insertions(+), 9 deletions(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">39</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d">---------</span></td></tr>
+</table></pre><pre>1 file changed, 30 insertions(+), 9 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -340,6 +340,7 @@ static int utf8encode(long *, char *);
+</a> static int utf8size(char *);
+ static int isfullutf8(char *, int);
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+static ssize_t xwrite(int, char *, size_t);
+</a> static void *xmalloc(size_t);
+ static void *xrealloc(void *, size_t);
+ static void *xcalloc(size_t nmemb, size_t size);
+<a href="#h0-1" id="h0-1" class="h">@@ -379,6 +380,21 @@ static char *opt_embed = NULL;
+</a> static char *opt_class = NULL;
+ static char *opt_font = NULL;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+ssize_t
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+xwrite(int fd, char *s, size_t len) {
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	size_t aux = len;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	while(len &gt; 0) {
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+		ssize_t r = write(fd, s, len);
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+		if(r &lt; 0)
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+			return r;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+		len -= r;
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+		s += r;
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	}
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	return aux;
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+}
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+
+</a> void *
+ xmalloc(size_t len) {
+ 	void *p = malloc(len);
+<a href="#h0-2" id="h0-2" class="h">@@ -926,13 +942,12 @@ ttynew(void) {
+</a> 		cmdfd = m;
+ 		signal(SIGCHLD, sigchld);
+ 		if(opt_io) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-			if(!strcmp(opt_io, &quot;-&quot;)) {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-				iofd = STDOUT_FILENO;
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-			} else {
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-				if((iofd = open(opt_io, O_WRONLY | O_CREAT, 0666)) &lt; 0) {
+</a><a href="#h0-2-7" id="h0-2-7" class="d">-					fprintf(stderr, &quot;Error opening %s:%s\n&quot;,
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-						opt_io, strerror(errno));
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-				}
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+			iofd = (!strcmp(opt_io, &quot;-&quot;)) ?
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+				  STDOUT_FILENO :
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+				  open(opt_io, O_WRONLY | O_CREAT, 0666);
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+			if(iofd &lt; 0) {
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+				fprintf(stderr, &quot;Error opening %s:%s\n&quot;,
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+					opt_io, strerror(errno));
+</a> 			}
+ 		}
+ 	}
+<a href="#h0-3" id="h0-3" class="h">@@ -1793,8 +1808,14 @@ tputc(char *c, int len) {
+</a> 	uchar ascii = *c;
+ 	bool control = ascii &lt; &#39;\x20&#39; || ascii == 0177;
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(iofd != -1)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-		write(iofd, c, len);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	if(iofd != -1) {
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+		if (xwrite(iofd, c, len) &lt; 0) {
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+			fprintf(stderr, &quot;Error writting in %s:%s\n&quot;,
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+				opt_io, strerror(errno));
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+			close(iofd);
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+			iofd = -1;
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+		}
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+	}
+</a> 	/*
+ 	 * STR sequences must be checked before of anything
+ 	 * because it can use some control codes as part of the sequence
+</pre>
+</div>
+</body>
+</html>

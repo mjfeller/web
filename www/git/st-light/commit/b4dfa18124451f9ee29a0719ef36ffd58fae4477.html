@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix disabling of bold and fastblink - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/b4dfa18124451f9ee29a0719ef36ffd58fae4477.html">b4dfa18124451f9ee29a0719ef36ffd58fae4477</a>
+<b>parent</b> <a href="../commit/e8f3513bf4d953176ae932c5d7eb5c374b05a2a0.html">e8f3513bf4d953176ae932c5d7eb5c374b05a2a0</a>
+<b>Author:</b> Michael Forney &lt;<a href="mailto:mforney@mforney.org">mforney@mforney.org</a>&gt;
+<b>Date:</b>   Sat, 26 Jul 2014 00:48:15 -0700
+
+Fix disabling of bold and fastblink
+
+According to ECMA-48¹ 8.3.117, an attribute value of 21 is &quot;doubly
+underlined&quot;, while 22 is &quot;normal colour or normal intensity (neither
+bold nor faint)&quot;.
+
+Additionally, 25 is &quot;steady (not blinking)&quot;, which likely means neither
+slow blink nor fast blink.
+
+¹: http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-048.pdf
+
+Signed-off-by: Roberto E. Vargas Caballero &lt;k0ga@shike2.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">10</td><td><span class="i">++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 2 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1718,11 +1718,8 @@ tsetattr(int *attr, int l) {
+</a> 		case 9:
+ 			term.c.attr.mode |= ATTR_STRUCK;
+ 			break;
+<a href="#h0-0-3" id="h0-0-3" class="d">-		case 21:
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-			term.c.attr.mode &amp;= ~ATTR_BOLD;
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-			break;
+</a> 		case 22:
+<a href="#h0-0-7" id="h0-0-7" class="d">-			term.c.attr.mode &amp;= ~ATTR_FAINT;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+			term.c.attr.mode &amp;= ~(ATTR_BOLD | ATTR_FAINT);
+</a> 			break;
+ 		case 23:
+ 			term.c.attr.mode &amp;= ~ATTR_ITALIC;
+<a href="#h0-1" id="h0-1" class="h">@@ -1731,10 +1728,7 @@ tsetattr(int *attr, int l) {
+</a> 			term.c.attr.mode &amp;= ~ATTR_UNDERLINE;
+ 			break;
+ 		case 25:
+<a href="#h0-1-3" id="h0-1-3" class="d">-			term.c.attr.mode &amp;= ~ATTR_BLINK;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			break;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-		case 26:
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-			term.c.attr.mode &amp;= ~ATTR_FASTBLINK;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+			term.c.attr.mode &amp;= ~(ATTR_BLINK | ATTR_FASTBLINK);
+</a> 			break;
+ 		case 27:
+ 			term.c.attr.mode &amp;= ~ATTR_REVERSE;
+</pre>
+</div>
+</body>
+</html>

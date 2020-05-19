@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fixed backspace problem, updated terminfo entry and moved TNAME in config.h. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ce3f4fc647be3ab28f934db9365445a56ebd85bf.html">ce3f4fc647be3ab28f934db9365445a56ebd85bf</a>
+<b>parent</b> <a href="../commit/d2f157c7418e2762316e5471f819ec1e5c49e93c.html">d2f157c7418e2762316e5471f819ec1e5c49e93c</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 19 Aug 2010 12:46:54 +0200
+
+fixed backspace problem, updated terminfo entry and moved TNAME in config.h.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.h</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.c</a></td><td> | </td><td class="num">6</td><td><span class="i">++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">st.info</a></td><td> | </td><td class="num">9</td><td><span class="i">++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>4 files changed, 12 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -42,7 +42,6 @@ install: all
+</a> 	@cp -f st ${DESTDIR}${PREFIX}/bin
+ 	@chmod 755 ${DESTDIR}${PREFIX}/bin/st
+ 	@tic st.info
+<a href="#h0-0-3" id="h0-0-3" class="d">-	@tic st-256color.info
+</a> 
+ uninstall:
+ 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
+<b>diff --git a/<a id="h1" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,5 +1,5 @@
+</a> #define TAB    8
+<a href="#h1-0-1" id="h1-0-1" class="d">-
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+#define TNAME &quot;st-256color&quot;
+</a> #define FONT &quot;6x13&quot;
+ #define BOLDFONT FONT&quot;bold&quot;
+ #define BORDER 2
+<a href="#h1-1" id="h1-1" class="h">@@ -33,6 +33,7 @@ static const char *colorname[] = {
+</a> 
+ /* special keys */
+ static Key key[] = {
+<a href="#h1-1-3" id="h1-1-3" class="i">+	{ XK_BackSpace, &quot;\177&quot; },
+</a> 	{ XK_Delete, &quot;\033[3~&quot; },
+ 	{ XK_Home,   &quot;\033[1~&quot; },
+ 	{ XK_End,    &quot;\033[4~&quot; },
+<b>diff --git a/<a id="h2" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -20,8 +20,6 @@
+</a> #include &lt;X11/keysym.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+ 
+<a href="#h2-0-3" id="h2-0-3" class="d">-#define TNAME &quot;st-256color&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-
+</a> /* Arbitrary sizes */
+ #define ESC_TITLE_SIZ 256
+ #define ESC_BUF_SIZ   256
+<a href="#h2-1" id="h2-1" class="h">@@ -107,8 +105,6 @@ typedef struct {
+</a> 	char s[ESC_BUF_SIZ];
+ } Key;
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-#include &quot;config.h&quot;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-
+</a> /* Drawing Context */
+ typedef struct {
+ 	unsigned long col[256];
+<a href="#h2-2" id="h2-2" class="h">@@ -117,6 +113,8 @@ typedef struct {
+</a> 	GC gc;
+ } DC;
+ 
+<a href="#h2-2-3" id="h2-2-3" class="i">+#include &quot;config.h&quot;
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+
+</a> static void die(const char *errstr, ...);
+ static void draw(int);
+ static void execsh(void);
+<b>diff --git a/<a id="h3" href="../file/st.info.html">st.info</a> b/<a href="../file/st.info.html">st.info</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -30,7 +30,7 @@ st| simpleterm,
+</a> 	il1=\E[L,
+ 	ind=^J,
+ 	invis=\E[8m,
+<a href="#h3-0-3" id="h3-0-3" class="d">-	kbs=^H,
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+	kbs=\177,
+</a> 	kcub1=\E[D,
+ 	kcud1=\E[B,
+ 	kcuf1=\E[C,
+<a href="#h3-1" id="h3-1" class="h">@@ -52,3 +52,10 @@ st| simpleterm,
+</a> 	smso=\E[7m,
+ 	smul=\E[4m,
+ 	tbc=\E[2g,
+<a href="#h3-1-3" id="h3-1-3" class="i">+
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+st-256color| simpleterm with 256 colors,
+</a><a href="#h3-1-5" id="h3-1-5" class="i">+	colors#256,
+</a><a href="#h3-1-6" id="h3-1-6" class="i">+#	Nicked from xterm-256color
+</a><a href="#h3-1-7" id="h3-1-7" class="i">+	setab=\E[%?%p1%{8}%&lt;%t4%p1%d%e%p1%{16}%&lt;%t10%p1%{8}%-%d%e48;5;%p1%d%;m,
+</a><a href="#h3-1-8" id="h3-1-8" class="i">+	setaf=\E[%?%p1%{8}%&lt;%t3%p1%d%e%p1%{16}%&lt;%t9%p1%{8}%-%d%e38;5;%p1%d%;m,
+</a><a href="#h3-1-9" id="h3-1-9" class="i">+	use=st,
+</a></pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Merge pull request #38 from AnusReaper/fix-patches - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/13f874ead76523d76267d653fe3ab12190ec16ea.html">13f874ead76523d76267d653fe3ab12190ec16ea</a>
+<b>parent</b> <a href="../commit/09a514cd5edf98c9fc6ac0e1a46d2f3b32b9093a.html">09a514cd5edf98c9fc6ac0e1a46d2f3b32b9093a</a>
+<b>Author:</b> dylan &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 18 Dec 2019 12:05:47 +0000
+
+Merge pull request #38 from AnusReaper/fix-patches
+
+Updated patches to conform with new changes
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">patches/sowm-almost-tags-0.3.diff</a></td><td> | </td><td class="num">14</td><td><span class="i">+++++++</span><span class="d">-------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">patches/sowm-almost-tags-1.0.diff</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">patches/sowm-primitive-multimonitor.patch</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">patches/sowm-rounded-corners.patch</a></td><td> | </td><td class="num">4</td><td><span class="i">++</span><span class="d">--</span></td></tr>
+</table></pre><pre>4 files changed, 13 insertions(+), 13 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/patches/sowm-almost-tags-0.3.diff.html">patches/sowm-almost-tags-0.3.diff</a> b/<a href="../file/patches/sowm-almost-tags-0.3.diff.html">patches/sowm-almost-tags-0.3.diff</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -36,7 +36,7 @@ Only in b/: sowm-almost-tags-0.3.diff
+</a> diff -up a/sowm.c b/sowm.c
+ --- a/sowm.c	2019-10-17 19:48:23.000000000 +0300
+ +++ b/sowm.c	2019-10-18 19:02:41.959290919 +0300
+<a href="#h0-0-3" id="h0-0-3" class="d">-@@ -43,11 +43,14 @@ static void win_kill();
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+@@ -43,11 +43,14 @@ static void win_prev();
+</a>  static void win_next();
+  static void win_to_ws(const Arg arg);
+  static void ws_go(const Arg arg);
+<a href="#h0-1" id="h0-1" class="h">@@ -44,13 +44,13 @@ diff -up a/sowm.c b/sowm.c
+</a> +static void ws_toggle_all(const Arg arg);
+  static int  xerror() { return 0;}
+  
+<a href="#h0-1-3" id="h0-1-3" class="d">- static client       *list = {0}, *ws_list[10] = {0};
+</a><a href="#h0-1-4" id="h0-1-4" class="d">- static int          ws = 1, sw, sh, wx, wy;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+ static client       *list = {0}, *ws_list[10] = {0}, *cur;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+ static int          ws = 1, sw, sh, wx, wy, numlock;
+</a>  static unsigned int ww, wh;
+ +static int			is_ws_enabled[10] = {0}; /* +1 the amount of ws */
+  
+  static Display      *d;
+<a href="#h0-1-11" id="h0-1-11" class="d">- static Window       root, cur;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+ static XButtonEvent mouse;
+</a> @@ -235,24 +238,68 @@ void win_next() {
+  }
+  
+<a href="#h0-2" id="h0-2" class="h">@@ -64,11 +64,11 @@ diff -up a/sowm.c b/sowm.c
+</a>      ws_save(ws);
+ -    ws_sel(arg.i);
+  
+<a href="#h0-2-3" id="h0-2-3" class="d">--    if (list) for win XMapWindow(d, c-&gt;w);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+-    for win XMapWindow(d, c-&gt;w);
+</a> -
+ -    ws_sel(tmp);
+ -
+<a href="#h0-2-8" id="h0-2-8" class="d">--    if (list) for win XUnmapWindow(d, c-&gt;w);
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+-    for win XUnmapWindow(d, c-&gt;w);
+</a> +	for (i = 1; i &lt;= 9; i++) {
+ +		if (i != arg.i) {
+ +			ws_sel(i);
+<a href="#h0-3" id="h0-3" class="h">@@ -80,7 +80,7 @@ diff -up a/sowm.c b/sowm.c
+</a>      ws_sel(arg.i);
+  
+ +    if (list) for win XMapWindow(d, c-&gt;w);
+<a href="#h0-3-3" id="h0-3-3" class="d">-     if (list) win_focus(list-&gt;w);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+     if (list) win_focus(list); else cur = 0;
+</a>  }
+  
+ +void
+<b>diff --git a/<a id="h1" href="../file/patches/sowm-almost-tags-1.0.diff.html">patches/sowm-almost-tags-1.0.diff</a> b/<a href="../file/patches/sowm-almost-tags-1.0.diff.html">patches/sowm-almost-tags-1.0.diff</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -46,7 +46,7 @@ diff -up a/sowm.c b/sowm.c
+</a>  static int  xerror() { return 0;}
+  
+  static client       *list = {0}, *ws_list[10] = {0}, *cur;
+<a href="#h1-0-3" id="h1-0-3" class="d">- static int          ws = 1, sw, sh, wx, wy;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+ static int          ws = 1, sw, sh, wx, wy, numlock;
+</a>  static unsigned int ww, wh;
+ +static int			is_ws_enabled[10] = {0}; /* +1 the amount of ws */
+  
+<b>diff --git a/<a id="h2" href="../file/patches/sowm-primitive-multimonitor.patch.html">patches/sowm-primitive-multimonitor.patch</a> b/<a href="../file/patches/sowm-primitive-multimonitor.patch.html">patches/sowm-primitive-multimonitor.patch</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -3,7 +3,7 @@ index 8573837..72e9542 100644
+</a> --- a/Makefile
+ +++ b/Makefile
+ @@ -1,5 +1,5 @@
+<a href="#h2-0-3" id="h2-0-3" class="d">- CFLAGS+= -std=c99 -Wall -Wextra -pedantic
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+ CFLAGS+= -std=c99 -Wall -Wextra -Wmissing-prototypes -pedantic
+</a> -LDADD+= -lX11
+ +LDADD+= -lX11 -lXinerama
+  LDFLAGS=
+<a href="#h2-1" id="h2-1" class="h">@@ -25,8 +25,8 @@ index 0cc1293..6f858a9 100644
+</a>  static int  xerror() { return 0;}
+  
+  static client       *list = {0}, *ws_list[10] = {0}, *cur;
+<a href="#h2-1-3" id="h2-1-3" class="d">--static int          ws = 1, sw, sh, wx, wy;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-+static int          ws = 1, sw, sh, wx, wy, monitors;
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+-static int          ws = 1, sw, sh, wx, wy, numlock;
+</a><a href="#h2-1-6" id="h2-1-6" class="i">++static int          ws = 1, sw, sh, wx, wy, numlock, monitors;
+</a>  static unsigned int ww, wh;
+  
+  static Display      *d;
+<b>diff --git a/<a id="h3" href="../file/patches/sowm-rounded-corners.patch.html">patches/sowm-rounded-corners.patch</a> b/<a href="../file/patches/sowm-rounded-corners.patch.html">patches/sowm-rounded-corners.patch</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -3,7 +3,7 @@ index 8573837..738af94 100644
+</a> --- a/Makefile
+ +++ b/Makefile
+ @@ -1,5 +1,5 @@
+<a href="#h3-0-3" id="h3-0-3" class="d">- CFLAGS+= -std=c99 -Wall -Wextra -pedantic
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+ CFLAGS+= -std=c99 -Wall -Wextra -Wmissing-prototypes -pedantic
+</a> -LDADD+= -lX11
+ +LDADD+= -lX11 -lXext
+  LDFLAGS=
+<a href="#h3-1" id="h3-1" class="h">@@ -34,8 +34,8 @@ index d1b4c2a..56bf509 100644
+</a>  #include &lt;signal.h&gt;
+  #include &lt;unistd.h&gt;
+ @@ -43,6 +44,7 @@ static void win_del(Window w);
+<a href="#h3-1-3" id="h3-1-3" class="d">- static void win_fs();
+</a>  static void win_kill();
+<a href="#h3-1-5" id="h3-1-5" class="i">+ static void win_prev();
+</a>  static void win_next();
+ +static void win_round_corners(Window w, int rad);
+  static void win_to_ws(const Arg arg);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Have selected() check whether selection exists - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/138caf294ea4d7968df36ead9d5ff5fc49f6215f.html">138caf294ea4d7968df36ead9d5ff5fc49f6215f</a>
+<b>parent</b> <a href="../commit/d84f3f4bd15e7d65fc0334cf7d62913c901bad00.html">d84f3f4bd15e7d65fc0334cf7d62913c901bad00</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 21 Feb 2018 22:48:28 -0600
+
+Have selected() check whether selection exists
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">x.c</a></td><td> | </td><td class="num">10</td><td><span class="i">++++</span><span class="d">------</span></td></tr>
+</table></pre><pre>2 files changed, 6 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -419,7 +419,8 @@ selnormalize(void)
+</a> int
+ selected(int x, int y)
+ {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if (sel.mode == SEL_EMPTY)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	if (sel.mode == SEL_EMPTY || sel.ob.x == -1 ||
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+			sel.alt != IS_SET(MODE_ALTSCREEN))
+</a> 		return 0;
+ 
+ 	if (sel.type == SEL_RECTANGULAR)
+<b>diff --git a/<a id="h1" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1418,7 +1418,6 @@ xdrawcursor(void)
+</a> 	static int oldx = 0, oldy = 0;
+ 	int curx;
+ 	Glyph g = {&#39; &#39;, ATTR_NULL, defaultbg, defaultcs}, og;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	int ena_sel = sel.ob.x != -1 &amp;&amp; sel.alt == IS_SET(MODE_ALTSCREEN);
+</a> 	Color drawcol;
+ 
+ 	LIMIT(oldx, 0, term.col-1);
+<a href="#h1-1" id="h1-1" class="h">@@ -1434,7 +1433,7 @@ xdrawcursor(void)
+</a> 
+ 	/* remove the old cursor */
+ 	og = term.line[oldy][oldx];
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if (ena_sel &amp;&amp; selected(oldx, oldy))
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	if (selected(oldx, oldy))
+</a> 		og.mode ^= ATTR_REVERSE;
+ 	xdrawglyph(og, oldx, oldy);
+ 
+<a href="#h1-2" id="h1-2" class="h">@@ -1448,7 +1447,7 @@ xdrawcursor(void)
+</a> 	if (IS_SET(MODE_REVERSE)) {
+ 		g.mode |= ATTR_REVERSE;
+ 		g.bg = defaultfg;
+<a href="#h1-2-3" id="h1-2-3" class="d">-		if (ena_sel &amp;&amp; selected(term.c.x, term.c.y)) {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+		if (selected(term.c.x, term.c.y)) {
+</a> 			drawcol = dc.col[defaultcs];
+ 			g.fg = defaultrcs;
+ 		} else {
+<a href="#h1-3" id="h1-3" class="h">@@ -1456,7 +1455,7 @@ xdrawcursor(void)
+</a> 			g.fg = defaultcs;
+ 		}
+ 	} else {
+<a href="#h1-3-3" id="h1-3-3" class="d">-		if (ena_sel &amp;&amp; selected(term.c.x, term.c.y)) {
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+		if (selected(term.c.x, term.c.y)) {
+</a> 			drawcol = dc.col[defaultrcs];
+ 			g.fg = defaultfg;
+ 			g.bg = defaultrcs;
+<a href="#h1-4" id="h1-4" class="h">@@ -1555,7 +1554,6 @@ drawregion(int x1, int y1, int x2, int y2)
+</a> 	int i, x, y, ox, numspecs;
+ 	Glyph base, new;
+ 	XftGlyphFontSpec *specs;
+<a href="#h1-4-3" id="h1-4-3" class="d">-	int ena_sel = sel.ob.x != -1 &amp;&amp; sel.alt == IS_SET(MODE_ALTSCREEN);
+</a> 
+ 	if (!(win.state &amp; WIN_VISIBLE))
+ 		return;
+<a href="#h1-5" id="h1-5" class="h">@@ -1574,7 +1572,7 @@ drawregion(int x1, int y1, int x2, int y2)
+</a> 			new = term.line[y][x];
+ 			if (new.mode == ATTR_WDUMMY)
+ 				continue;
+<a href="#h1-5-3" id="h1-5-3" class="d">-			if (ena_sel &amp;&amp; selected(x, y))
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+			if (selected(x, y))
+</a> 				new.mode ^= ATTR_REVERSE;
+ 			if (i &gt; 0 &amp;&amp; ATTRCMP(base, new)) {
+ 				xdrawglyphfontspecs(specs, base, i, ox, y);
+</pre>
+</div>
+</body>
+</html>

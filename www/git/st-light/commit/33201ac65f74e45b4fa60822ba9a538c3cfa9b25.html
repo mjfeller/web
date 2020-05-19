@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Move CRLF input processing into ttywrite - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/33201ac65f74e45b4fa60822ba9a538c3cfa9b25.html">33201ac65f74e45b4fa60822ba9a538c3cfa9b25</a>
+<b>parent</b> <a href="../commit/52d6fb1ab1f7d41839edebb63c3408578cd44e3c.html">52d6fb1ab1f7d41839edebb63c3408578cd44e3c</a>
+<b>Author:</b> Devin J. Pohly &lt;<a href="mailto:djpohly@gmail.com">djpohly@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 22 Feb 2018 01:05:12 -0600
+
+Move CRLF input processing into ttywrite
+
+This also allows us to remove the crlf field from the Key struct, since
+the only difference it made was converting &quot;\r&quot; to &quot;\r\n&quot; (which is now
+done automatically in ttywrite).  In addition, MODE_CRLF is no longer
+referenced from x.c.
+
+Signed-off-by: Devin J. Pohly &lt;djpohly@gmail.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">423</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">32</td><td><span class="i">+++++++++++++++++++++++++++++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">x.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+</span><span class="d">-----</span></td></tr>
+</table></pre><pre>3 files changed, 240 insertions(+), 221 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -229,219 +229,216 @@ static uint forceselmod = ShiftMask;
+</a>  * world. Please decide about changes wisely.
+  */
+ static Key key[] = {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	/* keysym           mask            string      appkey appcursor crlf */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	{ XK_KP_Home,       ShiftMask,      &quot;\033[2J&quot;,       0,   -1,    0},
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-	{ XK_KP_Home,       ShiftMask,      &quot;\033[1;2H&quot;,     0,   +1,    0},
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-	{ XK_KP_Home,       XK_ANY_MOD,     &quot;\033[H&quot;,        0,   -1,    0},
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	{ XK_KP_Home,       XK_ANY_MOD,     &quot;\033[1~&quot;,       0,   +1,    0},
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-	{ XK_KP_Up,         XK_ANY_MOD,     &quot;\033Ox&quot;,       +1,    0,    0},
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	{ XK_KP_Up,         XK_ANY_MOD,     &quot;\033[A&quot;,        0,   -1,    0},
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-	{ XK_KP_Up,         XK_ANY_MOD,     &quot;\033OA&quot;,        0,   +1,    0},
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-	{ XK_KP_Down,       XK_ANY_MOD,     &quot;\033Or&quot;,       +1,    0,    0},
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-	{ XK_KP_Down,       XK_ANY_MOD,     &quot;\033[B&quot;,        0,   -1,    0},
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-	{ XK_KP_Down,       XK_ANY_MOD,     &quot;\033OB&quot;,        0,   +1,    0},
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-	{ XK_KP_Left,       XK_ANY_MOD,     &quot;\033Ot&quot;,       +1,    0,    0},
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-	{ XK_KP_Left,       XK_ANY_MOD,     &quot;\033[D&quot;,        0,   -1,    0},
+</a><a href="#h0-0-16" id="h0-0-16" class="d">-	{ XK_KP_Left,       XK_ANY_MOD,     &quot;\033OD&quot;,        0,   +1,    0},
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-	{ XK_KP_Right,      XK_ANY_MOD,     &quot;\033Ov&quot;,       +1,    0,    0},
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-	{ XK_KP_Right,      XK_ANY_MOD,     &quot;\033[C&quot;,        0,   -1,    0},
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-	{ XK_KP_Right,      XK_ANY_MOD,     &quot;\033OC&quot;,        0,   +1,    0},
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-	{ XK_KP_Prior,      ShiftMask,      &quot;\033[5;2~&quot;,     0,    0,    0},
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-	{ XK_KP_Prior,      XK_ANY_MOD,     &quot;\033[5~&quot;,       0,    0,    0},
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-	{ XK_KP_Begin,      XK_ANY_MOD,     &quot;\033[E&quot;,        0,    0,    0},
+</a><a href="#h0-0-23" id="h0-0-23" class="d">-	{ XK_KP_End,        ControlMask,    &quot;\033[J&quot;,       -1,    0,    0},
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-	{ XK_KP_End,        ControlMask,    &quot;\033[1;5F&quot;,    +1,    0,    0},
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-	{ XK_KP_End,        ShiftMask,      &quot;\033[K&quot;,       -1,    0,    0},
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-	{ XK_KP_End,        ShiftMask,      &quot;\033[1;2F&quot;,    +1,    0,    0},
+</a><a href="#h0-0-27" id="h0-0-27" class="d">-	{ XK_KP_End,        XK_ANY_MOD,     &quot;\033[4~&quot;,       0,    0,    0},
+</a><a href="#h0-0-28" id="h0-0-28" class="d">-	{ XK_KP_Next,       ShiftMask,      &quot;\033[6;2~&quot;,     0,    0,    0},
+</a><a href="#h0-0-29" id="h0-0-29" class="d">-	{ XK_KP_Next,       XK_ANY_MOD,     &quot;\033[6~&quot;,       0,    0,    0},
+</a><a href="#h0-0-30" id="h0-0-30" class="d">-	{ XK_KP_Insert,     ShiftMask,      &quot;\033[2;2~&quot;,    +1,    0,    0},
+</a><a href="#h0-0-31" id="h0-0-31" class="d">-	{ XK_KP_Insert,     ShiftMask,      &quot;\033[4l&quot;,      -1,    0,    0},
+</a><a href="#h0-0-32" id="h0-0-32" class="d">-	{ XK_KP_Insert,     ControlMask,    &quot;\033[L&quot;,       -1,    0,    0},
+</a><a href="#h0-0-33" id="h0-0-33" class="d">-	{ XK_KP_Insert,     ControlMask,    &quot;\033[2;5~&quot;,    +1,    0,    0},
+</a><a href="#h0-0-34" id="h0-0-34" class="d">-	{ XK_KP_Insert,     XK_ANY_MOD,     &quot;\033[4h&quot;,      -1,    0,    0},
+</a><a href="#h0-0-35" id="h0-0-35" class="d">-	{ XK_KP_Insert,     XK_ANY_MOD,     &quot;\033[2~&quot;,      +1,    0,    0},
+</a><a href="#h0-0-36" id="h0-0-36" class="d">-	{ XK_KP_Delete,     ControlMask,    &quot;\033[M&quot;,       -1,    0,    0},
+</a><a href="#h0-0-37" id="h0-0-37" class="d">-	{ XK_KP_Delete,     ControlMask,    &quot;\033[3;5~&quot;,    +1,    0,    0},
+</a><a href="#h0-0-38" id="h0-0-38" class="d">-	{ XK_KP_Delete,     ShiftMask,      &quot;\033[2K&quot;,      -1,    0,    0},
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-	{ XK_KP_Delete,     ShiftMask,      &quot;\033[3;2~&quot;,    +1,    0,    0},
+</a><a href="#h0-0-40" id="h0-0-40" class="d">-	{ XK_KP_Delete,     XK_ANY_MOD,     &quot;\033[P&quot;,       -1,    0,    0},
+</a><a href="#h0-0-41" id="h0-0-41" class="d">-	{ XK_KP_Delete,     XK_ANY_MOD,     &quot;\033[3~&quot;,      +1,    0,    0},
+</a><a href="#h0-0-42" id="h0-0-42" class="d">-	{ XK_KP_Multiply,   XK_ANY_MOD,     &quot;\033Oj&quot;,       +2,    0,    0},
+</a><a href="#h0-0-43" id="h0-0-43" class="d">-	{ XK_KP_Add,        XK_ANY_MOD,     &quot;\033Ok&quot;,       +2,    0,    0},
+</a><a href="#h0-0-44" id="h0-0-44" class="d">-	{ XK_KP_Enter,      XK_ANY_MOD,     &quot;\033OM&quot;,       +2,    0,    0},
+</a><a href="#h0-0-45" id="h0-0-45" class="d">-	{ XK_KP_Enter,      XK_ANY_MOD,     &quot;\r&quot;,           -1,    0,   -1},
+</a><a href="#h0-0-46" id="h0-0-46" class="d">-	{ XK_KP_Enter,      XK_ANY_MOD,     &quot;\r\n&quot;,         -1,    0,   +1},
+</a><a href="#h0-0-47" id="h0-0-47" class="d">-	{ XK_KP_Subtract,   XK_ANY_MOD,     &quot;\033Om&quot;,       +2,    0,    0},
+</a><a href="#h0-0-48" id="h0-0-48" class="d">-	{ XK_KP_Decimal,    XK_ANY_MOD,     &quot;\033On&quot;,       +2,    0,    0},
+</a><a href="#h0-0-49" id="h0-0-49" class="d">-	{ XK_KP_Divide,     XK_ANY_MOD,     &quot;\033Oo&quot;,       +2,    0,    0},
+</a><a href="#h0-0-50" id="h0-0-50" class="d">-	{ XK_KP_0,          XK_ANY_MOD,     &quot;\033Op&quot;,       +2,    0,    0},
+</a><a href="#h0-0-51" id="h0-0-51" class="d">-	{ XK_KP_1,          XK_ANY_MOD,     &quot;\033Oq&quot;,       +2,    0,    0},
+</a><a href="#h0-0-52" id="h0-0-52" class="d">-	{ XK_KP_2,          XK_ANY_MOD,     &quot;\033Or&quot;,       +2,    0,    0},
+</a><a href="#h0-0-53" id="h0-0-53" class="d">-	{ XK_KP_3,          XK_ANY_MOD,     &quot;\033Os&quot;,       +2,    0,    0},
+</a><a href="#h0-0-54" id="h0-0-54" class="d">-	{ XK_KP_4,          XK_ANY_MOD,     &quot;\033Ot&quot;,       +2,    0,    0},
+</a><a href="#h0-0-55" id="h0-0-55" class="d">-	{ XK_KP_5,          XK_ANY_MOD,     &quot;\033Ou&quot;,       +2,    0,    0},
+</a><a href="#h0-0-56" id="h0-0-56" class="d">-	{ XK_KP_6,          XK_ANY_MOD,     &quot;\033Ov&quot;,       +2,    0,    0},
+</a><a href="#h0-0-57" id="h0-0-57" class="d">-	{ XK_KP_7,          XK_ANY_MOD,     &quot;\033Ow&quot;,       +2,    0,    0},
+</a><a href="#h0-0-58" id="h0-0-58" class="d">-	{ XK_KP_8,          XK_ANY_MOD,     &quot;\033Ox&quot;,       +2,    0,    0},
+</a><a href="#h0-0-59" id="h0-0-59" class="d">-	{ XK_KP_9,          XK_ANY_MOD,     &quot;\033Oy&quot;,       +2,    0,    0},
+</a><a href="#h0-0-60" id="h0-0-60" class="d">-	{ XK_Up,            ShiftMask,      &quot;\033[1;2A&quot;,     0,    0,    0},
+</a><a href="#h0-0-61" id="h0-0-61" class="d">-	{ XK_Up,            Mod1Mask,       &quot;\033[1;3A&quot;,     0,    0,    0},
+</a><a href="#h0-0-62" id="h0-0-62" class="d">-	{ XK_Up,         ShiftMask|Mod1Mask,&quot;\033[1;4A&quot;,     0,    0,    0},
+</a><a href="#h0-0-63" id="h0-0-63" class="d">-	{ XK_Up,            ControlMask,    &quot;\033[1;5A&quot;,     0,    0,    0},
+</a><a href="#h0-0-64" id="h0-0-64" class="d">-	{ XK_Up,      ShiftMask|ControlMask,&quot;\033[1;6A&quot;,     0,    0,    0},
+</a><a href="#h0-0-65" id="h0-0-65" class="d">-	{ XK_Up,       ControlMask|Mod1Mask,&quot;\033[1;7A&quot;,     0,    0,    0},
+</a><a href="#h0-0-66" id="h0-0-66" class="d">-	{ XK_Up,ShiftMask|ControlMask|Mod1Mask,&quot;\033[1;8A&quot;,  0,    0,    0},
+</a><a href="#h0-0-67" id="h0-0-67" class="d">-	{ XK_Up,            XK_ANY_MOD,     &quot;\033[A&quot;,        0,   -1,    0},
+</a><a href="#h0-0-68" id="h0-0-68" class="d">-	{ XK_Up,            XK_ANY_MOD,     &quot;\033OA&quot;,        0,   +1,    0},
+</a><a href="#h0-0-69" id="h0-0-69" class="d">-	{ XK_Down,          ShiftMask,      &quot;\033[1;2B&quot;,     0,    0,    0},
+</a><a href="#h0-0-70" id="h0-0-70" class="d">-	{ XK_Down,          Mod1Mask,       &quot;\033[1;3B&quot;,     0,    0,    0},
+</a><a href="#h0-0-71" id="h0-0-71" class="d">-	{ XK_Down,       ShiftMask|Mod1Mask,&quot;\033[1;4B&quot;,     0,    0,    0},
+</a><a href="#h0-0-72" id="h0-0-72" class="d">-	{ XK_Down,          ControlMask,    &quot;\033[1;5B&quot;,     0,    0,    0},
+</a><a href="#h0-0-73" id="h0-0-73" class="d">-	{ XK_Down,    ShiftMask|ControlMask,&quot;\033[1;6B&quot;,     0,    0,    0},
+</a><a href="#h0-0-74" id="h0-0-74" class="d">-	{ XK_Down,     ControlMask|Mod1Mask,&quot;\033[1;7B&quot;,     0,    0,    0},
+</a><a href="#h0-0-75" id="h0-0-75" class="d">-	{ XK_Down,ShiftMask|ControlMask|Mod1Mask,&quot;\033[1;8B&quot;,0,    0,    0},
+</a><a href="#h0-0-76" id="h0-0-76" class="d">-	{ XK_Down,          XK_ANY_MOD,     &quot;\033[B&quot;,        0,   -1,    0},
+</a><a href="#h0-0-77" id="h0-0-77" class="d">-	{ XK_Down,          XK_ANY_MOD,     &quot;\033OB&quot;,        0,   +1,    0},
+</a><a href="#h0-0-78" id="h0-0-78" class="d">-	{ XK_Left,          ShiftMask,      &quot;\033[1;2D&quot;,     0,    0,    0},
+</a><a href="#h0-0-79" id="h0-0-79" class="d">-	{ XK_Left,          Mod1Mask,       &quot;\033[1;3D&quot;,     0,    0,    0},
+</a><a href="#h0-0-80" id="h0-0-80" class="d">-	{ XK_Left,       ShiftMask|Mod1Mask,&quot;\033[1;4D&quot;,     0,    0,    0},
+</a><a href="#h0-0-81" id="h0-0-81" class="d">-	{ XK_Left,          ControlMask,    &quot;\033[1;5D&quot;,     0,    0,    0},
+</a><a href="#h0-0-82" id="h0-0-82" class="d">-	{ XK_Left,    ShiftMask|ControlMask,&quot;\033[1;6D&quot;,     0,    0,    0},
+</a><a href="#h0-0-83" id="h0-0-83" class="d">-	{ XK_Left,     ControlMask|Mod1Mask,&quot;\033[1;7D&quot;,     0,    0,    0},
+</a><a href="#h0-0-84" id="h0-0-84" class="d">-	{ XK_Left,ShiftMask|ControlMask|Mod1Mask,&quot;\033[1;8D&quot;,0,    0,    0},
+</a><a href="#h0-0-85" id="h0-0-85" class="d">-	{ XK_Left,          XK_ANY_MOD,     &quot;\033[D&quot;,        0,   -1,    0},
+</a><a href="#h0-0-86" id="h0-0-86" class="d">-	{ XK_Left,          XK_ANY_MOD,     &quot;\033OD&quot;,        0,   +1,    0},
+</a><a href="#h0-0-87" id="h0-0-87" class="d">-	{ XK_Right,         ShiftMask,      &quot;\033[1;2C&quot;,     0,    0,    0},
+</a><a href="#h0-0-88" id="h0-0-88" class="d">-	{ XK_Right,         Mod1Mask,       &quot;\033[1;3C&quot;,     0,    0,    0},
+</a><a href="#h0-0-89" id="h0-0-89" class="d">-	{ XK_Right,      ShiftMask|Mod1Mask,&quot;\033[1;4C&quot;,     0,    0,    0},
+</a><a href="#h0-0-90" id="h0-0-90" class="d">-	{ XK_Right,         ControlMask,    &quot;\033[1;5C&quot;,     0,    0,    0},
+</a><a href="#h0-0-91" id="h0-0-91" class="d">-	{ XK_Right,   ShiftMask|ControlMask,&quot;\033[1;6C&quot;,     0,    0,    0},
+</a><a href="#h0-0-92" id="h0-0-92" class="d">-	{ XK_Right,    ControlMask|Mod1Mask,&quot;\033[1;7C&quot;,     0,    0,    0},
+</a><a href="#h0-0-93" id="h0-0-93" class="d">-	{ XK_Right,ShiftMask|ControlMask|Mod1Mask,&quot;\033[1;8C&quot;,0,   0,    0},
+</a><a href="#h0-0-94" id="h0-0-94" class="d">-	{ XK_Right,         XK_ANY_MOD,     &quot;\033[C&quot;,        0,   -1,    0},
+</a><a href="#h0-0-95" id="h0-0-95" class="d">-	{ XK_Right,         XK_ANY_MOD,     &quot;\033OC&quot;,        0,   +1,    0},
+</a><a href="#h0-0-96" id="h0-0-96" class="d">-	{ XK_ISO_Left_Tab,  ShiftMask,      &quot;\033[Z&quot;,        0,    0,    0},
+</a><a href="#h0-0-97" id="h0-0-97" class="d">-	{ XK_Return,        Mod1Mask,       &quot;\033\r&quot;,        0,    0,   -1},
+</a><a href="#h0-0-98" id="h0-0-98" class="d">-	{ XK_Return,        Mod1Mask,       &quot;\033\r\n&quot;,      0,    0,   +1},
+</a><a href="#h0-0-99" id="h0-0-99" class="d">-	{ XK_Return,        XK_ANY_MOD,     &quot;\r&quot;,            0,    0,   -1},
+</a><a href="#h0-0-100" id="h0-0-100" class="d">-	{ XK_Return,        XK_ANY_MOD,     &quot;\r\n&quot;,          0,    0,   +1},
+</a><a href="#h0-0-101" id="h0-0-101" class="d">-	{ XK_Insert,        ShiftMask,      &quot;\033[4l&quot;,      -1,    0,    0},
+</a><a href="#h0-0-102" id="h0-0-102" class="d">-	{ XK_Insert,        ShiftMask,      &quot;\033[2;2~&quot;,    +1,    0,    0},
+</a><a href="#h0-0-103" id="h0-0-103" class="d">-	{ XK_Insert,        ControlMask,    &quot;\033[L&quot;,       -1,    0,    0},
+</a><a href="#h0-0-104" id="h0-0-104" class="d">-	{ XK_Insert,        ControlMask,    &quot;\033[2;5~&quot;,    +1,    0,    0},
+</a><a href="#h0-0-105" id="h0-0-105" class="d">-	{ XK_Insert,        XK_ANY_MOD,     &quot;\033[4h&quot;,      -1,    0,    0},
+</a><a href="#h0-0-106" id="h0-0-106" class="d">-	{ XK_Insert,        XK_ANY_MOD,     &quot;\033[2~&quot;,      +1,    0,    0},
+</a><a href="#h0-0-107" id="h0-0-107" class="d">-	{ XK_Delete,        ControlMask,    &quot;\033[M&quot;,       -1,    0,    0},
+</a><a href="#h0-0-108" id="h0-0-108" class="d">-	{ XK_Delete,        ControlMask,    &quot;\033[3;5~&quot;,    +1,    0,    0},
+</a><a href="#h0-0-109" id="h0-0-109" class="d">-	{ XK_Delete,        ShiftMask,      &quot;\033[2K&quot;,      -1,    0,    0},
+</a><a href="#h0-0-110" id="h0-0-110" class="d">-	{ XK_Delete,        ShiftMask,      &quot;\033[3;2~&quot;,    +1,    0,    0},
+</a><a href="#h0-0-111" id="h0-0-111" class="d">-	{ XK_Delete,        XK_ANY_MOD,     &quot;\033[P&quot;,       -1,    0,    0},
+</a><a href="#h0-0-112" id="h0-0-112" class="d">-	{ XK_Delete,        XK_ANY_MOD,     &quot;\033[3~&quot;,      +1,    0,    0},
+</a><a href="#h0-0-113" id="h0-0-113" class="d">-	{ XK_BackSpace,     XK_NO_MOD,      &quot;\177&quot;,          0,    0,    0},
+</a><a href="#h0-0-114" id="h0-0-114" class="d">-	{ XK_BackSpace,     Mod1Mask,       &quot;\033\177&quot;,      0,    0,    0},
+</a><a href="#h0-0-115" id="h0-0-115" class="d">-	{ XK_Home,          ShiftMask,      &quot;\033[2J&quot;,       0,   -1,    0},
+</a><a href="#h0-0-116" id="h0-0-116" class="d">-	{ XK_Home,          ShiftMask,      &quot;\033[1;2H&quot;,     0,   +1,    0},
+</a><a href="#h0-0-117" id="h0-0-117" class="d">-	{ XK_Home,          XK_ANY_MOD,     &quot;\033[H&quot;,        0,   -1,    0},
+</a><a href="#h0-0-118" id="h0-0-118" class="d">-	{ XK_Home,          XK_ANY_MOD,     &quot;\033[1~&quot;,       0,   +1,    0},
+</a><a href="#h0-0-119" id="h0-0-119" class="d">-	{ XK_End,           ControlMask,    &quot;\033[J&quot;,       -1,    0,    0},
+</a><a href="#h0-0-120" id="h0-0-120" class="d">-	{ XK_End,           ControlMask,    &quot;\033[1;5F&quot;,    +1,    0,    0},
+</a><a href="#h0-0-121" id="h0-0-121" class="d">-	{ XK_End,           ShiftMask,      &quot;\033[K&quot;,       -1,    0,    0},
+</a><a href="#h0-0-122" id="h0-0-122" class="d">-	{ XK_End,           ShiftMask,      &quot;\033[1;2F&quot;,    +1,    0,    0},
+</a><a href="#h0-0-123" id="h0-0-123" class="d">-	{ XK_End,           XK_ANY_MOD,     &quot;\033[4~&quot;,       0,    0,    0},
+</a><a href="#h0-0-124" id="h0-0-124" class="d">-	{ XK_Prior,         ControlMask,    &quot;\033[5;5~&quot;,     0,    0,    0},
+</a><a href="#h0-0-125" id="h0-0-125" class="d">-	{ XK_Prior,         ShiftMask,      &quot;\033[5;2~&quot;,     0,    0,    0},
+</a><a href="#h0-0-126" id="h0-0-126" class="d">-	{ XK_Prior,         XK_ANY_MOD,     &quot;\033[5~&quot;,       0,    0,    0},
+</a><a href="#h0-0-127" id="h0-0-127" class="d">-	{ XK_Next,          ControlMask,    &quot;\033[6;5~&quot;,     0,    0,    0},
+</a><a href="#h0-0-128" id="h0-0-128" class="d">-	{ XK_Next,          ShiftMask,      &quot;\033[6;2~&quot;,     0,    0,    0},
+</a><a href="#h0-0-129" id="h0-0-129" class="d">-	{ XK_Next,          XK_ANY_MOD,     &quot;\033[6~&quot;,       0,    0,    0},
+</a><a href="#h0-0-130" id="h0-0-130" class="d">-	{ XK_F1,            XK_NO_MOD,      &quot;\033OP&quot; ,       0,    0,    0},
+</a><a href="#h0-0-131" id="h0-0-131" class="d">-	{ XK_F1, /* F13 */  ShiftMask,      &quot;\033[1;2P&quot;,     0,    0,    0},
+</a><a href="#h0-0-132" id="h0-0-132" class="d">-	{ XK_F1, /* F25 */  ControlMask,    &quot;\033[1;5P&quot;,     0,    0,    0},
+</a><a href="#h0-0-133" id="h0-0-133" class="d">-	{ XK_F1, /* F37 */  Mod4Mask,       &quot;\033[1;6P&quot;,     0,    0,    0},
+</a><a href="#h0-0-134" id="h0-0-134" class="d">-	{ XK_F1, /* F49 */  Mod1Mask,       &quot;\033[1;3P&quot;,     0,    0,    0},
+</a><a href="#h0-0-135" id="h0-0-135" class="d">-	{ XK_F1, /* F61 */  Mod3Mask,       &quot;\033[1;4P&quot;,     0,    0,    0},
+</a><a href="#h0-0-136" id="h0-0-136" class="d">-	{ XK_F2,            XK_NO_MOD,      &quot;\033OQ&quot; ,       0,    0,    0},
+</a><a href="#h0-0-137" id="h0-0-137" class="d">-	{ XK_F2, /* F14 */  ShiftMask,      &quot;\033[1;2Q&quot;,     0,    0,    0},
+</a><a href="#h0-0-138" id="h0-0-138" class="d">-	{ XK_F2, /* F26 */  ControlMask,    &quot;\033[1;5Q&quot;,     0,    0,    0},
+</a><a href="#h0-0-139" id="h0-0-139" class="d">-	{ XK_F2, /* F38 */  Mod4Mask,       &quot;\033[1;6Q&quot;,     0,    0,    0},
+</a><a href="#h0-0-140" id="h0-0-140" class="d">-	{ XK_F2, /* F50 */  Mod1Mask,       &quot;\033[1;3Q&quot;,     0,    0,    0},
+</a><a href="#h0-0-141" id="h0-0-141" class="d">-	{ XK_F2, /* F62 */  Mod3Mask,       &quot;\033[1;4Q&quot;,     0,    0,    0},
+</a><a href="#h0-0-142" id="h0-0-142" class="d">-	{ XK_F3,            XK_NO_MOD,      &quot;\033OR&quot; ,       0,    0,    0},
+</a><a href="#h0-0-143" id="h0-0-143" class="d">-	{ XK_F3, /* F15 */  ShiftMask,      &quot;\033[1;2R&quot;,     0,    0,    0},
+</a><a href="#h0-0-144" id="h0-0-144" class="d">-	{ XK_F3, /* F27 */  ControlMask,    &quot;\033[1;5R&quot;,     0,    0,    0},
+</a><a href="#h0-0-145" id="h0-0-145" class="d">-	{ XK_F3, /* F39 */  Mod4Mask,       &quot;\033[1;6R&quot;,     0,    0,    0},
+</a><a href="#h0-0-146" id="h0-0-146" class="d">-	{ XK_F3, /* F51 */  Mod1Mask,       &quot;\033[1;3R&quot;,     0,    0,    0},
+</a><a href="#h0-0-147" id="h0-0-147" class="d">-	{ XK_F3, /* F63 */  Mod3Mask,       &quot;\033[1;4R&quot;,     0,    0,    0},
+</a><a href="#h0-0-148" id="h0-0-148" class="d">-	{ XK_F4,            XK_NO_MOD,      &quot;\033OS&quot; ,       0,    0,    0},
+</a><a href="#h0-0-149" id="h0-0-149" class="d">-	{ XK_F4, /* F16 */  ShiftMask,      &quot;\033[1;2S&quot;,     0,    0,    0},
+</a><a href="#h0-0-150" id="h0-0-150" class="d">-	{ XK_F4, /* F28 */  ControlMask,    &quot;\033[1;5S&quot;,     0,    0,    0},
+</a><a href="#h0-0-151" id="h0-0-151" class="d">-	{ XK_F4, /* F40 */  Mod4Mask,       &quot;\033[1;6S&quot;,     0,    0,    0},
+</a><a href="#h0-0-152" id="h0-0-152" class="d">-	{ XK_F4, /* F52 */  Mod1Mask,       &quot;\033[1;3S&quot;,     0,    0,    0},
+</a><a href="#h0-0-153" id="h0-0-153" class="d">-	{ XK_F5,            XK_NO_MOD,      &quot;\033[15~&quot;,      0,    0,    0},
+</a><a href="#h0-0-154" id="h0-0-154" class="d">-	{ XK_F5, /* F17 */  ShiftMask,      &quot;\033[15;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-155" id="h0-0-155" class="d">-	{ XK_F5, /* F29 */  ControlMask,    &quot;\033[15;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-156" id="h0-0-156" class="d">-	{ XK_F5, /* F41 */  Mod4Mask,       &quot;\033[15;6~&quot;,    0,    0,    0},
+</a><a href="#h0-0-157" id="h0-0-157" class="d">-	{ XK_F5, /* F53 */  Mod1Mask,       &quot;\033[15;3~&quot;,    0,    0,    0},
+</a><a href="#h0-0-158" id="h0-0-158" class="d">-	{ XK_F6,            XK_NO_MOD,      &quot;\033[17~&quot;,      0,    0,    0},
+</a><a href="#h0-0-159" id="h0-0-159" class="d">-	{ XK_F6, /* F18 */  ShiftMask,      &quot;\033[17;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-160" id="h0-0-160" class="d">-	{ XK_F6, /* F30 */  ControlMask,    &quot;\033[17;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-161" id="h0-0-161" class="d">-	{ XK_F6, /* F42 */  Mod4Mask,       &quot;\033[17;6~&quot;,    0,    0,    0},
+</a><a href="#h0-0-162" id="h0-0-162" class="d">-	{ XK_F6, /* F54 */  Mod1Mask,       &quot;\033[17;3~&quot;,    0,    0,    0},
+</a><a href="#h0-0-163" id="h0-0-163" class="d">-	{ XK_F7,            XK_NO_MOD,      &quot;\033[18~&quot;,      0,    0,    0},
+</a><a href="#h0-0-164" id="h0-0-164" class="d">-	{ XK_F7, /* F19 */  ShiftMask,      &quot;\033[18;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-165" id="h0-0-165" class="d">-	{ XK_F7, /* F31 */  ControlMask,    &quot;\033[18;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-166" id="h0-0-166" class="d">-	{ XK_F7, /* F43 */  Mod4Mask,       &quot;\033[18;6~&quot;,    0,    0,    0},
+</a><a href="#h0-0-167" id="h0-0-167" class="d">-	{ XK_F7, /* F55 */  Mod1Mask,       &quot;\033[18;3~&quot;,    0,    0,    0},
+</a><a href="#h0-0-168" id="h0-0-168" class="d">-	{ XK_F8,            XK_NO_MOD,      &quot;\033[19~&quot;,      0,    0,    0},
+</a><a href="#h0-0-169" id="h0-0-169" class="d">-	{ XK_F8, /* F20 */  ShiftMask,      &quot;\033[19;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-170" id="h0-0-170" class="d">-	{ XK_F8, /* F32 */  ControlMask,    &quot;\033[19;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-171" id="h0-0-171" class="d">-	{ XK_F8, /* F44 */  Mod4Mask,       &quot;\033[19;6~&quot;,    0,    0,    0},
+</a><a href="#h0-0-172" id="h0-0-172" class="d">-	{ XK_F8, /* F56 */  Mod1Mask,       &quot;\033[19;3~&quot;,    0,    0,    0},
+</a><a href="#h0-0-173" id="h0-0-173" class="d">-	{ XK_F9,            XK_NO_MOD,      &quot;\033[20~&quot;,      0,    0,    0},
+</a><a href="#h0-0-174" id="h0-0-174" class="d">-	{ XK_F9, /* F21 */  ShiftMask,      &quot;\033[20;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-175" id="h0-0-175" class="d">-	{ XK_F9, /* F33 */  ControlMask,    &quot;\033[20;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-176" id="h0-0-176" class="d">-	{ XK_F9, /* F45 */  Mod4Mask,       &quot;\033[20;6~&quot;,    0,    0,    0},
+</a><a href="#h0-0-177" id="h0-0-177" class="d">-	{ XK_F9, /* F57 */  Mod1Mask,       &quot;\033[20;3~&quot;,    0,    0,    0},
+</a><a href="#h0-0-178" id="h0-0-178" class="d">-	{ XK_F10,           XK_NO_MOD,      &quot;\033[21~&quot;,      0,    0,    0},
+</a><a href="#h0-0-179" id="h0-0-179" class="d">-	{ XK_F10, /* F22 */ ShiftMask,      &quot;\033[21;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-180" id="h0-0-180" class="d">-	{ XK_F10, /* F34 */ ControlMask,    &quot;\033[21;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-181" id="h0-0-181" class="d">-	{ XK_F10, /* F46 */ Mod4Mask,       &quot;\033[21;6~&quot;,    0,    0,    0},
+</a><a href="#h0-0-182" id="h0-0-182" class="d">-	{ XK_F10, /* F58 */ Mod1Mask,       &quot;\033[21;3~&quot;,    0,    0,    0},
+</a><a href="#h0-0-183" id="h0-0-183" class="d">-	{ XK_F11,           XK_NO_MOD,      &quot;\033[23~&quot;,      0,    0,    0},
+</a><a href="#h0-0-184" id="h0-0-184" class="d">-	{ XK_F11, /* F23 */ ShiftMask,      &quot;\033[23;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-185" id="h0-0-185" class="d">-	{ XK_F11, /* F35 */ ControlMask,    &quot;\033[23;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-186" id="h0-0-186" class="d">-	{ XK_F11, /* F47 */ Mod4Mask,       &quot;\033[23;6~&quot;,    0,    0,    0},
+</a><a href="#h0-0-187" id="h0-0-187" class="d">-	{ XK_F11, /* F59 */ Mod1Mask,       &quot;\033[23;3~&quot;,    0,    0,    0},
+</a><a href="#h0-0-188" id="h0-0-188" class="d">-	{ XK_F12,           XK_NO_MOD,      &quot;\033[24~&quot;,      0,    0,    0},
+</a><a href="#h0-0-189" id="h0-0-189" class="d">-	{ XK_F12, /* F24 */ ShiftMask,      &quot;\033[24;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-190" id="h0-0-190" class="d">-	{ XK_F12, /* F36 */ ControlMask,    &quot;\033[24;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-191" id="h0-0-191" class="d">-	{ XK_F12, /* F48 */ Mod4Mask,       &quot;\033[24;6~&quot;,    0,    0,    0},
+</a><a href="#h0-0-192" id="h0-0-192" class="d">-	{ XK_F12, /* F60 */ Mod1Mask,       &quot;\033[24;3~&quot;,    0,    0,    0},
+</a><a href="#h0-0-193" id="h0-0-193" class="d">-	{ XK_F13,           XK_NO_MOD,      &quot;\033[1;2P&quot;,     0,    0,    0},
+</a><a href="#h0-0-194" id="h0-0-194" class="d">-	{ XK_F14,           XK_NO_MOD,      &quot;\033[1;2Q&quot;,     0,    0,    0},
+</a><a href="#h0-0-195" id="h0-0-195" class="d">-	{ XK_F15,           XK_NO_MOD,      &quot;\033[1;2R&quot;,     0,    0,    0},
+</a><a href="#h0-0-196" id="h0-0-196" class="d">-	{ XK_F16,           XK_NO_MOD,      &quot;\033[1;2S&quot;,     0,    0,    0},
+</a><a href="#h0-0-197" id="h0-0-197" class="d">-	{ XK_F17,           XK_NO_MOD,      &quot;\033[15;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-198" id="h0-0-198" class="d">-	{ XK_F18,           XK_NO_MOD,      &quot;\033[17;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-199" id="h0-0-199" class="d">-	{ XK_F19,           XK_NO_MOD,      &quot;\033[18;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-200" id="h0-0-200" class="d">-	{ XK_F20,           XK_NO_MOD,      &quot;\033[19;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-201" id="h0-0-201" class="d">-	{ XK_F21,           XK_NO_MOD,      &quot;\033[20;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-202" id="h0-0-202" class="d">-	{ XK_F22,           XK_NO_MOD,      &quot;\033[21;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-203" id="h0-0-203" class="d">-	{ XK_F23,           XK_NO_MOD,      &quot;\033[23;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-204" id="h0-0-204" class="d">-	{ XK_F24,           XK_NO_MOD,      &quot;\033[24;2~&quot;,    0,    0,    0},
+</a><a href="#h0-0-205" id="h0-0-205" class="d">-	{ XK_F25,           XK_NO_MOD,      &quot;\033[1;5P&quot;,     0,    0,    0},
+</a><a href="#h0-0-206" id="h0-0-206" class="d">-	{ XK_F26,           XK_NO_MOD,      &quot;\033[1;5Q&quot;,     0,    0,    0},
+</a><a href="#h0-0-207" id="h0-0-207" class="d">-	{ XK_F27,           XK_NO_MOD,      &quot;\033[1;5R&quot;,     0,    0,    0},
+</a><a href="#h0-0-208" id="h0-0-208" class="d">-	{ XK_F28,           XK_NO_MOD,      &quot;\033[1;5S&quot;,     0,    0,    0},
+</a><a href="#h0-0-209" id="h0-0-209" class="d">-	{ XK_F29,           XK_NO_MOD,      &quot;\033[15;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-210" id="h0-0-210" class="d">-	{ XK_F30,           XK_NO_MOD,      &quot;\033[17;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-211" id="h0-0-211" class="d">-	{ XK_F31,           XK_NO_MOD,      &quot;\033[18;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-212" id="h0-0-212" class="d">-	{ XK_F32,           XK_NO_MOD,      &quot;\033[19;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-213" id="h0-0-213" class="d">-	{ XK_F33,           XK_NO_MOD,      &quot;\033[20;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-214" id="h0-0-214" class="d">-	{ XK_F34,           XK_NO_MOD,      &quot;\033[21;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-215" id="h0-0-215" class="d">-	{ XK_F35,           XK_NO_MOD,      &quot;\033[23;5~&quot;,    0,    0,    0},
+</a><a href="#h0-0-216" id="h0-0-216" class="i">+	/* keysym           mask            string      appkey appcursor */
+</a><a href="#h0-0-217" id="h0-0-217" class="i">+	{ XK_KP_Home,       ShiftMask,      &quot;\033[2J&quot;,       0,   -1},
+</a><a href="#h0-0-218" id="h0-0-218" class="i">+	{ XK_KP_Home,       ShiftMask,      &quot;\033[1;2H&quot;,     0,   +1},
+</a><a href="#h0-0-219" id="h0-0-219" class="i">+	{ XK_KP_Home,       XK_ANY_MOD,     &quot;\033[H&quot;,        0,   -1},
+</a><a href="#h0-0-220" id="h0-0-220" class="i">+	{ XK_KP_Home,       XK_ANY_MOD,     &quot;\033[1~&quot;,       0,   +1},
+</a><a href="#h0-0-221" id="h0-0-221" class="i">+	{ XK_KP_Up,         XK_ANY_MOD,     &quot;\033Ox&quot;,       +1,    0},
+</a><a href="#h0-0-222" id="h0-0-222" class="i">+	{ XK_KP_Up,         XK_ANY_MOD,     &quot;\033[A&quot;,        0,   -1},
+</a><a href="#h0-0-223" id="h0-0-223" class="i">+	{ XK_KP_Up,         XK_ANY_MOD,     &quot;\033OA&quot;,        0,   +1},
+</a><a href="#h0-0-224" id="h0-0-224" class="i">+	{ XK_KP_Down,       XK_ANY_MOD,     &quot;\033Or&quot;,       +1,    0},
+</a><a href="#h0-0-225" id="h0-0-225" class="i">+	{ XK_KP_Down,       XK_ANY_MOD,     &quot;\033[B&quot;,        0,   -1},
+</a><a href="#h0-0-226" id="h0-0-226" class="i">+	{ XK_KP_Down,       XK_ANY_MOD,     &quot;\033OB&quot;,        0,   +1},
+</a><a href="#h0-0-227" id="h0-0-227" class="i">+	{ XK_KP_Left,       XK_ANY_MOD,     &quot;\033Ot&quot;,       +1,    0},
+</a><a href="#h0-0-228" id="h0-0-228" class="i">+	{ XK_KP_Left,       XK_ANY_MOD,     &quot;\033[D&quot;,        0,   -1},
+</a><a href="#h0-0-229" id="h0-0-229" class="i">+	{ XK_KP_Left,       XK_ANY_MOD,     &quot;\033OD&quot;,        0,   +1},
+</a><a href="#h0-0-230" id="h0-0-230" class="i">+	{ XK_KP_Right,      XK_ANY_MOD,     &quot;\033Ov&quot;,       +1,    0},
+</a><a href="#h0-0-231" id="h0-0-231" class="i">+	{ XK_KP_Right,      XK_ANY_MOD,     &quot;\033[C&quot;,        0,   -1},
+</a><a href="#h0-0-232" id="h0-0-232" class="i">+	{ XK_KP_Right,      XK_ANY_MOD,     &quot;\033OC&quot;,        0,   +1},
+</a><a href="#h0-0-233" id="h0-0-233" class="i">+	{ XK_KP_Prior,      ShiftMask,      &quot;\033[5;2~&quot;,     0,    0},
+</a><a href="#h0-0-234" id="h0-0-234" class="i">+	{ XK_KP_Prior,      XK_ANY_MOD,     &quot;\033[5~&quot;,       0,    0},
+</a><a href="#h0-0-235" id="h0-0-235" class="i">+	{ XK_KP_Begin,      XK_ANY_MOD,     &quot;\033[E&quot;,        0,    0},
+</a><a href="#h0-0-236" id="h0-0-236" class="i">+	{ XK_KP_End,        ControlMask,    &quot;\033[J&quot;,       -1,    0},
+</a><a href="#h0-0-237" id="h0-0-237" class="i">+	{ XK_KP_End,        ControlMask,    &quot;\033[1;5F&quot;,    +1,    0},
+</a><a href="#h0-0-238" id="h0-0-238" class="i">+	{ XK_KP_End,        ShiftMask,      &quot;\033[K&quot;,       -1,    0},
+</a><a href="#h0-0-239" id="h0-0-239" class="i">+	{ XK_KP_End,        ShiftMask,      &quot;\033[1;2F&quot;,    +1,    0},
+</a><a href="#h0-0-240" id="h0-0-240" class="i">+	{ XK_KP_End,        XK_ANY_MOD,     &quot;\033[4~&quot;,       0,    0},
+</a><a href="#h0-0-241" id="h0-0-241" class="i">+	{ XK_KP_Next,       ShiftMask,      &quot;\033[6;2~&quot;,     0,    0},
+</a><a href="#h0-0-242" id="h0-0-242" class="i">+	{ XK_KP_Next,       XK_ANY_MOD,     &quot;\033[6~&quot;,       0,    0},
+</a><a href="#h0-0-243" id="h0-0-243" class="i">+	{ XK_KP_Insert,     ShiftMask,      &quot;\033[2;2~&quot;,    +1,    0},
+</a><a href="#h0-0-244" id="h0-0-244" class="i">+	{ XK_KP_Insert,     ShiftMask,      &quot;\033[4l&quot;,      -1,    0},
+</a><a href="#h0-0-245" id="h0-0-245" class="i">+	{ XK_KP_Insert,     ControlMask,    &quot;\033[L&quot;,       -1,    0},
+</a><a href="#h0-0-246" id="h0-0-246" class="i">+	{ XK_KP_Insert,     ControlMask,    &quot;\033[2;5~&quot;,    +1,    0},
+</a><a href="#h0-0-247" id="h0-0-247" class="i">+	{ XK_KP_Insert,     XK_ANY_MOD,     &quot;\033[4h&quot;,      -1,    0},
+</a><a href="#h0-0-248" id="h0-0-248" class="i">+	{ XK_KP_Insert,     XK_ANY_MOD,     &quot;\033[2~&quot;,      +1,    0},
+</a><a href="#h0-0-249" id="h0-0-249" class="i">+	{ XK_KP_Delete,     ControlMask,    &quot;\033[M&quot;,       -1,    0},
+</a><a href="#h0-0-250" id="h0-0-250" class="i">+	{ XK_KP_Delete,     ControlMask,    &quot;\033[3;5~&quot;,    +1,    0},
+</a><a href="#h0-0-251" id="h0-0-251" class="i">+	{ XK_KP_Delete,     ShiftMask,      &quot;\033[2K&quot;,      -1,    0},
+</a><a href="#h0-0-252" id="h0-0-252" class="i">+	{ XK_KP_Delete,     ShiftMask,      &quot;\033[3;2~&quot;,    +1,    0},
+</a><a href="#h0-0-253" id="h0-0-253" class="i">+	{ XK_KP_Delete,     XK_ANY_MOD,     &quot;\033[P&quot;,       -1,    0},
+</a><a href="#h0-0-254" id="h0-0-254" class="i">+	{ XK_KP_Delete,     XK_ANY_MOD,     &quot;\033[3~&quot;,      +1,    0},
+</a><a href="#h0-0-255" id="h0-0-255" class="i">+	{ XK_KP_Multiply,   XK_ANY_MOD,     &quot;\033Oj&quot;,       +2,    0},
+</a><a href="#h0-0-256" id="h0-0-256" class="i">+	{ XK_KP_Add,        XK_ANY_MOD,     &quot;\033Ok&quot;,       +2,    0},
+</a><a href="#h0-0-257" id="h0-0-257" class="i">+	{ XK_KP_Enter,      XK_ANY_MOD,     &quot;\033OM&quot;,       +2,    0},
+</a><a href="#h0-0-258" id="h0-0-258" class="i">+	{ XK_KP_Enter,      XK_ANY_MOD,     &quot;\r&quot;,           -1,    0},
+</a><a href="#h0-0-259" id="h0-0-259" class="i">+	{ XK_KP_Subtract,   XK_ANY_MOD,     &quot;\033Om&quot;,       +2,    0},
+</a><a href="#h0-0-260" id="h0-0-260" class="i">+	{ XK_KP_Decimal,    XK_ANY_MOD,     &quot;\033On&quot;,       +2,    0},
+</a><a href="#h0-0-261" id="h0-0-261" class="i">+	{ XK_KP_Divide,     XK_ANY_MOD,     &quot;\033Oo&quot;,       +2,    0},
+</a><a href="#h0-0-262" id="h0-0-262" class="i">+	{ XK_KP_0,          XK_ANY_MOD,     &quot;\033Op&quot;,       +2,    0},
+</a><a href="#h0-0-263" id="h0-0-263" class="i">+	{ XK_KP_1,          XK_ANY_MOD,     &quot;\033Oq&quot;,       +2,    0},
+</a><a href="#h0-0-264" id="h0-0-264" class="i">+	{ XK_KP_2,          XK_ANY_MOD,     &quot;\033Or&quot;,       +2,    0},
+</a><a href="#h0-0-265" id="h0-0-265" class="i">+	{ XK_KP_3,          XK_ANY_MOD,     &quot;\033Os&quot;,       +2,    0},
+</a><a href="#h0-0-266" id="h0-0-266" class="i">+	{ XK_KP_4,          XK_ANY_MOD,     &quot;\033Ot&quot;,       +2,    0},
+</a><a href="#h0-0-267" id="h0-0-267" class="i">+	{ XK_KP_5,          XK_ANY_MOD,     &quot;\033Ou&quot;,       +2,    0},
+</a><a href="#h0-0-268" id="h0-0-268" class="i">+	{ XK_KP_6,          XK_ANY_MOD,     &quot;\033Ov&quot;,       +2,    0},
+</a><a href="#h0-0-269" id="h0-0-269" class="i">+	{ XK_KP_7,          XK_ANY_MOD,     &quot;\033Ow&quot;,       +2,    0},
+</a><a href="#h0-0-270" id="h0-0-270" class="i">+	{ XK_KP_8,          XK_ANY_MOD,     &quot;\033Ox&quot;,       +2,    0},
+</a><a href="#h0-0-271" id="h0-0-271" class="i">+	{ XK_KP_9,          XK_ANY_MOD,     &quot;\033Oy&quot;,       +2,    0},
+</a><a href="#h0-0-272" id="h0-0-272" class="i">+	{ XK_Up,            ShiftMask,      &quot;\033[1;2A&quot;,     0,    0},
+</a><a href="#h0-0-273" id="h0-0-273" class="i">+	{ XK_Up,            Mod1Mask,       &quot;\033[1;3A&quot;,     0,    0},
+</a><a href="#h0-0-274" id="h0-0-274" class="i">+	{ XK_Up,         ShiftMask|Mod1Mask,&quot;\033[1;4A&quot;,     0,    0},
+</a><a href="#h0-0-275" id="h0-0-275" class="i">+	{ XK_Up,            ControlMask,    &quot;\033[1;5A&quot;,     0,    0},
+</a><a href="#h0-0-276" id="h0-0-276" class="i">+	{ XK_Up,      ShiftMask|ControlMask,&quot;\033[1;6A&quot;,     0,    0},
+</a><a href="#h0-0-277" id="h0-0-277" class="i">+	{ XK_Up,       ControlMask|Mod1Mask,&quot;\033[1;7A&quot;,     0,    0},
+</a><a href="#h0-0-278" id="h0-0-278" class="i">+	{ XK_Up,ShiftMask|ControlMask|Mod1Mask,&quot;\033[1;8A&quot;,  0,    0},
+</a><a href="#h0-0-279" id="h0-0-279" class="i">+	{ XK_Up,            XK_ANY_MOD,     &quot;\033[A&quot;,        0,   -1},
+</a><a href="#h0-0-280" id="h0-0-280" class="i">+	{ XK_Up,            XK_ANY_MOD,     &quot;\033OA&quot;,        0,   +1},
+</a><a href="#h0-0-281" id="h0-0-281" class="i">+	{ XK_Down,          ShiftMask,      &quot;\033[1;2B&quot;,     0,    0},
+</a><a href="#h0-0-282" id="h0-0-282" class="i">+	{ XK_Down,          Mod1Mask,       &quot;\033[1;3B&quot;,     0,    0},
+</a><a href="#h0-0-283" id="h0-0-283" class="i">+	{ XK_Down,       ShiftMask|Mod1Mask,&quot;\033[1;4B&quot;,     0,    0},
+</a><a href="#h0-0-284" id="h0-0-284" class="i">+	{ XK_Down,          ControlMask,    &quot;\033[1;5B&quot;,     0,    0},
+</a><a href="#h0-0-285" id="h0-0-285" class="i">+	{ XK_Down,    ShiftMask|ControlMask,&quot;\033[1;6B&quot;,     0,    0},
+</a><a href="#h0-0-286" id="h0-0-286" class="i">+	{ XK_Down,     ControlMask|Mod1Mask,&quot;\033[1;7B&quot;,     0,    0},
+</a><a href="#h0-0-287" id="h0-0-287" class="i">+	{ XK_Down,ShiftMask|ControlMask|Mod1Mask,&quot;\033[1;8B&quot;,0,    0},
+</a><a href="#h0-0-288" id="h0-0-288" class="i">+	{ XK_Down,          XK_ANY_MOD,     &quot;\033[B&quot;,        0,   -1},
+</a><a href="#h0-0-289" id="h0-0-289" class="i">+	{ XK_Down,          XK_ANY_MOD,     &quot;\033OB&quot;,        0,   +1},
+</a><a href="#h0-0-290" id="h0-0-290" class="i">+	{ XK_Left,          ShiftMask,      &quot;\033[1;2D&quot;,     0,    0},
+</a><a href="#h0-0-291" id="h0-0-291" class="i">+	{ XK_Left,          Mod1Mask,       &quot;\033[1;3D&quot;,     0,    0},
+</a><a href="#h0-0-292" id="h0-0-292" class="i">+	{ XK_Left,       ShiftMask|Mod1Mask,&quot;\033[1;4D&quot;,     0,    0},
+</a><a href="#h0-0-293" id="h0-0-293" class="i">+	{ XK_Left,          ControlMask,    &quot;\033[1;5D&quot;,     0,    0},
+</a><a href="#h0-0-294" id="h0-0-294" class="i">+	{ XK_Left,    ShiftMask|ControlMask,&quot;\033[1;6D&quot;,     0,    0},
+</a><a href="#h0-0-295" id="h0-0-295" class="i">+	{ XK_Left,     ControlMask|Mod1Mask,&quot;\033[1;7D&quot;,     0,    0},
+</a><a href="#h0-0-296" id="h0-0-296" class="i">+	{ XK_Left,ShiftMask|ControlMask|Mod1Mask,&quot;\033[1;8D&quot;,0,    0},
+</a><a href="#h0-0-297" id="h0-0-297" class="i">+	{ XK_Left,          XK_ANY_MOD,     &quot;\033[D&quot;,        0,   -1},
+</a><a href="#h0-0-298" id="h0-0-298" class="i">+	{ XK_Left,          XK_ANY_MOD,     &quot;\033OD&quot;,        0,   +1},
+</a><a href="#h0-0-299" id="h0-0-299" class="i">+	{ XK_Right,         ShiftMask,      &quot;\033[1;2C&quot;,     0,    0},
+</a><a href="#h0-0-300" id="h0-0-300" class="i">+	{ XK_Right,         Mod1Mask,       &quot;\033[1;3C&quot;,     0,    0},
+</a><a href="#h0-0-301" id="h0-0-301" class="i">+	{ XK_Right,      ShiftMask|Mod1Mask,&quot;\033[1;4C&quot;,     0,    0},
+</a><a href="#h0-0-302" id="h0-0-302" class="i">+	{ XK_Right,         ControlMask,    &quot;\033[1;5C&quot;,     0,    0},
+</a><a href="#h0-0-303" id="h0-0-303" class="i">+	{ XK_Right,   ShiftMask|ControlMask,&quot;\033[1;6C&quot;,     0,    0},
+</a><a href="#h0-0-304" id="h0-0-304" class="i">+	{ XK_Right,    ControlMask|Mod1Mask,&quot;\033[1;7C&quot;,     0,    0},
+</a><a href="#h0-0-305" id="h0-0-305" class="i">+	{ XK_Right,ShiftMask|ControlMask|Mod1Mask,&quot;\033[1;8C&quot;,0,   0},
+</a><a href="#h0-0-306" id="h0-0-306" class="i">+	{ XK_Right,         XK_ANY_MOD,     &quot;\033[C&quot;,        0,   -1},
+</a><a href="#h0-0-307" id="h0-0-307" class="i">+	{ XK_Right,         XK_ANY_MOD,     &quot;\033OC&quot;,        0,   +1},
+</a><a href="#h0-0-308" id="h0-0-308" class="i">+	{ XK_ISO_Left_Tab,  ShiftMask,      &quot;\033[Z&quot;,        0,    0},
+</a><a href="#h0-0-309" id="h0-0-309" class="i">+	{ XK_Return,        Mod1Mask,       &quot;\033\r&quot;,        0,    0},
+</a><a href="#h0-0-310" id="h0-0-310" class="i">+	{ XK_Return,        XK_ANY_MOD,     &quot;\r&quot;,            0,    0},
+</a><a href="#h0-0-311" id="h0-0-311" class="i">+	{ XK_Insert,        ShiftMask,      &quot;\033[4l&quot;,      -1,    0},
+</a><a href="#h0-0-312" id="h0-0-312" class="i">+	{ XK_Insert,        ShiftMask,      &quot;\033[2;2~&quot;,    +1,    0},
+</a><a href="#h0-0-313" id="h0-0-313" class="i">+	{ XK_Insert,        ControlMask,    &quot;\033[L&quot;,       -1,    0},
+</a><a href="#h0-0-314" id="h0-0-314" class="i">+	{ XK_Insert,        ControlMask,    &quot;\033[2;5~&quot;,    +1,    0},
+</a><a href="#h0-0-315" id="h0-0-315" class="i">+	{ XK_Insert,        XK_ANY_MOD,     &quot;\033[4h&quot;,      -1,    0},
+</a><a href="#h0-0-316" id="h0-0-316" class="i">+	{ XK_Insert,        XK_ANY_MOD,     &quot;\033[2~&quot;,      +1,    0},
+</a><a href="#h0-0-317" id="h0-0-317" class="i">+	{ XK_Delete,        ControlMask,    &quot;\033[M&quot;,       -1,    0},
+</a><a href="#h0-0-318" id="h0-0-318" class="i">+	{ XK_Delete,        ControlMask,    &quot;\033[3;5~&quot;,    +1,    0},
+</a><a href="#h0-0-319" id="h0-0-319" class="i">+	{ XK_Delete,        ShiftMask,      &quot;\033[2K&quot;,      -1,    0},
+</a><a href="#h0-0-320" id="h0-0-320" class="i">+	{ XK_Delete,        ShiftMask,      &quot;\033[3;2~&quot;,    +1,    0},
+</a><a href="#h0-0-321" id="h0-0-321" class="i">+	{ XK_Delete,        XK_ANY_MOD,     &quot;\033[P&quot;,       -1,    0},
+</a><a href="#h0-0-322" id="h0-0-322" class="i">+	{ XK_Delete,        XK_ANY_MOD,     &quot;\033[3~&quot;,      +1,    0},
+</a><a href="#h0-0-323" id="h0-0-323" class="i">+	{ XK_BackSpace,     XK_NO_MOD,      &quot;\177&quot;,          0,    0},
+</a><a href="#h0-0-324" id="h0-0-324" class="i">+	{ XK_BackSpace,     Mod1Mask,       &quot;\033\177&quot;,      0,    0},
+</a><a href="#h0-0-325" id="h0-0-325" class="i">+	{ XK_Home,          ShiftMask,      &quot;\033[2J&quot;,       0,   -1},
+</a><a href="#h0-0-326" id="h0-0-326" class="i">+	{ XK_Home,          ShiftMask,      &quot;\033[1;2H&quot;,     0,   +1},
+</a><a href="#h0-0-327" id="h0-0-327" class="i">+	{ XK_Home,          XK_ANY_MOD,     &quot;\033[H&quot;,        0,   -1},
+</a><a href="#h0-0-328" id="h0-0-328" class="i">+	{ XK_Home,          XK_ANY_MOD,     &quot;\033[1~&quot;,       0,   +1},
+</a><a href="#h0-0-329" id="h0-0-329" class="i">+	{ XK_End,           ControlMask,    &quot;\033[J&quot;,       -1,    0},
+</a><a href="#h0-0-330" id="h0-0-330" class="i">+	{ XK_End,           ControlMask,    &quot;\033[1;5F&quot;,    +1,    0},
+</a><a href="#h0-0-331" id="h0-0-331" class="i">+	{ XK_End,           ShiftMask,      &quot;\033[K&quot;,       -1,    0},
+</a><a href="#h0-0-332" id="h0-0-332" class="i">+	{ XK_End,           ShiftMask,      &quot;\033[1;2F&quot;,    +1,    0},
+</a><a href="#h0-0-333" id="h0-0-333" class="i">+	{ XK_End,           XK_ANY_MOD,     &quot;\033[4~&quot;,       0,    0},
+</a><a href="#h0-0-334" id="h0-0-334" class="i">+	{ XK_Prior,         ControlMask,    &quot;\033[5;5~&quot;,     0,    0},
+</a><a href="#h0-0-335" id="h0-0-335" class="i">+	{ XK_Prior,         ShiftMask,      &quot;\033[5;2~&quot;,     0,    0},
+</a><a href="#h0-0-336" id="h0-0-336" class="i">+	{ XK_Prior,         XK_ANY_MOD,     &quot;\033[5~&quot;,       0,    0},
+</a><a href="#h0-0-337" id="h0-0-337" class="i">+	{ XK_Next,          ControlMask,    &quot;\033[6;5~&quot;,     0,    0},
+</a><a href="#h0-0-338" id="h0-0-338" class="i">+	{ XK_Next,          ShiftMask,      &quot;\033[6;2~&quot;,     0,    0},
+</a><a href="#h0-0-339" id="h0-0-339" class="i">+	{ XK_Next,          XK_ANY_MOD,     &quot;\033[6~&quot;,       0,    0},
+</a><a href="#h0-0-340" id="h0-0-340" class="i">+	{ XK_F1,            XK_NO_MOD,      &quot;\033OP&quot; ,       0,    0},
+</a><a href="#h0-0-341" id="h0-0-341" class="i">+	{ XK_F1, /* F13 */  ShiftMask,      &quot;\033[1;2P&quot;,     0,    0},
+</a><a href="#h0-0-342" id="h0-0-342" class="i">+	{ XK_F1, /* F25 */  ControlMask,    &quot;\033[1;5P&quot;,     0,    0},
+</a><a href="#h0-0-343" id="h0-0-343" class="i">+	{ XK_F1, /* F37 */  Mod4Mask,       &quot;\033[1;6P&quot;,     0,    0},
+</a><a href="#h0-0-344" id="h0-0-344" class="i">+	{ XK_F1, /* F49 */  Mod1Mask,       &quot;\033[1;3P&quot;,     0,    0},
+</a><a href="#h0-0-345" id="h0-0-345" class="i">+	{ XK_F1, /* F61 */  Mod3Mask,       &quot;\033[1;4P&quot;,     0,    0},
+</a><a href="#h0-0-346" id="h0-0-346" class="i">+	{ XK_F2,            XK_NO_MOD,      &quot;\033OQ&quot; ,       0,    0},
+</a><a href="#h0-0-347" id="h0-0-347" class="i">+	{ XK_F2, /* F14 */  ShiftMask,      &quot;\033[1;2Q&quot;,     0,    0},
+</a><a href="#h0-0-348" id="h0-0-348" class="i">+	{ XK_F2, /* F26 */  ControlMask,    &quot;\033[1;5Q&quot;,     0,    0},
+</a><a href="#h0-0-349" id="h0-0-349" class="i">+	{ XK_F2, /* F38 */  Mod4Mask,       &quot;\033[1;6Q&quot;,     0,    0},
+</a><a href="#h0-0-350" id="h0-0-350" class="i">+	{ XK_F2, /* F50 */  Mod1Mask,       &quot;\033[1;3Q&quot;,     0,    0},
+</a><a href="#h0-0-351" id="h0-0-351" class="i">+	{ XK_F2, /* F62 */  Mod3Mask,       &quot;\033[1;4Q&quot;,     0,    0},
+</a><a href="#h0-0-352" id="h0-0-352" class="i">+	{ XK_F3,            XK_NO_MOD,      &quot;\033OR&quot; ,       0,    0},
+</a><a href="#h0-0-353" id="h0-0-353" class="i">+	{ XK_F3, /* F15 */  ShiftMask,      &quot;\033[1;2R&quot;,     0,    0},
+</a><a href="#h0-0-354" id="h0-0-354" class="i">+	{ XK_F3, /* F27 */  ControlMask,    &quot;\033[1;5R&quot;,     0,    0},
+</a><a href="#h0-0-355" id="h0-0-355" class="i">+	{ XK_F3, /* F39 */  Mod4Mask,       &quot;\033[1;6R&quot;,     0,    0},
+</a><a href="#h0-0-356" id="h0-0-356" class="i">+	{ XK_F3, /* F51 */  Mod1Mask,       &quot;\033[1;3R&quot;,     0,    0},
+</a><a href="#h0-0-357" id="h0-0-357" class="i">+	{ XK_F3, /* F63 */  Mod3Mask,       &quot;\033[1;4R&quot;,     0,    0},
+</a><a href="#h0-0-358" id="h0-0-358" class="i">+	{ XK_F4,            XK_NO_MOD,      &quot;\033OS&quot; ,       0,    0},
+</a><a href="#h0-0-359" id="h0-0-359" class="i">+	{ XK_F4, /* F16 */  ShiftMask,      &quot;\033[1;2S&quot;,     0,    0},
+</a><a href="#h0-0-360" id="h0-0-360" class="i">+	{ XK_F4, /* F28 */  ControlMask,    &quot;\033[1;5S&quot;,     0,    0},
+</a><a href="#h0-0-361" id="h0-0-361" class="i">+	{ XK_F4, /* F40 */  Mod4Mask,       &quot;\033[1;6S&quot;,     0,    0},
+</a><a href="#h0-0-362" id="h0-0-362" class="i">+	{ XK_F4, /* F52 */  Mod1Mask,       &quot;\033[1;3S&quot;,     0,    0},
+</a><a href="#h0-0-363" id="h0-0-363" class="i">+	{ XK_F5,            XK_NO_MOD,      &quot;\033[15~&quot;,      0,    0},
+</a><a href="#h0-0-364" id="h0-0-364" class="i">+	{ XK_F5, /* F17 */  ShiftMask,      &quot;\033[15;2~&quot;,    0,    0},
+</a><a href="#h0-0-365" id="h0-0-365" class="i">+	{ XK_F5, /* F29 */  ControlMask,    &quot;\033[15;5~&quot;,    0,    0},
+</a><a href="#h0-0-366" id="h0-0-366" class="i">+	{ XK_F5, /* F41 */  Mod4Mask,       &quot;\033[15;6~&quot;,    0,    0},
+</a><a href="#h0-0-367" id="h0-0-367" class="i">+	{ XK_F5, /* F53 */  Mod1Mask,       &quot;\033[15;3~&quot;,    0,    0},
+</a><a href="#h0-0-368" id="h0-0-368" class="i">+	{ XK_F6,            XK_NO_MOD,      &quot;\033[17~&quot;,      0,    0},
+</a><a href="#h0-0-369" id="h0-0-369" class="i">+	{ XK_F6, /* F18 */  ShiftMask,      &quot;\033[17;2~&quot;,    0,    0},
+</a><a href="#h0-0-370" id="h0-0-370" class="i">+	{ XK_F6, /* F30 */  ControlMask,    &quot;\033[17;5~&quot;,    0,    0},
+</a><a href="#h0-0-371" id="h0-0-371" class="i">+	{ XK_F6, /* F42 */  Mod4Mask,       &quot;\033[17;6~&quot;,    0,    0},
+</a><a href="#h0-0-372" id="h0-0-372" class="i">+	{ XK_F6, /* F54 */  Mod1Mask,       &quot;\033[17;3~&quot;,    0,    0},
+</a><a href="#h0-0-373" id="h0-0-373" class="i">+	{ XK_F7,            XK_NO_MOD,      &quot;\033[18~&quot;,      0,    0},
+</a><a href="#h0-0-374" id="h0-0-374" class="i">+	{ XK_F7, /* F19 */  ShiftMask,      &quot;\033[18;2~&quot;,    0,    0},
+</a><a href="#h0-0-375" id="h0-0-375" class="i">+	{ XK_F7, /* F31 */  ControlMask,    &quot;\033[18;5~&quot;,    0,    0},
+</a><a href="#h0-0-376" id="h0-0-376" class="i">+	{ XK_F7, /* F43 */  Mod4Mask,       &quot;\033[18;6~&quot;,    0,    0},
+</a><a href="#h0-0-377" id="h0-0-377" class="i">+	{ XK_F7, /* F55 */  Mod1Mask,       &quot;\033[18;3~&quot;,    0,    0},
+</a><a href="#h0-0-378" id="h0-0-378" class="i">+	{ XK_F8,            XK_NO_MOD,      &quot;\033[19~&quot;,      0,    0},
+</a><a href="#h0-0-379" id="h0-0-379" class="i">+	{ XK_F8, /* F20 */  ShiftMask,      &quot;\033[19;2~&quot;,    0,    0},
+</a><a href="#h0-0-380" id="h0-0-380" class="i">+	{ XK_F8, /* F32 */  ControlMask,    &quot;\033[19;5~&quot;,    0,    0},
+</a><a href="#h0-0-381" id="h0-0-381" class="i">+	{ XK_F8, /* F44 */  Mod4Mask,       &quot;\033[19;6~&quot;,    0,    0},
+</a><a href="#h0-0-382" id="h0-0-382" class="i">+	{ XK_F8, /* F56 */  Mod1Mask,       &quot;\033[19;3~&quot;,    0,    0},
+</a><a href="#h0-0-383" id="h0-0-383" class="i">+	{ XK_F9,            XK_NO_MOD,      &quot;\033[20~&quot;,      0,    0},
+</a><a href="#h0-0-384" id="h0-0-384" class="i">+	{ XK_F9, /* F21 */  ShiftMask,      &quot;\033[20;2~&quot;,    0,    0},
+</a><a href="#h0-0-385" id="h0-0-385" class="i">+	{ XK_F9, /* F33 */  ControlMask,    &quot;\033[20;5~&quot;,    0,    0},
+</a><a href="#h0-0-386" id="h0-0-386" class="i">+	{ XK_F9, /* F45 */  Mod4Mask,       &quot;\033[20;6~&quot;,    0,    0},
+</a><a href="#h0-0-387" id="h0-0-387" class="i">+	{ XK_F9, /* F57 */  Mod1Mask,       &quot;\033[20;3~&quot;,    0,    0},
+</a><a href="#h0-0-388" id="h0-0-388" class="i">+	{ XK_F10,           XK_NO_MOD,      &quot;\033[21~&quot;,      0,    0},
+</a><a href="#h0-0-389" id="h0-0-389" class="i">+	{ XK_F10, /* F22 */ ShiftMask,      &quot;\033[21;2~&quot;,    0,    0},
+</a><a href="#h0-0-390" id="h0-0-390" class="i">+	{ XK_F10, /* F34 */ ControlMask,    &quot;\033[21;5~&quot;,    0,    0},
+</a><a href="#h0-0-391" id="h0-0-391" class="i">+	{ XK_F10, /* F46 */ Mod4Mask,       &quot;\033[21;6~&quot;,    0,    0},
+</a><a href="#h0-0-392" id="h0-0-392" class="i">+	{ XK_F10, /* F58 */ Mod1Mask,       &quot;\033[21;3~&quot;,    0,    0},
+</a><a href="#h0-0-393" id="h0-0-393" class="i">+	{ XK_F11,           XK_NO_MOD,      &quot;\033[23~&quot;,      0,    0},
+</a><a href="#h0-0-394" id="h0-0-394" class="i">+	{ XK_F11, /* F23 */ ShiftMask,      &quot;\033[23;2~&quot;,    0,    0},
+</a><a href="#h0-0-395" id="h0-0-395" class="i">+	{ XK_F11, /* F35 */ ControlMask,    &quot;\033[23;5~&quot;,    0,    0},
+</a><a href="#h0-0-396" id="h0-0-396" class="i">+	{ XK_F11, /* F47 */ Mod4Mask,       &quot;\033[23;6~&quot;,    0,    0},
+</a><a href="#h0-0-397" id="h0-0-397" class="i">+	{ XK_F11, /* F59 */ Mod1Mask,       &quot;\033[23;3~&quot;,    0,    0},
+</a><a href="#h0-0-398" id="h0-0-398" class="i">+	{ XK_F12,           XK_NO_MOD,      &quot;\033[24~&quot;,      0,    0},
+</a><a href="#h0-0-399" id="h0-0-399" class="i">+	{ XK_F12, /* F24 */ ShiftMask,      &quot;\033[24;2~&quot;,    0,    0},
+</a><a href="#h0-0-400" id="h0-0-400" class="i">+	{ XK_F12, /* F36 */ ControlMask,    &quot;\033[24;5~&quot;,    0,    0},
+</a><a href="#h0-0-401" id="h0-0-401" class="i">+	{ XK_F12, /* F48 */ Mod4Mask,       &quot;\033[24;6~&quot;,    0,    0},
+</a><a href="#h0-0-402" id="h0-0-402" class="i">+	{ XK_F12, /* F60 */ Mod1Mask,       &quot;\033[24;3~&quot;,    0,    0},
+</a><a href="#h0-0-403" id="h0-0-403" class="i">+	{ XK_F13,           XK_NO_MOD,      &quot;\033[1;2P&quot;,     0,    0},
+</a><a href="#h0-0-404" id="h0-0-404" class="i">+	{ XK_F14,           XK_NO_MOD,      &quot;\033[1;2Q&quot;,     0,    0},
+</a><a href="#h0-0-405" id="h0-0-405" class="i">+	{ XK_F15,           XK_NO_MOD,      &quot;\033[1;2R&quot;,     0,    0},
+</a><a href="#h0-0-406" id="h0-0-406" class="i">+	{ XK_F16,           XK_NO_MOD,      &quot;\033[1;2S&quot;,     0,    0},
+</a><a href="#h0-0-407" id="h0-0-407" class="i">+	{ XK_F17,           XK_NO_MOD,      &quot;\033[15;2~&quot;,    0,    0},
+</a><a href="#h0-0-408" id="h0-0-408" class="i">+	{ XK_F18,           XK_NO_MOD,      &quot;\033[17;2~&quot;,    0,    0},
+</a><a href="#h0-0-409" id="h0-0-409" class="i">+	{ XK_F19,           XK_NO_MOD,      &quot;\033[18;2~&quot;,    0,    0},
+</a><a href="#h0-0-410" id="h0-0-410" class="i">+	{ XK_F20,           XK_NO_MOD,      &quot;\033[19;2~&quot;,    0,    0},
+</a><a href="#h0-0-411" id="h0-0-411" class="i">+	{ XK_F21,           XK_NO_MOD,      &quot;\033[20;2~&quot;,    0,    0},
+</a><a href="#h0-0-412" id="h0-0-412" class="i">+	{ XK_F22,           XK_NO_MOD,      &quot;\033[21;2~&quot;,    0,    0},
+</a><a href="#h0-0-413" id="h0-0-413" class="i">+	{ XK_F23,           XK_NO_MOD,      &quot;\033[23;2~&quot;,    0,    0},
+</a><a href="#h0-0-414" id="h0-0-414" class="i">+	{ XK_F24,           XK_NO_MOD,      &quot;\033[24;2~&quot;,    0,    0},
+</a><a href="#h0-0-415" id="h0-0-415" class="i">+	{ XK_F25,           XK_NO_MOD,      &quot;\033[1;5P&quot;,     0,    0},
+</a><a href="#h0-0-416" id="h0-0-416" class="i">+	{ XK_F26,           XK_NO_MOD,      &quot;\033[1;5Q&quot;,     0,    0},
+</a><a href="#h0-0-417" id="h0-0-417" class="i">+	{ XK_F27,           XK_NO_MOD,      &quot;\033[1;5R&quot;,     0,    0},
+</a><a href="#h0-0-418" id="h0-0-418" class="i">+	{ XK_F28,           XK_NO_MOD,      &quot;\033[1;5S&quot;,     0,    0},
+</a><a href="#h0-0-419" id="h0-0-419" class="i">+	{ XK_F29,           XK_NO_MOD,      &quot;\033[15;5~&quot;,    0,    0},
+</a><a href="#h0-0-420" id="h0-0-420" class="i">+	{ XK_F30,           XK_NO_MOD,      &quot;\033[17;5~&quot;,    0,    0},
+</a><a href="#h0-0-421" id="h0-0-421" class="i">+	{ XK_F31,           XK_NO_MOD,      &quot;\033[18;5~&quot;,    0,    0},
+</a><a href="#h0-0-422" id="h0-0-422" class="i">+	{ XK_F32,           XK_NO_MOD,      &quot;\033[19;5~&quot;,    0,    0},
+</a><a href="#h0-0-423" id="h0-0-423" class="i">+	{ XK_F33,           XK_NO_MOD,      &quot;\033[20;5~&quot;,    0,    0},
+</a><a href="#h0-0-424" id="h0-0-424" class="i">+	{ XK_F34,           XK_NO_MOD,      &quot;\033[21;5~&quot;,    0,    0},
+</a><a href="#h0-0-425" id="h0-0-425" class="i">+	{ XK_F35,           XK_NO_MOD,      &quot;\033[23;5~&quot;,    0,    0},
+</a> };
+ 
+ /*
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -108,6 +108,7 @@ typedef struct {
+</a> static void execsh(char **);
+ static void stty(char **);
+ static void sigchld(int);
+<a href="#h1-0-3" id="h1-0-3" class="i">+static void ttywriteraw(const char *, size_t);
+</a> 
+ static void csidump(void);
+ static void csihandle(void);
+<a href="#h1-1" id="h1-1" class="h">@@ -786,13 +787,38 @@ ttyread(void)
+</a> void
+ ttywrite(const char *s, size_t n, int may_echo)
+ {
+<a href="#h1-1-3" id="h1-1-3" class="d">-	fd_set wfd, rfd;
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-	ssize_t r;
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	size_t lim = 256;
+</a><a href="#h1-1-6" id="h1-1-6" class="i">+	const char *next;
+</a> 
+ 	if (may_echo &amp;&amp; IS_SET(MODE_ECHO))
+ 		twrite(s, n, 1);
+ 
+<a href="#h1-1-11" id="h1-1-11" class="i">+	if (!IS_SET(MODE_CRLF)) {
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		ttywriteraw(s, n);
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+		return;
+</a><a href="#h1-1-14" id="h1-1-14" class="i">+	}
+</a><a href="#h1-1-15" id="h1-1-15" class="i">+
+</a><a href="#h1-1-16" id="h1-1-16" class="i">+	/* This is similar to how the kernel handles ONLCR for ttys */
+</a><a href="#h1-1-17" id="h1-1-17" class="i">+	while (n &gt; 0) {
+</a><a href="#h1-1-18" id="h1-1-18" class="i">+		if (*s == &#39;\r&#39;) {
+</a><a href="#h1-1-19" id="h1-1-19" class="i">+			next = s + 1;
+</a><a href="#h1-1-20" id="h1-1-20" class="i">+			ttywriteraw(&quot;\r\n&quot;, 2);
+</a><a href="#h1-1-21" id="h1-1-21" class="i">+		} else {
+</a><a href="#h1-1-22" id="h1-1-22" class="i">+			next = memchr(s, &#39;\r&#39;, n);
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+			DEFAULT(next, s + n);
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+			ttywriteraw(s, next - s);
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+		}
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+		n -= next - s;
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+		s = next;
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+	}
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+}
+</a><a href="#h1-1-30" id="h1-1-30" class="i">+
+</a><a href="#h1-1-31" id="h1-1-31" class="i">+void
+</a><a href="#h1-1-32" id="h1-1-32" class="i">+ttywriteraw(const char *s, size_t n)
+</a><a href="#h1-1-33" id="h1-1-33" class="i">+{
+</a><a href="#h1-1-34" id="h1-1-34" class="i">+	fd_set wfd, rfd;
+</a><a href="#h1-1-35" id="h1-1-35" class="i">+	ssize_t r;
+</a><a href="#h1-1-36" id="h1-1-36" class="i">+	size_t lim = 256;
+</a><a href="#h1-1-37" id="h1-1-37" class="i">+
+</a> 	/*
+ 	 * Remember that we are using a pty, which might be a modem line.
+ 	 * Writing too much will clog the line. That&#39;s why we are doing this
+<b>diff --git a/<a id="h2" href="../file/x.c.html">x.c</a> b/<a href="../file/x.c.html">x.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -38,10 +38,9 @@ typedef struct {
+</a> 	KeySym k;
+ 	uint mask;
+ 	char *s;
+<a href="#h2-0-3" id="h2-0-3" class="d">-	/* three valued logic variables: 0 indifferent, 1 on, -1 off */
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	/* three-valued logic variables: 0 indifferent, 1 on, -1 off */
+</a> 	signed char appkey;    /* application keypad */
+ 	signed char appcursor; /* application cursor */
+<a href="#h2-0-7" id="h2-0-7" class="d">-	signed char crlf;      /* crlf mode          */
+</a> } Key;
+ 
+ /* X modifiers */
+<a href="#h2-1" id="h2-1" class="h">@@ -1680,9 +1679,6 @@ kmap(KeySym k, uint state)
+</a> 		if (IS_SET(MODE_APPCURSOR) ? kp-&gt;appcursor &lt; 0 : kp-&gt;appcursor &gt; 0)
+ 			continue;
+ 
+<a href="#h2-1-3" id="h2-1-3" class="d">-		if (IS_SET(MODE_CRLF) ? kp-&gt;crlf &lt; 0 : kp-&gt;crlf &gt; 0)
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-			continue;
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-
+</a> 		return kp-&gt;s;
+ 	}
+ 
+</pre>
+</div>
+</body>
+</html>

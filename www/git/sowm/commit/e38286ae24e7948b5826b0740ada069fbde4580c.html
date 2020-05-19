@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>docs: update - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e38286ae24e7948b5826b0740ada069fbde4580c.html">e38286ae24e7948b5826b0740ada069fbde4580c</a>
+<b>parent</b> <a href="../commit/df174d7e301e1492cfaaa417c126ebdaeb304b56.html">df174d7e301e1492cfaaa417c126ebdaeb304b56</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 11 Oct 2019 23:40:30 +0300
+
+docs: update
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">33</td><td><span class="i">++++++++++++++++++++++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>1 file changed, 22 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -38,18 +38,15 @@ struct desktop{
+</a>     int mode;
+ };
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void configure_request(XEvent *e);
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-static void destroy_notify(XEvent *e);
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-static void map_request(XEvent *e);
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-static void run(const Arg arg);
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+static void notify_motion(XEvent *e);
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+static void notify_destroy(XEvent *e);
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+static void notify_enter(XEvent *e);
+</a> 
+ static void key_grab();
+ static void key_press(XEvent *e);
+ 
+ static void button_press(XEvent *e);
+ static void button_release(XEvent *e);
+<a href="#h0-0-17" id="h0-0-17" class="d">-static void motion_notify(XEvent *e);
+</a> 
+ static void win_add(Window w);
+ static void win_del(Window w);
+<a href="#h0-1" id="h0-1" class="h">@@ -64,6 +61,10 @@ static void ws_go(const Arg arg);
+</a> static void ws_save(int i);
+ static void ws_sel(int i);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="i">+static void configure_request(XEvent *e);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static void map_request(XEvent *e);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+static void run(const Arg arg);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+
+</a> static void wm_init();
+ static void wm_setup();
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -84,10 +85,11 @@ static void (*events[LASTEvent])(XEvent *e) = {
+</a>     [ButtonPress]      = button_press,
+     [ButtonRelease]    = button_release,
+     [ConfigureRequest] = configure_request,
+<a href="#h0-2-3" id="h0-2-3" class="d">-    [DestroyNotify]    = destroy_notify,
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+    [DestroyNotify]    = notify_destroy,
+</a>     [KeyPress]         = key_press,
+     [MapRequest]       = map_request,
+<a href="#h0-2-7" id="h0-2-7" class="d">-    [MotionNotify]     = motion_notify
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+    [MotionNotify]     = notify_motion,
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+    [EnterNotify]      = notify_enter
+</a> };
+ 
+ void win_add(Window w) {
+<a href="#h0-3" id="h0-3" class="h">@@ -111,6 +113,9 @@ void win_add(Window w) {
+</a>     c-&gt;next = NULL;
+     c-&gt;win  = w;
+     cur     = c;
+<a href="#h0-3-3" id="h0-3-3" class="i">+
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	XSelectInput(dis, w, PropertyChangeMask|StructureNotifyMask|
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+                         EnterWindowMask|FocusChangeMask);
+</a> }
+ 
+ void ws_go(const Arg arg) {
+<a href="#h0-4" id="h0-4" class="h">@@ -182,7 +187,7 @@ void win_to_ws(const Arg arg) {
+</a>     win_update();
+ }
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-void destroy_notify(XEvent *e) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+void notify_destroy(XEvent *e) {
+</a>     int i = 0;
+     client *c;
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -222,6 +227,11 @@ void win_update() {
+</a>         }
+ }
+ 
+<a href="#h0-5-3" id="h0-5-3" class="i">+void notify_enter(XEvent *e) {
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	XCrossingEvent *ev = &amp;e-&gt;xcrossing;
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+    XSetInputFocus(dis, ev-&gt;window, RevertToParent, CurrentTime);
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+}
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+
+</a> void key_grab() {
+     int i;
+     KeyCode code;
+<a href="#h0-6" id="h0-6" class="h">@@ -252,7 +262,7 @@ void button_press(XEvent *e) {
+</a>     }
+ }
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-void motion_notify(XEvent *e) {
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+void notify_motion(XEvent *e) {
+</a>     XButtonEvent bu = e-&gt;xbutton;
+ 
+     if (start.subwindow != None) {
+<a href="#h0-7" id="h0-7" class="h">@@ -388,7 +398,8 @@ void wm_setup() {
+</a>     curr_desk     = arg.i;
+     ws_go(arg);
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-    XSelectInput(dis, root, SubstructureNotifyMask|SubstructureRedirectMask);
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+    XSelectInput(dis, root, SubstructureNotifyMask|SubstructureRedirectMask|
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+                            EnterWindowMask|LeaveWindowMask);
+</a> }
+ 
+ void run(const Arg arg) {
+</pre>
+</div>
+</body>
+</html>

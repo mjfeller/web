@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding error checks for XCreateIC and XOpenIM. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/3c6ec1995d8ec4d8d5da7ca81d15adfdb08086aa.html">3c6ec1995d8ec4d8d5da7ca81d15adfdb08086aa</a>
+<b>parent</b> <a href="../commit/2696f8187509eb94644bbac5b05348e37c391bea.html">2696f8187509eb94644bbac5b05348e37c391bea</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Tue, 11 Dec 2012 08:32:08 +0100
+
+Adding error checks for XCreateIC and XOpenIM.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">TODO</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 4 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/TODO.html">TODO</a> b/<a href="../file/TODO.html">TODO</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -17,7 +17,6 @@ code &amp; interface
+</a> bugs
+ ----
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-* handle XOpenMI() errors
+</a> * fix shift up/down (shift selection in emacs)
+ * fix selection paste for xatom STRING
+ * fix umlaut handling in settitle
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -2431,9 +2431,13 @@ xinit(void) {
+</a> 
+ 	/* input methods */
+ 	xw.xim = XOpenIM(xw.dpy, NULL, NULL, NULL);
+<a href="#h1-0-3" id="h1-0-3" class="i">+	if(xw.xim == NULL)
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+		die(&quot;XOpenIM failed. Could not open input device.\n&quot;);
+</a> 	xw.xic = XCreateIC(xw.xim, XNInputStyle, XIMPreeditNothing
+ 					   | XIMStatusNothing, XNClientWindow, xw.win,
+ 					   XNFocusWindow, xw.win, NULL);
+<a href="#h1-0-8" id="h1-0-8" class="i">+	if(xw.xic == NULL)
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+		die(&quot;XCreateIC failed. Could not obtain input method.\n&quot;);
+</a> 
+ 	/* white cursor, black outline */
+ 	cursor = XCreateFontCursor(xw.dpy, XC_xterm);
+</pre>
+</div>
+</body>
+</html>

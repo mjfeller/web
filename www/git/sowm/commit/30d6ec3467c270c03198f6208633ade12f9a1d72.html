@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>docs: update - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/30d6ec3467c270c03198f6208633ade12f9a1d72.html">30d6ec3467c270c03198f6208633ade12f9a1d72</a>
+<b>parent</b> <a href="../commit/8147eece3d5bc921cbb7b5debd7d852740db69f9.html">8147eece3d5bc921cbb7b5debd7d852740db69f9</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 12 Oct 2019 21:12:56 +0300
+
+docs: update
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">16</td><td><span class="i">+++++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -52,7 +52,6 @@ static void win_fs_current();
+</a> static void win_kill();
+ static void win_next();
+ static void win_to_ws(const Arg arg);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void win_update(Window w);
+</a> 
+ static void ws_go(const Arg arg);
+ static void ws_save(int i);
+<a href="#h0-1" id="h0-1" class="h">@@ -118,8 +117,7 @@ void ws_go(const Arg arg) {
+</a>     client *c;
+     int tmp = desk;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-    if (arg.i == desk)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-        return;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+    if (arg.i == desk) return;
+</a> 
+     ws_save(desk);
+     ws_sel(arg.i);
+<a href="#h0-2" id="h0-2" class="h">@@ -165,7 +163,7 @@ void win_fs(Window w) {
+</a> 
+     if (!c) return;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-    if (c-&gt;f != 1) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+    if (!c-&gt;f) {
+</a>         XGetWindowAttributes(dis, w, &amp;attr);
+ 
+         c-&gt;f = 1;
+<a href="#h0-3" id="h0-3" class="h">@@ -180,7 +178,7 @@ void win_fs(Window w) {
+</a>     else {
+         c-&gt;f = 0;
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-        XMoveResizeWindow(dis, c-&gt;win, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+        XMoveResizeWindow(dis, w, c-&gt;x, c-&gt;y, c-&gt;w, c-&gt;h);
+</a>     }
+ }
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -230,10 +228,6 @@ void configure_request(XEvent *e) {
+</a>     XConfigureWindow(dis, ev-&gt;window, ev-&gt;value_mask, &amp;wc);
+ }
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-void win_update(Window w) {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-    XSetInputFocus(dis, w, RevertToParent, CurrentTime);
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-}
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-
+</a> void notify_enter(XEvent *e) {
+     XSetInputFocus(dis, e-&gt;xcrossing.window, RevertToParent, CurrentTime);
+ }
+<a href="#h0-5" id="h0-5" class="h">@@ -300,7 +294,7 @@ void map_request(XEvent *e) {
+</a>                                   EnterWindowMask|FocusChangeMask);
+     win_center(ev-&gt;window);
+     XMapWindow(dis, ev-&gt;window);
+<a href="#h0-5-3" id="h0-5-3" class="d">-    win_update(ev-&gt;window);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+    XSetInputFocus(dis, ev-&gt;window, RevertToParent, CurrentTime);
+</a>     win_add(ev-&gt;window);
+ }
+ 
+<a href="#h0-6" id="h0-6" class="h">@@ -315,7 +309,7 @@ void win_next() {
+</a> 
+         if (!c) c = head;
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-        win_update(c-&gt;win);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+        XSetInputFocus(dis, c-&gt;win, RevertToParent, CurrentTime);
+</a>         XRaiseWindow(dis, c-&gt;win);
+     }
+ }
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Normalize the whole color selection in xdrawcursor. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2ea02c937e3a1810050a5fb9f51e7e522d23af3b.html">2ea02c937e3a1810050a5fb9f51e7e522d23af3b</a>
+<b>parent</b> <a href="../commit/80fe97f8a66d31945bdddbb9381b2cc54359f48e.html">80fe97f8a66d31945bdddbb9381b2cc54359f48e</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Tue,  6 Oct 2015 00:21:44 +0200
+
+Normalize the whole color selection in xdrawcursor.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">33</td><td><span class="i">++++++++++++++++++++++</span><span class="d">-----------</span></td></tr>
+</table></pre><pre>1 file changed, 22 insertions(+), 11 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3850,12 +3850,29 @@ xdrawcursor(void)
+</a> 	xdrawglyph(og, oldx, oldy);
+ 
+ 	g.u = term.line[term.c.y][term.c.x].u;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	if (ena_sel &amp;&amp; selected(term.c.x, term.c.y)) {
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-		drawcol = dc.col[defaultrcs];
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-		g.fg = defaultfg;
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-		g.bg = defaultrcs;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	/*
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	 * Select the right color for the right mode.
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	 */
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	if (IS_SET(MODE_REVERSE)) {
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+		g.mode |= ATTR_REVERSE;
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+		g.bg = defaultfg;
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+		if (ena_sel &amp;&amp; selected(term.c.x, term.c.y)) {
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+			drawcol = dc.col[defaultcs];
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+			g.fg = defaultrcs;
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+		} else {
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+			drawcol = dc.col[defaultrcs];
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+			g.fg = defaultcs;
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		}
+</a> 	} else {
+<a href="#h0-0-22" id="h0-0-22" class="d">-		drawcol = dc.col[defaultcs];
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		g.fg = defaultfg;
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+		if (ena_sel &amp;&amp; selected(term.c.x, term.c.y)) {
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+			g.bg = defaultcs;
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+			drawcol = dc.col[defaultrcs];
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+		} else {
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+			drawcol = dc.col[defaultcs];
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+			g.bg = defaultrcs;
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+		}
+</a> 	}
+ 
+ 	if (IS_SET(MODE_HIDE))
+<a href="#h0-1" id="h0-1" class="h">@@ -3869,12 +3886,6 @@ xdrawcursor(void)
+</a> 		case 0: /* Blinking Block */
+ 		case 1: /* Blinking Block (Default) */
+ 		case 2: /* Steady Block */
+<a href="#h0-1-3" id="h0-1-3" class="d">-			if (IS_SET(MODE_REVERSE)) {
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-				g.mode |= ATTR_REVERSE;
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-				g.fg = defaultcs;
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-				g.bg = defaultfg;
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-			}
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-
+</a> 			g.mode |= term.line[term.c.y][curx].mode &amp; ATTR_WIDE;
+ 			xdrawglyph(g, term.c.x, term.c.y);
+ 			break;
+</pre>
+</div>
+</body>
+</html>

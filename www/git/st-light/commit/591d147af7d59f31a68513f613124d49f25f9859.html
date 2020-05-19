@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fix segfault when selecting big buffers - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/591d147af7d59f31a68513f613124d49f25f9859.html">591d147af7d59f31a68513f613124d49f25f9859</a>
+<b>parent</b> <a href="../commit/1132d9e2d65f469dedd9c5b6f356495c7a87b743.html">1132d9e2d65f469dedd9c5b6f356495c7a87b743</a>
+<b>Author:</b> pancake@nopcode.org &lt;<a href="mailto:unknown">unknown</a>&gt;
+<b>Date:</b>   Tue, 31 Aug 2010 17:36:55 +0200
+
+fix segfault when selecting big buffers
+
+shift+insert paste clipboard
+honor CFLAGS and LDFLAGS in config.mk
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.mk</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">22</td><td><span class="i">++++++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>2 files changed, 9 insertions(+), 19 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -16,8 +16,8 @@ LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lutil
+</a> 
+ # flags
+ CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot;
+<a href="#h0-0-3" id="h0-0-3" class="d">-CFLAGS = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-LDFLAGS = -s ${LIBS}
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+CFLAGS += -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+LDFLAGS += -s ${LIBS}
+</a> 
+ # compiler and linker
+<a href="#h0-0-9" id="h0-0-9" class="d">-CC = cc
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+CC ?= cc
+</a><b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -249,19 +249,15 @@ static char *getseltext() {
+</a> 	int ls, x, y, sz;
+ 	if(sel.bx==-1)
+ 		return NULL;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	sz = ((xw.w/xw.ch) * (sel.e[1]-sel.b[1]+2));
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	sz = ((term.col+1) * (sel.e[1]-sel.b[1]+1));
+</a> 	ptr = str = malloc (sz);
+ 	for(y = 0; y &lt; term.row; y++) {
+ 		for(x = 0; x &lt; term.col; x++) {
+<a href="#h1-0-8" id="h1-0-8" class="d">-			if(term.line[y][x].state &amp; GLYPH_SET &amp;&amp; (ls=selected(x, y))) {
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-				*ptr = term.line[y][x].c;
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-				ptr++;
+</a><a href="#h1-0-11" id="h1-0-11" class="d">-			}
+</a><a href="#h1-0-12" id="h1-0-12" class="d">-		}
+</a><a href="#h1-0-13" id="h1-0-13" class="d">-		if (ls) {
+</a><a href="#h1-0-14" id="h1-0-14" class="d">-			*ptr = &#39;\n&#39;;
+</a><a href="#h1-0-15" id="h1-0-15" class="d">-			ptr++;
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+			if(term.line[y][x].state &amp; GLYPH_SET &amp;&amp; (ls=selected(x, y)))
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+				*ptr = term.line[y][x].c, ptr++;
+</a> 		}
+<a href="#h1-0-19" id="h1-0-19" class="i">+		if (ls)
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+			*ptr = &#39;\n&#39;, ptr++;
+</a> 	}
+ 	*ptr = 0;
+ 	return str;
+<a href="#h1-1" id="h1-1" class="h">@@ -283,12 +279,6 @@ static void brelease(XEvent *e) {
+</a> 	int b;
+ 	sel.mode = 0;
+ 	getbuttoninfo(e, &amp;b, &amp;sel.ex, &amp;sel.ey);
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if(b==4)
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-		tscrollup(1);
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-	else
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-	if(b==5)
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-		tscrolldown(1);
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-	else
+</a> 	if(sel.bx==sel.ex &amp;&amp; sel.by==sel.ey) {
+ 		sel.bx = -1;
+ 		if(b==2)
+<a href="#h1-2" id="h1-2" class="h">@@ -1411,7 +1401,7 @@ kpress(XEvent *ev) {
+</a> 			break;
+ 		case XK_Insert:
+ 			if(shift)
+<a href="#h1-2-3" id="h1-2-3" class="d">-				draw(1), puts(&quot;draw!&quot;)/* XXX: paste X clipboard */;
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+				selpaste(), draw(1);
+</a> 			break;
+ 		default:
+ 			fprintf(stderr, &quot;errkey: %d\n&quot;, (int)ksym);
+</pre>
+</div>
+</body>
+</html>

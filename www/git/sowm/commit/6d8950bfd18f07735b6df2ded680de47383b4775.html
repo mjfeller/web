@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>docs: update - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6d8950bfd18f07735b6df2ded680de47383b4775.html">6d8950bfd18f07735b6df2ded680de47383b4775</a>
+<b>parent</b> <a href="../commit/14b0cccedddc42da7973ed4fb047c3943249ef31.html">14b0cccedddc42da7973ed4fb047c3943249ef31</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 12 Oct 2019 20:02:35 +0300
+
+docs: update
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">49</td><td><span class="i">++++++++++++++++++++++++++++</span><span class="d">---------------------</span></td></tr>
+</table></pre><pre>1 file changed, 28 insertions(+), 21 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,6 +10,8 @@
+</a> #include &lt;signal.h&gt;
+ #include &lt;unistd.h&gt;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define WIN (c=head;c;c=c-&gt;next)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a> typedef union {
+     const char** com;
+     const int i;
+<a href="#h0-1" id="h0-1" class="h">@@ -29,12 +31,12 @@ struct client{
+</a>     int f, x, y, w, h;
+ };
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-typedef struct desktop desktop;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-struct desktop{client *head;};
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+typedef struct ws ws;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+struct ws{client *head;};
+</a> 
+<a href="#h0-1-8" id="h0-1-8" class="d">-static void notify_motion(XEvent *e);
+</a> static void notify_destroy(XEvent *e);
+ static void notify_enter(XEvent *e);
+<a href="#h0-1-11" id="h0-1-11" class="i">+static void notify_motion(XEvent *e);
+</a> 
+ static void key_grab();
+ static void key_press(XEvent *e);
+<a href="#h0-2" id="h0-2" class="h">@@ -43,12 +45,12 @@ static void button_press(XEvent *e);
+</a> static void button_release();
+ 
+ static void win_add(Window w);
+<a href="#h0-2-3" id="h0-2-3" class="i">+static void win_center(Window w);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+static void win_center_current();
+</a> static void win_del(Window w);
+ static void win_fs(Window w);
+ static void win_fs_current();
+ static void win_kill();
+<a href="#h0-2-9" id="h0-2-9" class="d">-static void win_center(Window w);
+</a><a href="#h0-2-10" id="h0-2-10" class="d">-static void win_center_current();
+</a> static void win_next();
+ static void win_to_ws(const Arg arg);
+ static void win_update(Window w);
+<a href="#h0-3" id="h0-3" class="h">@@ -65,7 +67,7 @@ static void wm_init();
+</a> static void wm_setup();
+ 
+ static client  *head;
+<a href="#h0-3-3" id="h0-3-3" class="d">-static desktop desktops[10];
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+static ws ws_list[10];
+</a> 
+ static int desk = 1, sh, sw;
+ 
+<a href="#h0-4" id="h0-4" class="h">@@ -81,11 +83,11 @@ static void (*events[LASTEvent])(XEvent *e) = {
+</a>     [ButtonPress]      = button_press,
+     [ButtonRelease]    = button_release,
+     [ConfigureRequest] = configure_request,
+<a href="#h0-4-3" id="h0-4-3" class="d">-    [DestroyNotify]    = notify_destroy,
+</a>     [KeyPress]         = key_press,
+     [MapRequest]       = map_request,
+<a href="#h0-4-6" id="h0-4-6" class="d">-    [MotionNotify]     = notify_motion,
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-    [EnterNotify]      = notify_enter
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+    [DestroyNotify]    = notify_destroy,
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+    [EnterNotify]      = notify_enter,
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+    [MotionNotify]     = notify_motion
+</a> };
+ 
+ void win_add(Window w) {
+<a href="#h0-5" id="h0-5" class="h">@@ -115,18 +117,23 @@ void win_add(Window w) {
+</a> 
+ void ws_go(const Arg arg) {
+     client *c;
+<a href="#h0-5-3" id="h0-5-3" class="i">+    int tmp = desk;
+</a> 
+     if (arg.i == desk)
+         return;
+ 
+<a href="#h0-5-8" id="h0-5-8" class="d">-    if (head != NULL)
+</a><a href="#h0-5-9" id="h0-5-9" class="d">-        for(c=head;c;c=c-&gt;next) XUnmapWindow(dis, c-&gt;win);
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-
+</a>     ws_save(desk);
+     ws_sel(arg.i);
+ 
+     if (head != NULL)
+<a href="#h0-5-15" id="h0-5-15" class="d">-        for(c=head;c;c=c-&gt;next) XMapWindow(dis, c-&gt;win);
+</a><a href="#h0-5-16" id="h0-5-16" class="i">+        for WIN XMapWindow(dis, c-&gt;win);
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+    ws_sel(tmp);
+</a><a href="#h0-5-19" id="h0-5-19" class="i">+
+</a><a href="#h0-5-20" id="h0-5-20" class="i">+    if (head != NULL)
+</a><a href="#h0-5-21" id="h0-5-21" class="i">+        for WIN XUnmapWindow(dis, c-&gt;win);
+</a><a href="#h0-5-22" id="h0-5-22" class="i">+
+</a><a href="#h0-5-23" id="h0-5-23" class="i">+    ws_sel(arg.i);
+</a> }
+ 
+ Window win_current() {
+<a href="#h0-6" id="h0-6" class="h">@@ -157,7 +164,7 @@ void win_fs_current() {
+</a> void win_fs(Window w) {
+     client *c;
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-    for(c=head;c;c=c-&gt;next)
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+    for WIN
+</a>         if (c-&gt;win == w) break;
+ 
+     if (c == NULL) return;
+<a href="#h0-7" id="h0-7" class="h">@@ -204,7 +211,7 @@ void notify_destroy(XEvent *e) {
+</a> 
+     XDestroyWindowEvent *ev = &amp;e-&gt;xdestroywindow;
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-    for (c=head;c;c=c-&gt;next)
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+    for WIN
+</a>         if(ev-&gt;window == c-&gt;win) i++;
+ 
+     if (i == 0)
+<a href="#h0-8" id="h0-8" class="h">@@ -306,7 +313,7 @@ void win_next() {
+</a>     client *c;
+ 
+     if (head != NULL) {
+<a href="#h0-8-3" id="h0-8-3" class="d">-        for(c=head;c;c=c-&gt;next)
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+        for WIN
+</a>             if (c-&gt;win == cur) break;
+ 
+         c = c-&gt;next;
+<a href="#h0-9" id="h0-9" class="h">@@ -321,7 +328,7 @@ void win_next() {
+</a> void win_del(Window w) {
+     client *c;
+ 
+<a href="#h0-9-3" id="h0-9-3" class="d">-    for(c=head;c;c=c-&gt;next) {
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+    for WIN {
+</a>         if (c-&gt;win != w) continue;
+ 
+         if (c-&gt;prev == NULL &amp;&amp; c-&gt;next == NULL) {
+<a href="#h0-10" id="h0-10" class="h">@@ -354,11 +361,11 @@ void win_del(Window w) {
+</a> }
+ 
+ void ws_save(int i) {
+<a href="#h0-10-3" id="h0-10-3" class="d">-    desktops[i].head = head;
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+    ws_list[i].head = head;
+</a> }
+ 
+ void ws_sel(int i) {
+<a href="#h0-10-8" id="h0-10-8" class="d">-    head = desktops[i].head;
+</a><a href="#h0-10-9" id="h0-10-9" class="i">+    head = ws_list[i].head;
+</a>     desk = i;
+ }
+ 
+<a href="#h0-11" id="h0-11" class="h">@@ -372,8 +379,8 @@ void wm_setup() {
+</a> 
+     key_grab();
+ 
+<a href="#h0-11-3" id="h0-11-3" class="d">-    for(int i=0; i &lt; sizeof(desktops)/sizeof(*desktops); ++i)
+</a><a href="#h0-11-4" id="h0-11-4" class="d">-        desktops[i].head = NULL;
+</a><a href="#h0-11-5" id="h0-11-5" class="i">+    for(int i=0; i &lt; sizeof(ws_list)/sizeof(*ws_list); ++i)
+</a><a href="#h0-11-6" id="h0-11-6" class="i">+        ws_list[i].head = NULL;
+</a> 
+     const Arg arg = {.i = 1};
+     ws_go(arg);
+</pre>
+</div>
+</body>
+</html>

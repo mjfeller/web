@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fixing color and refactor xsetcolorname. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c6fcb78b3a9a73b691875048848430c18870a0fc.html">c6fcb78b3a9a73b691875048848430c18870a0fc</a>
+<b>parent</b> <a href="../commit/8b4cfcea73a37ab6d67c06c69e9af3de304185e3.html">8b4cfcea73a37ab6d67c06c69e9af3de304185e3</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sun,  1 Jun 2014 17:08:16 +0200
+
+Fixing color and refactor xsetcolorname.
+
+By  the recommendation of FRIGN I refactored xsetcolorname to remove the
+unnecessary r, g, b variables when allocating a new  color.  Colors  are
+now freed and set to the new color. A die() should not happen here. Oth‐
+erwise it is easy for applications to kill st. St should be resilent  to
+malicious input.
+
+Second  this  patch  standardises  the  naming  of  »color«. There is no
+»colour« here. Maybe in some parts of the world.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">88</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 50 insertions(+), 38 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -179,8 +179,8 @@ typedef unsigned long ulong;
+</a> typedef unsigned short ushort;
+ 
+ typedef XftDraw *Draw;
+<a href="#h0-0-3" id="h0-0-3" class="d">-typedef XftColor Colour;
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-typedef Colormap Colourmap;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+typedef XftColor Color;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+typedef Colormap Colormap;
+</a> 
+ typedef struct {
+ 	char c[UTF_SIZ]; /* character code */
+<a href="#h0-1" id="h0-1" class="h">@@ -241,7 +241,7 @@ typedef struct {
+</a> /* Purely graphic info */
+ typedef struct {
+ 	Display *dpy;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	Colourmap cmap;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	Colormap cmap;
+</a> 	Window win;
+ 	Drawable buf;
+ 	Atom xembed, wmdeletewin, netwmname, netwmpid;
+<a href="#h0-2" id="h0-2" class="h">@@ -340,7 +340,7 @@ typedef struct {
+</a> 
+ /* Drawing Context */
+ typedef struct {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	Colour col[MAX(LEN(colorname), 256)];
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	Color col[MAX(LEN(colorname), 256)];
+</a> 	Font font, bfont, ifont, ibfont;
+ 	GC gc;
+ } DC;
+<a href="#h0-3" id="h0-3" class="h">@@ -1631,7 +1631,7 @@ tdefcolor(int *attr, int *npar, int l) {
+</a> 	uint r, g, b;
+ 
+ 	switch (attr[*npar + 1]) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-	case 2: /* direct colour in RGB space */
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	case 2: /* direct color in RGB space */
+</a> 		if (*npar + 4 &gt;= l) {
+ 			fprintf(stderr,
+ 				&quot;erresc(38): Incorrect number of parameters (%d)\n&quot;,
+<a href="#h0-4" id="h0-4" class="h">@@ -1648,7 +1648,7 @@ tdefcolor(int *attr, int *npar, int l) {
+</a> 		else
+ 			idx = TRUECOLOR(r, g, b);
+ 		break;
+<a href="#h0-4-3" id="h0-4-3" class="d">-	case 5: /* indexed colour */
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	case 5: /* indexed color */
+</a> 		if (*npar + 2 &gt;= l) {
+ 			fprintf(stderr,
+ 				&quot;erresc(38): Incorrect number of parameters (%d)\n&quot;,
+<a href="#h0-5" id="h0-5" class="h">@@ -1663,8 +1663,8 @@ tdefcolor(int *attr, int *npar, int l) {
+</a> 		break;
+ 	case 0: /* implemented defined (only foreground) */
+ 	case 1: /* transparent */
+<a href="#h0-5-3" id="h0-5-3" class="d">-	case 3: /* direct colour in CMY space */
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	case 4: /* direct colour in CMYK space */
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+	case 3: /* direct color in CMY space */
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+	case 4: /* direct color in CMYK space */
+</a> 	default:
+ 		fprintf(stderr,
+ 		        &quot;erresc(38): gfx attr %d unknown\n&quot;, attr[*npar]);
+<a href="#h0-6" id="h0-6" class="h">@@ -2151,7 +2151,7 @@ strhandle(void) {
+</a> 			/* FALLTHROUGH */
+ 		case 104: /* color reset, here p = NULL */
+ 			j = (narg &gt; 1) ? atoi(strescseq.args[1]) : -1;
+<a href="#h0-6-3" id="h0-6-3" class="d">-			if (!xsetcolorname(j, p)) {
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+			if(xsetcolorname(j, p)) {
+</a> 				fprintf(stderr, &quot;erresc: invalid color %s\n&quot;, p);
+ 			} else {
+ 				/*
+<a href="#h0-7" id="h0-7" class="h">@@ -2720,14 +2720,14 @@ xloadcols(void) {
+</a> 	int i;
+ 	XRenderColor color = { .alpha = 0xffff };
+ 	static bool loaded;
+<a href="#h0-7-3" id="h0-7-3" class="d">-	Colour *cp;
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	Color *cp;
+</a> 
+ 	if(loaded) {
+ 		for (cp = dc.col; cp &lt; dc.col + LEN(dc.col); ++cp)
+ 			XftColorFree(xw.dpy, xw.vis, xw.cmap, cp);
+ 	}
+ 
+<a href="#h0-7-11" id="h0-7-11" class="d">-	/* load colours [0-15] and [256-LEN(colorname)] (config.h) */
+</a><a href="#h0-7-12" id="h0-7-12" class="i">+	/* load colors [0-15] and [256-LEN(colorname)] (config.h) */
+</a> 	for(i = 0; i &lt; LEN(colorname); i++) {
+ 		if(!colorname[i])
+ 			continue;
+<a href="#h0-8" id="h0-8" class="h">@@ -2736,7 +2736,7 @@ xloadcols(void) {
+</a> 		}
+ 	}
+ 
+<a href="#h0-8-3" id="h0-8-3" class="d">-	/* load colours [16-231] ; same colours as xterm */
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+	/* load colors [16-231] ; same colors as xterm */
+</a> 	for(i = 16; i &lt; 6*6*6+16; i++) {
+ 		color.red   = sixd_to_16bit( ((i-16)/36)%6 );
+ 		color.green = sixd_to_16bit( ((i-16)/6) %6 );
+<a href="#h0-9" id="h0-9" class="h">@@ -2745,7 +2745,7 @@ xloadcols(void) {
+</a> 			die(&quot;Could not allocate color %d\n&quot;, i);
+ 	}
+ 
+<a href="#h0-9-3" id="h0-9-3" class="d">-	/* load colours [232-255] ; grayscale */
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+	/* load colors [232-255] ; grayscale */
+</a> 	for(; i &lt; 256; i++) {
+ 		color.red = color.green = color.blue = 0x0808 + 0x0a0a * (i-(6*6*6+16));
+ 		if(!XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;color, &amp;dc.col[i]))
+<a href="#h0-10" id="h0-10" class="h">@@ -2757,33 +2757,45 @@ xloadcols(void) {
+</a> int
+ xsetcolorname(int x, const char *name) {
+ 	XRenderColor color = { .alpha = 0xffff };
+<a href="#h0-10-3" id="h0-10-3" class="d">-	Colour colour;
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+	Color ncolor;
+</a><a href="#h0-10-5" id="h0-10-5" class="i">+
+</a> 	if(!BETWEEN(x, 0, LEN(colorname)))
+<a href="#h0-10-7" id="h0-10-7" class="d">-		return -1;
+</a><a href="#h0-10-8" id="h0-10-8" class="i">+		return 1;
+</a><a href="#h0-10-9" id="h0-10-9" class="i">+
+</a> 	if(!name) {
+<a href="#h0-10-11" id="h0-10-11" class="d">-		if(BETWEEN(x, 16, 16 + 215)) {
+</a><a href="#h0-10-12" id="h0-10-12" class="d">-			int r = (x - 16) / 36, g = ((x - 16) % 36) / 6, b = (x - 16) % 6;
+</a><a href="#h0-10-13" id="h0-10-13" class="d">-			color.red = sixd_to_16bit(r);
+</a><a href="#h0-10-14" id="h0-10-14" class="d">-			color.green = sixd_to_16bit(g);
+</a><a href="#h0-10-15" id="h0-10-15" class="d">-			color.blue = sixd_to_16bit(b);
+</a><a href="#h0-10-16" id="h0-10-16" class="d">-			if(!XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;color, &amp;colour))
+</a><a href="#h0-10-17" id="h0-10-17" class="d">-				return 0; /* something went wrong */
+</a><a href="#h0-10-18" id="h0-10-18" class="d">-			dc.col[x] = colour;
+</a><a href="#h0-10-19" id="h0-10-19" class="d">-			return 1;
+</a><a href="#h0-10-20" id="h0-10-20" class="d">-		} else if(BETWEEN(x, 16 + 216, 255)) {
+</a><a href="#h0-10-21" id="h0-10-21" class="d">-			color.red = color.green = color.blue = 0x0808 + 0x0a0a * (x - (16 + 216));
+</a><a href="#h0-10-22" id="h0-10-22" class="d">-			if(!XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;color, &amp;colour))
+</a><a href="#h0-10-23" id="h0-10-23" class="d">-				return 0; /* something went wrong */
+</a><a href="#h0-10-24" id="h0-10-24" class="d">-			dc.col[x] = colour;
+</a><a href="#h0-10-25" id="h0-10-25" class="d">-			return 1;
+</a><a href="#h0-10-26" id="h0-10-26" class="d">-		} else {
+</a><a href="#h0-10-27" id="h0-10-27" class="i">+		if(BETWEEN(x, 16, 16 + 215)) { /* 256 color */
+</a><a href="#h0-10-28" id="h0-10-28" class="i">+			color.red   = sixd_to_16bit( ((x-16)/36)%6 );
+</a><a href="#h0-10-29" id="h0-10-29" class="i">+			color.green = sixd_to_16bit( ((x-16)/6) %6 );
+</a><a href="#h0-10-30" id="h0-10-30" class="i">+			color.blue  = sixd_to_16bit( ((x-16)/1) %6 );
+</a><a href="#h0-10-31" id="h0-10-31" class="i">+			if(!XftColorAllocValue(xw.dpy, xw.vis,
+</a><a href="#h0-10-32" id="h0-10-32" class="i">+						xw.cmap, &amp;color, &amp;ncolor)) {
+</a><a href="#h0-10-33" id="h0-10-33" class="i">+				return 1;
+</a><a href="#h0-10-34" id="h0-10-34" class="i">+			}
+</a><a href="#h0-10-35" id="h0-10-35" class="i">+
+</a><a href="#h0-10-36" id="h0-10-36" class="i">+			XftColorFree(xw.dpy, xw.vis, xw.cmap, &amp;dc.col[x]);
+</a><a href="#h0-10-37" id="h0-10-37" class="i">+			dc.col[x] = ncolor;
+</a><a href="#h0-10-38" id="h0-10-38" class="i">+			return 0;
+</a><a href="#h0-10-39" id="h0-10-39" class="i">+		} else if(BETWEEN(x, 16 + 216, 255)) { /* greyscale */
+</a><a href="#h0-10-40" id="h0-10-40" class="i">+			color.red = color.green = color.blue = \
+</a><a href="#h0-10-41" id="h0-10-41" class="i">+				    0x0808 + 0x0a0a * (x - (16 + 216));
+</a><a href="#h0-10-42" id="h0-10-42" class="i">+			if(!XftColorAllocValue(xw.dpy, xw.vis,
+</a><a href="#h0-10-43" id="h0-10-43" class="i">+						xw.cmap, &amp;color, &amp;ncolor)) {
+</a><a href="#h0-10-44" id="h0-10-44" class="i">+				return 1;
+</a><a href="#h0-10-45" id="h0-10-45" class="i">+			}
+</a><a href="#h0-10-46" id="h0-10-46" class="i">+
+</a><a href="#h0-10-47" id="h0-10-47" class="i">+			XftColorFree(xw.dpy, xw.vis, xw.cmap, &amp;dc.col[x]);
+</a><a href="#h0-10-48" id="h0-10-48" class="i">+			dc.col[x] = ncolor;
+</a><a href="#h0-10-49" id="h0-10-49" class="i">+			return 0;
+</a><a href="#h0-10-50" id="h0-10-50" class="i">+		} else { /* system colors */
+</a> 			name = colorname[x];
+ 		}
+ 	}
+<a href="#h0-10-54" id="h0-10-54" class="d">-	if(!XftColorAllocName(xw.dpy, xw.vis, xw.cmap, name, &amp;colour))
+</a><a href="#h0-10-55" id="h0-10-55" class="d">-		return 0;
+</a><a href="#h0-10-56" id="h0-10-56" class="d">-	dc.col[x] = colour;
+</a><a href="#h0-10-57" id="h0-10-57" class="d">-	return 1;
+</a><a href="#h0-10-58" id="h0-10-58" class="i">+	if(!XftColorAllocName(xw.dpy, xw.vis, xw.cmap, name, &amp;ncolor))
+</a><a href="#h0-10-59" id="h0-10-59" class="i">+		return 1;
+</a><a href="#h0-10-60" id="h0-10-60" class="i">+
+</a><a href="#h0-10-61" id="h0-10-61" class="i">+	XftColorFree(xw.dpy, xw.vis, xw.cmap, &amp;dc.col[x]);
+</a><a href="#h0-10-62" id="h0-10-62" class="i">+	dc.col[x] = ncolor;
+</a><a href="#h0-10-63" id="h0-10-63" class="i">+	return 0;
+</a> }
+ 
+ void
+<a href="#h0-11" id="h0-11" class="h">@@ -3099,7 +3111,7 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 	FcPattern *fcpattern, *fontpattern;
+ 	FcFontSet *fcsets[] = { NULL };
+ 	FcCharSet *fccharset;
+<a href="#h0-11-3" id="h0-11-3" class="d">-	Colour *fg, *bg, *temp, revfg, revbg, truefg, truebg;
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+	Color *fg, *bg, *temp, revfg, revbg, truefg, truebg;
+</a> 	XRenderColor colfg, colbg;
+ 	XRectangle r;
+ 	int oneatatime;
+<a href="#h0-12" id="h0-12" class="h">@@ -3145,8 +3157,8 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 
+ 	if(base.mode &amp; ATTR_BOLD) {
+ 		/*
+<a href="#h0-12-3" id="h0-12-3" class="d">-		 * change basic system colours [0-7]
+</a><a href="#h0-12-4" id="h0-12-4" class="d">-		 * to bright system colours [8-15]
+</a><a href="#h0-12-5" id="h0-12-5" class="i">+		 * change basic system colors [0-7]
+</a><a href="#h0-12-6" id="h0-12-6" class="i">+		 * to bright system colors [8-15]
+</a> 		 */
+ 		if(BETWEEN(base.fg, 0, 7))
+ 			fg = &amp;dc.col[base.fg + 8];
+</pre>
+</div>
+</body>
+</html>

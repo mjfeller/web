@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>utf8 support! print text in delicious unicode greatness! all hail to the glorious Damian Okrasa for the patch! - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9b74fcadc46ee78b38b20e9663c6924cd9df7e84.html">9b74fcadc46ee78b38b20e9663c6924cd9df7e84</a>
+<b>parent</b> <a href="../commit/d581bfccd7c2987e12809383d8ce1f833529b715.html">d581bfccd7c2987e12809383d8ce1f833529b715</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 18 Nov 2010 01:00:04 +0100
+
+utf8 support! print text in delicious unicode greatness! all hail to the glorious Damian Okrasa for the patch!
+
+TERM set back to xterm.
+changed default fonts.
+Note: drawing is now (even) slower.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">29</td><td><span class="i">+++</span><span class="d">--------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">322</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------</span></td></tr>
+</table></pre><pre>2 files changed, 260 insertions(+), 91 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,7 +1,7 @@
+</a> #define TAB 8
+<a href="#h0-0-1" id="h0-0-1" class="d">-#define TNAME &quot;st-256color&quot;
+</a><a href="#h0-0-2" id="h0-0-2" class="d">-#define FONT &quot;-misc-*-medium-r-semicondensed-*-13-*-*-*-*-*-iso8859-*&quot;
+</a><a href="#h0-0-3" id="h0-0-3" class="d">-#define BOLDFONT &quot;-misc-*-bold-r-semicondensed-*-13-*-*-*-*-*-iso8859-*&quot;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define TNAME &quot;xterm&quot;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#define FONT &quot;-*-*-medium-r-*-*-*-120-75-75-*-60-*-*&quot;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#define BOLDFONT &quot;-*-*-bold-r-*-*-*-120-75-75-*-60-*-*&quot;
+</a> #define BORDER 2
+ #define SHELL &quot;/bin/sh&quot;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -55,31 +55,8 @@ static Key key[] = {
+</a> 
+ /* Line drawing characters (sometime specific to each font...) */
+ static char gfx[] = {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	[&#39;`&#39;] = 0x01,
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	[&#39;a&#39;] = 0x02,
+</a> 	[&#39;f&#39;] = &#39;o&#39;,
+ 	[&#39;g&#39;] = &#39;+&#39;,
+ 	[&#39;i&#39;] = &#39;#&#39;,
+<a href="#h0-1-8" id="h0-1-8" class="d">-	[&#39;j&#39;] = 0x0B,
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	[&#39;k&#39;] = 0x0C,
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	[&#39;l&#39;] = 0x0D,
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-	[&#39;m&#39;] = 0x0E,
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-	[&#39;n&#39;] = 0x0F,
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-	[&#39;o&#39;] = 0x10,
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-	[&#39;p&#39;] = 0x11,
+</a><a href="#h0-1-15" id="h0-1-15" class="d">-	[&#39;q&#39;] = 0x12,
+</a><a href="#h0-1-16" id="h0-1-16" class="d">-	[&#39;r&#39;] = 0x13,
+</a><a href="#h0-1-17" id="h0-1-17" class="d">-	[&#39;s&#39;] = 0x14,
+</a><a href="#h0-1-18" id="h0-1-18" class="d">-	[&#39;t&#39;] = 0x15,
+</a><a href="#h0-1-19" id="h0-1-19" class="d">-	[&#39;u&#39;] = 0x16,
+</a><a href="#h0-1-20" id="h0-1-20" class="d">-	[&#39;v&#39;] = 0x17,
+</a><a href="#h0-1-21" id="h0-1-21" class="d">-	[&#39;w&#39;] = 0x18,
+</a><a href="#h0-1-22" id="h0-1-22" class="d">-	[&#39;x&#39;] = 0x19,
+</a><a href="#h0-1-23" id="h0-1-23" class="d">-	[&#39;y&#39;] = 0x1A,
+</a><a href="#h0-1-24" id="h0-1-24" class="d">-	[&#39;z&#39;] = 0x1B,
+</a><a href="#h0-1-25" id="h0-1-25" class="d">-	[&#39;{&#39;] = 0x1C,
+</a><a href="#h0-1-26" id="h0-1-26" class="d">-	[&#39;|&#39;] = 0x1D,
+</a><a href="#h0-1-27" id="h0-1-27" class="d">-	[&#39;}&#39;] = 0x1E,
+</a><a href="#h0-1-28" id="h0-1-28" class="d">-	[&#39;~&#39;] = 0x1F,
+</a> 	[255] = 0,
+ };
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -38,6 +38,7 @@
+</a> #define ESC_BUF_SIZ   256
+ #define ESC_ARG_SIZ   16
+ #define DRAW_BUF_SIZ  1024
+<a href="#h1-0-3" id="h1-0-3" class="i">+#define UTF_SIZ       4
+</a> 
+ #define SERRNO strerror(errno)
+ #define MIN(a, b)  ((a) &lt; (b) ? (a) : (b))
+<a href="#h1-1" id="h1-1" class="h">@@ -61,8 +62,11 @@ enum { ESC_START=1, ESC_CSI=2, ESC_OSC=4, ESC_TITLE=8, ESC_ALTCHARSET=16 };
+</a> enum { SCREEN_UPDATE, SCREEN_REDRAW };
+ enum { WIN_VISIBLE=1, WIN_REDRAW=2, WIN_FOCUSED=4 };
+ 
+<a href="#h1-1-3" id="h1-1-3" class="i">+#undef B0
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+enum { B0=1, B1=2, B2=4, B3=8, B4=16, B5=32, B6=64, B7=128 };
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+
+</a> typedef struct {
+<a href="#h1-1-7" id="h1-1-7" class="d">-	char c;     /* character code  */
+</a><a href="#h1-1-8" id="h1-1-8" class="i">+	char c[UTF_SIZ];     /* character code */
+</a> 	char mode;  /* attribute flags */
+ 	int fg;     /* foreground      */
+ 	int bg;     /* background      */
+<a href="#h1-2" id="h1-2" class="h">@@ -127,11 +131,19 @@ typedef struct {
+</a> 	char s[ESC_BUF_SIZ];
+ } Key;
+ 
+<a href="#h1-2-3" id="h1-2-3" class="i">+typedef struct {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	XFontSet fs;
+</a><a href="#h1-2-5" id="h1-2-5" class="i">+	short lbearing;
+</a><a href="#h1-2-6" id="h1-2-6" class="i">+	short rbearing;
+</a><a href="#h1-2-7" id="h1-2-7" class="i">+	int ascent;
+</a><a href="#h1-2-8" id="h1-2-8" class="i">+	int descent;
+</a><a href="#h1-2-9" id="h1-2-9" class="i">+} FontInfo;
+</a><a href="#h1-2-10" id="h1-2-10" class="i">+
+</a> /* Drawing Context */
+ typedef struct {
+ 	unsigned long col[256];
+<a href="#h1-2-14" id="h1-2-14" class="d">-	XFontStruct* font;
+</a><a href="#h1-2-15" id="h1-2-15" class="d">-	XFontStruct* bfont;
+</a><a href="#h1-2-16" id="h1-2-16" class="i">+	FontInfo font;
+</a><a href="#h1-2-17" id="h1-2-17" class="i">+	FontInfo bfont;
+</a> 	GC gc;
+ } DC;
+ 
+<a href="#h1-3" id="h1-3" class="h">@@ -167,14 +179,13 @@ static void tmoveto(int, int);
+</a> static void tnew(int, int);
+ static void tnewline(int);
+ static void tputtab(void);
+<a href="#h1-3-3" id="h1-3-3" class="d">-static void tputc(char);
+</a><a href="#h1-3-4" id="h1-3-4" class="d">-static void tputs(char*, int);
+</a><a href="#h1-3-5" id="h1-3-5" class="i">+static void tputc(char*);
+</a> static void treset(void);
+ static int tresize(int, int);
+ static void tscrollup(int, int);
+ static void tscrolldown(int, int);
+ static void tsetattr(int*, int);
+<a href="#h1-3-11" id="h1-3-11" class="d">-static void tsetchar(char);
+</a><a href="#h1-3-12" id="h1-3-12" class="i">+static void tsetchar(char*);
+</a> static void tsetscroll(int, int);
+ static void tswapscreen(void);
+ 
+<a href="#h1-4" id="h1-4" class="h">@@ -183,7 +194,7 @@ static void ttyread(void);
+</a> static void ttyresize(int, int);
+ static void ttywrite(const char *, size_t);
+ 
+<a href="#h1-4-3" id="h1-4-3" class="d">-static void xdraws(char *, Glyph, int, int, int);
+</a><a href="#h1-4-4" id="h1-4-4" class="i">+static void xdraws(char *, Glyph, int, int, int, int);
+</a> static void xhints(void);
+ static void xclear(int, int, int, int);
+ static void xdrawcursor(void);
+<a href="#h1-5" id="h1-5" class="h">@@ -205,6 +216,11 @@ static void bmotion(XEvent *);
+</a> static void selection_notify(XEvent *);
+ static void selection_request(XEvent *);
+ 
+<a href="#h1-5-3" id="h1-5-3" class="i">+static int stou(char *, long *);
+</a><a href="#h1-5-4" id="h1-5-4" class="i">+static int utos(long *, char *);
+</a><a href="#h1-5-5" id="h1-5-5" class="i">+static int slen(char *);
+</a><a href="#h1-5-6" id="h1-5-6" class="i">+static int canstou(char *, int);
+</a><a href="#h1-5-7" id="h1-5-7" class="i">+
+</a> static void (*handler[LASTEvent])(XEvent *) = {
+ 	[KeyPress] = kpress,
+ 	[ConfigureNotify] = resize,
+<a href="#h1-6" id="h1-6" class="h">@@ -231,6 +247,133 @@ static Selection sel;
+</a> static char *opt_cmd   = NULL;
+ static char *opt_title = NULL;
+ 
+<a href="#h1-6-3" id="h1-6-3" class="i">+/* UTF-8 decode */
+</a><a href="#h1-6-4" id="h1-6-4" class="i">+static int
+</a><a href="#h1-6-5" id="h1-6-5" class="i">+stou(char *s, long *u)
+</a><a href="#h1-6-6" id="h1-6-6" class="i">+{
+</a><a href="#h1-6-7" id="h1-6-7" class="i">+	unsigned char c;
+</a><a href="#h1-6-8" id="h1-6-8" class="i">+	int i, n, rtn;
+</a><a href="#h1-6-9" id="h1-6-9" class="i">+
+</a><a href="#h1-6-10" id="h1-6-10" class="i">+	rtn = 1;
+</a><a href="#h1-6-11" id="h1-6-11" class="i">+	c = *s;
+</a><a href="#h1-6-12" id="h1-6-12" class="i">+	if(~c&amp;B7) { /* 0xxxxxxx */
+</a><a href="#h1-6-13" id="h1-6-13" class="i">+		*u = c;
+</a><a href="#h1-6-14" id="h1-6-14" class="i">+		return rtn;
+</a><a href="#h1-6-15" id="h1-6-15" class="i">+	} else if ((c&amp;(B7|B6|B5)) == (B7|B6)) { /* 110xxxxx */
+</a><a href="#h1-6-16" id="h1-6-16" class="i">+		*u = c&amp;(B4|B3|B2|B1|B0);
+</a><a href="#h1-6-17" id="h1-6-17" class="i">+		n = 1;
+</a><a href="#h1-6-18" id="h1-6-18" class="i">+	} else if ((c&amp;(B7|B6|B5|B4)) == (B7|B6|B5)) { /* 1110xxxx */
+</a><a href="#h1-6-19" id="h1-6-19" class="i">+		*u = c&amp;(B3|B2|B1|B0);
+</a><a href="#h1-6-20" id="h1-6-20" class="i">+		n = 2;
+</a><a href="#h1-6-21" id="h1-6-21" class="i">+	} else if ((c&amp;(B7|B6|B5|B4|B3)) == (B7|B6|B5|B4)) { /* 11110xxx */
+</a><a href="#h1-6-22" id="h1-6-22" class="i">+		*u = c&amp;(B2|B1|B0);
+</a><a href="#h1-6-23" id="h1-6-23" class="i">+		n = 3;
+</a><a href="#h1-6-24" id="h1-6-24" class="i">+	} else
+</a><a href="#h1-6-25" id="h1-6-25" class="i">+		goto invalid;
+</a><a href="#h1-6-26" id="h1-6-26" class="i">+	for (i=n,++s; i&gt;0; --i,++rtn,++s) {
+</a><a href="#h1-6-27" id="h1-6-27" class="i">+		c = *s;
+</a><a href="#h1-6-28" id="h1-6-28" class="i">+		if ((c&amp;(B7|B6)) != B7) /* 10xxxxxx */
+</a><a href="#h1-6-29" id="h1-6-29" class="i">+			goto invalid;
+</a><a href="#h1-6-30" id="h1-6-30" class="i">+		*u &lt;&lt;= 6;
+</a><a href="#h1-6-31" id="h1-6-31" class="i">+		*u |= c&amp;(B5|B4|B3|B2|B1|B0);
+</a><a href="#h1-6-32" id="h1-6-32" class="i">+	}
+</a><a href="#h1-6-33" id="h1-6-33" class="i">+	if ((n == 1 &amp;&amp; *u &lt; 0x80) ||
+</a><a href="#h1-6-34" id="h1-6-34" class="i">+	    (n == 2 &amp;&amp; *u &lt; 0x800) ||
+</a><a href="#h1-6-35" id="h1-6-35" class="i">+	    (n == 3 &amp;&amp; *u &lt; 0x10000) ||
+</a><a href="#h1-6-36" id="h1-6-36" class="i">+	    (*u &gt;= 0xD800 &amp;&amp; *u &lt;= 0xDFFF))
+</a><a href="#h1-6-37" id="h1-6-37" class="i">+		goto invalid;
+</a><a href="#h1-6-38" id="h1-6-38" class="i">+	return rtn;
+</a><a href="#h1-6-39" id="h1-6-39" class="i">+invalid:
+</a><a href="#h1-6-40" id="h1-6-40" class="i">+	*u = 0xFFFD;
+</a><a href="#h1-6-41" id="h1-6-41" class="i">+	return rtn;
+</a><a href="#h1-6-42" id="h1-6-42" class="i">+}
+</a><a href="#h1-6-43" id="h1-6-43" class="i">+
+</a><a href="#h1-6-44" id="h1-6-44" class="i">+/* UTF-8 encode */
+</a><a href="#h1-6-45" id="h1-6-45" class="i">+static int
+</a><a href="#h1-6-46" id="h1-6-46" class="i">+utos(long *u, char *s) 
+</a><a href="#h1-6-47" id="h1-6-47" class="i">+{
+</a><a href="#h1-6-48" id="h1-6-48" class="i">+	unsigned char *sp;
+</a><a href="#h1-6-49" id="h1-6-49" class="i">+	unsigned long uc;
+</a><a href="#h1-6-50" id="h1-6-50" class="i">+	int i, n;
+</a><a href="#h1-6-51" id="h1-6-51" class="i">+
+</a><a href="#h1-6-52" id="h1-6-52" class="i">+	sp = (unsigned char*) s;
+</a><a href="#h1-6-53" id="h1-6-53" class="i">+	uc = *u;
+</a><a href="#h1-6-54" id="h1-6-54" class="i">+	if (uc &lt; 0x80) {
+</a><a href="#h1-6-55" id="h1-6-55" class="i">+		*sp = uc; /* 0xxxxxxx */
+</a><a href="#h1-6-56" id="h1-6-56" class="i">+		return 1;
+</a><a href="#h1-6-57" id="h1-6-57" class="i">+	} else if (*u &lt; 0x800) {
+</a><a href="#h1-6-58" id="h1-6-58" class="i">+		*sp = (uc &gt;&gt; 6) | (B7|B6); /* 110xxxxx */
+</a><a href="#h1-6-59" id="h1-6-59" class="i">+		n = 1;
+</a><a href="#h1-6-60" id="h1-6-60" class="i">+	} else if (uc &lt; 0x10000) {
+</a><a href="#h1-6-61" id="h1-6-61" class="i">+		*sp = (uc &gt;&gt; 12) | (B7|B6|B5); /* 1110xxxx */
+</a><a href="#h1-6-62" id="h1-6-62" class="i">+		n = 2;
+</a><a href="#h1-6-63" id="h1-6-63" class="i">+	} else if (uc &lt;= 0x10FFFF) {
+</a><a href="#h1-6-64" id="h1-6-64" class="i">+		*sp = (uc &gt;&gt; 18) | (B7|B6|B5|B4); /* 11110xxx */
+</a><a href="#h1-6-65" id="h1-6-65" class="i">+		n = 3;
+</a><a href="#h1-6-66" id="h1-6-66" class="i">+	} else {
+</a><a href="#h1-6-67" id="h1-6-67" class="i">+		goto invalid;
+</a><a href="#h1-6-68" id="h1-6-68" class="i">+	}
+</a><a href="#h1-6-69" id="h1-6-69" class="i">+	for (i=n,++sp; i&gt;0; --i,++sp)
+</a><a href="#h1-6-70" id="h1-6-70" class="i">+		*sp = ((uc &gt;&gt; 6*(i-1)) &amp; (B5|B4|B3|B2|B1|B0)) | B7; /* 10xxxxxx */
+</a><a href="#h1-6-71" id="h1-6-71" class="i">+	return n+1;
+</a><a href="#h1-6-72" id="h1-6-72" class="i">+invalid:
+</a><a href="#h1-6-73" id="h1-6-73" class="i">+	/* U+FFFD */
+</a><a href="#h1-6-74" id="h1-6-74" class="i">+	*s++ = &#39;\xEF&#39;;
+</a><a href="#h1-6-75" id="h1-6-75" class="i">+	*s++ = &#39;\xBF&#39;;
+</a><a href="#h1-6-76" id="h1-6-76" class="i">+	*s = &#39;\xBD&#39;;
+</a><a href="#h1-6-77" id="h1-6-77" class="i">+	return 3;
+</a><a href="#h1-6-78" id="h1-6-78" class="i">+}
+</a><a href="#h1-6-79" id="h1-6-79" class="i">+
+</a><a href="#h1-6-80" id="h1-6-80" class="i">+/*
+</a><a href="#h1-6-81" id="h1-6-81" class="i">+ * use this if your buffer is less than UTF_SIZ, it returns 1 if you can decode UTF-8
+</a><a href="#h1-6-82" id="h1-6-82" class="i">+ * otherwise return 0
+</a><a href="#h1-6-83" id="h1-6-83" class="i">+ */
+</a><a href="#h1-6-84" id="h1-6-84" class="i">+static int
+</a><a href="#h1-6-85" id="h1-6-85" class="i">+canstou(char *s, int b)
+</a><a href="#h1-6-86" id="h1-6-86" class="i">+{
+</a><a href="#h1-6-87" id="h1-6-87" class="i">+	unsigned char c;
+</a><a href="#h1-6-88" id="h1-6-88" class="i">+	int n;
+</a><a href="#h1-6-89" id="h1-6-89" class="i">+
+</a><a href="#h1-6-90" id="h1-6-90" class="i">+	c = *s;
+</a><a href="#h1-6-91" id="h1-6-91" class="i">+	if (b &lt; 1)
+</a><a href="#h1-6-92" id="h1-6-92" class="i">+		return 0;
+</a><a href="#h1-6-93" id="h1-6-93" class="i">+	else if (~c&amp;B7)
+</a><a href="#h1-6-94" id="h1-6-94" class="i">+		return 1;
+</a><a href="#h1-6-95" id="h1-6-95" class="i">+	else if ((c&amp;(B7|B6|B5)) == (B7|B6))
+</a><a href="#h1-6-96" id="h1-6-96" class="i">+		n = 1;
+</a><a href="#h1-6-97" id="h1-6-97" class="i">+	else if ((c&amp;(B7|B6|B5|B4)) == (B7|B6|B5))
+</a><a href="#h1-6-98" id="h1-6-98" class="i">+		n = 2;
+</a><a href="#h1-6-99" id="h1-6-99" class="i">+	else if ((c&amp;(B7|B6|B5|B4|B3)) == (B7|B6|B5|B4))
+</a><a href="#h1-6-100" id="h1-6-100" class="i">+		n = 3;
+</a><a href="#h1-6-101" id="h1-6-101" class="i">+	else
+</a><a href="#h1-6-102" id="h1-6-102" class="i">+		return 1;
+</a><a href="#h1-6-103" id="h1-6-103" class="i">+	for (--b,++s; n&gt;0&amp;&amp;b&gt;0; --n,--b,++s) {
+</a><a href="#h1-6-104" id="h1-6-104" class="i">+		c = *s;
+</a><a href="#h1-6-105" id="h1-6-105" class="i">+		if ((c&amp;(B7|B6)) != B7)
+</a><a href="#h1-6-106" id="h1-6-106" class="i">+			break; 
+</a><a href="#h1-6-107" id="h1-6-107" class="i">+	}
+</a><a href="#h1-6-108" id="h1-6-108" class="i">+	if (n &gt; 0 &amp;&amp; b == 0)
+</a><a href="#h1-6-109" id="h1-6-109" class="i">+		return 0;
+</a><a href="#h1-6-110" id="h1-6-110" class="i">+	else
+</a><a href="#h1-6-111" id="h1-6-111" class="i">+		return 1;
+</a><a href="#h1-6-112" id="h1-6-112" class="i">+}
+</a><a href="#h1-6-113" id="h1-6-113" class="i">+
+</a><a href="#h1-6-114" id="h1-6-114" class="i">+static int
+</a><a href="#h1-6-115" id="h1-6-115" class="i">+slen(char *s)
+</a><a href="#h1-6-116" id="h1-6-116" class="i">+{
+</a><a href="#h1-6-117" id="h1-6-117" class="i">+	unsigned char c;
+</a><a href="#h1-6-118" id="h1-6-118" class="i">+
+</a><a href="#h1-6-119" id="h1-6-119" class="i">+	c = *s;
+</a><a href="#h1-6-120" id="h1-6-120" class="i">+	if (~c&amp;B7)
+</a><a href="#h1-6-121" id="h1-6-121" class="i">+		return 1;
+</a><a href="#h1-6-122" id="h1-6-122" class="i">+	else if ((c&amp;(B7|B6|B5)) == (B7|B6))
+</a><a href="#h1-6-123" id="h1-6-123" class="i">+		return 2;
+</a><a href="#h1-6-124" id="h1-6-124" class="i">+	else if ((c&amp;(B7|B6|B5|B4)) == (B7|B6|B5))
+</a><a href="#h1-6-125" id="h1-6-125" class="i">+		return 3;
+</a><a href="#h1-6-126" id="h1-6-126" class="i">+	else 
+</a><a href="#h1-6-127" id="h1-6-127" class="i">+		return 4;
+</a><a href="#h1-6-128" id="h1-6-128" class="i">+}
+</a><a href="#h1-6-129" id="h1-6-129" class="i">+
+</a> void
+ selinit(void) {
+ 	sel.mode = 0;
+<a href="#h1-7" id="h1-7" class="h">@@ -268,15 +411,18 @@ static void bpress(XEvent *e) {
+</a> 
+ static char *getseltext() {
+ 	char *str, *ptr;
+<a href="#h1-7-3" id="h1-7-3" class="d">-	int ls, x, y, sz;
+</a><a href="#h1-7-4" id="h1-7-4" class="i">+	int ls, x, y, sz, sl;
+</a> 	if(sel.bx == -1)
+ 		return NULL;
+<a href="#h1-7-7" id="h1-7-7" class="d">-	sz = (term.col+1) * (sel.e.y-sel.b.y+1);
+</a><a href="#h1-7-8" id="h1-7-8" class="i">+	sz = (term.col+1) * (sel.e.y-sel.b.y+1) * UTF_SIZ;
+</a> 	ptr = str = malloc(sz);
+ 	for(y = 0; y &lt; term.row; y++) {
+ 		for(x = 0; x &lt; term.col; x++)
+<a href="#h1-7-12" id="h1-7-12" class="d">-			if(term.line[y][x].state &amp; GLYPH_SET &amp;&amp; (ls = selected(x, y)))
+</a><a href="#h1-7-13" id="h1-7-13" class="d">-				*ptr = term.line[y][x].c, ptr++;
+</a><a href="#h1-7-14" id="h1-7-14" class="i">+			if(term.line[y][x].state &amp; GLYPH_SET &amp;&amp; (ls = selected(x, y))) {
+</a><a href="#h1-7-15" id="h1-7-15" class="i">+				sl = slen(term.line[y][x].c);
+</a><a href="#h1-7-16" id="h1-7-16" class="i">+				memcpy(ptr, term.line[y][x].c, sl);
+</a><a href="#h1-7-17" id="h1-7-17" class="i">+				ptr += sl;
+</a><a href="#h1-7-18" id="h1-7-18" class="i">+			}
+</a> 		if(ls)
+ 			*ptr = &#39;\n&#39;, ptr++;
+ 	}
+<a href="#h1-8" id="h1-8" class="h">@@ -476,13 +622,24 @@ dump(char c) {
+</a> 
+ void
+ ttyread(void) {
+<a href="#h1-8-3" id="h1-8-3" class="d">-	char buf[BUFSIZ];
+</a><a href="#h1-8-4" id="h1-8-4" class="d">-	int ret;
+</a><a href="#h1-8-5" id="h1-8-5" class="i">+	char buf[BUFSIZ], *ptr;
+</a><a href="#h1-8-6" id="h1-8-6" class="i">+	char s[UTF_SIZ];
+</a><a href="#h1-8-7" id="h1-8-7" class="i">+	int ret, br;
+</a><a href="#h1-8-8" id="h1-8-8" class="i">+	static int buflen = 0;
+</a><a href="#h1-8-9" id="h1-8-9" class="i">+	long u;
+</a> 
+<a href="#h1-8-11" id="h1-8-11" class="d">-	if((ret = read(cmdfd, buf, LEN(buf))) &lt; 0)
+</a><a href="#h1-8-12" id="h1-8-12" class="i">+	if((ret = read(cmdfd, buf+buflen, LEN(buf)-buflen)) &lt; 0)
+</a> 		die(&quot;Couldn&#39;t read from shell: %s\n&quot;, SERRNO);
+<a href="#h1-8-14" id="h1-8-14" class="d">-	else
+</a><a href="#h1-8-15" id="h1-8-15" class="d">-		tputs(buf, ret);
+</a><a href="#h1-8-16" id="h1-8-16" class="i">+	else {
+</a><a href="#h1-8-17" id="h1-8-17" class="i">+		buflen += ret;
+</a><a href="#h1-8-18" id="h1-8-18" class="i">+		for(ptr=buf; buflen&gt;=UTF_SIZ||canstou(ptr,buflen); buflen-=br) {
+</a><a href="#h1-8-19" id="h1-8-19" class="i">+			br = stou(ptr, &amp;u);
+</a><a href="#h1-8-20" id="h1-8-20" class="i">+			utos(&amp;u, s);
+</a><a href="#h1-8-21" id="h1-8-21" class="i">+			tputc(s);
+</a><a href="#h1-8-22" id="h1-8-22" class="i">+			ptr += br;
+</a><a href="#h1-8-23" id="h1-8-23" class="i">+		}
+</a><a href="#h1-8-24" id="h1-8-24" class="i">+		memcpy(buf, ptr, buflen);
+</a><a href="#h1-8-25" id="h1-8-25" class="i">+	}
+</a> }
+ 
+ void
+<a href="#h1-9" id="h1-9" class="h">@@ -622,9 +779,9 @@ tmoveto(int x, int y) {
+</a> }
+ 
+ void
+<a href="#h1-9-3" id="h1-9-3" class="d">-tsetchar(char c) {
+</a><a href="#h1-9-4" id="h1-9-4" class="i">+tsetchar(char *c) {
+</a> 	term.line[term.c.y][term.c.x] = term.c.attr;
+<a href="#h1-9-6" id="h1-9-6" class="d">-	term.line[term.c.y][term.c.x].c = c;
+</a><a href="#h1-9-7" id="h1-9-7" class="i">+	memcpy(term.line[term.c.y][term.c.x].c, c, UTF_SIZ);
+</a> 	term.line[term.c.y][term.c.x].state |= GLYPH_SET;
+ }
+ 
+<a href="#h1-10" id="h1-10" class="h">@@ -1025,30 +1182,31 @@ tputtab(void) {
+</a> }
+ 
+ void
+<a href="#h1-10-3" id="h1-10-3" class="d">-tputc(char c) {
+</a><a href="#h1-10-4" id="h1-10-4" class="i">+tputc(char *c) {
+</a><a href="#h1-10-5" id="h1-10-5" class="i">+	char ascii = *c;
+</a> 	if(term.esc &amp; ESC_START) {
+ 		if(term.esc &amp; ESC_CSI) {
+<a href="#h1-10-8" id="h1-10-8" class="d">-			escseq.buf[escseq.len++] = c;
+</a><a href="#h1-10-9" id="h1-10-9" class="d">-			if(BETWEEN(c, 0x40, 0x7E) || escseq.len &gt;= ESC_BUF_SIZ) {
+</a><a href="#h1-10-10" id="h1-10-10" class="i">+			escseq.buf[escseq.len++] = ascii;
+</a><a href="#h1-10-11" id="h1-10-11" class="i">+			if(BETWEEN(ascii, 0x40, 0x7E) || escseq.len &gt;= ESC_BUF_SIZ) {
+</a> 				term.esc = 0;
+ 				csiparse(), csihandle();
+ 			}
+ 			/* TODO: handle other OSC */
+ 		} else if(term.esc &amp; ESC_OSC) { 
+<a href="#h1-10-17" id="h1-10-17" class="d">-			if(c == &#39;;&#39;) {
+</a><a href="#h1-10-18" id="h1-10-18" class="i">+			if(ascii == &#39;;&#39;) {
+</a> 				term.titlelen = 0;
+ 				term.esc = ESC_START | ESC_TITLE;
+ 			}
+ 		} else if(term.esc &amp; ESC_TITLE) {
+<a href="#h1-10-23" id="h1-10-23" class="d">-			if(c == &#39;\a&#39; || term.titlelen+1 &gt;= ESC_TITLE_SIZ) {
+</a><a href="#h1-10-24" id="h1-10-24" class="i">+			if(ascii == &#39;\a&#39; || term.titlelen+1 &gt;= ESC_TITLE_SIZ) {
+</a> 				term.esc = 0;
+ 				term.title[term.titlelen] = &#39;\0&#39;;
+ 				XStoreName(xw.dis, xw.win, term.title);
+ 			} else {
+<a href="#h1-10-29" id="h1-10-29" class="d">-				term.title[term.titlelen++] = c;
+</a><a href="#h1-10-30" id="h1-10-30" class="i">+				term.title[term.titlelen++] = ascii;
+</a> 			}
+ 		} else if(term.esc &amp; ESC_ALTCHARSET) {
+<a href="#h1-10-33" id="h1-10-33" class="d">-			switch(c) {
+</a><a href="#h1-10-34" id="h1-10-34" class="i">+			switch(ascii) {
+</a> 			case &#39;0&#39;: /* Line drawing crap */
+ 				term.c.attr.mode |= ATTR_GFX;
+ 				break;
+<a href="#h1-11" id="h1-11" class="h">@@ -1056,11 +1214,11 @@ tputc(char c) {
+</a> 				term.c.attr.mode &amp;= ~ATTR_GFX;
+ 				break;
+ 			default:
+<a href="#h1-11-3" id="h1-11-3" class="d">-				printf(&quot;esc unhandled charset: ESC ( %c\n&quot;, c);
+</a><a href="#h1-11-4" id="h1-11-4" class="i">+				printf(&quot;esc unhandled charset: ESC ( %c\n&quot;, ascii);
+</a> 			}
+ 			term.esc = 0;
+ 		} else {
+<a href="#h1-11-8" id="h1-11-8" class="d">-			switch(c) {
+</a><a href="#h1-11-9" id="h1-11-9" class="i">+			switch(ascii) {
+</a> 			case &#39;[&#39;:
+ 				term.esc |= ESC_CSI;
+ 				break;
+<a href="#h1-12" id="h1-12" class="h">@@ -1109,12 +1267,13 @@ tputc(char c) {
+</a> 				term.esc = 0;
+ 				break;
+ 			default:
+<a href="#h1-12-3" id="h1-12-3" class="d">-				fprintf(stderr, &quot;erresc: unknown sequence ESC 0x%02X &#39;%c&#39;\n&quot;, c, isprint(c)?c:&#39;.&#39;);
+</a><a href="#h1-12-4" id="h1-12-4" class="i">+				fprintf(stderr, &quot;erresc: unknown sequence ESC 0x%02X &#39;%c&#39;\n&quot;,
+</a><a href="#h1-12-5" id="h1-12-5" class="i">+				    (unsigned char) ascii, isprint(ascii)?ascii:&#39;.&#39;);
+</a> 				term.esc = 0;
+ 			}
+ 		}
+ 	} else {
+<a href="#h1-12-10" id="h1-12-10" class="d">-		switch(c) {
+</a><a href="#h1-12-11" id="h1-12-11" class="i">+		switch(ascii) {
+</a> 		case &#39;\t&#39;:
+ 			tputtab();
+ 			break;
+<a href="#h1-13" id="h1-13" class="h">@@ -1151,12 +1310,6 @@ tputc(char c) {
+</a> 	}
+ }
+ 
+<a href="#h1-13-3" id="h1-13-3" class="d">-void
+</a><a href="#h1-13-4" id="h1-13-4" class="d">-tputs(char *s, int len) {
+</a><a href="#h1-13-5" id="h1-13-5" class="d">-	for(; len &gt; 0; len--)
+</a><a href="#h1-13-6" id="h1-13-6" class="d">-		tputc(*s++);
+</a><a href="#h1-13-7" id="h1-13-7" class="d">-}
+</a><a href="#h1-13-8" id="h1-13-8" class="d">-
+</a> int
+ tresize(int col, int row) {
+ 	int i, x;
+<a href="#h1-14" id="h1-14" class="h">@@ -1309,20 +1462,52 @@ xhints(void)
+</a> }
+ 
+ void
+<a href="#h1-14-3" id="h1-14-3" class="i">+xsetfontinfo(FontInfo *fi)
+</a><a href="#h1-14-4" id="h1-14-4" class="i">+{
+</a><a href="#h1-14-5" id="h1-14-5" class="i">+	XFontStruct **xfonts;
+</a><a href="#h1-14-6" id="h1-14-6" class="i">+	int fnum;
+</a><a href="#h1-14-7" id="h1-14-7" class="i">+	int i;
+</a><a href="#h1-14-8" id="h1-14-8" class="i">+	char **fontnames;
+</a><a href="#h1-14-9" id="h1-14-9" class="i">+
+</a><a href="#h1-14-10" id="h1-14-10" class="i">+	fi-&gt;lbearing = 0;
+</a><a href="#h1-14-11" id="h1-14-11" class="i">+	fi-&gt;rbearing = 0;
+</a><a href="#h1-14-12" id="h1-14-12" class="i">+	fi-&gt;ascent = 0;
+</a><a href="#h1-14-13" id="h1-14-13" class="i">+	fi-&gt;descent = 0;
+</a><a href="#h1-14-14" id="h1-14-14" class="i">+	fnum = XFontsOfFontSet(fi-&gt;fs, &amp;xfonts, &amp;fontnames);
+</a><a href="#h1-14-15" id="h1-14-15" class="i">+	for(i=0; i&lt;fnum; i++,xfonts++,fontnames++) {
+</a><a href="#h1-14-16" id="h1-14-16" class="i">+		puts(*fontnames);
+</a><a href="#h1-14-17" id="h1-14-17" class="i">+		if(fi-&gt;ascent &lt; (*xfonts)-&gt;ascent)
+</a><a href="#h1-14-18" id="h1-14-18" class="i">+			fi-&gt;ascent = (*xfonts)-&gt;ascent;
+</a><a href="#h1-14-19" id="h1-14-19" class="i">+		if(fi-&gt;descent &lt; (*xfonts)-&gt;descent)
+</a><a href="#h1-14-20" id="h1-14-20" class="i">+			fi-&gt;descent = (*xfonts)-&gt;descent;
+</a><a href="#h1-14-21" id="h1-14-21" class="i">+		if(fi-&gt;rbearing &lt; (*xfonts)-&gt;max_bounds.rbearing)
+</a><a href="#h1-14-22" id="h1-14-22" class="i">+			fi-&gt;rbearing = (*xfonts)-&gt;max_bounds.rbearing;
+</a><a href="#h1-14-23" id="h1-14-23" class="i">+		if(fi-&gt;lbearing &lt; (*xfonts)-&gt;min_bounds.lbearing)
+</a><a href="#h1-14-24" id="h1-14-24" class="i">+			fi-&gt;lbearing = (*xfonts)-&gt;min_bounds.lbearing;
+</a><a href="#h1-14-25" id="h1-14-25" class="i">+	}
+</a><a href="#h1-14-26" id="h1-14-26" class="i">+}
+</a><a href="#h1-14-27" id="h1-14-27" class="i">+
+</a><a href="#h1-14-28" id="h1-14-28" class="i">+void
+</a> xinit(void) {
+ 	XSetWindowAttributes attrs;
+<a href="#h1-14-31" id="h1-14-31" class="i">+	char **mc;
+</a><a href="#h1-14-32" id="h1-14-32" class="i">+	char *ds;
+</a><a href="#h1-14-33" id="h1-14-33" class="i">+	int nmc;
+</a> 
+ 	if(!(xw.dis = XOpenDisplay(NULL)))
+ 		die(&quot;Can&#39;t open display\n&quot;);
+ 	xw.scr = XDefaultScreen(xw.dis);
+ 	
+ 	/* font */
+<a href="#h1-14-40" id="h1-14-40" class="d">-	if(!(dc.font = XLoadQueryFont(xw.dis, FONT)) || !(dc.bfont = XLoadQueryFont(xw.dis, BOLDFONT)))
+</a><a href="#h1-14-41" id="h1-14-41" class="d">-		die(&quot;Can&#39;t load font %s\n&quot;, dc.font ? BOLDFONT : FONT);
+</a><a href="#h1-14-42" id="h1-14-42" class="i">+	if ((dc.font.fs = XCreateFontSet(xw.dis, FONT, &amp;mc, &amp;nmc, &amp;ds)) == NULL ||
+</a><a href="#h1-14-43" id="h1-14-43" class="i">+	    (dc.bfont.fs = XCreateFontSet(xw.dis, BOLDFONT, &amp;mc, &amp;nmc, &amp;ds)) == NULL)
+</a><a href="#h1-14-44" id="h1-14-44" class="i">+		die(&quot;Can&#39;t load font %s\n&quot;, dc.font.fs ? BOLDFONT : FONT); 
+</a><a href="#h1-14-45" id="h1-14-45" class="i">+	xsetfontinfo(&amp;dc.font);
+</a><a href="#h1-14-46" id="h1-14-46" class="i">+	xsetfontinfo(&amp;dc.bfont);
+</a> 
+ 	/* XXX: Assuming same size for bold font */
+<a href="#h1-14-49" id="h1-14-49" class="d">-	xw.cw = dc.font-&gt;max_bounds.rbearing - dc.font-&gt;min_bounds.lbearing;
+</a><a href="#h1-14-50" id="h1-14-50" class="d">-	xw.ch = dc.font-&gt;ascent + dc.font-&gt;descent;
+</a><a href="#h1-14-51" id="h1-14-51" class="i">+ 	xw.cw = dc.font.rbearing - dc.font.lbearing;
+</a><a href="#h1-14-52" id="h1-14-52" class="i">+	xw.ch = dc.font.ascent + dc.font.descent;
+</a> 
+ 	/* colors */
+ 	xw.cmap = XDefaultColormap(xw.dis, xw.scr);
+<a href="#h1-15" id="h1-15" class="h">@@ -1366,9 +1551,9 @@ xinit(void) {
+</a> }
+ 
+ void
+<a href="#h1-15-3" id="h1-15-3" class="d">-xdraws(char *s, Glyph base, int x, int y, int len) {
+</a><a href="#h1-15-4" id="h1-15-4" class="i">+xdraws(char *s, Glyph base, int x, int y, int cl, int sl) {
+</a> 	unsigned long xfg, xbg;
+<a href="#h1-15-6" id="h1-15-6" class="d">-	int winx = x*xw.cw, winy = y*xw.ch + dc.font-&gt;ascent, width = len*xw.cw;
+</a><a href="#h1-15-7" id="h1-15-7" class="i">+	int winx = x*xw.cw, winy = y*xw.ch + dc.font.ascent, width = cl*xw.cw;
+</a> 	int i;
+ 
+ 	if(base.mode &amp; ATTR_REVERSE)
+<a href="#h1-16" id="h1-16" class="h">@@ -1378,9 +1563,9 @@ xdraws(char *s, Glyph base, int x, int y, int len) {
+</a> 
+ 	XSetBackground(xw.dis, dc.gc, xbg);
+ 	XSetForeground(xw.dis, dc.gc, xfg);
+<a href="#h1-16-3" id="h1-16-3" class="d">-	
+</a><a href="#h1-16-4" id="h1-16-4" class="i">+
+</a> 	if(base.mode &amp; ATTR_GFX)
+<a href="#h1-16-6" id="h1-16-6" class="d">-		for(i = 0; i &lt; len; i++) {
+</a><a href="#h1-16-7" id="h1-16-7" class="i">+		for(i = 0; i &lt; cl; i++) {
+</a> 			char c = gfx[(unsigned int)s[i] % 256];
+ 			if(c)
+ 				s[i] = c;
+<a href="#h1-17" id="h1-17" class="h">@@ -1388,8 +1573,8 @@ xdraws(char *s, Glyph base, int x, int y, int len) {
+</a> 				s[i] -= 0x5f;
+ 		}
+ 
+<a href="#h1-17-3" id="h1-17-3" class="d">-	XSetFont(xw.dis, dc.gc, base.mode &amp; ATTR_BOLD ? dc.bfont-&gt;fid : dc.font-&gt;fid);
+</a><a href="#h1-17-4" id="h1-17-4" class="d">-	XDrawImageString(xw.dis, xw.buf, dc.gc, winx, winy, s, len);
+</a><a href="#h1-17-5" id="h1-17-5" class="i">+	XmbDrawImageString(xw.dis, xw.buf, base.mode &amp; ATTR_BOLD ? dc.bfont.fs : dc.font.fs,
+</a><a href="#h1-17-6" id="h1-17-6" class="i">+	    dc.gc, winx, winy, s, sl);
+</a> 	
+ 	if(base.mode &amp; ATTR_UNDERLINE)
+ 		XDrawLine(xw.dis, xw.buf, dc.gc, winx, winy+1, winx+width-1, winy+1);
+<a href="#h1-18" id="h1-18" class="h">@@ -1399,23 +1584,26 @@ void
+</a> xdrawcursor(void) {
+ 	static int oldx = 0;
+ 	static int oldy = 0;
+<a href="#h1-18-3" id="h1-18-3" class="d">-	Glyph g = {&#39; &#39;, ATTR_NULL, DefaultBG, DefaultCS, 0};
+</a><a href="#h1-18-4" id="h1-18-4" class="i">+	int sl;
+</a><a href="#h1-18-5" id="h1-18-5" class="i">+	Glyph g = {{&#39; &#39;}, ATTR_NULL, DefaultBG, DefaultCS, 0};
+</a> 	
+ 	LIMIT(oldx, 0, term.col-1);
+ 	LIMIT(oldy, 0, term.row-1);
+ 	
+ 	if(term.line[term.c.y][term.c.x].state &amp; GLYPH_SET)
+<a href="#h1-18-11" id="h1-18-11" class="d">-		g.c = term.line[term.c.y][term.c.x].c;
+</a><a href="#h1-18-12" id="h1-18-12" class="d">-	
+</a><a href="#h1-18-13" id="h1-18-13" class="i">+		memcpy(g.c, term.line[term.c.y][term.c.x].c, UTF_SIZ);
+</a><a href="#h1-18-14" id="h1-18-14" class="i">+
+</a> 	/* remove the old cursor */
+<a href="#h1-18-16" id="h1-18-16" class="d">-	if(term.line[oldy][oldx].state &amp; GLYPH_SET)
+</a><a href="#h1-18-17" id="h1-18-17" class="d">-		xdraws(&amp;term.line[oldy][oldx].c, term.line[oldy][oldx], oldx, oldy, 1);
+</a><a href="#h1-18-18" id="h1-18-18" class="d">-	else
+</a><a href="#h1-18-19" id="h1-18-19" class="i">+	if(term.line[oldy][oldx].state &amp; GLYPH_SET) {
+</a><a href="#h1-18-20" id="h1-18-20" class="i">+		sl = slen(term.line[oldy][oldx].c);
+</a><a href="#h1-18-21" id="h1-18-21" class="i">+		xdraws(term.line[oldy][oldx].c, term.line[oldy][oldx], oldx, oldy, 1, sl);
+</a><a href="#h1-18-22" id="h1-18-22" class="i">+	} else
+</a> 		xclear(oldx, oldy, oldx, oldy);
+ 	
+ 	/* draw the new one */
+ 	if(!(term.c.state &amp; CURSOR_HIDE) &amp;&amp; (xw.state &amp; WIN_FOCUSED)) {
+<a href="#h1-18-27" id="h1-18-27" class="d">-		xdraws(&amp;g.c, g, term.c.x, term.c.y, 1);
+</a><a href="#h1-18-28" id="h1-18-28" class="i">+		sl = slen(g.c);
+</a><a href="#h1-18-29" id="h1-18-29" class="i">+		xdraws(g.c, g, term.c.x, term.c.y, 1, sl);
+</a> 		oldx = term.c.x, oldy = term.c.y;
+ 	}
+ }
+<a href="#h1-19" id="h1-19" class="h">@@ -1424,11 +1612,12 @@ xdrawcursor(void) {
+</a> /* basic drawing routines */
+ void
+ xdrawc(int x, int y, Glyph g) {
+<a href="#h1-19-3" id="h1-19-3" class="i">+	int sl = slen(g.c);
+</a> 	XRectangle r = { x * xw.cw, y * xw.ch, xw.cw, xw.ch };
+ 	XSetBackground(xw.dis, dc.gc, dc.col[g.bg]);
+ 	XSetForeground(xw.dis, dc.gc, dc.col[g.fg]);
+<a href="#h1-19-7" id="h1-19-7" class="d">-	XSetFont(xw.dis, dc.gc, g.mode &amp; ATTR_BOLD ? dc.bfont-&gt;fid : dc.font-&gt;fid);
+</a><a href="#h1-19-8" id="h1-19-8" class="d">-	XDrawImageString(xw.dis, xw.buf, dc.gc, r.x, r.y+dc.font-&gt;ascent, &amp;g.c, 1);
+</a><a href="#h1-19-9" id="h1-19-9" class="i">+	XmbDrawImageString(xw.dis, xw.buf, g.mode&amp;ATTR_BOLD?dc.bfont.fs:dc.font.fs,
+</a><a href="#h1-19-10" id="h1-19-10" class="i">+	    dc.gc, r.x, r.y+dc.font.ascent, g.c, sl);
+</a> }
+ 
+ void
+<a href="#h1-20" id="h1-20" class="h">@@ -1450,7 +1639,7 @@ draw(int dummy) {
+</a> /* optimized drawing routine */
+ void
+ draw(int redraw_all) {
+<a href="#h1-20-3" id="h1-20-3" class="d">-	int i, x, y, ox;
+</a><a href="#h1-20-4" id="h1-20-4" class="i">+	int ic, ib, x, y, ox, sl;
+</a> 	Glyph base, new;
+ 	char buf[DRAW_BUF_SIZ];
+ 
+<a href="#h1-21" id="h1-21" class="h">@@ -1460,26 +1649,29 @@ draw(int redraw_all) {
+</a> 	xclear(0, 0, term.col-1, term.row-1);
+ 	for(y = 0; y &lt; term.row; y++) {
+ 		base = term.line[y][0];
+<a href="#h1-21-3" id="h1-21-3" class="d">-		i = ox = 0;
+</a><a href="#h1-21-4" id="h1-21-4" class="i">+		ic = ib = ox = 0;
+</a> 		for(x = 0; x &lt; term.col; x++) {
+ 			new = term.line[y][x];
+<a href="#h1-21-7" id="h1-21-7" class="d">-			if(sel.bx!=-1 &amp;&amp; new.c &amp;&amp; selected(x, y))
+</a><a href="#h1-21-8" id="h1-21-8" class="i">+			if(sel.bx!=-1 &amp;&amp; *(new.c) &amp;&amp; selected(x, y))
+</a> 				new.mode ^= ATTR_REVERSE;
+<a href="#h1-21-10" id="h1-21-10" class="d">-			if(i &gt; 0 &amp;&amp; (!(new.state &amp; GLYPH_SET) || ATTRCMP(base, new) ||
+</a><a href="#h1-21-11" id="h1-21-11" class="d">-					i &gt;= DRAW_BUF_SIZ)) {
+</a><a href="#h1-21-12" id="h1-21-12" class="d">-				xdraws(buf, base, ox, y, i);
+</a><a href="#h1-21-13" id="h1-21-13" class="d">-				i = 0;
+</a><a href="#h1-21-14" id="h1-21-14" class="i">+			if(ib &gt; 0 &amp;&amp; (!(new.state &amp; GLYPH_SET) || ATTRCMP(base, new) ||
+</a><a href="#h1-21-15" id="h1-21-15" class="i">+					ib &gt;= DRAW_BUF_SIZ-UTF_SIZ)) {
+</a><a href="#h1-21-16" id="h1-21-16" class="i">+				xdraws(buf, base, ox, y, ic, ib);
+</a><a href="#h1-21-17" id="h1-21-17" class="i">+				ic = ib = 0;
+</a> 			}
+ 			if(new.state &amp; GLYPH_SET) {
+<a href="#h1-21-20" id="h1-21-20" class="d">-				if(i == 0) {
+</a><a href="#h1-21-21" id="h1-21-21" class="i">+				if(ib == 0) {
+</a> 					ox = x;
+ 					base = new;
+ 				}
+<a href="#h1-21-25" id="h1-21-25" class="d">-				buf[i++] = new.c;
+</a><a href="#h1-21-26" id="h1-21-26" class="i">+				sl = slen(new.c);
+</a><a href="#h1-21-27" id="h1-21-27" class="i">+				memcpy(buf+ib, new.c, sl);
+</a><a href="#h1-21-28" id="h1-21-28" class="i">+				ib += sl;
+</a><a href="#h1-21-29" id="h1-21-29" class="i">+				++ic;
+</a> 			}
+ 		}
+<a href="#h1-21-32" id="h1-21-32" class="d">-		if(i &gt; 0)
+</a><a href="#h1-21-33" id="h1-21-33" class="d">-			xdraws(buf, base, ox, y, i);
+</a><a href="#h1-21-34" id="h1-21-34" class="i">+		if(ib &gt; 0)
+</a><a href="#h1-21-35" id="h1-21-35" class="i">+			xdraws(buf, base, ox, y, ic, ib);
+</a> 	}
+ 	xdrawcursor();
+ 	XCopyArea(xw.dis, xw.buf, xw.win, dc.gc, 0, 0, xw.bufw, xw.bufh, BORDER, BORDER);
+</pre>
+</div>
+</body>
+</html>

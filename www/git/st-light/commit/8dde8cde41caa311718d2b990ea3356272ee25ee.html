@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add RGB color definition - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8dde8cde41caa311718d2b990ea3356272ee25ee.html">8dde8cde41caa311718d2b990ea3356272ee25ee</a>
+<b>parent</b> <a href="../commit/33ad83d49213749f4fcec850327f57a33ca8b921.html">33ad83d49213749f4fcec850327f57a33ca8b921</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Fri, 19 Jul 2013 20:34:36 +0200
+
+Add RGB color definition
+
+This patch uses the bit 24 in the color descriptor as an indicator
+of RGB color, so we can take the values and generating the XftColour
+directly in xdraws.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">119</td><td><span class="i">++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>1 file changed, 85 insertions(+), 34 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -77,6 +77,13 @@ char *argv0;
+</a> #define IS_SET(flag) ((term.mode &amp; (flag)) != 0)
+ #define TIMEDIFF(t1, t2) ((t1.tv_sec-t2.tv_sec)*1000 + (t1.tv_usec-t2.tv_usec)/1000)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+#define TRUECOLOR(r,g,b) (1 &lt;&lt; 24 | (r) &lt;&lt; 16 | (g) &lt;&lt; 8 | (b))
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define IS_TRUECOL(x)    (1 &lt;&lt; 24 &amp; (x))
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+#define TRUERED(x)       (((x) &amp; 0xff0000) &gt;&gt; 8)
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+#define TRUEGREEN(x)     (((x) &amp; 0xff00))
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+#define TRUEBLUE(x)      (((x) &amp; 0xff) &lt;&lt; 8)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a> #define VT102ID &quot;\033[?6c&quot;
+ 
+ enum glyph_attribute {
+<a href="#h0-1" id="h0-1" class="h">@@ -158,8 +165,8 @@ typedef unsigned short ushort;
+</a> typedef struct {
+ 	char c[UTF_SIZ]; /* character code */
+ 	uchar mode;      /* attribute flags */
+<a href="#h0-1-3" id="h0-1-3" class="d">-	ushort fg;       /* foreground  */
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	ushort bg;       /* background  */
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	ulong fg;        /* foreground  */
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	ulong bg;        /* background  */
+</a> } Glyph;
+ 
+ typedef Glyph *Line;
+<a href="#h0-2" id="h0-2" class="h">@@ -354,7 +361,7 @@ static void tsetdirtattr(int);
+</a> static void tsetmode(bool, bool, int *, int);
+ static void tfulldirt(void);
+ static void techo(char *, int);
+<a href="#h0-2-3" id="h0-2-3" class="d">-
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+static ulong tdefcolor(int *, int *, int);
+</a> static inline bool match(uint, uint);
+ static void ttynew(void);
+ static void ttyread(void);
+<a href="#h0-3" id="h0-3" class="h">@@ -1618,9 +1625,58 @@ tdeleteline(int n) {
+</a> 	tscrollup(term.c.y, n);
+ }
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+ulong
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+tdefcolor(int *attr, int *npar, int l) {
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	long idx = -1;
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+	uint r, g, b;
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+	switch (attr[*npar + 1]) {
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+	case 2: /* direct colour in RGB space */
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+		if (*npar + 4 &gt;= l) {
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+			fprintf(stderr,
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+				&quot;erresc(38): Incorrect number of parameters (%d)\n&quot;,
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+				*npar);
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+			break;
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+		}
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+		r = attr[*npar + 2];
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+		g = attr[*npar + 3];
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+		b = attr[*npar + 4];
+</a><a href="#h0-3-19" id="h0-3-19" class="i">+		*npar += 4;
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+		if(!BETWEEN(r, 0, 255) || !BETWEEN(g, 0, 255) || !BETWEEN(b, 0, 255))
+</a><a href="#h0-3-21" id="h0-3-21" class="i">+			fprintf(stderr, &quot;erresc: bad rgb color (%d,%d,%d)\n&quot;,
+</a><a href="#h0-3-22" id="h0-3-22" class="i">+				r, g, b);
+</a><a href="#h0-3-23" id="h0-3-23" class="i">+		else
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+			idx = TRUECOLOR(r, g, b);
+</a><a href="#h0-3-25" id="h0-3-25" class="i">+		break;
+</a><a href="#h0-3-26" id="h0-3-26" class="i">+	case 5: /* indexed colour */
+</a><a href="#h0-3-27" id="h0-3-27" class="i">+		if (*npar + 2 &gt;= l) {
+</a><a href="#h0-3-28" id="h0-3-28" class="i">+			fprintf(stderr,
+</a><a href="#h0-3-29" id="h0-3-29" class="i">+				&quot;erresc(38): Incorrect number of parameters (%d)\n&quot;,
+</a><a href="#h0-3-30" id="h0-3-30" class="i">+				*npar);
+</a><a href="#h0-3-31" id="h0-3-31" class="i">+			break;
+</a><a href="#h0-3-32" id="h0-3-32" class="i">+		}
+</a><a href="#h0-3-33" id="h0-3-33" class="i">+		*npar += 2;
+</a><a href="#h0-3-34" id="h0-3-34" class="i">+		if(!BETWEEN(attr[*npar], 0, 255))
+</a><a href="#h0-3-35" id="h0-3-35" class="i">+			fprintf(stderr, &quot;erresc: bad fgcolor %d\n&quot;, attr[*npar]);
+</a><a href="#h0-3-36" id="h0-3-36" class="i">+		else
+</a><a href="#h0-3-37" id="h0-3-37" class="i">+			idx = attr[*npar];
+</a><a href="#h0-3-38" id="h0-3-38" class="i">+		break;
+</a><a href="#h0-3-39" id="h0-3-39" class="i">+	case 0: /* implemented defined (only foreground) */
+</a><a href="#h0-3-40" id="h0-3-40" class="i">+	case 1: /* transparent */
+</a><a href="#h0-3-41" id="h0-3-41" class="i">+	case 3: /* direct colour in CMY space */
+</a><a href="#h0-3-42" id="h0-3-42" class="i">+	case 4: /* direct colour in CMYK space */
+</a><a href="#h0-3-43" id="h0-3-43" class="i">+	default:
+</a><a href="#h0-3-44" id="h0-3-44" class="i">+		fprintf(stderr,
+</a><a href="#h0-3-45" id="h0-3-45" class="i">+		        &quot;erresc(38): gfx attr %d unknown\n&quot;, attr[*npar]);
+</a><a href="#h0-3-46" id="h0-3-46" class="i">+	}
+</a><a href="#h0-3-47" id="h0-3-47" class="i">+
+</a><a href="#h0-3-48" id="h0-3-48" class="i">+	return idx;
+</a><a href="#h0-3-49" id="h0-3-49" class="i">+}
+</a><a href="#h0-3-50" id="h0-3-50" class="i">+
+</a> void
+ tsetattr(int *attr, int l) {
+ 	int i;
+<a href="#h0-3-54" id="h0-3-54" class="i">+	ulong idx;
+</a> 
+ 	for(i = 0; i &lt; l; i++) {
+ 		switch(attr[i]) {
+<a href="#h0-4" id="h0-4" class="h">@@ -1665,39 +1721,15 @@ tsetattr(int *attr, int l) {
+</a> 			term.c.attr.mode &amp;= ~ATTR_REVERSE;
+ 			break;
+ 		case 38:
+<a href="#h0-4-3" id="h0-4-3" class="d">-			if(i + 2 &lt; l &amp;&amp; attr[i + 1] == 5) {
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-				i += 2;
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-				if(BETWEEN(attr[i], 0, 255)) {
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-					term.c.attr.fg = attr[i];
+</a><a href="#h0-4-7" id="h0-4-7" class="d">-				} else {
+</a><a href="#h0-4-8" id="h0-4-8" class="d">-					fprintf(stderr,
+</a><a href="#h0-4-9" id="h0-4-9" class="d">-						&quot;erresc: bad fgcolor %d\n&quot;,
+</a><a href="#h0-4-10" id="h0-4-10" class="d">-						attr[i]);
+</a><a href="#h0-4-11" id="h0-4-11" class="d">-				}
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-			} else {
+</a><a href="#h0-4-13" id="h0-4-13" class="d">-				fprintf(stderr,
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-					&quot;erresc(38): gfx attr %d unknown\n&quot;,
+</a><a href="#h0-4-15" id="h0-4-15" class="d">-					attr[i]);
+</a><a href="#h0-4-16" id="h0-4-16" class="d">-			}
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+			if ((idx = tdefcolor(attr, &amp;i, l)) &gt;= 0)
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+				term.c.attr.fg = idx;
+</a> 			break;
+ 		case 39:
+ 			term.c.attr.fg = defaultfg;
+ 			break;
+ 		case 48:
+<a href="#h0-4-24" id="h0-4-24" class="d">-			if(i + 2 &lt; l &amp;&amp; attr[i + 1] == 5) {
+</a><a href="#h0-4-25" id="h0-4-25" class="d">-				i += 2;
+</a><a href="#h0-4-26" id="h0-4-26" class="d">-				if(BETWEEN(attr[i], 0, 255)) {
+</a><a href="#h0-4-27" id="h0-4-27" class="d">-					term.c.attr.bg = attr[i];
+</a><a href="#h0-4-28" id="h0-4-28" class="d">-				} else {
+</a><a href="#h0-4-29" id="h0-4-29" class="d">-					fprintf(stderr,
+</a><a href="#h0-4-30" id="h0-4-30" class="d">-						&quot;erresc: bad bgcolor %d\n&quot;,
+</a><a href="#h0-4-31" id="h0-4-31" class="d">-						attr[i]);
+</a><a href="#h0-4-32" id="h0-4-32" class="d">-				}
+</a><a href="#h0-4-33" id="h0-4-33" class="d">-			} else {
+</a><a href="#h0-4-34" id="h0-4-34" class="d">-				fprintf(stderr,
+</a><a href="#h0-4-35" id="h0-4-35" class="d">-					&quot;erresc(48): gfx attr %d unknown\n&quot;,
+</a><a href="#h0-4-36" id="h0-4-36" class="d">-					attr[i]);
+</a><a href="#h0-4-37" id="h0-4-37" class="d">-			}
+</a><a href="#h0-4-38" id="h0-4-38" class="i">+			if ((idx = tdefcolor(attr, &amp;i, l)) &gt;= 0)
+</a><a href="#h0-4-39" id="h0-4-39" class="i">+				term.c.attr.bg = idx;
+</a> 			break;
+ 		case 49:
+ 			term.c.attr.bg = defaultbg;
+<a href="#h0-5" id="h0-5" class="h">@@ -2916,7 +2948,7 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 	FcPattern *fcpattern, *fontpattern;
+ 	FcFontSet *fcsets[] = { NULL };
+ 	FcCharSet *fccharset;
+<a href="#h0-5-3" id="h0-5-3" class="d">-	Colour *fg, *bg, *temp, revfg, revbg;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	Colour *fg, *bg, *temp, revfg, revbg, truefg, truebg;
+</a> 	XRenderColor colfg, colbg;
+ 	Rectangle r;
+ 
+<a href="#h0-6" id="h0-6" class="h">@@ -2936,8 +2968,27 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 		if(base.fg == defaultfg)
+ 			base.fg = defaultunderline;
+ 	}
+<a href="#h0-6-3" id="h0-6-3" class="d">-	fg = &amp;dc.col[base.fg];
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-	bg = &amp;dc.col[base.bg];
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+	if(IS_TRUECOL(base.fg)) {
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+		colfg.red = TRUERED(base.fg);
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+		colfg.green = TRUEGREEN(base.fg);
+</a><a href="#h0-6-8" id="h0-6-8" class="i">+		colfg.blue = TRUEBLUE(base.fg);
+</a><a href="#h0-6-9" id="h0-6-9" class="i">+		XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;colfg, &amp;truefg);
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+		fg = &amp;truefg;
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+	} else {
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+		fg = &amp;dc.col[base.fg];
+</a><a href="#h0-6-13" id="h0-6-13" class="i">+	}
+</a><a href="#h0-6-14" id="h0-6-14" class="i">+
+</a><a href="#h0-6-15" id="h0-6-15" class="i">+	if(IS_TRUECOL(base.bg)) {
+</a><a href="#h0-6-16" id="h0-6-16" class="i">+		colbg.green = TRUEGREEN(base.bg);
+</a><a href="#h0-6-17" id="h0-6-17" class="i">+		colbg.red = TRUERED(base.bg);
+</a><a href="#h0-6-18" id="h0-6-18" class="i">+		colbg.blue = TRUEBLUE(base.bg);
+</a><a href="#h0-6-19" id="h0-6-19" class="i">+		XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;colbg, &amp;truebg);
+</a><a href="#h0-6-20" id="h0-6-20" class="i">+		bg = &amp;truebg;
+</a><a href="#h0-6-21" id="h0-6-21" class="i">+	} else {
+</a><a href="#h0-6-22" id="h0-6-22" class="i">+		bg = &amp;dc.col[base.bg];
+</a><a href="#h0-6-23" id="h0-6-23" class="i">+	}
+</a><a href="#h0-6-24" id="h0-6-24" class="i">+
+</a><a href="#h0-6-25" id="h0-6-25" class="i">+
+</a> 
+ 	if(base.mode &amp; ATTR_BOLD) {
+ 		if(BETWEEN(base.fg, 0, 7)) {
+</pre>
+</div>
+</body>
+</html>

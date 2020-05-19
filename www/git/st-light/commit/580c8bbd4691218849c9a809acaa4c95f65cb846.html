@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add an option to disable alternative screens. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/580c8bbd4691218849c9a809acaa4c95f65cb846.html">580c8bbd4691218849c9a809acaa4c95f65cb846</a>
+<b>parent</b> <a href="../commit/502911e55442a89602bd5681763f68250bff330b.html">502911e55442a89602bd5681763f68250bff330b</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Wed,  3 Apr 2013 20:42:27 +0200
+
+Add an option to disable alternative screens.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">3</td><td><span class="i">+++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.1</a></td><td> | </td><td class="num">4</td><td><span class="i">++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.c</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>3 files changed, 16 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -13,6 +13,9 @@ static char shell[] = &quot;/bin/sh&quot;;
+</a> static unsigned int doubleclicktimeout = 300;
+ static unsigned int tripleclicktimeout = 600;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+/* alt screens */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static bool allowaltscreen = true;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a> /* frames per second st should at maximum draw to the screen */
+ static unsigned int xfps = 60;
+ static unsigned int actionfps = 30;
+<b>diff --git a/<a id="h1" href="../file/st.1.html">st.1</a> b/<a href="../file/st.1.html">st.1</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -3,6 +3,7 @@
+</a> st \- simple terminal
+ .SH SYNOPSIS
+ .B st
+<a href="#h1-0-3" id="h1-0-3" class="i">+.RB [ \-a ]
+</a> .RB [ \-c
+ .IR class ]
+ .RB [ \-f
+<a href="#h1-1" id="h1-1" class="h">@@ -23,6 +24,9 @@ st \- simple terminal
+</a> is a simple terminal emulator.
+ .SH OPTIONS
+ .TP
+<a href="#h1-1-3" id="h1-1-3" class="i">+.B \-a
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+disable alternate screens in terminal
+</a><a href="#h1-1-5" id="h1-1-5" class="i">+.TP
+</a> .BI \-c &quot; class&quot;
+ defines the window class (default $TERM).
+ .TP
+<b>diff --git a/<a id="h2" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -43,7 +43,7 @@
+</a> 
+ #define USAGE \
+ 	&quot;st &quot; VERSION &quot; (c) 2010-2013 st engineers\n&quot; \
+<a href="#h2-0-3" id="h2-0-3" class="d">-	&quot;usage: st [-v] [-c class] [-f font] [-g geometry] [-o file]&quot; \
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+	&quot;usage: st [-a] [-v] [-c class] [-f font] [-g geometry] [-o file]&quot; \
+</a> 	&quot; [-t title] [-w windowid] [-e command ...]\n&quot;
+ 
+ /* XEMBED messages */
+<a href="#h2-1" id="h2-1" class="h">@@ -1615,7 +1615,10 @@ tsetmode(bool priv, bool set, int *args, int narg) {
+</a> 				break;
+ 			case 1049: /* = 1047 and 1048 */
+ 			case 47:
+<a href="#h2-1-3" id="h2-1-3" class="d">-			case 1047: {
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+			case 1047:
+</a><a href="#h2-1-5" id="h2-1-5" class="i">+				if (!allowaltscreen)
+</a><a href="#h2-1-6" id="h2-1-6" class="i">+					break;
+</a><a href="#h2-1-7" id="h2-1-7" class="i">+
+</a> 				alt = IS_SET(MODE_ALTSCREEN);
+ 				if(alt) {
+ 					tclearregion(0, 0, term.col-1,
+<a href="#h2-2" id="h2-2" class="h">@@ -1625,8 +1628,7 @@ tsetmode(bool priv, bool set, int *args, int narg) {
+</a> 					tswapscreen();
+ 				if(*args != 1049)
+ 					break;
+<a href="#h2-2-3" id="h2-2-3" class="d">-			}
+</a><a href="#h2-2-4" id="h2-2-4" class="d">-				/* pass through */
+</a><a href="#h2-2-5" id="h2-2-5" class="i">+				/* FALLTRU */
+</a> 			case 1048:
+ 				tcursor((set) ? CURSOR_SAVE : CURSOR_LOAD);
+ 				break;
+<a href="#h2-3" id="h2-3" class="h">@@ -3316,6 +3318,9 @@ main(int argc, char *argv[]) {
+</a> 
+ 	for(i = 1; i &lt; argc; i++) {
+ 		switch(argv[i][0] != &#39;-&#39; || argv[i][2] ? -1 : argv[i][1]) {
+<a href="#h2-3-3" id="h2-3-3" class="i">+		case &#39;a&#39;:
+</a><a href="#h2-3-4" id="h2-3-4" class="i">+			allowaltscreen = false;
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+			break;
+</a> 		case &#39;c&#39;:
+ 			if(++i &lt; argc)
+ 				opt_class = argv[i];
+</pre>
+</div>
+</body>
+</html>

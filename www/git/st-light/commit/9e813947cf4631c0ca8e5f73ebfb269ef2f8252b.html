@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add DEC alignment test - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/9e813947cf4631c0ca8e5f73ebfb269ef2f8252b.html">9e813947cf4631c0ca8e5f73ebfb269ef2f8252b</a>
+<b>parent</b> <a href="../commit/b7a7f171effb301ce8dbce07c1c77a6b06ef980f.html">b7a7f171effb301ce8dbce07c1c77a6b06ef980f</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Sun,  7 Oct 2012 11:06:17 +0200
+
+Add DEC alignment test
+
+This sequence was used by DEC personal in to for verifying the screen adjust
+of terminals. It is the unique test sequence implemented by all the
+emulators, and I think it is because they want be conforms with vttest which
+uses this sequence in some tests.
+---
+ st.c |   31 +++++++++++++++++++++++--------
+ 1 file changed, 23 insertions(+), 8 deletions(-)
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">31</td><td><span class="i">+++++++++++++++++++++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 23 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -123,6 +123,7 @@ enum escape_state {
+</a> 	ESC_STR	= 4, /* DSC, OSC, PM, APC */
+ 	ESC_ALTCHARSET = 8,
+ 	ESC_STR_END    = 16, /* a final string was encountered */
+<a href="#h0-0-3" id="h0-0-3" class="i">+	ESC_TEST       = 32, /* Enter in test mode */
+</a> };
+ 
+ enum window_state {
+<a href="#h0-1" id="h0-1" class="h">@@ -289,7 +290,7 @@ static int tresize(int, int);
+</a> static void tscrollup(int, int);
+ static void tscrolldown(int, int);
+ static void tsetattr(int*, int);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void tsetchar(char*);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static void tsetchar(char *, Glyph *, int, int);
+</a> static void tsetscroll(int, int);
+ static void tswapscreen(void);
+ static void tsetdirt(int, int);
+<a href="#h0-2" id="h0-2" class="h">@@ -1182,7 +1183,7 @@ tmoveto(int x, int y) {
+</a> }
+ 
+ void
+<a href="#h0-2-3" id="h0-2-3" class="d">-tsetchar(char *c) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+tsetchar(char *c, Glyph *attr, int x, int y) {
+</a> 	static char *vt100_0[62] = { /* 0x41 - 0x7e */
+ 		&quot;↑&quot;, &quot;↓&quot;, &quot;→&quot;, &quot;←&quot;, &quot;█&quot;, &quot;▚&quot;, &quot;☃&quot;, /* A - G */
+ 		0, 0, 0, 0, 0, 0, 0, 0, /* H - O */
+<a href="#h0-3" id="h0-3" class="h">@@ -1197,17 +1198,17 @@ tsetchar(char *c) {
+</a> 	/*
+ 	 * The table is proudly stolen from rxvt.
+ 	 */
+<a href="#h0-3-3" id="h0-3-3" class="d">-	if(term.c.attr.mode &amp; ATTR_GFX) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	if(attr-&gt;mode &amp; ATTR_GFX) {
+</a> 		if(c[0] &gt;= 0x41 &amp;&amp; c[0] &lt;= 0x7e
+ 				&amp;&amp; vt100_0[c[0] - 0x41]) {
+ 			c = vt100_0[c[0] - 0x41];
+ 		}
+ 	}
+ 
+<a href="#h0-3-11" id="h0-3-11" class="d">-	term.dirty[term.c.y] = 1;
+</a><a href="#h0-3-12" id="h0-3-12" class="d">-	term.line[term.c.y][term.c.x] = term.c.attr;
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-	memcpy(term.line[term.c.y][term.c.x].c, c, UTF_SIZ);
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-	term.line[term.c.y][term.c.x].state |= GLYPH_SET;
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+	term.dirty[y] = 1;
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+	term.line[y][x] = *attr;
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+	memcpy(term.line[y][x].c, c, UTF_SIZ);
+</a><a href="#h0-3-18" id="h0-3-18" class="i">+	term.line[y][x].state |= GLYPH_SET;
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -1893,11 +1894,25 @@ tputc(char *c, int len) {
+</a> 				fprintf(stderr, &quot;esc unhandled charset: ESC ( %c\n&quot;, ascii);
+ 			}
+ 			term.esc = 0;
+<a href="#h0-4-3" id="h0-4-3" class="i">+		} else if(term.esc &amp; ESC_TEST) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+			if(ascii == &#39;8&#39;) { /* DEC screen alignment test. */
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+				char E[UTF_SIZ] = &quot;E&quot;;
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+				int x, y;
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+				for(x = 0; x &lt; term.col; ++x) {
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+					for(y = 0; y &lt; term.row; ++y)
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+						tsetchar(E, &amp;term.c.attr, x, y);
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+				}
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+			}
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+			term.esc = 0;
+</a> 		} else {
+ 			switch(ascii) {
+ 			case &#39;[&#39;:
+ 				term.esc |= ESC_CSI;
+ 				break;
+<a href="#h0-4-19" id="h0-4-19" class="i">+			case &#39;#&#39;:
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+				term.esc |= ESC_TEST;
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+				break;
+</a> 			case &#39;P&#39;: /* DCS -- Device Control String */
+ 			case &#39;_&#39;: /* APC -- Application Program Command */
+ 			case &#39;^&#39;: /* PM -- Privacy Message */
+<a href="#h0-5" id="h0-5" class="h">@@ -1988,7 +2003,7 @@ tputc(char *c, int len) {
+</a> 		sel.bx = -1;
+ 	if(IS_SET(MODE_WRAP) &amp;&amp; term.c.state &amp; CURSOR_WRAPNEXT)
+ 		tnewline(1); /* always go to first col */
+<a href="#h0-5-3" id="h0-5-3" class="d">-	tsetchar(c);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	tsetchar(c, &amp;term.c.attr, term.c.x, term.c.y);
+</a> 	if(term.c.x+1 &lt; term.col)
+ 		tmoveto(term.c.x+1, term.c.y);
+ 	else
+</pre>
+</div>
+</body>
+</html>

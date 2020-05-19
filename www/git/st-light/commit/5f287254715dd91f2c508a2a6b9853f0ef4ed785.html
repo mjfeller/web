@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>source utility functions out to util.c - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5f287254715dd91f2c508a2a6b9853f0ef4ed785.html">5f287254715dd91f2c508a2a6b9853f0ef4ed785</a>
+<b>parent</b> <a href="../commit/05ebee60843f24201f3e7c5c76ff94b6b5e868b2.html">05ebee60843f24201f3e7c5c76ff94b6b5e868b2</a>
+<b>Author:</b> Matthias-Christian Ott &lt;<a href="mailto:ott@enolink.de">ott@enolink.de</a>&gt;
+<b>Date:</b>   Tue, 10 Jun 2008 17:56:57 +0200
+
+source utility functions out to util.c
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">pty.c</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.c</a></td><td> | </td><td class="num">1</td><td><span class="i">+</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">std.c</a></td><td> | </td><td class="num">39</td><td><span class="i">+</span><span class="d">--------------------------------------</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h4">util.c</a></td><td> | </td><td class="num">37</td><td><span class="i">+++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="A">A</td><td><a href="#h5">util.h</a></td><td> | </td><td class="num">5</td><td><span class="i">+++++</span><span class="d"></span></td></tr>
+</table></pre><pre>6 files changed, 46 insertions(+), 39 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -3,7 +3,7 @@
+</a> 
+ include config.mk
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-SRC = st.c std.c
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+SRC = st.c std.c util.c pty.c
+</a> OBJ = ${SRC:.c=.o}
+ 
+ all: options st
+<b>diff --git a/<a id="h1" href="../file/pty.c.html">pty.c</a> b/<a href="../file/pty.c.html">pty.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -1,4 +1,5 @@
+</a> /* See LICENSE file for copyright and license details. */
+<a href="#h1-0-1" id="h1-0-1" class="i">+#include &quot;util.h&quot;
+</a> #include &lt;sys/types.h&gt;
+ #include &lt;sys/stat.h&gt;
+ #include &lt;fcntl.h&gt;
+<b>diff --git a/<a id="h2" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,4 +1,5 @@
+</a> /* See LICENSE file for copyright and license details. */
+<a href="#h2-0-1" id="h2-0-1" class="i">+#include &quot;util.h&quot;
+</a> #include &lt;stdio.h&gt;
+ 
+ int
+<b>diff --git a/<a id="h3" href="../file/std.c.html">std.c</a> b/<a href="../file/std.c.html">std.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -1,12 +1,8 @@
+</a> /* See LICENSE file for copyright and license details. */
+<a href="#h3-0-1" id="h3-0-1" class="d">-#include &lt;sys/ioctl.h&gt;
+</a><a href="#h3-0-2" id="h3-0-2" class="d">-#include &lt;sys/select.h&gt;
+</a><a href="#h3-0-3" id="h3-0-3" class="d">-#include &lt;sys/stat.h&gt;
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+#include &quot;util.h&quot;
+</a> #include &lt;sys/types.h&gt;
+ #include &lt;sys/wait.h&gt;
+ #include &lt;ctype.h&gt;
+<a href="#h3-0-8" id="h3-0-8" class="d">-#include &lt;errno.h&gt;
+</a><a href="#h3-0-9" id="h3-0-9" class="d">-#include &lt;fcntl.h&gt;
+</a> #include &lt;signal.h&gt;
+ #include &lt;stdarg.h&gt;
+ #include &lt;stdio.h&gt;
+<a href="#h3-1" id="h3-1" class="h">@@ -20,9 +16,6 @@
+</a> 
+ void buffer(char c);
+ void cmd(const char *cmdstr, ...);
+<a href="#h3-1-3" id="h3-1-3" class="d">-void *emallocz(unsigned int size);
+</a><a href="#h3-1-4" id="h3-1-4" class="d">-void eprint(const char *errstr, ...);
+</a><a href="#h3-1-5" id="h3-1-5" class="d">-void eprintn(const char *errstr, ...);
+</a> void getpty(void);
+ void movea(int x, int y);
+ void mover(int x, int y);
+<a href="#h3-2" id="h3-2" class="h">@@ -68,36 +61,6 @@ cmd(const char *cmdstr, ...) {
+</a> 	va_end(ap);
+ }
+ 
+<a href="#h3-2-3" id="h3-2-3" class="d">-void *
+</a><a href="#h3-2-4" id="h3-2-4" class="d">-emallocz(unsigned int size) {
+</a><a href="#h3-2-5" id="h3-2-5" class="d">-	void *res = calloc(1, size);
+</a><a href="#h3-2-6" id="h3-2-6" class="d">-
+</a><a href="#h3-2-7" id="h3-2-7" class="d">-	if(!res)
+</a><a href="#h3-2-8" id="h3-2-8" class="d">-		eprint(&quot;fatal: could not malloc() %u bytes\n&quot;, size);
+</a><a href="#h3-2-9" id="h3-2-9" class="d">-	return res;
+</a><a href="#h3-2-10" id="h3-2-10" class="d">-}
+</a><a href="#h3-2-11" id="h3-2-11" class="d">-
+</a><a href="#h3-2-12" id="h3-2-12" class="d">-void
+</a><a href="#h3-2-13" id="h3-2-13" class="d">-eprint(const char *errstr, ...) {
+</a><a href="#h3-2-14" id="h3-2-14" class="d">-	va_list ap;
+</a><a href="#h3-2-15" id="h3-2-15" class="d">-
+</a><a href="#h3-2-16" id="h3-2-16" class="d">-	va_start(ap, errstr);
+</a><a href="#h3-2-17" id="h3-2-17" class="d">-	vfprintf(stderr, errstr, ap);
+</a><a href="#h3-2-18" id="h3-2-18" class="d">-	va_end(ap);
+</a><a href="#h3-2-19" id="h3-2-19" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h3-2-20" id="h3-2-20" class="d">-}
+</a><a href="#h3-2-21" id="h3-2-21" class="d">-
+</a><a href="#h3-2-22" id="h3-2-22" class="d">-void
+</a><a href="#h3-2-23" id="h3-2-23" class="d">-eprintn(const char *errstr, ...) {
+</a><a href="#h3-2-24" id="h3-2-24" class="d">-	va_list ap;
+</a><a href="#h3-2-25" id="h3-2-25" class="d">-
+</a><a href="#h3-2-26" id="h3-2-26" class="d">-	va_start(ap, errstr);
+</a><a href="#h3-2-27" id="h3-2-27" class="d">-	vfprintf(stderr, errstr, ap);
+</a><a href="#h3-2-28" id="h3-2-28" class="d">-	va_end(ap);
+</a><a href="#h3-2-29" id="h3-2-29" class="d">-	fprintf(stderr, &quot;: %s\n&quot;, strerror(errno));
+</a><a href="#h3-2-30" id="h3-2-30" class="d">-	exit(EXIT_FAILURE);
+</a><a href="#h3-2-31" id="h3-2-31" class="d">-}
+</a><a href="#h3-2-32" id="h3-2-32" class="d">-
+</a> void
+ movea(int x, int y) {
+ 	x = MAX(x, cols);
+<b>diff --git a/<a id="h4" href="../file/util.c.html">util.c</a> b/<a href="../file/util.c.html">util.c</a></b>
+<a href="#h4-0" id="h4-0" class="h">@@ -0,0 +1,37 @@
+</a><a href="#h4-0-0" id="h4-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h4-0-1" id="h4-0-1" class="i">+#include &quot;util.h&quot;
+</a><a href="#h4-0-2" id="h4-0-2" class="i">+#include &lt;errno.h&gt;
+</a><a href="#h4-0-3" id="h4-0-3" class="i">+#include &lt;stdarg.h&gt;
+</a><a href="#h4-0-4" id="h4-0-4" class="i">+#include &lt;stdio.h&gt;
+</a><a href="#h4-0-5" id="h4-0-5" class="i">+#include &lt;stdlib.h&gt;
+</a><a href="#h4-0-6" id="h4-0-6" class="i">+#include &lt;string.h&gt;
+</a><a href="#h4-0-7" id="h4-0-7" class="i">+
+</a><a href="#h4-0-8" id="h4-0-8" class="i">+void *
+</a><a href="#h4-0-9" id="h4-0-9" class="i">+emallocz(unsigned int size) {
+</a><a href="#h4-0-10" id="h4-0-10" class="i">+	void *res = calloc(1, size);
+</a><a href="#h4-0-11" id="h4-0-11" class="i">+
+</a><a href="#h4-0-12" id="h4-0-12" class="i">+	if(!res)
+</a><a href="#h4-0-13" id="h4-0-13" class="i">+		eprint(&quot;fatal: could not malloc() %u bytes\n&quot;, size);
+</a><a href="#h4-0-14" id="h4-0-14" class="i">+	return res;
+</a><a href="#h4-0-15" id="h4-0-15" class="i">+}
+</a><a href="#h4-0-16" id="h4-0-16" class="i">+
+</a><a href="#h4-0-17" id="h4-0-17" class="i">+void
+</a><a href="#h4-0-18" id="h4-0-18" class="i">+eprint(const char *errstr, ...) {
+</a><a href="#h4-0-19" id="h4-0-19" class="i">+	va_list ap;
+</a><a href="#h4-0-20" id="h4-0-20" class="i">+
+</a><a href="#h4-0-21" id="h4-0-21" class="i">+	va_start(ap, errstr);
+</a><a href="#h4-0-22" id="h4-0-22" class="i">+	vfprintf(stderr, errstr, ap);
+</a><a href="#h4-0-23" id="h4-0-23" class="i">+	va_end(ap);
+</a><a href="#h4-0-24" id="h4-0-24" class="i">+	exit(EXIT_FAILURE);
+</a><a href="#h4-0-25" id="h4-0-25" class="i">+}
+</a><a href="#h4-0-26" id="h4-0-26" class="i">+
+</a><a href="#h4-0-27" id="h4-0-27" class="i">+void
+</a><a href="#h4-0-28" id="h4-0-28" class="i">+eprintn(const char *errstr, ...) {
+</a><a href="#h4-0-29" id="h4-0-29" class="i">+	va_list ap;
+</a><a href="#h4-0-30" id="h4-0-30" class="i">+
+</a><a href="#h4-0-31" id="h4-0-31" class="i">+	va_start(ap, errstr);
+</a><a href="#h4-0-32" id="h4-0-32" class="i">+	vfprintf(stderr, errstr, ap);
+</a><a href="#h4-0-33" id="h4-0-33" class="i">+	va_end(ap);
+</a><a href="#h4-0-34" id="h4-0-34" class="i">+	fprintf(stderr, &quot;: %s\n&quot;, strerror(errno));
+</a><a href="#h4-0-35" id="h4-0-35" class="i">+	exit(EXIT_FAILURE);
+</a><a href="#h4-0-36" id="h4-0-36" class="i">+}
+</a><b>diff --git a/<a id="h5" href="../file/util.h.html">util.h</a> b/<a href="../file/util.h.html">util.h</a></b>
+<a href="#h5-0" id="h5-0" class="h">@@ -0,0 +1,5 @@
+</a><a href="#h5-0-0" id="h5-0-0" class="i">+/* See LICENSE file for copyright and license details. */
+</a><a href="#h5-0-1" id="h5-0-1" class="i">+
+</a><a href="#h5-0-2" id="h5-0-2" class="i">+void *emallocz(unsigned int size);
+</a><a href="#h5-0-3" id="h5-0-3" class="i">+void eprint(const char *errstr, ...);
+</a><a href="#h5-0-4" id="h5-0-4" class="i">+void eprintn(const char *errstr, ...);
+</a></pre>
+</div>
+</body>
+</html>

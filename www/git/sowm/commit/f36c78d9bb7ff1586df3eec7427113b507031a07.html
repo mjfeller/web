@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: move two overly simple functions to macros. - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f36c78d9bb7ff1586df3eec7427113b507031a07.html">f36c78d9bb7ff1586df3eec7427113b507031a07</a>
+<b>parent</b> <a href="../commit/d6de0007250e1d2dbb0c50bfd7ca76601c235a82.html">d6de0007250e1d2dbb0c50bfd7ca76601c235a82</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 16 Oct 2019 13:21:36 +0300
+
+sowm: move two overly simple functions to macros.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">72</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d">----------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 26 insertions(+), 46 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -7,19 +7,6 @@
+</a> #include &lt;signal.h&gt;
+ #include &lt;unistd.h&gt;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-/*
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-   This iterates over the current desktop&#39;s
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-   window list and is inserted where needed.
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-*/
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-#define WIN (c=list;c;c=c-&gt;next)
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-/*
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-   This sets focus to the given window. It
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-   could very well be a function but I feel
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-   it belongs here.
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-*/
+</a><a href="#h0-0-14" id="h0-0-14" class="d">-#define FOC(W) XSetInputFocus(d, W, RevertToParent, CurrentTime);
+</a><a href="#h0-0-15" id="h0-0-15" class="d">-
+</a> typedef union {
+     const char** com;
+     const int i;
+<a href="#h0-1" id="h0-1" class="h">@@ -62,8 +49,6 @@ static void win_kill();
+</a> static void win_next();
+ static void win_to_ws(const Arg arg);
+ static void ws_go(const Arg arg);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void ws_save(int i);
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-static void ws_sel(int i);
+</a> 
+ static client  *list = {0};
+ static desktop ws_list[10];
+<a href="#h0-2" id="h0-2" class="h">@@ -74,8 +59,6 @@ static Window            root, cur;
+</a> static XButtonEvent      mouse;
+ static XWindowAttributes attr;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-#include &quot;config.h&quot;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-
+</a> /*
+    The list of events to subscribe to and the paired functions
+    to call on an event.
+<a href="#h0-3" id="h0-3" class="h">@@ -91,6 +74,20 @@ static void (*events[LASTEvent])(XEvent *e) = {
+</a>     [MotionNotify]     = notify_motion
+ };
+ 
+<a href="#h0-3-3" id="h0-3-3" class="i">+#include &quot;config.h&quot;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+// Iterate over the current desktop&#39;s window list.
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+#define win (c=list;c;c=c-&gt;next)
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+
+</a><a href="#h0-3-8" id="h0-3-8" class="i">+// Focus the given window.
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+#define win_focus(W) XSetInputFocus(d, W, RevertToParent, CurrentTime);
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+// Save the current desktop&#39;s window list.
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+#define ws_save(i) ws_list[i].list = list;
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+// Select the current desktop&#39;s window list.
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+#define ws_sel(i) list = ws_list[i].list, ws = i;
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+
+</a> /*
+    &#39;sowm&#39; doesn&#39;t keep track of the currently focused window
+    and instead grabs the window under the cursor when needed.
+<a href="#h0-4" id="h0-4" class="h">@@ -126,7 +123,7 @@ Window win_current() {
+</a> void notify_destroy(XEvent *e) {
+     win_del(e-&gt;xdestroywindow.window);
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-    if (list) FOC(win_current() == root ? list-&gt;w : cur);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+    if (list) win_focus(win_current() == root ? list-&gt;w : cur);
+</a> }
+ 
+ /*
+<a href="#h0-5" id="h0-5" class="h">@@ -146,7 +143,7 @@ void notify_destroy(XEvent *e) {
+</a> void notify_enter(XEvent *e) {
+     while(XCheckTypedEvent(d, EnterNotify, e));
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-    if (e-&gt;xcrossing.window != root) FOC(e-&gt;xcrossing.window)
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+    if (e-&gt;xcrossing.window != root) win_focus(e-&gt;xcrossing.window)
+</a> }
+ 
+ /*
+<a href="#h0-6" id="h0-6" class="h">@@ -242,7 +239,7 @@ void button_press(XEvent *e) {
+</a> void button_release() {
+     client *c;
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-    for WIN if (c-&gt;w == mouse.subwindow) c-&gt;f = 0;
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+    for win if (c-&gt;w == mouse.subwindow) c-&gt;f = 0;
+</a> 
+     mouse.subwindow = None;
+ }
+<a href="#h0-7" id="h0-7" class="h">@@ -287,7 +284,7 @@ void win_add(Window w) {
+</a> void win_del(Window w) {
+     client *c;
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-    for WIN if (c-&gt;w == w) {
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+    for win if (c-&gt;w == w) {
+</a>         if (!c-&gt;prev &amp;&amp; !c-&gt;next) {
+             free(list);
+             list = 0;
+<a href="#h0-8" id="h0-8" class="h">@@ -362,7 +359,7 @@ void win_fs() {
+</a> 
+     win_current();
+ 
+<a href="#h0-8-3" id="h0-8-3" class="d">-    for WIN if (c-&gt;w == cur) {
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+    for win if (c-&gt;w == cur) {
+</a>         if ((c-&gt;f = c-&gt;f == 0 ? 1 : 0)) {
+             XGetWindowAttributes(d, cur, &amp;c-&gt;a);
+             XMoveResizeWindow(d, cur, 0, 0, sw, sh);
+<a href="#h0-9" id="h0-9" class="h">@@ -399,7 +396,7 @@ void win_to_ws(const Arg arg) {
+</a>     XUnmapWindow(d, cur);
+     ws_save(tmp);
+ 
+<a href="#h0-9-3" id="h0-9-3" class="d">-    if (list) FOC(list-&gt;w);
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+    if (list) win_focus(list-&gt;w);
+</a> }
+ 
+ /*
+<a href="#h0-10" id="h0-10" class="h">@@ -417,11 +414,11 @@ void win_next() {
+</a>     client *c;
+ 
+     if (list) {
+<a href="#h0-10-3" id="h0-10-3" class="d">-        for WIN if (c-&gt;w == cur) break;
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+        for win if (c-&gt;w == cur) break;
+</a> 
+         c = c-&gt;next ? c-&gt;next : list;
+ 
+<a href="#h0-10-8" id="h0-10-8" class="d">-        FOC(c-&gt;w);
+</a><a href="#h0-10-9" id="h0-10-9" class="i">+        win_focus(c-&gt;w);
+</a>         XRaiseWindow(d, c-&gt;w);
+     }
+ }
+<a href="#h0-11" id="h0-11" class="h">@@ -445,32 +442,15 @@ void ws_go(const Arg arg) {
+</a>     ws_save(ws);
+     ws_sel(arg.i);
+ 
+<a href="#h0-11-3" id="h0-11-3" class="d">-    if (list) for WIN XMapWindow(d, c-&gt;w);
+</a><a href="#h0-11-4" id="h0-11-4" class="i">+    if (list) for win XMapWindow(d, c-&gt;w);
+</a> 
+     ws_sel(tmp);
+ 
+<a href="#h0-11-8" id="h0-11-8" class="d">-    if (list) for WIN XUnmapWindow(d, c-&gt;w);
+</a><a href="#h0-11-9" id="h0-11-9" class="i">+    if (list) for win XUnmapWindow(d, c-&gt;w);
+</a> 
+     ws_sel(arg.i);
+ 
+<a href="#h0-11-13" id="h0-11-13" class="d">-    if (list) FOC(list-&gt;w);
+</a><a href="#h0-11-14" id="h0-11-14" class="d">-}
+</a><a href="#h0-11-15" id="h0-11-15" class="d">-
+</a><a href="#h0-11-16" id="h0-11-16" class="d">-/*
+</a><a href="#h0-11-17" id="h0-11-17" class="d">-    This function saves the current desktop&#39;s window list.
+</a><a href="#h0-11-18" id="h0-11-18" class="d">-    Simple, nothing to see here.
+</a><a href="#h0-11-19" id="h0-11-19" class="d">-*/
+</a><a href="#h0-11-20" id="h0-11-20" class="d">-void ws_save(int i) {
+</a><a href="#h0-11-21" id="h0-11-21" class="d">-    ws_list[i].list = list;
+</a><a href="#h0-11-22" id="h0-11-22" class="d">-}
+</a><a href="#h0-11-23" id="h0-11-23" class="d">-
+</a><a href="#h0-11-24" id="h0-11-24" class="d">-/*
+</a><a href="#h0-11-25" id="h0-11-25" class="d">-    This function restores a saved desktop&#39;s window list.
+</a><a href="#h0-11-26" id="h0-11-26" class="d">-    Simple, nothing to see here.
+</a><a href="#h0-11-27" id="h0-11-27" class="d">-*/
+</a><a href="#h0-11-28" id="h0-11-28" class="d">-void ws_sel(int i) {
+</a><a href="#h0-11-29" id="h0-11-29" class="d">-    list = ws_list[i].list;
+</a><a href="#h0-11-30" id="h0-11-30" class="d">-    ws   = i;
+</a><a href="#h0-11-31" id="h0-11-31" class="i">+    if (list) win_focus(list-&gt;w);
+</a> }
+ 
+ /*
+<a href="#h0-12" id="h0-12" class="h">@@ -513,7 +493,7 @@ void map_request(XEvent *e) {
+</a> 
+     win_center((Arg){.i = w});
+     XMapWindow(d, w);
+<a href="#h0-12-3" id="h0-12-3" class="d">-    FOC(w);
+</a><a href="#h0-12-4" id="h0-12-4" class="i">+    win_focus(w);
+</a>     win_add(w);
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

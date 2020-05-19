@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Implementing mouse focus and all events. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/405fd89ac1d333be79325417c973a07ccad67453.html">405fd89ac1d333be79325417c973a07ccad67453</a>
+<b>parent</b> <a href="../commit/8315dc417982936186837edfac24420d0d0e516e.html">8315dc417982936186837edfac24420d0d0e516e</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sat,  1 Jun 2013 13:06:53 +0200
+
+Implementing mouse focus and all events.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 15 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -118,6 +118,7 @@ enum term_mode {
+</a> 	MODE_8BIT	 = 8192,
+ 	MODE_BLINK	 = 16384,
+ 	MODE_FBLINK	 = 32768,
+<a href="#h0-0-3" id="h0-0-3" class="i">+	MODE_FOCUS	 = 65536,
+</a> };
+ 
+ enum escape_state {
+<a href="#h0-1" id="h0-1" class="h">@@ -1782,6 +1783,13 @@ tsetmode(bool priv, bool set, int *args, int narg) {
+</a> 				MODBIT(term.mode, set, MODE_MOUSEMOTION);
+ 				MODBIT(term.mode, 0, MODE_MOUSEBTN);
+ 				break;
+<a href="#h0-1-3" id="h0-1-3" class="i">+			case 1003: /* 1003: enable all mouse reports */
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+				MODBIT(term.mode, set, MODE_MOUSEMOTION);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+				MODBIT(term.mode, set, MODE_MOUSEBTN);
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+				break;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+			case 1004:
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+				MODBIT(term.mode, set, MODE_FOCUS);
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+				break;
+</a> 			case 1006:
+ 				MODBIT(term.mode, set, MODE_MOUSESGR);
+ 				break;
+<a href="#h0-2" id="h0-2" class="h">@@ -1807,6 +1815,9 @@ tsetmode(bool priv, bool set, int *args, int narg) {
+</a> 			case 1048:
+ 				tcursor((set) ? CURSOR_SAVE : CURSOR_LOAD);
+ 				break;
+<a href="#h0-2-3" id="h0-2-3" class="i">+			case 9: /* X10 compatibility mode */
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+			case 1001: /* mouse highlight mode; can hang the
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+				      terminal when implemented. */
+</a> 			default:
+ 				fprintf(stderr,
+ 					&quot;erresc: unknown private set/reset mode %d\n&quot;,
+<a href="#h0-3" id="h0-3" class="h">@@ -3309,9 +3320,13 @@ focus(XEvent *ev) {
+</a> 		XSetICFocus(xw.xic);
+ 		xw.state |= WIN_FOCUSED;
+ 		xseturgency(0);
+<a href="#h0-3-3" id="h0-3-3" class="i">+		if(IS_SET(MODE_FOCUS))
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			ttywrite(&quot;\033[I&quot;, 3);
+</a> 	} else {
+ 		XUnsetICFocus(xw.xic);
+ 		xw.state &amp;= ~WIN_FOCUSED;
+<a href="#h0-3-8" id="h0-3-8" class="i">+		if(IS_SET(MODE_FOCUS))
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+			ttywrite(&quot;\033[O&quot;, 3);
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

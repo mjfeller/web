@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>cleanup. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/babf4db52b58da74c9e1072d14cb0b9ef5b4dee7.html">babf4db52b58da74c9e1072d14cb0b9ef5b4dee7</a>
+<b>parent</b> <a href="../commit/aede91e22a41cbf4b11d64faa42575d1bdbd8446.html">aede91e22a41cbf4b11d64faa42575d1bdbd8446</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 26 Apr 2011 20:22:15 +0200
+
+cleanup.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">104</td><td><span class="i">+++++++++++++++++++++</span><span class="d">----------------------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 27 insertions(+), 77 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -163,8 +163,8 @@ typedef struct {
+</a> 
+ #include &quot;config.h&quot;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void die(const char *errstr, ...);
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-static void draw();
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+static void die(const char*, ...);
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+static void draw(void);
+</a> static void drawregion(int, int, int, int);
+ static void execsh(void);
+ static void sigchld(int);
+<a href="#h0-1" id="h0-1" class="h">@@ -363,11 +363,11 @@ int
+</a> utf8size(char *s) {
+ 	unsigned char c = *s;
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	if (~c&amp;B7)
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	if(~c&amp;B7)
+</a> 		return 1;
+<a href="#h0-1-6" id="h0-1-6" class="d">-	else if ((c&amp;(B7|B6|B5)) == (B7|B6))
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	else if((c&amp;(B7|B6|B5)) == (B7|B6))
+</a> 		return 2;
+<a href="#h0-1-9" id="h0-1-9" class="d">-	else if ((c&amp;(B7|B6|B5|B4)) == (B7|B6|B5))
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	else if((c&amp;(B7|B6|B5|B4)) == (B7|B6|B5))
+</a> 		return 3;
+ 	else
+ 		return 4;
+<a href="#h0-2" id="h0-2" class="h">@@ -523,20 +523,25 @@ xsetsel(char *str) {
+</a> void
+ brelease(XEvent *e) {
+ 	int b;
+<a href="#h0-2-3" id="h0-2-3" class="i">+
+</a> 	sel.mode = 0;
+ 	getbuttoninfo(e, &amp;b, &amp;sel.ex, &amp;sel.ey);
+<a href="#h0-2-6" id="h0-2-6" class="d">-	
+</a> 	if(sel.bx == sel.ex &amp;&amp; sel.by == sel.ey) {
+ 		sel.bx = -1;
+ 		if(b == 2)
+ 			selpaste();
+<a href="#h0-2-11" id="h0-2-11" class="d">-
+</a> 		else if(b == 1) {
+<a href="#h0-2-13" id="h0-2-13" class="d">-			/* double click to select word */
+</a> 			struct timeval now;
+ 			gettimeofday(&amp;now, NULL);
+ 
+<a href="#h0-2-17" id="h0-2-17" class="d">-			if(TIMEDIFFERENCE(now, sel.tclick1) &lt;= DOUBLECLICK_TIMEOUT) {
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+			if(TIMEDIFFERENCE(now, sel.tclick2) &lt;= TRIPLECLICK_TIMEOUT) {
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+				/* triple click on the line */
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+				sel.b.x = sel.bx = 0;
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+				sel.e.x = sel.ex = term.col;
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+				sel.b.y = sel.e.y = sel.ey;
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+				selcopy();
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+			} else if(TIMEDIFFERENCE(now, sel.tclick1) &lt;= DOUBLECLICK_TIMEOUT) {
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+				/* double click to select word */
+</a> 				sel.bx = sel.ex;
+ 				while(term.line[sel.ey][sel.bx-1].state &amp; GLYPH_SET &amp;&amp; 
+ 					  term.line[sel.ey][sel.bx-1].c[0] != &#39; &#39;) sel.bx--;
+<a href="#h0-3" id="h0-3" class="h">@@ -547,19 +552,9 @@ brelease(XEvent *e) {
+</a> 				sel.b.y = sel.e.y = sel.ey;
+ 				selcopy();
+ 			}
+<a href="#h0-3-3" id="h0-3-3" class="d">-
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-			/* triple click on the line */
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-			if(TIMEDIFFERENCE(now, sel.tclick2) &lt;= TRIPLECLICK_TIMEOUT) {
+</a><a href="#h0-3-6" id="h0-3-6" class="d">-				sel.b.x = sel.bx = 0;
+</a><a href="#h0-3-7" id="h0-3-7" class="d">-				sel.e.x = sel.ex = term.col;
+</a><a href="#h0-3-8" id="h0-3-8" class="d">-				sel.b.y = sel.e.y = sel.ey;
+</a><a href="#h0-3-9" id="h0-3-9" class="d">-				selcopy();
+</a><a href="#h0-3-10" id="h0-3-10" class="d">-			}
+</a> 		}
+<a href="#h0-3-12" id="h0-3-12" class="d">-	} else {
+</a><a href="#h0-3-13" id="h0-3-13" class="d">-		if(b == 1) 
+</a><a href="#h0-3-14" id="h0-3-14" class="d">-			selcopy();
+</a><a href="#h0-3-15" id="h0-3-15" class="d">-	}
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+	} else if(b == 1) 
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+		selcopy();
+</a> 	memcpy(&amp;sel.tclick2, &amp;sel.tclick1, sizeof(struct timeval));
+ 	gettimeofday(&amp;sel.tclick1, NULL);
+ 	draw();
+<a href="#h0-4" id="h0-4" class="h">@@ -683,10 +678,6 @@ ttyread(void) {
+</a> 
+ void
+ ttywrite(const char *s, size_t n) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-	{size_t nn;
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-		for(nn = 0; nn &lt; n; nn++)
+</a><a href="#h0-4-5" id="h0-4-5" class="d">-			dump(s[nn]);
+</a><a href="#h0-4-6" id="h0-4-6" class="d">-	}
+</a> 	if(write(cmdfd, s, n) == -1)
+ 		die(&quot;write error on tty: %s\n&quot;, SERRNO);
+ }
+<a href="#h0-5" id="h0-5" class="h">@@ -921,9 +912,9 @@ tsetattr(int *attr, int l) {
+</a> 			term.c.attr.mode &amp;= ~ATTR_REVERSE;	 
+ 			break;
+ 		case 38:
+<a href="#h0-5-3" id="h0-5-3" class="d">-			if (i + 2 &lt; l &amp;&amp; attr[i + 1] == 5) {
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+			if(i + 2 &lt; l &amp;&amp; attr[i + 1] == 5) {
+</a> 				i += 2;
+<a href="#h0-5-6" id="h0-5-6" class="d">-				if (BETWEEN(attr[i], 0, 255))
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+				if(BETWEEN(attr[i], 0, 255))
+</a> 					term.c.attr.fg = attr[i];
+ 				else
+ 					fprintf(stderr, &quot;erresc: bad fgcolor %d\n&quot;, attr[i]);
+<a href="#h0-6" id="h0-6" class="h">@@ -935,9 +926,9 @@ tsetattr(int *attr, int l) {
+</a> 			term.c.attr.fg = DefaultFG;
+ 			break;
+ 		case 48:
+<a href="#h0-6-3" id="h0-6-3" class="d">-			if (i + 2 &lt; l &amp;&amp; attr[i + 1] == 5) {
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+			if(i + 2 &lt; l &amp;&amp; attr[i + 1] == 5) {
+</a> 				i += 2;
+<a href="#h0-6-6" id="h0-6-6" class="d">-				if (BETWEEN(attr[i], 0, 255))
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+				if(BETWEEN(attr[i], 0, 255))
+</a> 					term.c.attr.bg = attr[i];
+ 				else
+ 					fprintf(stderr, &quot;erresc: bad bgcolor %d\n&quot;, attr[i]);
+<a href="#h0-7" id="h0-7" class="h">@@ -1348,7 +1339,6 @@ tputc(char *c) {
+</a> 				tmoveto(term.c.x+1, term.c.y);
+ 			else
+ 				term.c.state |= CURSOR_WRAPNEXT;
+<a href="#h0-7-3" id="h0-7-3" class="d">-			break;
+</a> 		}
+ 	}
+ }
+<a href="#h0-8" id="h0-8" class="h">@@ -1447,7 +1437,7 @@ xloadcols(void) {
+</a> 	unsigned long white = WhitePixel(xw.dpy, xw.scr);
+ 
+ 	for(i = 0; i &lt; 16; i++) {
+<a href="#h0-8-3" id="h0-8-3" class="d">-		if (!XAllocNamedColor(xw.dpy, xw.cmap, colorname[i], &amp;color, &amp;color)) {
+</a><a href="#h0-8-4" id="h0-8-4" class="i">+		if(!XAllocNamedColor(xw.dpy, xw.cmap, colorname[i], &amp;color, &amp;color)) {
+</a> 			dc.col[i] = white;
+ 			fprintf(stderr, &quot;Could not allocate color &#39;%s&#39;\n&quot;, colorname[i]);
+ 		} else
+<a href="#h0-9" id="h0-9" class="h">@@ -1461,7 +1451,7 @@ xloadcols(void) {
+</a> 				color.red = r == 0 ? 0 : 0x3737 + 0x2828 * r;
+ 				color.green = g == 0 ? 0 : 0x3737 + 0x2828 * g;
+ 				color.blue = b == 0 ? 0 : 0x3737 + 0x2828 * b;
+<a href="#h0-9-3" id="h0-9-3" class="d">-				if (!XAllocColor(xw.dpy, xw.cmap, &amp;color)) {
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+				if(!XAllocColor(xw.dpy, xw.cmap, &amp;color)) {
+</a> 					dc.col[i] = white;
+ 					fprintf(stderr, &quot;Could not allocate color %d\n&quot;, i);
+ 				} else
+<a href="#h0-10" id="h0-10" class="h">@@ -1488,8 +1478,7 @@ xclear(int x1, int y1, int x2, int y2) {
+</a> }
+ 
+ void
+<a href="#h0-10-3" id="h0-10-3" class="d">-xhints(void)
+</a><a href="#h0-10-4" id="h0-10-4" class="d">-{
+</a><a href="#h0-10-5" id="h0-10-5" class="i">+xhints(void) {
+</a> 	XClassHint class = {opt_class ? opt_class : TNAME, TNAME};
+ 	XWMHints wm = {.flags = InputHint, .input = 1};
+ 	XSizeHints size = {
+<a href="#h0-11" id="h0-11" class="h">@@ -1505,8 +1494,7 @@ xhints(void)
+</a> }
+ 
+ XFontSet
+<a href="#h0-11-3" id="h0-11-3" class="d">-xinitfont(char *fontstr)
+</a><a href="#h0-11-4" id="h0-11-4" class="d">-{
+</a><a href="#h0-11-5" id="h0-11-5" class="i">+xinitfont(char *fontstr) {
+</a> 	XFontSet set;
+ 	char *def, **missing;
+ 	int n;
+<a href="#h0-12" id="h0-12" class="h">@@ -1522,8 +1510,7 @@ xinitfont(char *fontstr)
+</a> }
+ 
+ void
+<a href="#h0-12-3" id="h0-12-3" class="d">-xgetfontinfo(XFontSet set, int *ascent, int *descent, short *lbearing, short *rbearing)
+</a><a href="#h0-12-4" id="h0-12-4" class="d">-{
+</a><a href="#h0-12-5" id="h0-12-5" class="i">+xgetfontinfo(XFontSet set, int *ascent, int *descent, short *lbearing, short *rbearing) {
+</a> 	XFontStruct **xfonts;
+ 	char **font_names;
+ 	int i, n;
+<a href="#h0-13" id="h0-13" class="h">@@ -1540,8 +1527,7 @@ xgetfontinfo(XFontSet set, int *ascent, int *descent, short *lbearing, short *rb
+</a> }
+ 
+ void
+<a href="#h0-13-3" id="h0-13-3" class="d">-initfonts(char *fontstr, char *bfontstr)
+</a><a href="#h0-13-4" id="h0-13-4" class="d">-{
+</a><a href="#h0-13-5" id="h0-13-5" class="i">+initfonts(char *fontstr, char *bfontstr) {
+</a> 	if((dc.font.set = xinitfont(fontstr)) == NULL ||
+ 	   (dc.bfont.set = xinitfont(bfontstr)) == NULL)
+ 		die(&quot;Can&#39;t load font %s\n&quot;, dc.font.set ? BOLDFONT : FONT);
+<a href="#h0-14" id="h0-14" class="h">@@ -1674,40 +1660,6 @@ xdrawcursor(void) {
+</a> 	}
+ }
+ 
+<a href="#h0-14-3" id="h0-14-3" class="d">-#ifdef DEBUG
+</a><a href="#h0-14-4" id="h0-14-4" class="d">-/* basic drawing routines */
+</a><a href="#h0-14-5" id="h0-14-5" class="d">-void
+</a><a href="#h0-14-6" id="h0-14-6" class="d">-xdrawc(int x, int y, Glyph g) {
+</a><a href="#h0-14-7" id="h0-14-7" class="d">-	int sl = utf8size(g.c);
+</a><a href="#h0-14-8" id="h0-14-8" class="d">-	XRectangle r = { x * xw.cw, y * xw.ch, xw.cw, xw.ch };
+</a><a href="#h0-14-9" id="h0-14-9" class="d">-	XSetBackground(xw.dpy, dc.gc, dc.col[g.bg]);
+</a><a href="#h0-14-10" id="h0-14-10" class="d">-	XSetForeground(xw.dpy, dc.gc, dc.col[g.fg]);
+</a><a href="#h0-14-11" id="h0-14-11" class="d">-	XmbDrawImageString(xw.dpy, xw.buf, g.mode&amp;ATTR_BOLD?dc.bfont.fs:dc.font.fs,
+</a><a href="#h0-14-12" id="h0-14-12" class="d">-	    dc.gc, r.x, r.y+dc.font.ascent, g.c, sl);
+</a><a href="#h0-14-13" id="h0-14-13" class="d">-}
+</a><a href="#h0-14-14" id="h0-14-14" class="d">-
+</a><a href="#h0-14-15" id="h0-14-15" class="d">-void 
+</a><a href="#h0-14-16" id="h0-14-16" class="d">-drawregion(int x0, int x1, int y0, int y1) {
+</a><a href="#h0-14-17" id="h0-14-17" class="d">-	draw();
+</a><a href="#h0-14-18" id="h0-14-18" class="d">-}
+</a><a href="#h0-14-19" id="h0-14-19" class="d">-
+</a><a href="#h0-14-20" id="h0-14-20" class="d">-void
+</a><a href="#h0-14-21" id="h0-14-21" class="d">-draw() {
+</a><a href="#h0-14-22" id="h0-14-22" class="d">-	int x, y;
+</a><a href="#h0-14-23" id="h0-14-23" class="d">-
+</a><a href="#h0-14-24" id="h0-14-24" class="d">-	xclear(0, 0, term.col-1, term.row-1);
+</a><a href="#h0-14-25" id="h0-14-25" class="d">-	for(y = 0; y &lt; term.row; y++)
+</a><a href="#h0-14-26" id="h0-14-26" class="d">-		for(x = 0; x &lt; term.col; x++)
+</a><a href="#h0-14-27" id="h0-14-27" class="d">-			if(term.line[y][x].state &amp; GLYPH_SET)
+</a><a href="#h0-14-28" id="h0-14-28" class="d">-				xdrawc(x, y, term.line[y][x]);
+</a><a href="#h0-14-29" id="h0-14-29" class="d">-
+</a><a href="#h0-14-30" id="h0-14-30" class="d">-	xdrawcursor();
+</a><a href="#h0-14-31" id="h0-14-31" class="d">-	XCopyArea(xw.dpy, xw.buf, xw.win, dc.gc, 0, 0, xw.bufw, xw.bufh, BORDER, BORDER);
+</a><a href="#h0-14-32" id="h0-14-32" class="d">-	XFlush(xw.dpy);
+</a><a href="#h0-14-33" id="h0-14-33" class="d">-}
+</a><a href="#h0-14-34" id="h0-14-34" class="d">-
+</a><a href="#h0-14-35" id="h0-14-35" class="d">-#else
+</a><a href="#h0-14-36" id="h0-14-36" class="d">-/* optimized drawing routine */
+</a> void 
+ draw() {
+ 	drawregion(0, 0, term.col, term.row);
+<a href="#h0-15" id="h0-15" class="h">@@ -1753,8 +1705,6 @@ drawregion(int x1, int y1, int x2, int y2) {
+</a> 	XCopyArea(xw.dpy, xw.buf, xw.win, dc.gc, 0, 0, xw.bufw, xw.bufh, BORDER, BORDER);
+ }
+ 
+<a href="#h0-15-3" id="h0-15-3" class="d">-#endif
+</a><a href="#h0-15-4" id="h0-15-4" class="d">-
+</a> void
+ expose(XEvent *ev) {
+ 	XExposeEvent *e = &amp;ev-&gt;xexpose;
+<a href="#h0-16" id="h0-16" class="h">@@ -1900,7 +1850,7 @@ run(void) {
+</a> 		}
+ 		while(XPending(xw.dpy)) {
+ 			XNextEvent(xw.dpy, &amp;ev);
+<a href="#h0-16-3" id="h0-16-3" class="d">-			if (XFilterEvent(&amp;ev, xw.win))
+</a><a href="#h0-16-4" id="h0-16-4" class="i">+			if(XFilterEvent(&amp;ev, xw.win))
+</a> 				continue;
+ 			if(handler[ev.type])
+ 				(handler[ev.type])(&amp;ev);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: we circular now (we also a little broken too) - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ef61316b5f6edb57b615c5fd1d037f152959fa44.html">ef61316b5f6edb57b615c5fd1d037f152959fa44</a>
+<b>parent</b> <a href="../commit/116ebcfc7444af6ac0946f58db3b755216a373c2.html">116ebcfc7444af6ac0946f58db3b755216a373c2</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 18 Oct 2019 17:40:04 +0300
+
+sowm: we circular now (we also a little broken too)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">70</td><td><span class="i">++++++++++++++++++++++++++</span><span class="d">--------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 26 insertions(+), 44 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -37,7 +37,7 @@ static void notify_motion(XEvent *e);
+</a> static void run(const Arg arg);
+ static void win_add(Window w);
+ static void win_center();
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void win_del(Window w);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void win_del(client *c);
+</a> static void win_fs();
+ static void win_kill();
+ static void win_next();
+<a href="#h0-1" id="h0-1" class="h">@@ -45,7 +45,7 @@ static void win_to_ws(const Arg arg);
+</a> static void ws_go(const Arg arg);
+ static int  xerror() { return 0;}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-static client       *list = {0}, *ws_list[10] = {0}, *cur = {0};
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static client       *list = 0, *ws_list[10] = {0}, *cur = {0};
+</a> static int          ws = 1, sw, sh, wx, wy;
+ static unsigned int ww, wh;
+ 
+<a href="#h0-2" id="h0-2" class="h">@@ -66,7 +66,8 @@ static void (*events[LASTEvent])(XEvent *e) = {
+</a> 
+ #include &quot;config.h&quot;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-#define win          (client *c=list;c;c=c-&gt;next)
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+#define win (client *t=0, *c=list; t!=list-&gt;prev; t=c, c=c-&gt;next)
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+
+</a> #define ws_save(W)   ws_list[W] = list
+ #define ws_sel(W)    list = ws_list[ws = W]
+ 
+<a href="#h0-3" id="h0-3" class="h">@@ -81,7 +82,7 @@ void win_focus(Window w) {
+</a> }
+ 
+ void notify_destroy(XEvent *e) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-    win_del(e-&gt;xdestroywindow.window);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+    for win if (c-&gt;w == e-&gt;xdestroywindow.window) win_del(c);
+</a> 
+     if (list) win_focus(list-&gt;w);
+ }
+<a href="#h0-4" id="h0-4" class="h">@@ -130,7 +131,7 @@ void button_release() {
+</a> }
+ 
+ void win_add(Window w) {
+<a href="#h0-4-3" id="h0-4-3" class="d">-    client *c, *t = list;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+    client *c;
+</a> 
+     if (!(c = (client *) calloc(1, sizeof(client))))
+         exit(1);
+<a href="#h0-5" id="h0-5" class="h">@@ -138,42 +139,27 @@ void win_add(Window w) {
+</a>     c-&gt;w = w;
+ 
+     if (list) {
+<a href="#h0-5-3" id="h0-5-3" class="d">-        while (t-&gt;next) t = t-&gt;next;
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-        t-&gt;next = c;
+</a><a href="#h0-5-6" id="h0-5-6" class="d">-        c-&gt;prev = t;
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+        list-&gt;prev-&gt;next = c;
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+        c-&gt;prev          = list-&gt;prev;
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+        list-&gt;prev       = c;
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+        c-&gt;next          = list;
+</a> 
+<a href="#h0-5-12" id="h0-5-12" class="d">-    } else
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+    } else {
+</a>         list = c;
+<a href="#h0-5-15" id="h0-5-15" class="d">-
+</a><a href="#h0-5-16" id="h0-5-16" class="d">-    ws_save(ws);
+</a><a href="#h0-5-17" id="h0-5-17" class="i">+        list-&gt;prev = list-&gt;next = list;
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+    }
+</a> }
+ 
+<a href="#h0-5-21" id="h0-5-21" class="d">-void win_del(Window w) {
+</a><a href="#h0-5-22" id="h0-5-22" class="d">-    for win if (c-&gt;w == w) {
+</a><a href="#h0-5-23" id="h0-5-23" class="d">-        if (!c-&gt;prev &amp;&amp; !c-&gt;next) {
+</a><a href="#h0-5-24" id="h0-5-24" class="d">-            free(list);
+</a><a href="#h0-5-25" id="h0-5-25" class="d">-            list = 0;
+</a><a href="#h0-5-26" id="h0-5-26" class="d">-            ws_save(ws);
+</a><a href="#h0-5-27" id="h0-5-27" class="d">-            return;
+</a><a href="#h0-5-28" id="h0-5-28" class="d">-        }
+</a><a href="#h0-5-29" id="h0-5-29" class="d">-
+</a><a href="#h0-5-30" id="h0-5-30" class="d">-        if (!c-&gt;prev) {
+</a><a href="#h0-5-31" id="h0-5-31" class="d">-            list = c-&gt;next;
+</a><a href="#h0-5-32" id="h0-5-32" class="d">-            c-&gt;next-&gt;prev = 0;
+</a><a href="#h0-5-33" id="h0-5-33" class="d">-
+</a><a href="#h0-5-34" id="h0-5-34" class="d">-        } else if (!c-&gt;next) {
+</a><a href="#h0-5-35" id="h0-5-35" class="d">-            c-&gt;prev-&gt;next = 0;
+</a><a href="#h0-5-36" id="h0-5-36" class="d">-
+</a><a href="#h0-5-37" id="h0-5-37" class="d">-        } else {
+</a><a href="#h0-5-38" id="h0-5-38" class="d">-            c-&gt;prev-&gt;next = c-&gt;next;
+</a><a href="#h0-5-39" id="h0-5-39" class="d">-            c-&gt;next-&gt;prev = c-&gt;prev;
+</a><a href="#h0-5-40" id="h0-5-40" class="d">-        }
+</a><a href="#h0-5-41" id="h0-5-41" class="d">-
+</a><a href="#h0-5-42" id="h0-5-42" class="d">-        free(c);
+</a><a href="#h0-5-43" id="h0-5-43" class="d">-        ws_save(ws);
+</a><a href="#h0-5-44" id="h0-5-44" class="d">-        return;
+</a><a href="#h0-5-45" id="h0-5-45" class="d">-    }
+</a><a href="#h0-5-46" id="h0-5-46" class="i">+void win_del(client *c) {
+</a><a href="#h0-5-47" id="h0-5-47" class="i">+    struct client **head = &amp;list;
+</a><a href="#h0-5-48" id="h0-5-48" class="i">+
+</a><a href="#h0-5-49" id="h0-5-49" class="i">+    if (!*head || !c) return;
+</a><a href="#h0-5-50" id="h0-5-50" class="i">+    if (*head == c)   *head = c-&gt;next;
+</a><a href="#h0-5-51" id="h0-5-51" class="i">+    if (c-&gt;next)      c-&gt;next-&gt;prev = c-&gt;prev;
+</a><a href="#h0-5-52" id="h0-5-52" class="i">+    if (c-&gt;prev)      c-&gt;prev-&gt;next = c-&gt;next;
+</a><a href="#h0-5-53" id="h0-5-53" class="i">+
+</a><a href="#h0-5-54" id="h0-5-54" class="i">+    free(c);
+</a><a href="#h0-5-55" id="h0-5-55" class="i">+    ws_save(ws);
+</a> }
+ 
+ void win_kill() {
+<a href="#h0-6" id="h0-6" class="h">@@ -208,7 +194,7 @@ void win_to_ws(const Arg arg) {
+</a>     ws_save(arg.i);
+ 
+     ws_sel(tmp);
+<a href="#h0-6-3" id="h0-6-3" class="d">-    win_del(cur-&gt;w);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+    win_del(cur);
+</a>     XUnmapWindow(d, cur-&gt;w);
+     ws_save(tmp);
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -216,12 +202,8 @@ void win_to_ws(const Arg arg) {
+</a> }
+ 
+ void win_next() {
+<a href="#h0-7-3" id="h0-7-3" class="d">-    if (!list) return;
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-
+</a><a href="#h0-7-5" id="h0-7-5" class="d">-    client *c = cur-&gt;next ? cur-&gt;next : list;
+</a><a href="#h0-7-6" id="h0-7-6" class="d">-
+</a><a href="#h0-7-7" id="h0-7-7" class="d">-    win_focus(c-&gt;w);
+</a><a href="#h0-7-8" id="h0-7-8" class="d">-    XRaiseWindow(d, c-&gt;w);
+</a><a href="#h0-7-9" id="h0-7-9" class="i">+    win_focus(cur-&gt;next-&gt;w);
+</a><a href="#h0-7-10" id="h0-7-10" class="i">+    XRaiseWindow(d, cur-&gt;next-&gt;w);
+</a> }
+ 
+ void ws_go(const Arg arg) {
+</pre>
+</div>
+</body>
+</html>

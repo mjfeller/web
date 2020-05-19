@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>docs: update - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2d71b2d74d32b709fd8f6cd4d862f45cba7f3979.html">2d71b2d74d32b709fd8f6cd4d862f45cba7f3979</a>
+<b>parent</b> <a href="../commit/6d8950bfd18f07735b6df2ded680de47383b4775.html">6d8950bfd18f07735b6df2ded680de47383b4775</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 12 Oct 2019 20:35:24 +0300
+
+docs: update
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -96,7 +96,7 @@ void win_add(Window w) {
+</a>     if (!(c = (client *)calloc(1,sizeof(client))))
+         exit(1);
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-    if (head == NULL) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+    if (!head) {
+</a>         c-&gt;next = NULL;
+         c-&gt;prev = NULL;
+         c-&gt;win  = w;
+<a href="#h0-1" id="h0-1" class="h">@@ -125,13 +125,11 @@ void ws_go(const Arg arg) {
+</a>     ws_save(desk);
+     ws_sel(arg.i);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-    if (head != NULL)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-        for WIN XMapWindow(dis, c-&gt;win);
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+    if (head) for WIN XMapWindow(dis, c-&gt;win);
+</a> 
+     ws_sel(tmp);
+ 
+<a href="#h0-1-9" id="h0-1-9" class="d">-    if (head != NULL)
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-        for WIN XUnmapWindow(dis, c-&gt;win);
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+    if (head) for WIN XUnmapWindow(dis, c-&gt;win);
+</a> 
+     ws_sel(arg.i);
+ }
+<a href="#h0-2" id="h0-2" class="h">@@ -164,10 +162,9 @@ void win_fs_current() {
+</a> void win_fs(Window w) {
+     client *c;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-    for WIN
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-        if (c-&gt;win == w) break;
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+    for WIN if (c-&gt;win == w) break;
+</a> 
+<a href="#h0-2-7" id="h0-2-7" class="d">-    if (c == NULL) return;
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+    if (!c) return;
+</a> 
+     if (c-&gt;f != 1) {
+         XGetWindowAttributes(dis, w, &amp;attr);
+<a href="#h0-3" id="h0-3" class="h">@@ -312,13 +309,12 @@ void win_next() {
+</a>     Window cur = win_current();
+     client *c;
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-    if (head != NULL) {
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-        for WIN
+</a><a href="#h0-3-5" id="h0-3-5" class="d">-            if (c-&gt;win == cur) break;
+</a><a href="#h0-3-6" id="h0-3-6" class="i">+    if (head) {
+</a><a href="#h0-3-7" id="h0-3-7" class="i">+        for WIN if (c-&gt;win == cur) break;
+</a> 
+         c = c-&gt;next;
+ 
+<a href="#h0-3-11" id="h0-3-11" class="d">-        if (c == NULL) c = head;
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+        if (!c) c = head;
+</a> 
+         win_update(c-&gt;win);
+         XRaiseWindow(dis, c-&gt;win);
+<a href="#h0-4" id="h0-4" class="h">@@ -331,7 +327,7 @@ void win_del(Window w) {
+</a>     for WIN {
+         if (c-&gt;win != w) continue;
+ 
+<a href="#h0-4-3" id="h0-4-3" class="d">-        if (c-&gt;prev == NULL &amp;&amp; c-&gt;next == NULL) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+        if (!c-&gt;prev &amp;&amp; !c-&gt;next) {
+</a>             free(head);
+ 
+             head = NULL;
+<a href="#h0-5" id="h0-5" class="h">@@ -340,12 +336,12 @@ void win_del(Window w) {
+</a>             return;
+         }
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-        if (c-&gt;prev == NULL) {
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+        if (!c-&gt;prev) {
+</a>             head          = c-&gt;next;
+             c-&gt;next-&gt;prev = NULL;
+         }
+ 
+<a href="#h0-5-9" id="h0-5-9" class="d">-        else if (c-&gt;next == NULL) {
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+        else if (!c-&gt;next) {
+</a>             c-&gt;prev-&gt;next = NULL;
+         }
+ 
+</pre>
+</div>
+</body>
+</html>

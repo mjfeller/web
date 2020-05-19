@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>docs: update - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2385f2c4e769e35970fd8896c64db0b3694120ef.html">2385f2c4e769e35970fd8896c64db0b3694120ef</a>
+<b>parent</b> <a href="../commit/25b94a205b56ff8122ad0cc09d2fe9bca0276720.html">25b94a205b56ff8122ad0cc09d2fe9bca0276720</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 13 Oct 2019 15:34:20 +0300
+
+docs: update
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">45</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 31 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -25,7 +25,7 @@ struct key {
+</a> 
+ typedef struct client client;
+ struct client{
+<a href="#h0-0-3" id="h0-0-3" class="d">-    client *next;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+    client *next, *prev;
+</a>     Window win;
+     XWindowAttributes a;
+     int f;
+<a href="#h0-1" id="h0-1" class="h">@@ -158,12 +158,16 @@ void win_add(Window w) {
+</a>         exit(1);
+ 
+     if (!list) {
+<a href="#h0-1-3" id="h0-1-3" class="i">+        c-&gt;next = 0;
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+        c-&gt;prev = 0;
+</a>         c-&gt;win  = w;
+         list    = c;
+ 
+     } else {
+         for (t=list;t-&gt;next;t=t-&gt;next);
+ 
+<a href="#h0-1-11" id="h0-1-11" class="i">+        c-&gt;next = 0;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+        c-&gt;prev = t;
+</a>         c-&gt;win  = w;
+         t-&gt;next = c;
+     }
+<a href="#h0-2" id="h0-2" class="h">@@ -174,18 +178,27 @@ void win_add(Window w) {
+</a> void win_del(Window w) {
+     client *c;
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-    for WIN {
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-        if (c-&gt;win != w) continue;
+</a><a href="#h0-2-5" id="h0-2-5" class="d">-
+</a><a href="#h0-2-6" id="h0-2-6" class="d">-        if (!c-&gt;next &amp;&amp; c == list) {
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+    for WIN if (c-&gt;win == w) {
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+        if (!c-&gt;prev &amp;&amp; !c-&gt;next) {
+</a>             free(list);
+             list = 0;
+<a href="#h0-2-11" id="h0-2-11" class="i">+            ws_save(desk);
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+            return;
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+        }
+</a> 
+<a href="#h0-2-15" id="h0-2-15" class="d">-        } else if (c-&gt;next) {
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+        if (!c-&gt;prev) {
+</a>             list = c-&gt;next;
+<a href="#h0-2-18" id="h0-2-18" class="d">-            free(c);
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+            c-&gt;next-&gt;prev = 0;
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+        } else if (!c-&gt;next) {
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+            c-&gt;prev-&gt;next = 0;
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+        } else {
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+            c-&gt;prev-&gt;next = c-&gt;next;
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+            c-&gt;next-&gt;prev = c-&gt;prev;
+</a>         }
+ 
+<a href="#h0-2-29" id="h0-2-29" class="i">+        free(c);
+</a>         ws_save(desk);
+         return;
+     }
+<a href="#h0-3" id="h0-3" class="h">@@ -232,22 +245,26 @@ void win_to_ws(const Arg arg) {
+</a>     ws_save(arg.i);
+ 
+     ws_sel(tmp);
+<a href="#h0-3-3" id="h0-3-3" class="d">-    XUnmapWindow(dis, cur);
+</a>     win_del(cur);
+<a href="#h0-3-5" id="h0-3-5" class="i">+    XUnmapWindow(dis, cur);
+</a>     ws_save(tmp);
+ }
+ 
+ void win_next() {
+     Window cur = win_current();
+<a href="#h0-3-11" id="h0-3-11" class="d">-    client *c, *n;
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+    client *c;
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+
+</a><a href="#h0-3-14" id="h0-3-14" class="i">+    if (list) {
+</a><a href="#h0-3-15" id="h0-3-15" class="i">+        if (cur == root) cur = list-&gt;win;
+</a><a href="#h0-3-16" id="h0-3-16" class="i">+
+</a><a href="#h0-3-17" id="h0-3-17" class="i">+        for WIN if (c-&gt;win == cur) break;
+</a> 
+<a href="#h0-3-19" id="h0-3-19" class="d">-    if (cur == root) cur = list-&gt;win;
+</a><a href="#h0-3-20" id="h0-3-20" class="i">+        c = c-&gt;next;
+</a> 
+<a href="#h0-3-22" id="h0-3-22" class="d">-    for WIN if (c-&gt;win == cur) {
+</a><a href="#h0-3-23" id="h0-3-23" class="d">-        n = c-&gt;next ? c-&gt;next : list ? list : c;
+</a><a href="#h0-3-24" id="h0-3-24" class="i">+        if (!c) c = list;
+</a> 
+<a href="#h0-3-26" id="h0-3-26" class="d">-        XSetInputFocus(dis, n-&gt;win, RevertToParent, CurrentTime);
+</a><a href="#h0-3-27" id="h0-3-27" class="d">-        XRaiseWindow(dis, n-&gt;win);
+</a><a href="#h0-3-28" id="h0-3-28" class="i">+        XSetInputFocus(dis, c-&gt;win, RevertToParent, CurrentTime);
+</a><a href="#h0-3-29" id="h0-3-29" class="i">+        XRaiseWindow(dis, c-&gt;win);
+</a>     }
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

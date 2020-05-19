@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Clean up xdraws and optimize glyph drawing with non-unit kerning values - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ae1923d27533ff46400d93765e971558201ca1ee.html">ae1923d27533ff46400d93765e971558201ca1ee</a>
+<b>parent</b> <a href="../commit/38af006b5e4a36c77f25affbb3f7e28899db75ed.html">38af006b5e4a36c77f25affbb3f7e28899db75ed</a>
+<b>Author:</b> suigin &lt;<a href="mailto:suigin@national.shitposting.agency">suigin@national.shitposting.agency</a>&gt;
+<b>Date:</b>   Tue,  5 May 2015 20:24:00 -0700
+
+Clean up xdraws and optimize glyph drawing with non-unit kerning values
+
+I have another patch here for review that optimizes the performance of
+glyph drawing, primarily when using non-unit kerning values, and fixes a
+few other minor issues. It&#39;s dependent on the earlier patch from me that
+stores unicode codepoints in a Rune type, typedef&#39;d to uint_least32_t.
+
+This patch is a pretty big change to xdraws so your scrutiny is
+appreciated.
+
+First, some performance numbers. I used Yu-Jie Lin termfps.sh shell
+script to benchmark before and after, and you can find it in the
+attachments. On my Kaveri A10 7850k machine, I get the following
+results:
+
+Before Patch
+============
+
+1) Font: &quot;Liberation Mono:pixelsize=12:antialias=false:autohint=false&quot;
+   cwscale: 1.0, chscale: 1.0
+   For 273x83 100 frames.
+   Elapsed time :     1.553
+   Frames/second:    64.352
+   Chars /second: 1,458,159
+
+2) Font: &quot;Inconsolata:pixelsize=14:antialias=true:autohint=true&quot;
+   cwscale: 1.001, chscale: 1.001
+   For 239x73 100 frames.
+   Elapsed time :   159.286
+   Frames/second:     0.627
+   Chars /second:    10,953
+
+After Patch
+===========
+
+3) Font: &quot;Liberation Mono:pixelsize=12:antialias=false:autohint=false&quot;
+   cwscale: 1.0, chscale: 1.0
+   For 273x83 100 frames.
+   Elapsed time :     1.544
+   Frames/second:    64.728
+   Chars /second: 1,466,690
+
+4) Font: &quot;Inconsolata:pixelsize=14:antialias=true:autohint=true&quot;
+   cwscale: 1.001, chscale: 1.001
+   For 239x73 100 frames.
+   Elapsed time :     1.955
+   Frames/second:    51.146
+   Chars /second:   892,361
+
+As you can see, while the improvements for fonts with unit-kerning is
+marginal, there&#39;s a huge ~81x performance increase with the patch when
+using kerning values other than 1.0.
+
+So what does the patch do?
+
+The `xdraws&#39; function would render each glyph one at a time if non-unit
+kerning values were configured, and this was the primary cause of the
+slow down. Xft provides a handful of functions which allow you to render
+multiple characters or glyphs at time, each with a unique &lt;x,y&gt; position,
+so it was simply a matter of massaging the data into a format that would
+allow us to use one of these functions.
+
+I&#39;ve split `xdraws&#39; up into two functions. In the first pass with
+`xmakeglyphfontspecs&#39; it will iterate over all of the glyphs in a given
+row and it will build up an array of corresponding XftGlyphFontSpec
+records. Much of the old logic for resolving fonts for glyphs using Xft
+and fontconfig went into this function.
+
+The second pass is done with `xrenderglyphfontspecs&#39; which contains the
+old logic for determining colors, clearing the background, and finally
+rendering the array of XftGlyphFontSpec records.
+
+There&#39;s a couple of other things that have been improved by this patch.
+For instance, the UTF-32 codepoints in the Line&#39;s were being re-encoded
+back into UTF-8 strings to be passed to `xdraws&#39; which in turn would then
+decode back to UTF-32 to verify that the Font contained a matching glyph
+for the code point. Next, the UTF-8 string was being passed to
+`XftDrawStringUtf8&#39; which internally mallocs a scratch buffer and decodes
+back to UTF-32 and does the lookup of the glyphs all over again.
+
+This patch gets rid of all of this redundant round-trip encoding and
+decoding of characters to be rendered and only looks up the glyph index
+once (per font) during the font resolution phase. So this is probably
+what&#39;s responsible for the marginal improvements seen when kerning values
+are kept to 1.0.
+
+I imagine there are other performance improvements here too, not seen in
+the above benchmarks, if the user has lots of non-ASCII code plane characters
+on the screen, or several different fonts are being utilized during
+screen redraw.
+
+Anyway, if you see any problems, please let me know and I can fix them.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">383</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 187 insertions(+), 196 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -58,7 +58,6 @@ char *argv0;
+</a> #define ESC_ARG_SIZ   16
+ #define STR_BUF_SIZ   ESC_BUF_SIZ
+ #define STR_ARG_SIZ   ESC_ARG_SIZ
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define DRAW_BUF_SIZ  20*1024
+</a> #define XK_ANY_MOD    UINT_MAX
+ #define XK_NO_MOD     0
+ #define XK_SWITCH_MOD (1&lt;&lt;13)
+<a href="#h0-1" id="h0-1" class="h">@@ -87,18 +86,19 @@ char *argv0;
+</a> 
+ 
+ enum glyph_attribute {
+<a href="#h0-1-3" id="h0-1-3" class="d">-	ATTR_NULL      = 0,
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	ATTR_BOLD      = 1 &lt;&lt; 0,
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-	ATTR_FAINT     = 1 &lt;&lt; 1,
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-	ATTR_ITALIC    = 1 &lt;&lt; 2,
+</a><a href="#h0-1-7" id="h0-1-7" class="d">-	ATTR_UNDERLINE = 1 &lt;&lt; 3,
+</a><a href="#h0-1-8" id="h0-1-8" class="d">-	ATTR_BLINK     = 1 &lt;&lt; 4,
+</a><a href="#h0-1-9" id="h0-1-9" class="d">-	ATTR_REVERSE   = 1 &lt;&lt; 5,
+</a><a href="#h0-1-10" id="h0-1-10" class="d">-	ATTR_INVISIBLE = 1 &lt;&lt; 6,
+</a><a href="#h0-1-11" id="h0-1-11" class="d">-	ATTR_STRUCK    = 1 &lt;&lt; 7,
+</a><a href="#h0-1-12" id="h0-1-12" class="d">-	ATTR_WRAP      = 1 &lt;&lt; 8,
+</a><a href="#h0-1-13" id="h0-1-13" class="d">-	ATTR_WIDE      = 1 &lt;&lt; 9,
+</a><a href="#h0-1-14" id="h0-1-14" class="d">-	ATTR_WDUMMY    = 1 &lt;&lt; 10,
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+	ATTR_NULL       = 0,
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	ATTR_BOLD       = 1 &lt;&lt; 0,
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+	ATTR_FAINT      = 1 &lt;&lt; 1,
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+	ATTR_ITALIC     = 1 &lt;&lt; 2,
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+	ATTR_UNDERLINE  = 1 &lt;&lt; 3,
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	ATTR_BLINK      = 1 &lt;&lt; 4,
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	ATTR_REVERSE    = 1 &lt;&lt; 5,
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	ATTR_INVISIBLE  = 1 &lt;&lt; 6,
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+	ATTR_STRUCK     = 1 &lt;&lt; 7,
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+	ATTR_WRAP       = 1 &lt;&lt; 8,
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	ATTR_WIDE       = 1 &lt;&lt; 9,
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+	ATTR_WDUMMY     = 1 &lt;&lt; 10,
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+	ATTR_BOLD_FAINT = ATTR_BOLD | ATTR_FAINT,
+</a> };
+ 
+ enum cursor_movement {
+<a href="#h0-2" id="h0-2" class="h">@@ -232,6 +232,7 @@ typedef struct {
+</a> 	Line *line;   /* screen */
+ 	Line *alt;    /* alternate screen */
+ 	bool *dirty;  /* dirtyness of lines */
+<a href="#h0-2-3" id="h0-2-3" class="i">+	XftGlyphFontSpec *specbuf; /* font spec buffer used for rendering */
+</a> 	TCursor c;    /* cursor */
+ 	int top;      /* top    scroll limit */
+ 	int bot;      /* bottom scroll limit */
+<a href="#h0-3" id="h0-3" class="h">@@ -418,7 +419,8 @@ static void ttywrite(const char *, size_t);
+</a> static void tstrsequence(uchar);
+ 
+ static inline ushort sixd_to_16bit(int);
+<a href="#h0-3-3" id="h0-3-3" class="d">-static void xdraws(char *, Glyph, int, int, int, int);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+static int xmakeglyphfontspecs(XftGlyphFontSpec *, const Glyph *, int, int, int);
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+static void xdrawglyphfontspecs(const XftGlyphFontSpec *, Glyph, int, int, int);
+</a> static void xdrawglyph(Glyph, int, int);
+ static void xhints(void);
+ static void xclear(int, int, int, int);
+<a href="#h0-4" id="h0-4" class="h">@@ -2819,6 +2821,9 @@ tresize(int col, int row) {
+</a> 		free(term.alt[i]);
+ 	}
+ 
+<a href="#h0-4-3" id="h0-4-3" class="i">+	/* resize to new width */
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	term.specbuf = xrealloc(term.specbuf, col * sizeof(XftGlyphFontSpec));
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+
+</a> 	/* resize to new height */
+ 	term.line = xrealloc(term.line, row * sizeof(Line));
+ 	term.alt  = xrealloc(term.alt,  row * sizeof(Line));
+<a href="#h0-5" id="h0-5" class="h">@@ -3257,38 +3262,155 @@ xinit(void) {
+</a> 	XSync(xw.dpy, False);
+ }
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-void
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-	int winx = borderpx + x * xw.cw, winy = borderpx + y * xw.ch,
+</a><a href="#h0-5-6" id="h0-5-6" class="d">-	    width = charlen * xw.cw, xp, i;
+</a><a href="#h0-5-7" id="h0-5-7" class="d">-	int frcflags, charexists;
+</a><a href="#h0-5-8" id="h0-5-8" class="d">-	int u8fl, u8fblen, u8cblen, doesexist;
+</a><a href="#h0-5-9" id="h0-5-9" class="d">-	char *u8c, *u8fs;
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-	Rune unicodep;
+</a><a href="#h0-5-11" id="h0-5-11" class="i">+int
+</a><a href="#h0-5-12" id="h0-5-12" class="i">+xmakeglyphfontspecs(XftGlyphFontSpec *specs, const Glyph *glyphs, int len, int x, int y)
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+{
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+	float winx = borderpx + x * xw.cw, winy = borderpx + y * xw.ch, xp, yp;
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+	ushort mode, prevmode = USHRT_MAX;
+</a> 	Font *font = &amp;dc.font;
+<a href="#h0-5-17" id="h0-5-17" class="i">+	int frcflags = FRC_NORMAL;
+</a><a href="#h0-5-18" id="h0-5-18" class="i">+	float runewidth = xw.cw;
+</a><a href="#h0-5-19" id="h0-5-19" class="i">+	Rune rune;
+</a><a href="#h0-5-20" id="h0-5-20" class="i">+	FT_UInt glyphidx;
+</a> 	FcResult fcres;
+ 	FcPattern *fcpattern, *fontpattern;
+ 	FcFontSet *fcsets[] = { NULL };
+ 	FcCharSet *fccharset;
+<a href="#h0-5-25" id="h0-5-25" class="i">+	int i, f, numspecs = 0;
+</a><a href="#h0-5-26" id="h0-5-26" class="i">+
+</a><a href="#h0-5-27" id="h0-5-27" class="i">+	for(i = 0, xp = winx, yp = winy + font-&gt;ascent; i &lt; len; ++i) {
+</a><a href="#h0-5-28" id="h0-5-28" class="i">+		/* Fetch rune and mode for current glyph. */
+</a><a href="#h0-5-29" id="h0-5-29" class="i">+		rune = glyphs[i].u;
+</a><a href="#h0-5-30" id="h0-5-30" class="i">+		mode = glyphs[i].mode;
+</a><a href="#h0-5-31" id="h0-5-31" class="i">+
+</a><a href="#h0-5-32" id="h0-5-32" class="i">+		/* Skip dummy wide-character spacing. */
+</a><a href="#h0-5-33" id="h0-5-33" class="i">+		if(mode == ATTR_WDUMMY)
+</a><a href="#h0-5-34" id="h0-5-34" class="i">+			continue;
+</a><a href="#h0-5-35" id="h0-5-35" class="i">+
+</a><a href="#h0-5-36" id="h0-5-36" class="i">+		/* Determine font for glyph if different from previous glyph. */
+</a><a href="#h0-5-37" id="h0-5-37" class="i">+		if(prevmode != mode) {
+</a><a href="#h0-5-38" id="h0-5-38" class="i">+			prevmode = mode;
+</a><a href="#h0-5-39" id="h0-5-39" class="i">+			font = &amp;dc.font;
+</a><a href="#h0-5-40" id="h0-5-40" class="i">+			frcflags = FRC_NORMAL;
+</a><a href="#h0-5-41" id="h0-5-41" class="i">+			runewidth = xw.cw * ((mode &amp; ATTR_WIDE) ? 2.0f : 1.0f);
+</a><a href="#h0-5-42" id="h0-5-42" class="i">+			if((mode &amp; ATTR_ITALIC) &amp;&amp; (mode &amp; ATTR_BOLD)) {
+</a><a href="#h0-5-43" id="h0-5-43" class="i">+				font = &amp;dc.ibfont;
+</a><a href="#h0-5-44" id="h0-5-44" class="i">+				frcflags = FRC_ITALICBOLD;
+</a><a href="#h0-5-45" id="h0-5-45" class="i">+			} else if(mode &amp; ATTR_ITALIC) {
+</a><a href="#h0-5-46" id="h0-5-46" class="i">+				font = &amp;dc.ifont;
+</a><a href="#h0-5-47" id="h0-5-47" class="i">+				frcflags = FRC_ITALIC;
+</a><a href="#h0-5-48" id="h0-5-48" class="i">+			} else if(mode &amp; ATTR_BOLD) {
+</a><a href="#h0-5-49" id="h0-5-49" class="i">+				font = &amp;dc.bfont;
+</a><a href="#h0-5-50" id="h0-5-50" class="i">+				frcflags = FRC_BOLD;
+</a><a href="#h0-5-51" id="h0-5-51" class="i">+			}
+</a><a href="#h0-5-52" id="h0-5-52" class="i">+			yp = winy + font-&gt;ascent;
+</a><a href="#h0-5-53" id="h0-5-53" class="i">+		}
+</a><a href="#h0-5-54" id="h0-5-54" class="i">+
+</a><a href="#h0-5-55" id="h0-5-55" class="i">+		/* Lookup character index with default font. */
+</a><a href="#h0-5-56" id="h0-5-56" class="i">+		glyphidx = XftCharIndex(xw.dpy, font-&gt;match, rune);
+</a><a href="#h0-5-57" id="h0-5-57" class="i">+		if(glyphidx) {
+</a><a href="#h0-5-58" id="h0-5-58" class="i">+			specs[numspecs].font = font-&gt;match;
+</a><a href="#h0-5-59" id="h0-5-59" class="i">+			specs[numspecs].glyph = glyphidx;
+</a><a href="#h0-5-60" id="h0-5-60" class="i">+			specs[numspecs].x = (short)xp;
+</a><a href="#h0-5-61" id="h0-5-61" class="i">+			specs[numspecs].y = (short)yp;
+</a><a href="#h0-5-62" id="h0-5-62" class="i">+			xp += runewidth;
+</a><a href="#h0-5-63" id="h0-5-63" class="i">+			numspecs++;
+</a><a href="#h0-5-64" id="h0-5-64" class="i">+			continue;
+</a><a href="#h0-5-65" id="h0-5-65" class="i">+		}
+</a><a href="#h0-5-66" id="h0-5-66" class="i">+
+</a><a href="#h0-5-67" id="h0-5-67" class="i">+		/* Fallback on font cache, search the font cache for match. */
+</a><a href="#h0-5-68" id="h0-5-68" class="i">+		for(f = 0; f &lt; frclen; f++) {
+</a><a href="#h0-5-69" id="h0-5-69" class="i">+			glyphidx = XftCharIndex(xw.dpy, frc[f].font, rune);
+</a><a href="#h0-5-70" id="h0-5-70" class="i">+			/* Everything correct. */
+</a><a href="#h0-5-71" id="h0-5-71" class="i">+			if(glyphidx &amp;&amp; frc[f].flags == frcflags)
+</a><a href="#h0-5-72" id="h0-5-72" class="i">+				break;
+</a><a href="#h0-5-73" id="h0-5-73" class="i">+			/* We got a default font for a not found glyph. */
+</a><a href="#h0-5-74" id="h0-5-74" class="i">+			if(!glyphidx &amp;&amp; frc[f].flags == frcflags
+</a><a href="#h0-5-75" id="h0-5-75" class="i">+					&amp;&amp; frc[f].unicodep == rune) {
+</a><a href="#h0-5-76" id="h0-5-76" class="i">+				break;
+</a><a href="#h0-5-77" id="h0-5-77" class="i">+			}
+</a><a href="#h0-5-78" id="h0-5-78" class="i">+		}
+</a><a href="#h0-5-79" id="h0-5-79" class="i">+
+</a><a href="#h0-5-80" id="h0-5-80" class="i">+		/* Nothing was found. Use fontconfig to find matching font. */
+</a><a href="#h0-5-81" id="h0-5-81" class="i">+		if(f &gt;= frclen) {
+</a><a href="#h0-5-82" id="h0-5-82" class="i">+			if(!font-&gt;set)
+</a><a href="#h0-5-83" id="h0-5-83" class="i">+				font-&gt;set = FcFontSort(0, font-&gt;pattern,
+</a><a href="#h0-5-84" id="h0-5-84" class="i">+				                       FcTrue, 0, &amp;fcres);
+</a><a href="#h0-5-85" id="h0-5-85" class="i">+			fcsets[0] = font-&gt;set;
+</a><a href="#h0-5-86" id="h0-5-86" class="i">+
+</a><a href="#h0-5-87" id="h0-5-87" class="i">+			/*
+</a><a href="#h0-5-88" id="h0-5-88" class="i">+			 * Nothing was found in the cache. Now use
+</a><a href="#h0-5-89" id="h0-5-89" class="i">+			 * some dozen of Fontconfig calls to get the
+</a><a href="#h0-5-90" id="h0-5-90" class="i">+			 * font for one single character.
+</a><a href="#h0-5-91" id="h0-5-91" class="i">+			 *
+</a><a href="#h0-5-92" id="h0-5-92" class="i">+			 * Xft and fontconfig are design failures.
+</a><a href="#h0-5-93" id="h0-5-93" class="i">+			 */
+</a><a href="#h0-5-94" id="h0-5-94" class="i">+			fcpattern = FcPatternDuplicate(font-&gt;pattern);
+</a><a href="#h0-5-95" id="h0-5-95" class="i">+			fccharset = FcCharSetCreate();
+</a><a href="#h0-5-96" id="h0-5-96" class="i">+
+</a><a href="#h0-5-97" id="h0-5-97" class="i">+			FcCharSetAddChar(fccharset, rune);
+</a><a href="#h0-5-98" id="h0-5-98" class="i">+			FcPatternAddCharSet(fcpattern, FC_CHARSET,
+</a><a href="#h0-5-99" id="h0-5-99" class="i">+					fccharset);
+</a><a href="#h0-5-100" id="h0-5-100" class="i">+			FcPatternAddBool(fcpattern, FC_SCALABLE,
+</a><a href="#h0-5-101" id="h0-5-101" class="i">+					FcTrue);
+</a><a href="#h0-5-102" id="h0-5-102" class="i">+
+</a><a href="#h0-5-103" id="h0-5-103" class="i">+			FcConfigSubstitute(0, fcpattern,
+</a><a href="#h0-5-104" id="h0-5-104" class="i">+					FcMatchPattern);
+</a><a href="#h0-5-105" id="h0-5-105" class="i">+			FcDefaultSubstitute(fcpattern);
+</a><a href="#h0-5-106" id="h0-5-106" class="i">+
+</a><a href="#h0-5-107" id="h0-5-107" class="i">+			fontpattern = FcFontSetMatch(0, fcsets, 1,
+</a><a href="#h0-5-108" id="h0-5-108" class="i">+					fcpattern, &amp;fcres);
+</a><a href="#h0-5-109" id="h0-5-109" class="i">+
+</a><a href="#h0-5-110" id="h0-5-110" class="i">+			/*
+</a><a href="#h0-5-111" id="h0-5-111" class="i">+			 * Overwrite or create the new cache entry.
+</a><a href="#h0-5-112" id="h0-5-112" class="i">+			 */
+</a><a href="#h0-5-113" id="h0-5-113" class="i">+			if(frclen &gt;= LEN(frc)) {
+</a><a href="#h0-5-114" id="h0-5-114" class="i">+				frclen = LEN(frc) - 1;
+</a><a href="#h0-5-115" id="h0-5-115" class="i">+				XftFontClose(xw.dpy, frc[frclen].font);
+</a><a href="#h0-5-116" id="h0-5-116" class="i">+				frc[frclen].unicodep = 0;
+</a><a href="#h0-5-117" id="h0-5-117" class="i">+			}
+</a><a href="#h0-5-118" id="h0-5-118" class="i">+
+</a><a href="#h0-5-119" id="h0-5-119" class="i">+			frc[frclen].font = XftFontOpenPattern(xw.dpy,
+</a><a href="#h0-5-120" id="h0-5-120" class="i">+					fontpattern);
+</a><a href="#h0-5-121" id="h0-5-121" class="i">+			frc[frclen].flags = frcflags;
+</a><a href="#h0-5-122" id="h0-5-122" class="i">+			frc[frclen].unicodep = rune;
+</a><a href="#h0-5-123" id="h0-5-123" class="i">+
+</a><a href="#h0-5-124" id="h0-5-124" class="i">+			glyphidx = XftCharIndex(xw.dpy, frc[frclen].font, rune);
+</a><a href="#h0-5-125" id="h0-5-125" class="i">+
+</a><a href="#h0-5-126" id="h0-5-126" class="i">+			f = frclen;
+</a><a href="#h0-5-127" id="h0-5-127" class="i">+			frclen++;
+</a><a href="#h0-5-128" id="h0-5-128" class="i">+
+</a><a href="#h0-5-129" id="h0-5-129" class="i">+			FcPatternDestroy(fcpattern);
+</a><a href="#h0-5-130" id="h0-5-130" class="i">+			FcCharSetDestroy(fccharset);
+</a><a href="#h0-5-131" id="h0-5-131" class="i">+		}
+</a><a href="#h0-5-132" id="h0-5-132" class="i">+
+</a><a href="#h0-5-133" id="h0-5-133" class="i">+		specs[numspecs].font = frc[f].font;
+</a><a href="#h0-5-134" id="h0-5-134" class="i">+		specs[numspecs].glyph = glyphidx;
+</a><a href="#h0-5-135" id="h0-5-135" class="i">+		specs[numspecs].x = (short)xp;
+</a><a href="#h0-5-136" id="h0-5-136" class="i">+		specs[numspecs].y = (short)(winy + frc[f].font-&gt;ascent);
+</a><a href="#h0-5-137" id="h0-5-137" class="i">+		xp += runewidth;
+</a><a href="#h0-5-138" id="h0-5-138" class="i">+		numspecs++;
+</a><a href="#h0-5-139" id="h0-5-139" class="i">+	}
+</a><a href="#h0-5-140" id="h0-5-140" class="i">+
+</a><a href="#h0-5-141" id="h0-5-141" class="i">+	return numspecs;
+</a><a href="#h0-5-142" id="h0-5-142" class="i">+}
+</a><a href="#h0-5-143" id="h0-5-143" class="i">+
+</a><a href="#h0-5-144" id="h0-5-144" class="i">+void
+</a><a href="#h0-5-145" id="h0-5-145" class="i">+xdrawglyphfontspecs(const XftGlyphFontSpec *specs, Glyph base, int len, int x, int y) {
+</a><a href="#h0-5-146" id="h0-5-146" class="i">+	int charlen = len * ((base.mode &amp; ATTR_WIDE) ? 2 : 1);
+</a><a href="#h0-5-147" id="h0-5-147" class="i">+	int winx = borderpx + x * xw.cw, winy = borderpx + y * xw.ch,
+</a><a href="#h0-5-148" id="h0-5-148" class="i">+	    width = charlen * xw.cw;
+</a> 	Color *fg, *bg, *temp, revfg, revbg, truefg, truebg;
+ 	XRenderColor colfg, colbg;
+ 	XRectangle r;
+<a href="#h0-5-152" id="h0-5-152" class="d">-	int oneatatime;
+</a> 
+<a href="#h0-5-154" id="h0-5-154" class="d">-	frcflags = FRC_NORMAL;
+</a><a href="#h0-5-155" id="h0-5-155" class="d">-
+</a><a href="#h0-5-156" id="h0-5-156" class="d">-	if(base.mode &amp; ATTR_ITALIC) {
+</a><a href="#h0-5-157" id="h0-5-157" class="d">-		if(base.fg == defaultfg)
+</a><a href="#h0-5-158" id="h0-5-158" class="i">+	/* Determine foreground and background colors based on mode. */
+</a><a href="#h0-5-159" id="h0-5-159" class="i">+	if(base.fg == defaultfg) {
+</a><a href="#h0-5-160" id="h0-5-160" class="i">+		if(base.mode &amp; ATTR_ITALIC)
+</a> 			base.fg = defaultitalic;
+<a href="#h0-5-162" id="h0-5-162" class="d">-		font = &amp;dc.ifont;
+</a><a href="#h0-5-163" id="h0-5-163" class="d">-		frcflags = FRC_ITALIC;
+</a><a href="#h0-5-164" id="h0-5-164" class="d">-	} else if((base.mode &amp; ATTR_ITALIC) &amp;&amp; (base.mode &amp; ATTR_BOLD)) {
+</a><a href="#h0-5-165" id="h0-5-165" class="d">-		if(base.fg == defaultfg)
+</a><a href="#h0-5-166" id="h0-5-166" class="i">+		else if((base.mode &amp; ATTR_ITALIC) &amp;&amp; (base.mode &amp; ATTR_BOLD))
+</a> 			base.fg = defaultitalic;
+<a href="#h0-5-168" id="h0-5-168" class="d">-		font = &amp;dc.ibfont;
+</a><a href="#h0-5-169" id="h0-5-169" class="d">-		frcflags = FRC_ITALICBOLD;
+</a><a href="#h0-5-170" id="h0-5-170" class="d">-	} else if(base.mode &amp; ATTR_UNDERLINE) {
+</a><a href="#h0-5-171" id="h0-5-171" class="d">-		if(base.fg == defaultfg)
+</a><a href="#h0-5-172" id="h0-5-172" class="i">+		else if(base.mode &amp; ATTR_UNDERLINE)
+</a> 			base.fg = defaultunderline;
+ 	}
+ 
+<a href="#h0-6" id="h0-6" class="h">@@ -3314,22 +3436,9 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 		bg = &amp;dc.col[base.bg];
+ 	}
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-	if(base.mode &amp; ATTR_BOLD) {
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-		/*
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-		 * change basic system colors [0-7]
+</a><a href="#h0-6-6" id="h0-6-6" class="d">-		 * to bright system colors [8-15]
+</a><a href="#h0-6-7" id="h0-6-7" class="d">-		 */
+</a><a href="#h0-6-8" id="h0-6-8" class="d">-		if(BETWEEN(base.fg, 0, 7) &amp;&amp; !(base.mode &amp; ATTR_FAINT))
+</a><a href="#h0-6-9" id="h0-6-9" class="d">-			fg = &amp;dc.col[base.fg + 8];
+</a><a href="#h0-6-10" id="h0-6-10" class="d">-
+</a><a href="#h0-6-11" id="h0-6-11" class="d">-		if(base.mode &amp; ATTR_ITALIC) {
+</a><a href="#h0-6-12" id="h0-6-12" class="d">-			font = &amp;dc.ibfont;
+</a><a href="#h0-6-13" id="h0-6-13" class="d">-			frcflags = FRC_ITALICBOLD;
+</a><a href="#h0-6-14" id="h0-6-14" class="d">-		} else {
+</a><a href="#h0-6-15" id="h0-6-15" class="d">-			font = &amp;dc.bfont;
+</a><a href="#h0-6-16" id="h0-6-16" class="d">-			frcflags = FRC_BOLD;
+</a><a href="#h0-6-17" id="h0-6-17" class="d">-		}
+</a><a href="#h0-6-18" id="h0-6-18" class="d">-	}
+</a><a href="#h0-6-19" id="h0-6-19" class="i">+	/* Change basic system colors [0-7] to bright system colors [8-15] */
+</a><a href="#h0-6-20" id="h0-6-20" class="i">+	if((base.mode &amp; ATTR_BOLD_FAINT) == ATTR_BOLD &amp;&amp; BETWEEN(base.fg, 0, 7))
+</a><a href="#h0-6-21" id="h0-6-21" class="i">+		fg = &amp;dc.col[base.fg + 8];
+</a> 
+ 	if(IS_SET(MODE_REVERSE)) {
+ 		if(fg == &amp;dc.col[defaultfg]) {
+<a href="#h0-7" id="h0-7" class="h">@@ -3363,7 +3472,7 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 		bg = temp;
+ 	}
+ 
+<a href="#h0-7-3" id="h0-7-3" class="d">-	if(base.mode &amp; ATTR_FAINT &amp;&amp; !(base.mode &amp; ATTR_BOLD)) {
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+	if((base.mode &amp; ATTR_BOLD_FAINT) == ATTR_FAINT) {
+</a> 		colfg.red = fg-&gt;color.red / 2;
+ 		colfg.green = fg-&gt;color.green / 2;
+ 		colfg.blue = fg-&gt;color.blue / 2;
+<a href="#h0-8" id="h0-8" class="h">@@ -3401,136 +3510,17 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 	r.width = width;
+ 	XftDrawSetClipRectangles(xw.draw, winx, winy, &amp;r, 1);
+ 
+<a href="#h0-8-3" id="h0-8-3" class="d">-	for(xp = winx; bytelen &gt; 0;) {
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-		/*
+</a><a href="#h0-8-5" id="h0-8-5" class="d">-		 * Search for the range in the to be printed string of glyphs
+</a><a href="#h0-8-6" id="h0-8-6" class="d">-		 * that are in the main font. Then print that range. If
+</a><a href="#h0-8-7" id="h0-8-7" class="d">-		 * some glyph is found that is not in the font, do the
+</a><a href="#h0-8-8" id="h0-8-8" class="d">-		 * fallback dance.
+</a><a href="#h0-8-9" id="h0-8-9" class="d">-		 */
+</a><a href="#h0-8-10" id="h0-8-10" class="d">-		u8fs = s;
+</a><a href="#h0-8-11" id="h0-8-11" class="d">-		u8fblen = 0;
+</a><a href="#h0-8-12" id="h0-8-12" class="d">-		u8fl = 0;
+</a><a href="#h0-8-13" id="h0-8-13" class="d">-		oneatatime = font-&gt;width != xw.cw;
+</a><a href="#h0-8-14" id="h0-8-14" class="d">-		for(;;) {
+</a><a href="#h0-8-15" id="h0-8-15" class="d">-			u8c = s;
+</a><a href="#h0-8-16" id="h0-8-16" class="d">-			u8cblen = utf8decode(s, &amp;unicodep, UTF_SIZ);
+</a><a href="#h0-8-17" id="h0-8-17" class="d">-			s += u8cblen;
+</a><a href="#h0-8-18" id="h0-8-18" class="d">-			bytelen -= u8cblen;
+</a><a href="#h0-8-19" id="h0-8-19" class="d">-
+</a><a href="#h0-8-20" id="h0-8-20" class="d">-			doesexist = XftCharExists(xw.dpy, font-&gt;match, unicodep);
+</a><a href="#h0-8-21" id="h0-8-21" class="d">-			if(doesexist) {
+</a><a href="#h0-8-22" id="h0-8-22" class="d">-					u8fl++;
+</a><a href="#h0-8-23" id="h0-8-23" class="d">-					u8fblen += u8cblen;
+</a><a href="#h0-8-24" id="h0-8-24" class="d">-					if(!oneatatime &amp;&amp; bytelen &gt; 0)
+</a><a href="#h0-8-25" id="h0-8-25" class="d">-							continue;
+</a><a href="#h0-8-26" id="h0-8-26" class="d">-			}
+</a><a href="#h0-8-27" id="h0-8-27" class="d">-
+</a><a href="#h0-8-28" id="h0-8-28" class="d">-			if(u8fl &gt; 0) {
+</a><a href="#h0-8-29" id="h0-8-29" class="d">-				XftDrawStringUtf8(xw.draw, fg,
+</a><a href="#h0-8-30" id="h0-8-30" class="d">-						font-&gt;match, xp,
+</a><a href="#h0-8-31" id="h0-8-31" class="d">-						winy + font-&gt;ascent,
+</a><a href="#h0-8-32" id="h0-8-32" class="d">-						(FcChar8 *)u8fs,
+</a><a href="#h0-8-33" id="h0-8-33" class="d">-						u8fblen);
+</a><a href="#h0-8-34" id="h0-8-34" class="d">-				xp += xw.cw * u8fl;
+</a><a href="#h0-8-35" id="h0-8-35" class="d">-			}
+</a><a href="#h0-8-36" id="h0-8-36" class="d">-			break;
+</a><a href="#h0-8-37" id="h0-8-37" class="d">-		}
+</a><a href="#h0-8-38" id="h0-8-38" class="d">-		if(doesexist) {
+</a><a href="#h0-8-39" id="h0-8-39" class="d">-			if(oneatatime)
+</a><a href="#h0-8-40" id="h0-8-40" class="d">-				continue;
+</a><a href="#h0-8-41" id="h0-8-41" class="d">-			break;
+</a><a href="#h0-8-42" id="h0-8-42" class="d">-		}
+</a><a href="#h0-8-43" id="h0-8-43" class="d">-
+</a><a href="#h0-8-44" id="h0-8-44" class="d">-		/* Search the font cache. */
+</a><a href="#h0-8-45" id="h0-8-45" class="d">-		for(i = 0; i &lt; frclen; i++) {
+</a><a href="#h0-8-46" id="h0-8-46" class="d">-			charexists = XftCharExists(xw.dpy, frc[i].font, unicodep);
+</a><a href="#h0-8-47" id="h0-8-47" class="d">-			/* Everything correct. */
+</a><a href="#h0-8-48" id="h0-8-48" class="d">-			if(charexists &amp;&amp; frc[i].flags == frcflags)
+</a><a href="#h0-8-49" id="h0-8-49" class="d">-				break;
+</a><a href="#h0-8-50" id="h0-8-50" class="d">-			/* We got a default font for a not found glyph. */
+</a><a href="#h0-8-51" id="h0-8-51" class="d">-			if(!charexists &amp;&amp; frc[i].flags == frcflags \
+</a><a href="#h0-8-52" id="h0-8-52" class="d">-					&amp;&amp; frc[i].unicodep == unicodep) {
+</a><a href="#h0-8-53" id="h0-8-53" class="d">-				break;
+</a><a href="#h0-8-54" id="h0-8-54" class="d">-			}
+</a><a href="#h0-8-55" id="h0-8-55" class="d">-		}
+</a><a href="#h0-8-56" id="h0-8-56" class="d">-
+</a><a href="#h0-8-57" id="h0-8-57" class="d">-		/* Nothing was found. */
+</a><a href="#h0-8-58" id="h0-8-58" class="d">-		if(i &gt;= frclen) {
+</a><a href="#h0-8-59" id="h0-8-59" class="d">-			if(!font-&gt;set)
+</a><a href="#h0-8-60" id="h0-8-60" class="d">-				font-&gt;set = FcFontSort(0, font-&gt;pattern,
+</a><a href="#h0-8-61" id="h0-8-61" class="d">-				                       FcTrue, 0, &amp;fcres);
+</a><a href="#h0-8-62" id="h0-8-62" class="d">-			fcsets[0] = font-&gt;set;
+</a><a href="#h0-8-63" id="h0-8-63" class="d">-
+</a><a href="#h0-8-64" id="h0-8-64" class="d">-			/*
+</a><a href="#h0-8-65" id="h0-8-65" class="d">-			 * Nothing was found in the cache. Now use
+</a><a href="#h0-8-66" id="h0-8-66" class="d">-			 * some dozen of Fontconfig calls to get the
+</a><a href="#h0-8-67" id="h0-8-67" class="d">-			 * font for one single character.
+</a><a href="#h0-8-68" id="h0-8-68" class="d">-			 *
+</a><a href="#h0-8-69" id="h0-8-69" class="d">-			 * Xft and fontconfig are design failures.
+</a><a href="#h0-8-70" id="h0-8-70" class="d">-			 */
+</a><a href="#h0-8-71" id="h0-8-71" class="d">-			fcpattern = FcPatternDuplicate(font-&gt;pattern);
+</a><a href="#h0-8-72" id="h0-8-72" class="d">-			fccharset = FcCharSetCreate();
+</a><a href="#h0-8-73" id="h0-8-73" class="d">-
+</a><a href="#h0-8-74" id="h0-8-74" class="d">-			FcCharSetAddChar(fccharset, unicodep);
+</a><a href="#h0-8-75" id="h0-8-75" class="d">-			FcPatternAddCharSet(fcpattern, FC_CHARSET,
+</a><a href="#h0-8-76" id="h0-8-76" class="d">-					fccharset);
+</a><a href="#h0-8-77" id="h0-8-77" class="d">-			FcPatternAddBool(fcpattern, FC_SCALABLE,
+</a><a href="#h0-8-78" id="h0-8-78" class="d">-					FcTrue);
+</a><a href="#h0-8-79" id="h0-8-79" class="d">-
+</a><a href="#h0-8-80" id="h0-8-80" class="d">-			FcConfigSubstitute(0, fcpattern,
+</a><a href="#h0-8-81" id="h0-8-81" class="d">-					FcMatchPattern);
+</a><a href="#h0-8-82" id="h0-8-82" class="d">-			FcDefaultSubstitute(fcpattern);
+</a><a href="#h0-8-83" id="h0-8-83" class="d">-
+</a><a href="#h0-8-84" id="h0-8-84" class="d">-			fontpattern = FcFontSetMatch(0, fcsets, 1,
+</a><a href="#h0-8-85" id="h0-8-85" class="d">-					fcpattern, &amp;fcres);
+</a><a href="#h0-8-86" id="h0-8-86" class="d">-
+</a><a href="#h0-8-87" id="h0-8-87" class="d">-			/*
+</a><a href="#h0-8-88" id="h0-8-88" class="d">-			 * Overwrite or create the new cache entry.
+</a><a href="#h0-8-89" id="h0-8-89" class="d">-			 */
+</a><a href="#h0-8-90" id="h0-8-90" class="d">-			if(frclen &gt;= LEN(frc)) {
+</a><a href="#h0-8-91" id="h0-8-91" class="d">-				frclen = LEN(frc) - 1;
+</a><a href="#h0-8-92" id="h0-8-92" class="d">-				XftFontClose(xw.dpy, frc[frclen].font);
+</a><a href="#h0-8-93" id="h0-8-93" class="d">-				frc[frclen].unicodep = 0;
+</a><a href="#h0-8-94" id="h0-8-94" class="d">-			}
+</a><a href="#h0-8-95" id="h0-8-95" class="d">-
+</a><a href="#h0-8-96" id="h0-8-96" class="d">-			frc[frclen].font = XftFontOpenPattern(xw.dpy,
+</a><a href="#h0-8-97" id="h0-8-97" class="d">-					fontpattern);
+</a><a href="#h0-8-98" id="h0-8-98" class="d">-			frc[frclen].flags = frcflags;
+</a><a href="#h0-8-99" id="h0-8-99" class="d">-			frc[frclen].unicodep = unicodep;
+</a><a href="#h0-8-100" id="h0-8-100" class="d">-
+</a><a href="#h0-8-101" id="h0-8-101" class="d">-			i = frclen;
+</a><a href="#h0-8-102" id="h0-8-102" class="d">-			frclen++;
+</a><a href="#h0-8-103" id="h0-8-103" class="d">-
+</a><a href="#h0-8-104" id="h0-8-104" class="d">-			FcPatternDestroy(fcpattern);
+</a><a href="#h0-8-105" id="h0-8-105" class="d">-			FcCharSetDestroy(fccharset);
+</a><a href="#h0-8-106" id="h0-8-106" class="d">-		}
+</a><a href="#h0-8-107" id="h0-8-107" class="d">-
+</a><a href="#h0-8-108" id="h0-8-108" class="d">-		XftDrawStringUtf8(xw.draw, fg, frc[i].font,
+</a><a href="#h0-8-109" id="h0-8-109" class="d">-				xp, winy + frc[i].font-&gt;ascent,
+</a><a href="#h0-8-110" id="h0-8-110" class="d">-				(FcChar8 *)u8c, u8cblen);
+</a><a href="#h0-8-111" id="h0-8-111" class="d">-
+</a><a href="#h0-8-112" id="h0-8-112" class="d">-		xp += xw.cw * wcwidth(unicodep);
+</a><a href="#h0-8-113" id="h0-8-113" class="d">-	}
+</a><a href="#h0-8-114" id="h0-8-114" class="d">-
+</a><a href="#h0-8-115" id="h0-8-115" class="d">-	/*
+</a><a href="#h0-8-116" id="h0-8-116" class="d">-	 * This is how the loop above actually should be. Why does the
+</a><a href="#h0-8-117" id="h0-8-117" class="d">-	 * application have to care about font details?
+</a><a href="#h0-8-118" id="h0-8-118" class="d">-	 *
+</a><a href="#h0-8-119" id="h0-8-119" class="d">-	 * I have to repeat: Xft and Fontconfig are design failures.
+</a><a href="#h0-8-120" id="h0-8-120" class="d">-	 */
+</a><a href="#h0-8-121" id="h0-8-121" class="d">-	/*
+</a><a href="#h0-8-122" id="h0-8-122" class="d">-	XftDrawStringUtf8(xw.draw, fg, font-&gt;set, winx,
+</a><a href="#h0-8-123" id="h0-8-123" class="d">-			winy + font-&gt;ascent, (FcChar8 *)s, bytelen);
+</a><a href="#h0-8-124" id="h0-8-124" class="d">-	*/
+</a><a href="#h0-8-125" id="h0-8-125" class="i">+	/* Render the glyphs. */
+</a><a href="#h0-8-126" id="h0-8-126" class="i">+	XftDrawGlyphFontSpec(xw.draw, fg, specs, len);
+</a> 
+<a href="#h0-8-128" id="h0-8-128" class="i">+	/* Render underline and strikethrough. */
+</a> 	if(base.mode &amp; ATTR_UNDERLINE) {
+<a href="#h0-8-130" id="h0-8-130" class="d">-		XftDrawRect(xw.draw, fg, winx, winy + font-&gt;ascent + 1,
+</a><a href="#h0-8-131" id="h0-8-131" class="i">+		XftDrawRect(xw.draw, fg, winx, winy + dc.font.ascent + 1,
+</a> 				width, 1);
+ 	}
+ 
+ 	if(base.mode &amp; ATTR_STRUCK) {
+<a href="#h0-8-136" id="h0-8-136" class="d">-		XftDrawRect(xw.draw, fg, winx, winy + 2 * font-&gt;ascent / 3,
+</a><a href="#h0-8-137" id="h0-8-137" class="i">+		XftDrawRect(xw.draw, fg, winx, winy + 2 * dc.font.ascent / 3,
+</a> 				width, 1);
+ 	}
+ 
+<a href="#h0-9" id="h0-9" class="h">@@ -3540,11 +3530,10 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 
+ void
+ xdrawglyph(Glyph g, int x, int y) {
+<a href="#h0-9-3" id="h0-9-3" class="d">-	static char buf[UTF_SIZ];
+</a><a href="#h0-9-4" id="h0-9-4" class="d">-	size_t len = utf8encode(g.u, buf);
+</a><a href="#h0-9-5" id="h0-9-5" class="d">-	int width = g.mode &amp; ATTR_WIDE ? 2 : 1;
+</a><a href="#h0-9-6" id="h0-9-6" class="d">-
+</a><a href="#h0-9-7" id="h0-9-7" class="d">-	xdraws(buf, g, x, y, width, len);
+</a><a href="#h0-9-8" id="h0-9-8" class="i">+	int numspecs;
+</a><a href="#h0-9-9" id="h0-9-9" class="i">+	XftGlyphFontSpec spec;
+</a><a href="#h0-9-10" id="h0-9-10" class="i">+	numspecs = xmakeglyphfontspecs(&amp;spec, &amp;g, 1, x, y);
+</a><a href="#h0-9-11" id="h0-9-11" class="i">+	xdrawglyphfontspecs(&amp;spec, g, numspecs, x, y);
+</a> }
+ 
+ void
+<a href="#h0-10" id="h0-10" class="h">@@ -3658,9 +3647,9 @@ draw(void) {
+</a> 
+ void
+ drawregion(int x1, int y1, int x2, int y2) {
+<a href="#h0-10-3" id="h0-10-3" class="d">-	int ic, ib, x, y, ox;
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+	int i, x, y, ox, numspecs;
+</a> 	Glyph base, new;
+<a href="#h0-10-6" id="h0-10-6" class="d">-	char buf[DRAW_BUF_SIZ];
+</a><a href="#h0-10-7" id="h0-10-7" class="i">+	XftGlyphFontSpec* specs;
+</a> 	bool ena_sel = sel.ob.x != -1 &amp;&amp; sel.alt == IS_SET(MODE_ALTSCREEN);
+ 
+ 	if(!(xw.state &amp; WIN_VISIBLE))
+<a href="#h0-11" id="h0-11" class="h">@@ -3672,29 +3661,31 @@ drawregion(int x1, int y1, int x2, int y2) {
+</a> 
+ 		xtermclear(0, y, term.col, y);
+ 		term.dirty[y] = 0;
+<a href="#h0-11-3" id="h0-11-3" class="d">-		base = term.line[y][0];
+</a><a href="#h0-11-4" id="h0-11-4" class="d">-		ic = ib = ox = 0;
+</a><a href="#h0-11-5" id="h0-11-5" class="d">-		for(x = x1; x &lt; x2; x++) {
+</a><a href="#h0-11-6" id="h0-11-6" class="i">+
+</a><a href="#h0-11-7" id="h0-11-7" class="i">+		specs = term.specbuf;
+</a><a href="#h0-11-8" id="h0-11-8" class="i">+		numspecs = xmakeglyphfontspecs(specs, &amp;term.line[y][0], x2 - x1, x1, y);
+</a><a href="#h0-11-9" id="h0-11-9" class="i">+
+</a><a href="#h0-11-10" id="h0-11-10" class="i">+		i = ox = 0;
+</a><a href="#h0-11-11" id="h0-11-11" class="i">+		for(x = x1; x &lt; x2 &amp;&amp; i &lt; numspecs; x++) {
+</a> 			new = term.line[y][x];
+ 			if(new.mode == ATTR_WDUMMY)
+ 				continue;
+ 			if(ena_sel &amp;&amp; selected(x, y))
+ 				new.mode ^= ATTR_REVERSE;
+<a href="#h0-11-17" id="h0-11-17" class="d">-			if(ib &gt; 0 &amp;&amp; (ATTRCMP(base, new)
+</a><a href="#h0-11-18" id="h0-11-18" class="d">-					|| ib &gt;= DRAW_BUF_SIZ-UTF_SIZ)) {
+</a><a href="#h0-11-19" id="h0-11-19" class="d">-				xdraws(buf, base, ox, y, ic, ib);
+</a><a href="#h0-11-20" id="h0-11-20" class="d">-				ic = ib = 0;
+</a><a href="#h0-11-21" id="h0-11-21" class="i">+			if(i &gt; 0 &amp;&amp; ATTRCMP(base, new)) {
+</a><a href="#h0-11-22" id="h0-11-22" class="i">+				xdrawglyphfontspecs(specs, base, i, ox, y);
+</a><a href="#h0-11-23" id="h0-11-23" class="i">+				specs += i;
+</a><a href="#h0-11-24" id="h0-11-24" class="i">+				numspecs -= i;
+</a><a href="#h0-11-25" id="h0-11-25" class="i">+				i = 0;
+</a> 			}
+<a href="#h0-11-27" id="h0-11-27" class="d">-			if(ib == 0) {
+</a><a href="#h0-11-28" id="h0-11-28" class="i">+			if(i == 0) {
+</a> 				ox = x;
+ 				base = new;
+ 			}
+<a href="#h0-11-32" id="h0-11-32" class="d">-
+</a><a href="#h0-11-33" id="h0-11-33" class="d">-			ib += utf8encode(new.u, buf+ib);
+</a><a href="#h0-11-34" id="h0-11-34" class="d">-			ic += (new.mode &amp; ATTR_WIDE)? 2 : 1;
+</a><a href="#h0-11-35" id="h0-11-35" class="i">+			i++;
+</a> 		}
+<a href="#h0-11-37" id="h0-11-37" class="d">-		if(ib &gt; 0)
+</a><a href="#h0-11-38" id="h0-11-38" class="d">-			xdraws(buf, base, ox, y, ic, ib);
+</a><a href="#h0-11-39" id="h0-11-39" class="i">+		if(i &gt; 0)
+</a><a href="#h0-11-40" id="h0-11-40" class="i">+			xdrawglyphfontspecs(specs, base, i, ox, y);
+</a> 	}
+ 	xdrawcursor();
+ }
+</pre>
+</div>
+</body>
+</html>

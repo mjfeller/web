@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Simplify tdeftrans - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/93661042a2a0cf6f3655360f5c52215c684a4211.html">93661042a2a0cf6f3655360f5c52215c684a4211</a>
+<b>parent</b> <a href="../commit/18a05fdf4326ac1c7165de8cad0895b5c44fac83.html">18a05fdf4326ac1c7165de8cad0895b5c44fac83</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Sat,  7 Jun 2014 13:23:45 +0200
+
+Simplify tdeftrans
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++</span><span class="d">----------</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 10 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2315,19 +2315,14 @@ techo(char *buf, int len) {
+</a> 
+ void
+ tdeftran(char ascii) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	char c, (*bp)[2];
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-	static char tbl[][2] = {
+</a><a href="#h0-0-5" id="h0-0-5" class="d">-		{&#39;0&#39;, CS_GRAPHIC0}, {&#39;B&#39;, CS_USA},
+</a><a href="#h0-0-6" id="h0-0-6" class="d">-		{0, 0}
+</a><a href="#h0-0-7" id="h0-0-7" class="d">-	};
+</a><a href="#h0-0-8" id="h0-0-8" class="d">-
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-	for (bp = &amp;tbl[0]; (c = (*bp)[0]) &amp;&amp; c != ascii; ++bp)
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-		/* nothing */;
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	static char cs[] = &quot;0B&quot;;
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	static int vcs[] = {CS_GRAPHIC0, CS_USA};
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	char *p;
+</a> 
+<a href="#h0-0-15" id="h0-0-15" class="d">-	if (c == 0)
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+	if((p = strchr(cs, ascii)) == NULL)
+</a> 		fprintf(stderr, &quot;esc unhandled charset: ESC ( %c\n&quot;, ascii);
+ 	else
+<a href="#h0-0-19" id="h0-0-19" class="d">-		term.trantbl[term.icharset] = (*bp)[1];
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+		term.trantbl[term.icharset] = vcs[p - cs];
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

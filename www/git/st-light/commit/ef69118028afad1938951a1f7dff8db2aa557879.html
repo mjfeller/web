@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>factor and cleanup code. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/ef69118028afad1938951a1f7dff8db2aa557879.html">ef69118028afad1938951a1f7dff8db2aa557879</a>
+<b>parent</b> <a href="../commit/f732ca5f1f03a0a496a07aa6bda15f6c363a2484.html">f732ca5f1f03a0a496a07aa6bda15f6c363a2484</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Wed,  1 Sep 2010 16:26:12 +0200
+
+factor and cleanup code.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">23</td><td><span class="i">+++++++++++</span><span class="d">------------</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 12 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -387,10 +387,10 @@ dump(char c) {
+</a> 
+ void
+ ttyread(void) {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	char buf[BUFSIZ] = {0};
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	char buf[BUFSIZ];
+</a> 	int ret;
+ 
+<a href="#h0-0-7" id="h0-0-7" class="d">-	if((ret = read(cmdfd, buf, BUFSIZ)) &lt; 0)
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	if((ret = read(cmdfd, buf, LEN(buf))) &lt; 0)
+</a> 		die(&quot;Couldn&#39;t read from shell: %s\n&quot;, SERRNO);
+ 	else
+ 		tputs(buf, ret);
+<a href="#h0-1" id="h0-1" class="h">@@ -465,8 +465,7 @@ tscrolldown (int n) {
+</a> 	
+ 	LIMIT(n, 0, term.bot-term.top+1);
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	for(i = 0; i &lt; n; i++)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-		memset(term.line[term.bot-i], 0, term.col*sizeof(Glyph));
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	tclearregion(0, term.bot-n+1, term.col-1, term.bot);
+</a> 	
+ 	for(i = term.bot; i &gt;= term.top+n; i--) {
+ 		temp = term.line[i];
+<a href="#h0-2" id="h0-2" class="h">@@ -481,8 +480,7 @@ tscrollup (int n) {
+</a> 	Line temp;
+ 	LIMIT(n, 0, term.bot-term.top+1);
+ 	
+<a href="#h0-2-3" id="h0-2-3" class="d">-	for(i = 0; i &lt; n; i++)
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		memset(term.line[term.top+i], 0, term.col*sizeof(Glyph));
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+	tclearregion(0, term.top, term.col-1, term.top+n-1);
+</a> 	
+ 	for(i = term.top; i &lt;= term.bot-n; i++) { 
+ 		 temp = term.line[i];
+<a href="#h0-3" id="h0-3" class="h">@@ -957,7 +955,8 @@ tputc(char c) {
+</a> 				term.esc = 0;
+ 				csiparse(), csihandle();
+ 			}
+<a href="#h0-3-3" id="h0-3-3" class="d">-		} else if(term.esc &amp; ESC_OSC) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+			/* TODO: handle other OSC */
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+		} else if(term.esc &amp; ESC_OSC) { 
+</a> 			if(c == &#39;;&#39;) {
+ 				term.titlelen = 0;
+ 				term.esc = ESC_START | ESC_TITLE;
+<a href="#h0-4" id="h0-4" class="h">@@ -1201,18 +1200,18 @@ xinit(void) {
+</a> 	xloadcols();
+ 
+ 	/* windows */
+<a href="#h0-4-3" id="h0-4-3" class="d">-	xw.h = term.row * xw.ch + 2*BORDER;
+</a><a href="#h0-4-4" id="h0-4-4" class="d">-	xw.w = term.col * xw.cw + 2*BORDER;
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	xw.bufh = term.row * xw.ch;
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+	xw.bufw = term.col * xw.cw;
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+	xw.h = xw.bufh + 2*BORDER;
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+	xw.w = xw.bufw + 2*BORDER;
+</a> 	xw.win = XCreateSimpleWindow(xw.dis, XRootWindow(xw.dis, xw.scr), 0, 0,
+ 			xw.w, xw.h, 0,
+ 			dc.col[DefaultBG],
+ 			dc.col[DefaultBG]);
+<a href="#h0-4-13" id="h0-4-13" class="d">-	xw.bufw = xw.w - 2*BORDER;
+</a><a href="#h0-4-14" id="h0-4-14" class="d">-	xw.bufh = xw.h - 2*BORDER;
+</a> 	xw.buf = XCreatePixmap(xw.dis, xw.win, xw.bufw, xw.bufh, XDefaultDepth(xw.dis, xw.scr));
+ 	/* gc */
+ 	dc.gc = XCreateGC(xw.dis, xw.win, 0, NULL);
+<a href="#h0-4-18" id="h0-4-18" class="d">-	
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+
+</a> 	/* event mask */
+ 	XSelectInput(xw.dis, xw.win, ExposureMask | KeyPressMask
+ 		| StructureNotifyMask | FocusChangeMask | PointerMotionMask
+</pre>
+</div>
+</body>
+</html>

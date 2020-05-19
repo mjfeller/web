@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Replace character with U+FFFD if wcwidth() is -1 - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/11625c7166b7e4dad414606227acec2de1c36464.html">11625c7166b7e4dad414606227acec2de1c36464</a>
+<b>parent</b> <a href="../commit/008aae541b5cb1e67a025048adef9a06eaa11c2e.html">008aae541b5cb1e67a025048adef9a06eaa11c2e</a>
+<b>Author:</b> czarkoff@gmail.com &lt;<a href="mailto:czarkoff@gmail.com">czarkoff@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 28 Oct 2014 12:55:28 +0100
+
+Replace character with U+FFFD if wcwidth() is -1
+
+Helpful when new Unicode codepoints are not recognized by libc.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 4 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2576,7 +2576,10 @@ tputc(char *c, int len) {
+</a> 		unicodep = ascii = *c;
+ 	} else {
+ 		utf8decode(c, &amp;unicodep, UTF_SIZ);
+<a href="#h0-0-3" id="h0-0-3" class="d">-		width = wcwidth(unicodep);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+		if ((width = wcwidth(unicodep)) == -1) {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+			c = &quot;\357\277\275&quot;;	/* UTF_INVALID */
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+			width = 1;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+		}
+</a> 		control = ISCONTROLC1(unicodep);
+ 		ascii = unicodep;
+ 	}
+</pre>
+</div>
+</body>
+</html>

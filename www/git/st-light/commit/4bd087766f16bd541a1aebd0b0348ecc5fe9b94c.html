@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>selection is removed or scrolled properly. (thx Rafa Garcia Gallego) - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/4bd087766f16bd541a1aebd0b0348ecc5fe9b94c.html">4bd087766f16bd541a1aebd0b0348ecc5fe9b94c</a>
+<b>parent</b> <a href="../commit/b032814e25ddb166b4621262be4b8a1a0a609e37.html">b032814e25ddb166b4621262be4b8a1a0a609e37</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 16 Sep 2011 18:48:16 +0200
+
+selection is removed or scrolled properly. (thx Rafa Garcia Gallego)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">30</td><td><span class="i">++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 30 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -237,6 +237,7 @@ static void selinit(void);
+</a> static inline int selected(int, int);
+ static void selcopy(void);
+ static void selpaste();
+<a href="#h0-0-3" id="h0-0-3" class="i">+static void selscroll(int, int);
+</a> 
+ static int utf8decode(char *, long *);
+ static int utf8encode(long *, char *);
+<a href="#h0-1" id="h0-1" class="h">@@ -806,6 +807,8 @@ tscrolldown(int orig, int n) {
+</a> 		term.line[i] = term.line[i-n];
+ 		term.line[i-n] = temp;
+ 	}
+<a href="#h0-1-3" id="h0-1-3" class="i">+
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	selscroll(orig, n);
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -821,6 +824,31 @@ tscrollup(int orig, int n) {
+</a> 		 term.line[i] = term.line[i+n];
+ 		 term.line[i+n] = temp;
+ 	}
+<a href="#h0-2-3" id="h0-2-3" class="i">+
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	selscroll(orig, -n);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+}
+</a><a href="#h0-2-6" id="h0-2-6" class="i">+
+</a><a href="#h0-2-7" id="h0-2-7" class="i">+void
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+selscroll(int orig, int n) {
+</a><a href="#h0-2-9" id="h0-2-9" class="i">+	if(sel.bx == -1)
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+		return;
+</a><a href="#h0-2-11" id="h0-2-11" class="i">+	
+</a><a href="#h0-2-12" id="h0-2-12" class="i">+	if(BETWEEN(sel.by, orig, term.bot) || BETWEEN(sel.ey, orig, term.bot)) {
+</a><a href="#h0-2-13" id="h0-2-13" class="i">+		if((sel.by += n) &gt; term.bot || (sel.ey += n) &lt; term.top) {
+</a><a href="#h0-2-14" id="h0-2-14" class="i">+			sel.bx = -1;
+</a><a href="#h0-2-15" id="h0-2-15" class="i">+			return;
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+		}
+</a><a href="#h0-2-17" id="h0-2-17" class="i">+		if(sel.by &lt; term.top) {
+</a><a href="#h0-2-18" id="h0-2-18" class="i">+			sel.by = term.top;
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+			sel.bx = 0;
+</a><a href="#h0-2-20" id="h0-2-20" class="i">+		}
+</a><a href="#h0-2-21" id="h0-2-21" class="i">+		if(sel.ey &gt; term.bot) {
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+			sel.ey = term.bot;
+</a><a href="#h0-2-23" id="h0-2-23" class="i">+			sel.ex = term.col;
+</a><a href="#h0-2-24" id="h0-2-24" class="i">+		}
+</a><a href="#h0-2-25" id="h0-2-25" class="i">+		sel.b.y = sel.by, sel.b.x = sel.bx;
+</a><a href="#h0-2-26" id="h0-2-26" class="i">+		sel.e.y = sel.ey, sel.e.x = sel.ex;
+</a><a href="#h0-2-27" id="h0-2-27" class="i">+	}
+</a> }
+ 
+ void
+<a href="#h0-3" id="h0-3" class="h">@@ -1077,6 +1105,7 @@ csihandle(void) {
+</a> 		break;
+ 	/* XXX: (CSI n I) CHT -- Cursor Forward Tabulation &lt;n&gt; tab stops */
+ 	case &#39;J&#39;: /* ED -- Clear screen */
+<a href="#h0-3-3" id="h0-3-3" class="i">+		sel.bx = -1;
+</a> 		switch(escseq.arg[0]) {
+ 		case 0: /* below */
+ 			tclearregion(term.c.x, term.c.y, term.col-1, term.c.y);
+<a href="#h0-4" id="h0-4" class="h">@@ -1382,6 +1411,7 @@ tputc(char *c) {
+</a> 			}
+ 		}
+ 	} else {
+<a href="#h0-4-3" id="h0-4-3" class="i">+		if(sel.bx != -1 &amp;&amp; BETWEEN(term.c.y, sel.by, sel.ey)) sel.bx = -1;
+</a> 		switch(ascii) {
+ 		case &#39;\t&#39;:
+ 			tputtab();
+</pre>
+</div>
+</body>
+</html>

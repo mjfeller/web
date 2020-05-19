@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Let curses do the dirty work for flash - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1b514048b254827f1a83c05e1b2a2428bf31924e.html">1b514048b254827f1a83c05e1b2a2428bf31924e</a>
+<b>parent</b> <a href="../commit/3604445ffc6ff1bfdfc7614771ca659e423b404b.html">3604445ffc6ff1bfdfc7614771ca659e423b404b</a>
+<b>Author:</b> Ivan Delalande &lt;<a href="mailto:colona@ycc.fr">colona@ycc.fr</a>&gt;
+<b>Date:</b>   Sun, 15 Feb 2015 00:34:03 +0100
+
+Let curses do the dirty work for flash
+
+Use the terminfo delay syntax ($&lt;x&gt;) in our flash capability to avoid
+hardcoding a fixed delay in redraw() when called from tsetmode() with
+DECSCNM.
+We need to turn on the npc capability so that delays are made with
+xon/xoff instead of padding characters.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">21</td><td><span class="i">++++++</span><span class="d">---------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.info</a></td><td> | </td><td class="num">3</td><td><span class="i">++</span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 8 insertions(+), 16 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -63,8 +63,6 @@ char *argv0;
+</a> #define XK_NO_MOD     0
+ #define XK_SWITCH_MOD (1&lt;&lt;13)
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define REDRAW_TIMEOUT (80*1000) /* 80 ms */
+</a><a href="#h0-0-4" id="h0-0-4" class="d">-
+</a> /* macros */
+ #define MIN(a, b)  ((a) &lt; (b) ? (a) : (b))
+ #define MAX(a, b)  ((a) &lt; (b) ? (b) : (a))
+<a href="#h0-1" id="h0-1" class="h">@@ -349,7 +347,7 @@ typedef struct {
+</a> 
+ static void die(const char *, ...);
+ static void draw(void);
+<a href="#h0-1-3" id="h0-1-3" class="d">-static void redraw(int);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+static void redraw(void);
+</a> static void drawregion(int, int, int, int);
+ static void execsh(void);
+ static void sigchld(int);
+<a href="#h0-2" id="h0-2" class="h">@@ -1826,7 +1824,7 @@ tsetmode(bool priv, bool set, int *args, int narg) {
+</a> 				mode = term.mode;
+ 				MODBIT(term.mode, set, MODE_REVERSE);
+ 				if(mode != term.mode)
+<a href="#h0-2-3" id="h0-2-3" class="d">-					redraw(REDRAW_TIMEOUT);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+					redraw();
+</a> 				break;
+ 			case 6: /* DECOM -- Origin */
+ 				MODBIT(term.c.state, set, CURSOR_ORIGIN);
+<a href="#h0-3" id="h0-3" class="h">@@ -2200,7 +2198,7 @@ strhandle(void) {
+</a> 				 * TODO if defaultbg color is changed, borders
+ 				 * are dirty
+ 				 */
+<a href="#h0-3-3" id="h0-3-3" class="d">-				redraw(0);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+				redraw();
+</a> 			}
+ 			return;
+ 		}
+<a href="#h0-4" id="h0-4" class="h">@@ -3093,7 +3091,7 @@ xzoomabs(const Arg *arg) {
+</a> 	xunloadfonts();
+ 	xloadfonts(usedfont, arg-&gt;i);
+ 	cresize(0, 0);
+<a href="#h0-4-3" id="h0-4-3" class="d">-	redraw(0);
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	redraw();
+</a> 	xhints();
+ }
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -3558,16 +3556,9 @@ xresettitle(void) {
+</a> }
+ 
+ void
+<a href="#h0-5-3" id="h0-5-3" class="d">-redraw(int timeout) {
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-	struct timespec tv = {0, timeout * 1000};
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+redraw(void) {
+</a> 	tfulldirt();
+ 	draw();
+<a href="#h0-5-9" id="h0-5-9" class="d">-
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-	if(timeout &gt; 0) {
+</a><a href="#h0-5-11" id="h0-5-11" class="d">-		nanosleep(&amp;tv, NULL);
+</a><a href="#h0-5-12" id="h0-5-12" class="d">-		XSync(xw.dpy, False); /* necessary for a good tput flash */
+</a><a href="#h0-5-13" id="h0-5-13" class="d">-	}
+</a> }
+ 
+ void
+<a href="#h0-6" id="h0-6" class="h">@@ -3634,7 +3625,7 @@ expose(XEvent *ev) {
+</a> 		if(!e-&gt;count)
+ 			xw.state &amp;= ~WIN_REDRAW;
+ 	}
+<a href="#h0-6-3" id="h0-6-3" class="d">-	redraw(0);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	redraw();
+</a> }
+ 
+ void
+<b>diff --git a/<a id="h1" href="../file/st.info.html">st.info</a> b/<a href="../file/st.info.html">st.info</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -32,7 +32,7 @@ st| simpleterm,
+</a> 	el=\E[K,
+ 	el1=\E[1K,
+ 	enacs=\E)0,
+<a href="#h1-0-3" id="h1-0-3" class="d">-	flash=\E[?5h\E[?5l,
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	flash=\E[?5h$&lt;80/&gt;\E[?5l,
+</a> 	fsl=^G,
+ 	home=\E[H,
+ 	hpa=\E[%i%p1%dG,
+<a href="#h1-1" id="h1-1" class="h">@@ -150,6 +150,7 @@ st| simpleterm,
+</a> 	mir,
+ 	msgr,
+ 	ncv#3,
+<a href="#h1-1-3" id="h1-1-3" class="i">+	npc,
+</a> 	op=\E[39;49m,
+ 	pairs#64,
+ 	mc0=\E[i,
+</pre>
+</div>
+</body>
+</html>

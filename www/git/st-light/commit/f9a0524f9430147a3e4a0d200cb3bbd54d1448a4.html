@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>add select(2)-based i/o multiplexing - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/f9a0524f9430147a3e4a0d200cb3bbd54d1448a4.html">f9a0524f9430147a3e4a0d200cb3bbd54d1448a4</a>
+<b>parent</b> <a href="../commit/a49919a10c11c141f1bfb8414d5c8d2ca9d4a90e.html">a49919a10c11c141f1bfb8414d5c8d2ca9d4a90e</a>
+<b>Author:</b> Matthias-Christian Ott &lt;<a href="mailto:ott@enolink.de">ott@enolink.de</a>&gt;
+<b>Date:</b>   Sat, 14 Jun 2008 23:24:12 +0200
+
+add select(2)-based i/o multiplexing
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">std.c</a></td><td> | </td><td class="num">26</td><td><span class="i">+++++++++++++++++++</span><span class="d">-------</span></td></tr>
+</table></pre><pre>1 file changed, 19 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/std.c.html">std.c</a> b/<a href="../file/std.c.html">std.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -263,20 +263,32 @@ ungetch(int c) {
+</a> 
+ int
+ main(int argc, char *argv[]) {
+<a href="#h0-0-3" id="h0-0-3" class="i">+	fd_set rfds;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	int r;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+
+</a> 	if(argc == 2 &amp;&amp; !strcmp(&quot;-v&quot;, argv[1]))
+ 		eprint(&quot;std-&quot;VERSION&quot;, © 2008 Matthias-Christian Ott\n&quot;);
+ 	else if(argc == 1)
+ 		eprint(&quot;usage: st [-v]\n&quot;);
+ 	getpty();
+ 	shell();
+<a href="#h0-0-12" id="h0-0-12" class="i">+	FD_ZERO(&amp;rfds);
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	FD_SET(STDIN_FILENO, &amp;rfds);
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+	FD_SET(ptm, &amp;rfds);
+</a> 	for(;;) {
+<a href="#h0-0-16" id="h0-0-16" class="d">-		c = getch();
+</a><a href="#h0-0-17" id="h0-0-17" class="d">-		switch(c) {
+</a><a href="#h0-0-18" id="h0-0-18" class="d">-		case &#39;\033&#39;:
+</a><a href="#h0-0-19" id="h0-0-19" class="d">-			parseesc();
+</a><a href="#h0-0-20" id="h0-0-20" class="d">-			break;
+</a><a href="#h0-0-21" id="h0-0-21" class="d">-		default:
+</a><a href="#h0-0-22" id="h0-0-22" class="d">-			putchar(c);
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+		r = select(ptm + 1, &amp;rfds, NULL, NULL, NULL);
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+		if(r == -1)
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+			eprintn(&quot;error, cannot select&quot;);
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+		if(FD_ISSET(ptm, &amp;rfds)) {
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+			c = getch();
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+			switch(c) {
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+			case &#39;\033&#39;:
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+				parseesc();
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+				break;
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+			default:
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+				putchar(c);
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+			}
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+			fflush(stdout);
+</a> 		}
+ 	}
+ 	return 0;
+</pre>
+</div>
+</body>
+</html>

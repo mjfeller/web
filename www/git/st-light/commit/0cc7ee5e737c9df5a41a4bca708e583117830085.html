@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Removing the xclearborders() hack. St now cleans up the parts of the border, - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0cc7ee5e737c9df5a41a4bca708e583117830085.html">0cc7ee5e737c9df5a41a4bca708e583117830085</a>
+<b>parent</b> <a href="../commit/4eddf19fdc2f3845c927291b99d3faefe73f98f3.html">4eddf19fdc2f3845c927291b99d3faefe73f98f3</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sat,  6 Oct 2012 13:43:01 +0200
+
+Removing the xclearborders() hack. St now cleans up the parts of the border,
+
+if something needs to be drawn close to it.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">59</td><td><span class="i">+++++++++++++++++++++++++++++++</span><span class="d">----------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 31 insertions(+), 28 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -224,7 +224,9 @@ typedef struct {
+</a> 	int mode;
+ 	int bx, by;
+ 	int ex, ey;
+<a href="#h0-0-3" id="h0-0-3" class="d">-	struct {int x, y;} b, e;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	struct {
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+		int x, y;
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	} b, e;
+</a> 	char *clip;
+ 	Atom xtarget;
+ 	bool alt;
+<a href="#h0-1" id="h0-1" class="h">@@ -587,10 +589,10 @@ selected(int x, int y) {
+</a> 		return BETWEEN(x, bx, ex);
+ 	}
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-	return ((sel.b.y &lt; y&amp;&amp;y &lt; sel.e.y)
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-			|| (y==sel.e.y &amp;&amp; x&lt;=sel.e.x))
+</a><a href="#h0-1-5" id="h0-1-5" class="d">-			|| (y==sel.b.y &amp;&amp; x&gt;=sel.b.x
+</a><a href="#h0-1-6" id="h0-1-6" class="d">-					&amp;&amp; (x&lt;=sel.e.x || sel.b.y!=sel.e.y));
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	return ((sel.b.y &lt; y &amp;&amp; y &lt; sel.e.y)
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+			|| (y == sel.e.y &amp;&amp; x &lt;= sel.e.x))
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+			|| (y == sel.b.y &amp;&amp; x &gt;= sel.b.x
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+				&amp;&amp; (x &lt;= sel.e.x || sel.b.y != sel.e.y));
+</a> }
+ 
+ void
+<a href="#h0-2" id="h0-2" class="h">@@ -803,12 +805,12 @@ brelease(XEvent *e) {
+</a> 				/* double click to select word */
+ 				sel.bx = sel.ex;
+ 				while(sel.bx &gt; 0 &amp;&amp; term.line[sel.ey][sel.bx-1].state &amp; GLYPH_SET &amp;&amp;
+<a href="#h0-2-3" id="h0-2-3" class="d">-					  term.line[sel.ey][sel.bx-1].c[0] != &#39; &#39;) {
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+						term.line[sel.ey][sel.bx-1].c[0] != &#39; &#39;) {
+</a> 					sel.bx--;
+ 				}
+ 				sel.b.x = sel.bx;
+ 				while(sel.ex &lt; term.col-1 &amp;&amp; term.line[sel.ey][sel.ex+1].state &amp; GLYPH_SET &amp;&amp;
+<a href="#h0-2-9" id="h0-2-9" class="d">-					  term.line[sel.ey][sel.ex+1].c[0] != &#39; &#39;) {
+</a><a href="#h0-2-10" id="h0-2-10" class="i">+						term.line[sel.ey][sel.ex+1].c[0] != &#39; &#39;) {
+</a> 					sel.ex++;
+ 				}
+ 				sel.e.x = sel.ex;
+<a href="#h0-3" id="h0-3" class="h">@@ -1031,7 +1033,8 @@ treset(void) {
+</a> 	memset(term.tabs, 0, term.col * sizeof(*term.tabs));
+ 	for(i = TAB; i &lt; term.col; i += TAB)
+ 		term.tabs[i] = 1;
+<a href="#h0-3-3" id="h0-3-3" class="d">-	term.top = 0, term.bot = term.row - 1;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	term.top = 0;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+	term.bot = term.row - 1;
+</a> 	term.mode = MODE_WRAP;
+ 
+ 	tclearregion(0, 0, term.col-1, term.row-1);
+<a href="#h0-4" id="h0-4" class="h">@@ -1040,7 +1043,8 @@ treset(void) {
+</a> void
+ tnew(int col, int row) {
+ 	/* set screen size */
+<a href="#h0-4-3" id="h0-4-3" class="d">-	term.row = row, term.col = col;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	term.row = row;
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	term.col = col;
+</a> 	term.line = xmalloc(term.row * sizeof(Line));
+ 	term.alt  = xmalloc(term.row * sizeof(Line));
+ 	term.dirty = xmalloc(term.row * sizeof(*term.dirty));
+<a href="#h0-5" id="h0-5" class="h">@@ -1437,8 +1441,8 @@ tsetmode(bool priv, bool set, int *args, int narg) {
+</a> 				if(IS_SET(MODE_ALTSCREEN))
+ 					tclearregion(0, 0, term.col-1, term.row-1);
+ 				if((set &amp;&amp; !IS_SET(MODE_ALTSCREEN)) ||
+<a href="#h0-5-3" id="h0-5-3" class="d">-				    (!set &amp;&amp; IS_SET(MODE_ALTSCREEN))) {
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-					    tswapscreen();
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+						(!set &amp;&amp; IS_SET(MODE_ALTSCREEN))) {
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+					tswapscreen();
+</a> 				}
+ 				if(*args != 1049)
+ 					break;
+<a href="#h0-6" id="h0-6" class="h">@@ -1909,7 +1913,6 @@ tputc(char *c, int len) {
+</a> 			case &#39;c&#39;: /* RIS -- Reset to inital state */
+ 				treset();
+ 				term.esc = 0;
+<a href="#h0-6-3" id="h0-6-3" class="d">-				xclearborders();
+</a> 				xresettitle();
+ 				break;
+ 			case &#39;=&#39;: /* DECPAM -- Application keypad */
+<a href="#h0-7" id="h0-7" class="h">@@ -2091,18 +2094,6 @@ xclear(int x1, int y1, int x2, int y2) {
+</a> }
+ 
+ void
+<a href="#h0-7-3" id="h0-7-3" class="d">-xclearborders(void) {
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-	/* top and left border */
+</a><a href="#h0-7-5" id="h0-7-5" class="d">-	xclear(0, 0, BORDER, xw.h);
+</a><a href="#h0-7-6" id="h0-7-6" class="d">-	xclear(0, 0, xw.w, BORDER);
+</a><a href="#h0-7-7" id="h0-7-7" class="d">-
+</a><a href="#h0-7-8" id="h0-7-8" class="d">-	/* lower and right border */
+</a><a href="#h0-7-9" id="h0-7-9" class="d">-	xclear(BORDER, xw.th - 1, xw.w, xw.h);
+</a><a href="#h0-7-10" id="h0-7-10" class="d">-	/* Will just draw what hasn&#39;t been drawn by the previous call. */
+</a><a href="#h0-7-11" id="h0-7-11" class="d">-	xclear(xw.tw - 1, BORDER, xw.w, xw.h - xw.th - 2);
+</a><a href="#h0-7-12" id="h0-7-12" class="d">-}
+</a><a href="#h0-7-13" id="h0-7-13" class="d">-
+</a><a href="#h0-7-14" id="h0-7-14" class="d">-void
+</a> xhints(void) {
+ 	XClassHint class = {opt_class ? opt_class : TNAME, TNAME};
+ 	XWMHints wm = {.flags = InputHint, .input = 1};
+<a href="#h0-8" id="h0-8" class="h">@@ -2264,8 +2255,8 @@ xinit(void) {
+</a> 
+ void
+ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+<a href="#h0-8-3" id="h0-8-3" class="d">-	int winx = BORDER+x*xw.cw, winy = BORDER+y*xw.ch,
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-	    width = charlen*xw.cw;
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+	int winx = BORDER + x * xw.cw, winy = BORDER + y * xw.ch,
+</a><a href="#h0-8-6" id="h0-8-6" class="i">+	    width = charlen * xw.cw;
+</a> 	Font *font = &amp;dc.font;
+ 	XGlyphInfo extents;
+ 	XftColor *fg = &amp;dc.xft_col[base.fg], *bg = &amp;dc.xft_col[base.bg],
+<a href="#h0-9" id="h0-9" class="h">@@ -2328,6 +2319,20 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> 			&amp;extents);
+ 	width = extents.xOff;
+ 
+<a href="#h0-9-3" id="h0-9-3" class="i">+	/* Intelligent cleaning up of the borders. */
+</a><a href="#h0-9-4" id="h0-9-4" class="i">+	if(x == 0) {
+</a><a href="#h0-9-5" id="h0-9-5" class="i">+		xclear(0, (y == 0)? 0 : winy, BORDER,
+</a><a href="#h0-9-6" id="h0-9-6" class="i">+			winy + xw.ch + (y == term.row-1)? xw.h : 0);
+</a><a href="#h0-9-7" id="h0-9-7" class="i">+	}
+</a><a href="#h0-9-8" id="h0-9-8" class="i">+	if(x + charlen &gt;= term.col-1) {
+</a><a href="#h0-9-9" id="h0-9-9" class="i">+		xclear(winx + width, (y == 0)? 0 : winy, xw.w,
+</a><a href="#h0-9-10" id="h0-9-10" class="i">+			winy + xw.ch + (y == term.row-1)? xw.h : 0);
+</a><a href="#h0-9-11" id="h0-9-11" class="i">+	}
+</a><a href="#h0-9-12" id="h0-9-12" class="i">+	if(y == 0)
+</a><a href="#h0-9-13" id="h0-9-13" class="i">+		xclear(winx, 0, winx + width, BORDER);
+</a><a href="#h0-9-14" id="h0-9-14" class="i">+	if(y == term.row-1)
+</a><a href="#h0-9-15" id="h0-9-15" class="i">+		xclear(winx, winy + xw.ch, winx + width, xw.h);
+</a><a href="#h0-9-16" id="h0-9-16" class="i">+
+</a> 	XftDrawRect(xw.xft_draw, bg, winx, winy, width, xw.ch);
+ 	XftDrawStringUtf8(xw.xft_draw, fg, font-&gt;xft_set, winx,
+ 			winy + font-&gt;ascent, (FcChar8 *)s, bytelen);
+<a href="#h0-10" id="h0-10" class="h">@@ -2382,7 +2387,6 @@ void
+</a> redraw(void) {
+ 	struct timespec tv = {0, REDRAW_TIMEOUT * 1000};
+ 
+<a href="#h0-10-3" id="h0-10-3" class="d">-	xclearborders();
+</a> 	tfulldirt();
+ 	draw();
+ 	XSync(xw.dpy, False); /* necessary for a good tput flash */
+<a href="#h0-11" id="h0-11" class="h">@@ -2598,7 +2602,6 @@ resize(XEvent *e) {
+</a> 
+ 	tresize(col, row);
+ 	xresize(col, row);
+<a href="#h0-11-3" id="h0-11-3" class="d">-	xclearborders();
+</a> 	ttyresize();
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

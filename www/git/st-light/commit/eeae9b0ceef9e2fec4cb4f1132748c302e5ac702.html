@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Fix core in multi-line selection on OpenBSD - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/eeae9b0ceef9e2fec4cb4f1132748c302e5ac702.html">eeae9b0ceef9e2fec4cb4f1132748c302e5ac702</a>
+<b>parent</b> <a href="../commit/8ac0a5f872b0024bab161fa020126013724758ba.html">8ac0a5f872b0024bab161fa020126013724758ba</a>
+<b>Author:</b> Maurice Quennet &lt;<a href="mailto:mjq@gmx.net">mjq@gmx.net</a>&gt;
+<b>Date:</b>   Sat, 21 Sep 2013 23:33:56 +0200
+
+Fix core in multi-line selection on OpenBSD
+
+OpenBSD 5.3 amd64 release version with the most current st
+version from git, crash and dump core when selecting multiple
+lines whith the cursor.  This happens, because on line 964
+of st.c (gp-1)-&gt;mode is accessed, although gp is still
+pointing at the beginning of the array term.line[y] (see
+line 939 for initialization of gp).
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 1 insertion(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -962,7 +962,7 @@ selcopy(void) {
+</a> 			 * st.
+ 			 * FIXME: Fix the computer world.
+ 			 */
+<a href="#h0-0-3" id="h0-0-3" class="d">-			if(y &lt; sel.ne.y &amp;&amp; !((gp-1)-&gt;mode &amp; ATTR_WRAP))
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+			if(y &lt; sel.ne.y &amp;&amp; x &gt; 0 &amp;&amp; !((gp-1)-&gt;mode &amp; ATTR_WRAP))
+</a> 				*ptr++ = &#39;\n&#39;;
+ 
+ 			/*
+</pre>
+</div>
+</body>
+</html>

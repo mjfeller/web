@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding a more efficient drawing code. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/95033753be32e93915ddce14ea41b8765b665771.html">95033753be32e93915ddce14ea41b8765b665771</a>
+<b>parent</b> <a href="../commit/b7261c84aa3af984d5a7e5f5239c4173255a215d.html">b7261c84aa3af984d5a7e5f5239c4173255a215d</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Fri, 15 Feb 2013 19:10:22 +0100
+
+Adding a more efficient drawing code.
+
+Thanks Mihail Zenkov &lt;mihail.zenkov@gmail.com&gt; for giving the hint!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">65</td><td><span class="i">++++++++++++++++++++++++++++++++++++++</span><span class="d">---------------------------</span></td></tr>
+</table></pre><pre>2 files changed, 42 insertions(+), 28 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -9,10 +9,13 @@ static char font[] = &quot;Liberation Mono:pixelsize=12:antialias=false:autohint=fals
+</a> static int borderpx = 2;
+ static char shell[] = &quot;/bin/sh&quot;;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-/* double-click timeout (in milliseconds) between clicks for selection */
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+/* timeouts (in milliseconds) */
+</a> static unsigned int doubleclicktimeout = 300;
+ static unsigned int tripleclicktimeout = 600;
+ 
+<a href="#h0-0-8" id="h0-0-8" class="i">+/* frames per second st should at maximum draw to the screen */
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+static unsigned int framespersecond = 60;
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+
+</a> /* TERM value */
+ static char termname[] = &quot;st-256color&quot;;
+ 
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -3166,10 +3166,12 @@ void
+</a> run(void) {
+ 	XEvent ev;
+ 	fd_set rfd;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	int xfd = XConnectionNumber(xw.dpy), i;
+</a><a href="#h1-0-4" id="h1-0-4" class="d">-	struct timeval drawtimeout, *tv = NULL;
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+	int xfd = XConnectionNumber(xw.dpy);
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+	struct timeval drawtimeout, *tv = NULL, now, last;
+</a> 
+<a href="#h1-0-8" id="h1-0-8" class="d">-	for(i = 0;; i++) {
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	gettimeofday(&amp;last, NULL);
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	for(;;) {
+</a> 		FD_ZERO(&amp;rfd);
+ 		FD_SET(cmdfd, &amp;rfd);
+ 		FD_SET(xfd, &amp;rfd);
+<a href="#h1-1" id="h1-1" class="h">@@ -3179,35 +3181,44 @@ run(void) {
+</a> 			die(&quot;select failed: %s\n&quot;, SERRNO);
+ 		}
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-		/*
+</a><a href="#h1-1-4" id="h1-1-4" class="d">-		 * Stop after a certain number of reads so the user does not
+</a><a href="#h1-1-5" id="h1-1-5" class="d">-		 * feel like the system is stuttering.
+</a><a href="#h1-1-6" id="h1-1-6" class="d">-		 */
+</a><a href="#h1-1-7" id="h1-1-7" class="d">-		if(i &lt; 1000 &amp;&amp; FD_ISSET(cmdfd, &amp;rfd)) {
+</a><a href="#h1-1-8" id="h1-1-8" class="d">-			ttyread();
+</a><a href="#h1-1-9" id="h1-1-9" class="i">+		gettimeofday(&amp;now, NULL);
+</a><a href="#h1-1-10" id="h1-1-10" class="i">+		/* usecs until (next) frame */
+</a><a href="#h1-1-11" id="h1-1-11" class="i">+		drawtimeout.tv_sec = 0;
+</a><a href="#h1-1-12" id="h1-1-12" class="i">+		drawtimeout.tv_usec = \
+</a><a href="#h1-1-13" id="h1-1-13" class="i">+			((1000/framespersecond) - TIMEDIFF(now, last)) * 1000;
+</a> 
+<a href="#h1-1-15" id="h1-1-15" class="d">-			/*
+</a><a href="#h1-1-16" id="h1-1-16" class="d">-			 * Just wait a bit so it isn&#39;t disturbing the
+</a><a href="#h1-1-17" id="h1-1-17" class="d">-			 * user and the system is able to write something.
+</a><a href="#h1-1-18" id="h1-1-18" class="d">-			 */
+</a><a href="#h1-1-19" id="h1-1-19" class="d">-			drawtimeout.tv_sec = 0;
+</a><a href="#h1-1-20" id="h1-1-20" class="d">-			drawtimeout.tv_usec = 5;
+</a><a href="#h1-1-21" id="h1-1-21" class="d">-			tv = &amp;drawtimeout;
+</a><a href="#h1-1-22" id="h1-1-22" class="d">-			continue;
+</a><a href="#h1-1-23" id="h1-1-23" class="i">+		/* Let us draw a frame. */
+</a><a href="#h1-1-24" id="h1-1-24" class="i">+		if(drawtimeout.tv_usec &lt;= 0) {
+</a><a href="#h1-1-25" id="h1-1-25" class="i">+			draw();
+</a><a href="#h1-1-26" id="h1-1-26" class="i">+			XFlush(xw.dpy);
+</a><a href="#h1-1-27" id="h1-1-27" class="i">+
+</a><a href="#h1-1-28" id="h1-1-28" class="i">+			last = now;
+</a><a href="#h1-1-29" id="h1-1-29" class="i">+			tv = NULL;
+</a> 		}
+<a href="#h1-1-31" id="h1-1-31" class="d">-		i = 0;
+</a><a href="#h1-1-32" id="h1-1-32" class="d">-		tv = NULL;
+</a> 
+<a href="#h1-1-34" id="h1-1-34" class="d">-		while(XPending(xw.dpy)) {
+</a><a href="#h1-1-35" id="h1-1-35" class="d">-			XNextEvent(xw.dpy, &amp;ev);
+</a><a href="#h1-1-36" id="h1-1-36" class="d">-			if(XFilterEvent(&amp;ev, None))
+</a><a href="#h1-1-37" id="h1-1-37" class="d">-				continue;
+</a><a href="#h1-1-38" id="h1-1-38" class="d">-			if(handler[ev.type])
+</a><a href="#h1-1-39" id="h1-1-39" class="d">-				(handler[ev.type])(&amp;ev);
+</a><a href="#h1-1-40" id="h1-1-40" class="i">+		if(FD_ISSET(cmdfd, &amp;rfd))
+</a><a href="#h1-1-41" id="h1-1-41" class="i">+			ttyread();
+</a><a href="#h1-1-42" id="h1-1-42" class="i">+
+</a><a href="#h1-1-43" id="h1-1-43" class="i">+		if(FD_ISSET(xfd, &amp;rfd)) {
+</a><a href="#h1-1-44" id="h1-1-44" class="i">+			while(XPending(xw.dpy)) {
+</a><a href="#h1-1-45" id="h1-1-45" class="i">+				XNextEvent(xw.dpy, &amp;ev);
+</a><a href="#h1-1-46" id="h1-1-46" class="i">+				if(XFilterEvent(&amp;ev, None))
+</a><a href="#h1-1-47" id="h1-1-47" class="i">+					continue;
+</a><a href="#h1-1-48" id="h1-1-48" class="i">+				if(handler[ev.type])
+</a><a href="#h1-1-49" id="h1-1-49" class="i">+					(handler[ev.type])(&amp;ev);
+</a><a href="#h1-1-50" id="h1-1-50" class="i">+			}
+</a><a href="#h1-1-51" id="h1-1-51" class="i">+
+</a><a href="#h1-1-52" id="h1-1-52" class="i">+			if(drawtimeout.tv_usec &lt;= 0) {
+</a><a href="#h1-1-53" id="h1-1-53" class="i">+				draw();
+</a><a href="#h1-1-54" id="h1-1-54" class="i">+				XFlush(xw.dpy);
+</a><a href="#h1-1-55" id="h1-1-55" class="i">+			}
+</a> 		}
+ 
+<a href="#h1-1-58" id="h1-1-58" class="d">-		draw();
+</a><a href="#h1-1-59" id="h1-1-59" class="d">-		XFlush(xw.dpy);
+</a><a href="#h1-1-60" id="h1-1-60" class="i">+		/* There is still some time to wait until next frame. */
+</a><a href="#h1-1-61" id="h1-1-61" class="i">+		if(drawtimeout.tv_usec &gt; 0) {
+</a><a href="#h1-1-62" id="h1-1-62" class="i">+			tv = &amp;drawtimeout;
+</a><a href="#h1-1-63" id="h1-1-63" class="i">+			continue;
+</a><a href="#h1-1-64" id="h1-1-64" class="i">+		}
+</a> 	}
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

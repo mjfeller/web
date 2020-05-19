@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: clean up&#39; - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1fd8b40b097b287004b6169790911d6e5602d5e8.html">1fd8b40b097b287004b6169790911d6e5602d5e8</a>
+<b>parent</b> <a href="../commit/b05b4e8d588284c501ce6e38ee6c286a30588fc3.html">b05b4e8d588284c501ce6e38ee6c286a30588fc3</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 12 Oct 2019 22:12:20 +0300
+
+sowm: clean up&#39;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">22</td><td><span class="i">+++++++</span><span class="d">---------------</span></td></tr>
+</table></pre><pre>1 file changed, 7 insertions(+), 15 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -185,9 +185,7 @@ void win_del(Window w) {
+</a> 
+         if (!c-&gt;prev &amp;&amp; !c-&gt;next) {
+             free(head);
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a>             head = 0;
+<a href="#h0-0-5" id="h0-0-5" class="d">-
+</a>             ws_save(desk);
+             return;
+         }
+<a href="#h0-1" id="h0-1" class="h">@@ -197,9 +195,8 @@ void win_del(Window w) {
+</a>             c-&gt;next-&gt;prev = 0;
+         }
+ 
+<a href="#h0-1-3" id="h0-1-3" class="d">-        else if (!c-&gt;next) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+        else if (!c-&gt;next)
+</a>             c-&gt;prev-&gt;next = 0;
+<a href="#h0-1-6" id="h0-1-6" class="d">-        }
+</a> 
+         else {
+             c-&gt;prev-&gt;next = c-&gt;next;
+<a href="#h0-2" id="h0-2" class="h">@@ -215,8 +212,7 @@ void win_del(Window w) {
+</a> void win_kill() {
+     Window cur = win_current();
+ 
+<a href="#h0-2-3" id="h0-2-3" class="d">-    if (cur != root)
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-        XKillClient(dis, cur);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+    if (cur != root) XKillClient(dis, cur);
+</a> }
+ 
+ void win_center(Window w) {
+<a href="#h0-3" id="h0-3" class="h">@@ -258,8 +254,7 @@ void win_to_ws(const Arg arg) {
+</a>     int    tmp = desk;
+     Window cur = win_current();
+ 
+<a href="#h0-3-3" id="h0-3-3" class="d">-    if (arg.i == tmp)
+</a><a href="#h0-3-4" id="h0-3-4" class="d">-        return;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+    if (arg.i == tmp) return;
+</a> 
+     ws_sel(arg.i);
+     win_add(cur);
+<a href="#h0-4" id="h0-4" class="h">@@ -378,6 +373,8 @@ void wm_setup() {
+</a> void wm_init() {
+     XEvent ev;
+ 
+<a href="#h0-4-3" id="h0-4-3" class="i">+    wm_setup();
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+
+</a>     XGrabButton(dis, 1, Mod4Mask, DefaultRootWindow(dis), True,
+             ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
+ 
+<a href="#h0-5" id="h0-5" class="h">@@ -386,17 +383,12 @@ void wm_init() {
+</a> 
+     start.subwindow = None;
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-    while(1 &amp;&amp; !XNextEvent(dis,&amp;ev))
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+    while(1 &amp;&amp; !XNextEvent(dis, &amp;ev))
+</a>         if (events[ev.type]) events[ev.type](&amp;ev);
+ }
+ 
+ int main() {
+<a href="#h0-5-9" id="h0-5-9" class="d">-    if ((dis = XOpenDisplay(0))) {
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-        wm_setup();
+</a><a href="#h0-5-11" id="h0-5-11" class="d">-        wm_init();
+</a><a href="#h0-5-12" id="h0-5-12" class="d">-
+</a><a href="#h0-5-13" id="h0-5-13" class="d">-        XCloseDisplay(dis);
+</a><a href="#h0-5-14" id="h0-5-14" class="d">-    }
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+    if ((dis = XOpenDisplay(0))) wm_init();
+</a> 
+     return 0;
+ }
+</pre>
+</div>
+</body>
+</html>

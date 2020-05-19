@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>handle tabulation (still not perfect) - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/1cf8b77d2798a43c979b71e16fd45d63b808f569.html">1cf8b77d2798a43c979b71e16fd45d63b808f569</a>
+<b>parent</b> <a href="../commit/0ecfcc39b07bb7cca6a688a743299e6ef990e122.html">0ecfcc39b07bb7cca6a688a743299e6ef990e122</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 14 May 2009 01:03:17 +0200
+
+handle tabulation (still not perfect)
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">14</td><td><span class="i">++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.h</a></td><td> | </td><td class="num">2</td><td><span class="i">++</span><span class="d"></span></td></tr>
+</table></pre><pre>2 files changed, 16 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -559,6 +559,17 @@ escreset(void) {
+</a> }
+ 
+ void
+<a href="#h0-0-3" id="h0-0-3" class="i">+tputtab(void) {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+    int space = TAB - term.c.x % TAB;
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+    
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+    if(term.c.x + space &gt;= term.col)
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+        space--;
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+    
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+    for(; space &gt; 0; space--)
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+        tputc(&#39; &#39;);
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+}
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+void
+</a> tputc(char c) {
+ 	static int inesc = 0;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -574,6 +585,9 @@ tputc(char c) {
+</a> 			tsetchar(c);
+ 			tcursor(CSright);
+ 			break;
+<a href="#h0-1-3" id="h0-1-3" class="i">+        case &#39;\t&#39;:
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+            tputtab();
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+            break;
+</a> 		case &#39;\b&#39;:
+ 			tcursor(CSleft);
+ 			break;
+<b>diff --git a/<a id="h1" href="../file/st.h.html">st.h</a> b/<a href="../file/st.h.html">st.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -66,6 +66,8 @@ enum { CRset=1 , CRupdate=2 }; /* Character state */
+</a> enum { TMwrap=1 , TMinsert=2 }; /* Terminal mode */
+ enum { SCupdate, SCredraw }; /* screen draw mode */
+ 
+<a href="#h1-0-3" id="h1-0-3" class="i">+typedef int Color;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+
+</a> typedef struct {
+ 	char c;     /* character code  */
+ 	char mode;  /* attribute flags */
+</pre>
+</div>
+</body>
+</html>

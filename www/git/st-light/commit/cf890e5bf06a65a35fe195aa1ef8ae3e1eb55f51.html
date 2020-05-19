@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Allow mouse selection override using ShiftMask - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cf890e5bf06a65a35fe195aa1ef8ae3e1eb55f51.html">cf890e5bf06a65a35fe195aa1ef8ae3e1eb55f51</a>
+<b>parent</b> <a href="../commit/bdb850a16a6d7a2d12b2bd5500a3b7d70290a74a.html">bdb850a16a6d7a2d12b2bd5500a3b7d70290a74a</a>
+<b>Author:</b> Hiltjo Posthuma &lt;<a href="mailto:hiltjo@codemadness.org">hiltjo@codemadness.org</a>&gt;
+<b>Date:</b>   Mon, 12 May 2014 14:39:37 +0200
+
+Allow mouse selection override using ShiftMask
+
+Similar to xterm or urxvt holding shift before selecting text with the mouse
+allows to override copying text. For example in tmux with &quot;mode-mouse on&quot; or
+vim (compiled with --with-x), mc, htop, etc.
+
+forceselmod in config.h sets the modifier to use this mode, by default
+ShiftMask.
+
+Signed-off-by: Hiltjo Posthuma &lt;hiltjo@codemadness.org&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">6</td><td><span class="i">+++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>2 files changed, 9 insertions(+), 5 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -154,6 +154,11 @@ static KeySym mappedkeys[] = { -1 };
+</a>  */
+ static uint ignoremod = Mod2Mask|XK_SWITCH_MOD;
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+/* Override mouse-select while mask is active (when MODE_MOUSE is set).
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+ * Note that if you want to use ShiftMask with selmasks, set this to an other
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+ * modifier, set to 0 to not use it. */
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+static uint forceselmod = ShiftMask;
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+
+</a> static Key key[] = {
+ 	/* keysym           mask            string      appkey appcursor crlf */
+ 	{ XK_KP_Home,       ShiftMask,      &quot;\033[2J&quot;,       0,   -1,    0},
+<a href="#h0-1" id="h0-1" class="h">@@ -357,7 +362,6 @@ static Key key[] = {
+</a>  * ButtonRelease and MotionNotify.
+  * If no match is found, regular selection is used.
+  */
+<a href="#h0-1-3" id="h0-1-3" class="d">-
+</a> static uint selmasks[] = {
+ 	[SEL_RECTANGULAR] = Mod1Mask,
+ };
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -765,7 +765,7 @@ selsnap(int mode, int *x, int *y, int direction) {
+</a> void
+ getbuttoninfo(XEvent *e) {
+ 	int type;
+<a href="#h1-0-3" id="h1-0-3" class="d">-	uint state = e-&gt;xbutton.state &amp;~Button1Mask;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+	uint state = e-&gt;xbutton.state &amp; ~(Button1Mask | forceselmod);
+</a> 
+ 	sel.alt = IS_SET(MODE_ALTSCREEN);
+ 
+<a href="#h1-1" id="h1-1" class="h">@@ -858,7 +858,7 @@ bpress(XEvent *e) {
+</a> 	struct timeval now;
+ 	Mousekey *mk;
+ 
+<a href="#h1-1-3" id="h1-1-3" class="d">-	if(IS_SET(MODE_MOUSE)) {
+</a><a href="#h1-1-4" id="h1-1-4" class="i">+	if(IS_SET(MODE_MOUSE) &amp;&amp; !(e-&gt;xbutton.state &amp; forceselmod)) {
+</a> 		mousereport(e);
+ 		return;
+ 	}
+<a href="#h1-2" id="h1-2" class="h">@@ -1090,7 +1090,7 @@ xsetsel(char *str) {
+</a> 
+ void
+ brelease(XEvent *e) {
+<a href="#h1-2-3" id="h1-2-3" class="d">-	if(IS_SET(MODE_MOUSE)) {
+</a><a href="#h1-2-4" id="h1-2-4" class="i">+	if(IS_SET(MODE_MOUSE) &amp;&amp; !(e-&gt;xbutton.state &amp; forceselmod)) {
+</a> 		mousereport(e);
+ 		return;
+ 	}
+<a href="#h1-3" id="h1-3" class="h">@@ -1113,7 +1113,7 @@ void
+</a> bmotion(XEvent *e) {
+ 	int oldey, oldex, oldsby, oldsey;
+ 
+<a href="#h1-3-3" id="h1-3-3" class="d">-	if(IS_SET(MODE_MOUSE)) {
+</a><a href="#h1-3-4" id="h1-3-4" class="i">+	if(IS_SET(MODE_MOUSE) &amp;&amp; !(e-&gt;xbutton.state &amp; forceselmod)) {
+</a> 		mousereport(e);
+ 		return;
+ 	}
+</pre>
+</div>
+</body>
+</html>

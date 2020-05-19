@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Ignore numlock (Mod2Mask) for button events too. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/297c886b72f4e9093973aaa14b66d392f6196634.html">297c886b72f4e9093973aaa14b66d392f6196634</a>
+<b>parent</b> <a href="../commit/0f6942cdf6f8220f1ecd06e4b398e95c43833d44.html">0f6942cdf6f8220f1ecd06e4b398e95c43833d44</a>
+<b>Author:</b> Mark Edgar &lt;<a href="mailto:medgar123@gmail.com">medgar123@gmail.com</a>&gt;
+<b>Date:</b>   Sun, 22 Sep 2013 00:07:49 +0200
+
+Ignore numlock (Mod2Mask) for button events too.
+
+Conflicts:
+	config.def.h
+	st.c
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">st.c</a></td><td> | </td><td class="num">1</td><td><span class="i"></span><span class="d">-</span></td></tr>
+</table></pre><pre>2 files changed, 3 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -146,10 +146,10 @@ static Shortcut shortcuts[] = {
+</a> static KeySym mappedkeys[] = { -1 };
+ 
+ /*
+<a href="#h0-0-3" id="h0-0-3" class="d">- * Which bits of the state should be ignored. By default the state bit for the
+</a><a href="#h0-0-4" id="h0-0-4" class="d">- * keyboard layout (XK_SWITCH_MOD) is ignored.
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+ * State bits to ignore when matching key or button events.  By default,
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+ * numlock (Mod2Mask) and keyboard layout (XK_SWITCH_MOD) are ignored.
+</a>  */
+<a href="#h0-0-8" id="h0-0-8" class="d">-uint ignoremod = XK_SWITCH_MOD;
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+static uint ignoremod = Mod2Mask|XK_SWITCH_MOD;
+</a> 
+ /* key, mask, output, keypad, cursor, crlf */
+ static Key key[] = {
+<b>diff --git a/<a id="h1" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -3579,7 +3579,6 @@ kpress(XEvent *ev) {
+</a> 		return;
+ 
+ 	len = XmbLookupString(xw.xic, e, buf, sizeof buf, &amp;ksym, &amp;status);
+<a href="#h1-0-3" id="h1-0-3" class="d">-	e-&gt;state &amp;= ~Mod2Mask;
+</a> 	/* 1. shortcuts */
+ 	for(bp = shortcuts; bp &lt; shortcuts + LEN(shortcuts); bp++) {
+ 		if(ksym == bp-&gt;keysym &amp;&amp; match(bp-&gt;mod, e-&gt;state)) {
+</pre>
+</div>
+</body>
+</html>

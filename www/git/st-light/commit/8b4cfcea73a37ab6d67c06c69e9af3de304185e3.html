@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Revert &quot;Refactor xsetcolorname()&quot; - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/8b4cfcea73a37ab6d67c06c69e9af3de304185e3.html">8b4cfcea73a37ab6d67c06c69e9af3de304185e3</a>
+<b>parent</b> <a href="../commit/a32c5f5726f514b49bd396f27aab0e78c40126d3.html">a32c5f5726f514b49bd396f27aab0e78c40126d3</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Sun,  1 Jun 2014 16:52:19 +0200
+
+Revert &quot;Refactor xsetcolorname()&quot;
+
+This reverts commit a32c5f5726f514b49bd396f27aab0e78c40126d3.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">32</td><td><span class="i">++++++++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 18 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -2757,28 +2757,32 @@ xloadcols(void) {
+</a> int
+ xsetcolorname(int x, const char *name) {
+ 	XRenderColor color = { .alpha = 0xffff };
+<a href="#h0-0-3" id="h0-0-3" class="d">-
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	Colour colour;
+</a> 	if(!BETWEEN(x, 0, LEN(colorname)))
+ 		return -1;
+ 	if(!name) {
+<a href="#h0-0-8" id="h0-0-8" class="d">-		if(BETWEEN(x, 16, 6*6*6+16)) { /* 256 colour */
+</a><a href="#h0-0-9" id="h0-0-9" class="d">-			color.red   = sixd_to_16bit( ((x-16)/36)%6 );
+</a><a href="#h0-0-10" id="h0-0-10" class="d">-			color.green = sixd_to_16bit( ((x-16)/6) %6 );
+</a><a href="#h0-0-11" id="h0-0-11" class="d">-			color.blue  = sixd_to_16bit( ((x-16)/1) %6 );
+</a><a href="#h0-0-12" id="h0-0-12" class="d">-			if(!XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;color, &amp;dc.col[x]))
+</a><a href="#h0-0-13" id="h0-0-13" class="d">-				die(&quot;Could not allocate color %d\n&quot;, x);
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+		if(BETWEEN(x, 16, 16 + 215)) {
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+			int r = (x - 16) / 36, g = ((x - 16) % 36) / 6, b = (x - 16) % 6;
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+			color.red = sixd_to_16bit(r);
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+			color.green = sixd_to_16bit(g);
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+			color.blue = sixd_to_16bit(b);
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+			if(!XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;color, &amp;colour))
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+				return 0; /* something went wrong */
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+			dc.col[x] = colour;
+</a> 			return 1;
+<a href="#h0-0-23" id="h0-0-23" class="d">-		} else if(BETWEEN(x, 6*6*6+16, 255)) { /* grayscale */
+</a><a href="#h0-0-24" id="h0-0-24" class="d">-			color.red = color.green = color.blue = 0x0808 + 0x0a0a * (x-(6*6*6+16));
+</a><a href="#h0-0-25" id="h0-0-25" class="d">-			if(!XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;color, &amp;dc.col[x]))
+</a><a href="#h0-0-26" id="h0-0-26" class="d">-				die(&quot;Could not allocate color %d\n&quot;, x);
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+		} else if(BETWEEN(x, 16 + 216, 255)) {
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+			color.red = color.green = color.blue = 0x0808 + 0x0a0a * (x - (16 + 216));
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+			if(!XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;color, &amp;colour))
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+				return 0; /* something went wrong */
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+			dc.col[x] = colour;
+</a> 			return 1;
+<a href="#h0-0-33" id="h0-0-33" class="d">-		} else { /* system colours */
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+		} else {
+</a> 			name = colorname[x];
+ 		}
+ 	}
+<a href="#h0-0-38" id="h0-0-38" class="d">-	if(!XftColorAllocName(xw.dpy, xw.vis, xw.cmap, name, &amp;dc.col[x]))
+</a><a href="#h0-0-39" id="h0-0-39" class="d">-		return 0; /* invalid name */
+</a><a href="#h0-0-40" id="h0-0-40" class="i">+	if(!XftColorAllocName(xw.dpy, xw.vis, xw.cmap, name, &amp;colour))
+</a><a href="#h0-0-41" id="h0-0-41" class="i">+		return 0;
+</a><a href="#h0-0-42" id="h0-0-42" class="i">+	dc.col[x] = colour;
+</a> 	return 1;
+ }
+ 
+</pre>
+</div>
+</body>
+</html>

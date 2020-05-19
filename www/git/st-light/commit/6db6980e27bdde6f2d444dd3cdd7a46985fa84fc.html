@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>st now runs on Linux, OpenBSD and FreeBSD. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/6db6980e27bdde6f2d444dd3cdd7a46985fa84fc.html">6db6980e27bdde6f2d444dd3cdd7a46985fa84fc</a>
+<b>parent</b> <a href="../commit/c56332857145d1c6741d4f6c1bbc87dcc6c6ab97.html">c56332857145d1c6741d4f6c1bbc87dcc6c6ab97</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Sat, 28 Aug 2010 03:18:22 +0200
+
+st now runs on Linux, OpenBSD and FreeBSD.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">5</td><td><span class="i">+++</span><span class="d">--</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++++</span><span class="d">------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.c</a></td><td> | </td><td class="num">27</td><td><span class="i">++++++++++++++</span><span class="d">-------------</span></td></tr>
+</table></pre><pre>3 files changed, 24 insertions(+), 21 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,6 +10,7 @@ all: options st
+</a> 
+ options:
+ 	@echo st build options:
+<a href="#h0-0-3" id="h0-0-3" class="i">+	@echo &quot;SYSTEM   = ${SYSTEM}&quot;
+</a> 	@echo &quot;CFLAGS   = ${CFLAGS}&quot;
+ 	@echo &quot;LDFLAGS  = ${LDFLAGS}&quot;
+ 	@echo &quot;CC       = ${CC}&quot;
+<a href="#h0-1" id="h0-1" class="h">@@ -31,7 +32,7 @@ clean:
+</a> dist: clean
+ 	@echo creating dist tarball
+ 	@mkdir -p st-${VERSION}
+<a href="#h0-1-3" id="h0-1-3" class="d">-	@cp -R LICENSE Makefile README config.mk st.h ${SRC} st-${VERSION}
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	@cp -R LICENSE Makefile README config.mk config.h st.info ${SRC} st-${VERSION}
+</a> 	@tar -cf st-${VERSION}.tar st-${VERSION}
+ 	@gzip st-${VERSION}.tar
+ 	@rm -rf st-${VERSION}
+<a href="#h0-2" id="h0-2" class="h">@@ -41,7 +42,7 @@ install: all
+</a> 	@mkdir -p ${DESTDIR}${PREFIX}/bin
+ 	@cp -f st ${DESTDIR}${PREFIX}/bin
+ 	@chmod 755 ${DESTDIR}${PREFIX}/bin/st
+<a href="#h0-2-3" id="h0-2-3" class="d">-	@tic st.info
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	@tic -s st.info
+</a> 
+ uninstall:
+ 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -12,16 +12,17 @@ X11LIB = /usr/X11R6/lib
+</a> 
+ # includes and libs
+ INCS = -I. -I/usr/include -I${X11INC}
+<a href="#h1-0-3" id="h1-0-3" class="d">-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lutil
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+# uncomment your system #
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+#SYSTEM = -DLINUX
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+#SYSTEM = -DOPENBSD
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+#SYSTEM = -DFREEBSD
+</a> 
+ # flags
+<a href="#h1-0-12" id="h1-0-12" class="d">-CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot; ${SYSTEM}
+</a> CFLAGS = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
+ LDFLAGS = -s ${LIBS}
+ 
+<a href="#h1-0-17" id="h1-0-17" class="d">-# Solaris
+</a><a href="#h1-0-18" id="h1-0-18" class="d">-#CFLAGS = -fast ${INCS} -DVERSION=\&quot;${VERSION}\&quot;
+</a><a href="#h1-0-19" id="h1-0-19" class="d">-#LDFLAGS = ${LIBS}
+</a><a href="#h1-0-20" id="h1-0-20" class="d">-
+</a> # compiler and linker
+ CC = cc
+<b>diff --git a/<a id="h2" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -20,6 +20,14 @@
+</a> #include &lt;X11/keysym.h&gt;
+ #include &lt;X11/Xutil.h&gt;
+ 
+<a href="#h2-0-3" id="h2-0-3" class="i">+#if   defined(LINUX)
+</a><a href="#h2-0-4" id="h2-0-4" class="i">+ #include &lt;pty.h&gt;
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+#elif defined(OPENBSD)
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+ #include &lt;util.h&gt;
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+#elif defined(FREEBSD)
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+ #include &lt;libutil.h&gt;
+</a><a href="#h2-0-9" id="h2-0-9" class="i">+#endif
+</a><a href="#h2-0-10" id="h2-0-10" class="i">+
+</a> /* Arbitrary sizes */
+ #define ESC_TITLE_SIZ 256
+ #define ESC_BUF_SIZ   256
+<a href="#h2-1" id="h2-1" class="h">@@ -242,19 +250,12 @@ sigchld(int a) {
+</a> void
+ ttynew(void) {
+ 	int m, s;
+<a href="#h2-1-3" id="h2-1-3" class="d">-	char *pts;
+</a><a href="#h2-1-4" id="h2-1-4" class="d">-
+</a><a href="#h2-1-5" id="h2-1-5" class="d">-	if((m = posix_openpt(O_RDWR | O_NOCTTY)) &lt; 0)
+</a><a href="#h2-1-6" id="h2-1-6" class="d">-		die(&quot;openpt failed: %s\n&quot;, SERRNO);
+</a><a href="#h2-1-7" id="h2-1-7" class="d">-	if(grantpt(m) &lt; 0)
+</a><a href="#h2-1-8" id="h2-1-8" class="d">-		die(&quot;grantpt failed: %s\n&quot;, SERRNO);
+</a><a href="#h2-1-9" id="h2-1-9" class="d">-	if(unlockpt(m) &lt; 0)
+</a><a href="#h2-1-10" id="h2-1-10" class="d">-		die(&quot;unlockpt failed: %s\n&quot;, SERRNO);
+</a><a href="#h2-1-11" id="h2-1-11" class="d">-	if(!(pts = ptsname(m)))
+</a><a href="#h2-1-12" id="h2-1-12" class="d">-		die(&quot;ptsname failed: %s\n&quot;, SERRNO);
+</a><a href="#h2-1-13" id="h2-1-13" class="d">-	if((s = open(pts, O_RDWR | O_NOCTTY)) &lt; 0)
+</a><a href="#h2-1-14" id="h2-1-14" class="d">-		die(&quot;Couldn&#39;t open slave: %s\n&quot;, SERRNO);
+</a><a href="#h2-1-15" id="h2-1-15" class="d">-	fcntl(s, F_SETFL, O_NDELAY);
+</a><a href="#h2-1-16" id="h2-1-16" class="i">+	
+</a><a href="#h2-1-17" id="h2-1-17" class="i">+	/* seems to work fine on linux, openbsd and freebsd */
+</a><a href="#h2-1-18" id="h2-1-18" class="i">+	struct winsize w = {term.row, term.col, 0, 0};
+</a><a href="#h2-1-19" id="h2-1-19" class="i">+	if(openpty(&amp;m, &amp;s, NULL, NULL, &amp;w) &lt; 0)
+</a><a href="#h2-1-20" id="h2-1-20" class="i">+		die(&quot;openpty failed: %s\n&quot;, SERRNO);
+</a><a href="#h2-1-21" id="h2-1-21" class="i">+
+</a> 	switch(pid = fork()) {
+ 	case -1:
+ 		die(&quot;fork failed\n&quot;);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>patches: optimize rounded corners further. - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/cd03f2e3d1e7015efa66313cb04613a26a908e1b.html">cd03f2e3d1e7015efa66313cb04613a26a908e1b</a>
+<b>parent</b> <a href="../commit/9353c2be35abacc29e8565c41a39ec1ebc957432.html">9353c2be35abacc29e8565c41a39ec1ebc957432</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Thu, 17 Oct 2019 19:47:34 +0300
+
+patches: optimize rounded corners further.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">patches/sowm-rounded-corners.patch</a></td><td> | </td><td class="num">13</td><td><span class="i">+++++</span><span class="d">--------</span></td></tr>
+</table></pre><pre>1 file changed, 5 insertions(+), 8 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/patches/sowm-rounded-corners.patch.html">patches/sowm-rounded-corners.patch</a> b/<a href="../file/patches/sowm-rounded-corners.patch.html">patches/sowm-rounded-corners.patch</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -22,7 +22,7 @@ index 3cef34b..e7f1518 100644
+</a>  const char* menu[]    = {&quot;dmenu_run&quot;,      0};
+  const char* term[]    = {&quot;st&quot;,             0};
+ diff --git a/sowm.c b/sowm.c
+<a href="#h0-0-3" id="h0-0-3" class="d">-index 126aca0..996e005 100644
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+index 126aca0..5c99c5c 100644
+</a> --- a/sowm.c
+ +++ b/sowm.c
+ @@ -3,6 +3,7 @@
+<a href="#h0-1" id="h0-1" class="h">@@ -51,7 +51,7 @@ index 126aca0..996e005 100644
+</a>  }
+  
+  void key_press(XEvent *e) {
+<a href="#h0-1-3" id="h0-1-3" class="d">-@@ -201,9 +206,47 @@ void win_fs() {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+@@ -201,9 +206,44 @@ void win_fs() {
+</a>  
+          } else
+              XMoveResizeWindow(d, cur, c-&gt;wx, c-&gt;wy, c-&gt;ww, c-&gt;wh);
+<a href="#h0-2" id="h0-2" class="h">@@ -61,12 +61,9 @@ index 126aca0..996e005 100644
+</a>  }
+  
+ +void win_round_corners(Window w, int rad) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-+    XWindowAttributes attr2;
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-+    XGetWindowAttributes(d, w, &amp;attr2);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">++    unsigned int ww, wh, dia = 2 * rad;
+</a> +
+<a href="#h0-2-7" id="h0-2-7" class="d">-+    int dia = 2 * rad;
+</a><a href="#h0-2-8" id="h0-2-8" class="d">-+    int ww  = attr2.width;
+</a><a href="#h0-2-9" id="h0-2-9" class="d">-+    int wh  = attr2.height;
+</a><a href="#h0-2-10" id="h0-2-10" class="i">++    win_size(w, &amp;(int){1}, &amp;(int){1}, &amp;ww, &amp;wh);
+</a> +
+ +    if (ww &lt; dia || wh &lt; dia) return;
+ +
+<a href="#h0-3" id="h0-3" class="h">@@ -99,7 +96,7 @@ index 126aca0..996e005 100644
+</a>  void win_to_ws(const Arg arg) {
+      int tmp = ws;
+      win_current();
+<a href="#h0-3-3" id="h0-3-3" class="d">-@@ -275,6 +318,7 @@ void map_request(XEvent *e) {
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+@@ -275,6 +315,7 @@ void map_request(XEvent *e) {
+</a>      if (wx == 0 &amp;&amp; wy == 0) win_center((Arg){.i = w});
+  
+      XMapWindow(d, w);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Applying the CBT patch of Roberto Vargas. Thanks. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/c58950f2efd8f203e72add7b22e7f5b973c09a7d.html">c58950f2efd8f203e72add7b22e7f5b973c09a7d</a>
+<b>parent</b> <a href="../commit/91fa81dbac4f09de234921cdf5afacb8c8295919.html">91fa81dbac4f09de234921cdf5afacb8c8295919</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Thu, 30 Aug 2012 21:17:54 +0200
+
+Applying the CBT patch of Roberto Vargas. Thanks.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">59</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">-----------------------</span></td></tr>
+</table></pre><pre>1 file changed, 36 insertions(+), 23 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -97,11 +97,11 @@ enum glyph_state {
+</a> };
+ 
+ enum term_mode {
+<a href="#h0-0-3" id="h0-0-3" class="d">-	MODE_WRAP        = 1,
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	MODE_WRAP	= 1,
+</a> 	MODE_INSERT      = 2,
+ 	MODE_APPKEYPAD   = 4,
+ 	MODE_ALTSCREEN   = 8,
+<a href="#h0-0-8" id="h0-0-8" class="d">-	MODE_CRLF        = 16,
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	MODE_CRLF	= 16,
+</a> 	MODE_MOUSEBTN    = 32,
+ 	MODE_MOUSEMOTION = 64,
+ 	MODE_MOUSE       = 32|64,
+<a href="#h0-1" id="h0-1" class="h">@@ -110,8 +110,8 @@ enum term_mode {
+</a> 
+ enum escape_state {
+ 	ESC_START      = 1,
+<a href="#h0-1-3" id="h0-1-3" class="d">-	ESC_CSI        = 2,
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	ESC_STR        = 4, /* DSC, OSC, PM, APC */
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	ESC_CSI	= 2,
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	ESC_STR	= 4, /* DSC, OSC, PM, APC */
+</a> 	ESC_ALTCHARSET = 8,
+ 	ESC_STR_END    = 16, /* a final string was encountered */
+ };
+<a href="#h0-2" id="h0-2" class="h">@@ -152,21 +152,21 @@ typedef struct {
+</a> /* ESC &#39;[&#39; [[ [&lt;priv&gt;] &lt;arg&gt; [;]] &lt;mode&gt;] */
+ typedef struct {
+ 	char buf[ESC_BUF_SIZ]; /* raw string */
+<a href="#h0-2-3" id="h0-2-3" class="d">-	int len;               /* raw string length */
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	int len;	       /* raw string length */
+</a> 	char priv;
+ 	int arg[ESC_ARG_SIZ];
+<a href="#h0-2-7" id="h0-2-7" class="d">-	int narg;              /* nb of args */
+</a><a href="#h0-2-8" id="h0-2-8" class="i">+	int narg;	      /* nb of args */
+</a> 	char mode;
+ } CSIEscape;
+ 
+ /* STR Escape sequence structs */
+ /* ESC type [[ [&lt;priv&gt;] &lt;arg&gt; [;]] &lt;mode&gt;] ESC &#39;\&#39; */
+ typedef struct {
+<a href="#h0-2-15" id="h0-2-15" class="d">-	char type;             /* ESC type ... */
+</a><a href="#h0-2-16" id="h0-2-16" class="i">+	char type;	     /* ESC type ... */
+</a> 	char buf[STR_BUF_SIZ]; /* raw string */
+<a href="#h0-2-18" id="h0-2-18" class="d">-	int len;               /* raw string length */
+</a><a href="#h0-2-19" id="h0-2-19" class="i">+	int len;	       /* raw string length */
+</a> 	char *args[STR_ARG_SIZ];
+<a href="#h0-2-21" id="h0-2-21" class="d">-	int narg;              /* nb of args */
+</a><a href="#h0-2-22" id="h0-2-22" class="i">+	int narg;	      /* nb of args */
+</a> } STREscape;
+ 
+ /* Internal representation of the screen */
+<a href="#h0-3" id="h0-3" class="h">@@ -262,7 +262,7 @@ static void tinsertblankline(int);
+</a> static void tmoveto(int, int);
+ static void tnew(int, int);
+ static void tnewline(int);
+<a href="#h0-3-3" id="h0-3-3" class="d">-static void tputtab(void);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+static void tputtab(bool);
+</a> static void tputc(char*);
+ static void treset(void);
+ static int tresize(int, int);
+<a href="#h0-4" id="h0-4" class="h">@@ -1243,7 +1243,7 @@ csihandle(void) {
+</a> 	case &#39;I&#39;: /* CHT -- Cursor Forward Tabulation &lt;n&gt; tab stops */
+ 		DEFAULT(csiescseq.arg[0], 1);
+ 		while (csiescseq.arg[0]--)
+<a href="#h0-4-3" id="h0-4-3" class="d">-			tputtab();
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+			tputtab(1);
+</a> 		break;
+ 	case &#39;J&#39;: /* ED -- Clear screen */
+ 		sel.bx = -1;
+<a href="#h0-5" id="h0-5" class="h">@@ -1356,7 +1356,11 @@ csihandle(void) {
+</a> 		DEFAULT(csiescseq.arg[0], 1);
+ 		tdeletechar(csiescseq.arg[0]);
+ 		break;
+<a href="#h0-5-3" id="h0-5-3" class="d">-	/* XXX: (CSI n Z) CBT -- Cursor Backward Tabulation &lt;n&gt; tab stops */
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	case &#39;Z&#39;: /* CBT -- Cursor Backward Tabulation &lt;n&gt; tab stops */
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+		DEFAULT(csiescseq.arg[0], 1);
+</a><a href="#h0-5-6" id="h0-5-6" class="i">+		while (csiescseq.arg[0]--)
+</a><a href="#h0-5-7" id="h0-5-7" class="i">+			tputtab(0);
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+		break;
+</a> 	case &#39;d&#39;: /* VPA -- Move to &lt;row&gt; */
+ 		DEFAULT(csiescseq.arg[0], 1);
+ 		tmoveto(term.c.x, csiescseq.arg[0]-1);
+<a href="#h0-6" id="h0-6" class="h">@@ -1528,11 +1532,20 @@ strreset(void) {
+</a> }
+ 
+ void
+<a href="#h0-6-3" id="h0-6-3" class="d">-tputtab(void) {
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-	unsigned x;
+</a><a href="#h0-6-5" id="h0-6-5" class="i">+tputtab(bool forward) {
+</a><a href="#h0-6-6" id="h0-6-6" class="i">+	unsigned x = term.c.x;
+</a> 
+<a href="#h0-6-8" id="h0-6-8" class="d">-	for (x = term.c.x + 1; x &lt; term.col &amp;&amp; !term.tabs[x]; ++x)
+</a><a href="#h0-6-9" id="h0-6-9" class="d">-		/* nothing */ ;
+</a><a href="#h0-6-10" id="h0-6-10" class="i">+	if (forward) {
+</a><a href="#h0-6-11" id="h0-6-11" class="i">+		if (x == term.col)
+</a><a href="#h0-6-12" id="h0-6-12" class="i">+			return;
+</a><a href="#h0-6-13" id="h0-6-13" class="i">+		for (++x; x &lt; term.col &amp;&amp; !term.tabs[x]; ++x)
+</a><a href="#h0-6-14" id="h0-6-14" class="i">+			/* nothing */ ;
+</a><a href="#h0-6-15" id="h0-6-15" class="i">+	} else {
+</a><a href="#h0-6-16" id="h0-6-16" class="i">+		if (x == 0)
+</a><a href="#h0-6-17" id="h0-6-17" class="i">+			return;
+</a><a href="#h0-6-18" id="h0-6-18" class="i">+		for (--x; x &gt; 0 &amp;&amp; !term.tabs[x]; --x)
+</a><a href="#h0-6-19" id="h0-6-19" class="i">+			/* nothing */ ;
+</a><a href="#h0-6-20" id="h0-6-20" class="i">+	}
+</a> 	tmoveto(x, term.c.y);
+ }
+ 
+<a href="#h0-7" id="h0-7" class="h">@@ -1650,7 +1663,7 @@ tputc(char *c) {
+</a> 			sel.bx = -1;
+ 		switch(ascii) {
+ 		case &#39;\t&#39;:
+<a href="#h0-7-3" id="h0-7-3" class="d">-			tputtab();
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+			tputtab(1);
+</a> 			break;
+ 		case &#39;\b&#39;:
+ 			tmoveto(term.c.x-1, term.c.y);
+<a href="#h0-8" id="h0-8" class="h">@@ -1806,8 +1819,8 @@ void
+</a> xclear(int x1, int y1, int x2, int y2) {
+ 	XSetForeground(xw.dpy, dc.gc, dc.col[IS_SET(MODE_REVERSE) ? DefaultFG : DefaultBG]);
+ 	XFillRectangle(xw.dpy, xw.buf, dc.gc,
+<a href="#h0-8-3" id="h0-8-3" class="d">-	               BORDER + x1 * xw.cw, BORDER + y1 * xw.ch,
+</a><a href="#h0-8-4" id="h0-8-4" class="d">-	               (x2-x1+1) * xw.cw, (y2-y1+1) * xw.ch);
+</a><a href="#h0-8-5" id="h0-8-5" class="i">+		       BORDER + x1 * xw.cw, BORDER + y1 * xw.ch,
+</a><a href="#h0-8-6" id="h0-8-6" class="i">+		       (x2-x1+1) * xw.cw, (y2-y1+1) * xw.ch);
+</a> }
+ 
+ void
+<a href="#h0-9" id="h0-9" class="h">@@ -1982,8 +1995,8 @@ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+</a> /* copy buffer pixmap to screen pixmap */
+ void
+ xcopy() {
+<a href="#h0-9-3" id="h0-9-3" class="d">-        XdbeSwapInfo swpinfo[1] = {{xw.win, XdbeCopied}};
+</a><a href="#h0-9-4" id="h0-9-4" class="d">-        XdbeSwapBuffers(xw.dpy, swpinfo, 1);
+</a><a href="#h0-9-5" id="h0-9-5" class="i">+	XdbeSwapInfo swpinfo[1] = {{xw.win, XdbeCopied}};
+</a><a href="#h0-9-6" id="h0-9-6" class="i">+	XdbeSwapBuffers(xw.dpy, swpinfo, 1);
+</a> 
+ }
+ 
+<a href="#h0-10" id="h0-10" class="h">@@ -2080,8 +2093,8 @@ expose(XEvent *ev) {
+</a> 	if(xw.state &amp; WIN_REDRAW) {
+ 		if(!e-&gt;count)
+ 			xw.state &amp;= ~WIN_REDRAW;
+<a href="#h0-10-3" id="h0-10-3" class="d">-        }
+</a><a href="#h0-10-4" id="h0-10-4" class="d">-        xcopy();
+</a><a href="#h0-10-5" id="h0-10-5" class="i">+	}
+</a><a href="#h0-10-6" id="h0-10-6" class="i">+	xcopy();
+</a> }
+ 
+ void
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Use monotonic clock to prevent timing issues - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/5edeec1b20fcb5900d4f1408594d1e76b6c544f0.html">5edeec1b20fcb5900d4f1408594d1e76b6c544f0</a>
+<b>parent</b> <a href="../commit/738f555f66e2423678d7f81344131d2e01f7c2e9.html">738f555f66e2423678d7f81344131d2e01f7c2e9</a>
+<b>Author:</b> FRIGN &lt;<a href="mailto:dev@frign.de">dev@frign.de</a>&gt;
+<b>Date:</b>   Mon, 23 Jun 2014 16:51:51 +0200
+
+Use monotonic clock to prevent timing issues
+
+This patch replaces the gettimeofday()/timeval-system with
+uses of clock_gettime() with a monolithic clock and timespec-structs.
+gettimeofday() is not accurate and prone to jumps and POSIX.1-2008
+marks it as obsolete. Read more here [0].
+
+The patch should speak for itself and decreases the binary
+size for me by almost 200K(!).
+
+[0]: http://blog.habets.pp.se/2010/09/gettimeofday-should-never-be-used-to-measure-time
+
+Signed-off-by: Roberto E. Vargas Caballero &lt;k0ga@shike2.com&gt;
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">27</td><td><span class="i">+++++++++++++</span><span class="d">--------------</span></td></tr>
+</table></pre><pre>1 file changed, 13 insertions(+), 14 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -76,7 +76,7 @@ char *argv0;
+</a> #define LIMIT(x, a, b)    (x) = (x) &lt; (a) ? (a) : (x) &gt; (b) ? (b) : (x)
+ #define ATTRCMP(a, b) ((a).mode != (b).mode || (a).fg != (b).fg || (a).bg != (b).bg)
+ #define IS_SET(flag) ((term.mode &amp; (flag)) != 0)
+<a href="#h0-0-3" id="h0-0-3" class="d">-#define TIMEDIFF(t1, t2) ((t1.tv_sec-t2.tv_sec)*1000 + (t1.tv_usec-t2.tv_usec)/1000)
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+#define TIMEDIFF(t1, t2) ((t1.tv_sec-t2.tv_sec)*1000 + (t1.tv_nsec-t2.tv_nsec)/10E6)
+</a> #define CEIL(x) (((x) != (int) (x)) ? (x) + 1 : (x))
+ #define MODBIT(x, set, bit) ((set) ? ((x) |= (bit)) : ((x) &amp;= ~(bit)))
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -294,8 +294,8 @@ typedef struct {
+</a> 	char *clip;
+ 	Atom xtarget;
+ 	bool alt;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	struct timeval tclick1;
+</a><a href="#h0-1-4" id="h0-1-4" class="d">-	struct timeval tclick2;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	struct timespec tclick1;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	struct timespec tclick2;
+</a> } Selection;
+ 
+ typedef union {
+<a href="#h0-2" id="h0-2" class="h">@@ -860,7 +860,7 @@ mousereport(XEvent *e) {
+</a> 
+ void
+ bpress(XEvent *e) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-	struct timeval now;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+	struct timespec now;
+</a> 	Mousekey *mk;
+ 
+ 	if(IS_SET(MODE_MOUSE) &amp;&amp; !(e-&gt;xbutton.state &amp; forceselmod)) {
+<a href="#h0-3" id="h0-3" class="h">@@ -877,7 +877,7 @@ bpress(XEvent *e) {
+</a> 	}
+ 
+ 	if(e-&gt;xbutton.button == Button1) {
+<a href="#h0-3-3" id="h0-3-3" class="d">-		gettimeofday(&amp;now, NULL);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+		clock_gettime(CLOCK_MONOTONIC, &amp;now);
+</a> 
+ 		/* Clear previous selection, logically and visually. */
+ 		selclear(NULL);
+<a href="#h0-4" id="h0-4" class="h">@@ -3709,7 +3709,8 @@ run(void) {
+</a> 	int w = xw.w, h = xw.h;
+ 	fd_set rfd;
+ 	int xfd = XConnectionNumber(xw.dpy), xev, blinkset = 0, dodraw = 0;
+<a href="#h0-4-3" id="h0-4-3" class="d">-	struct timeval drawtimeout, *tv = NULL, now, last, lastblink;
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	struct timespec drawtimeout, *tv = NULL, now, last, lastblink;
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	long deltatime;
+</a> 
+ 	/* Waiting for window mapping */
+ 	while(1) {
+<a href="#h0-5" id="h0-5" class="h">@@ -3725,17 +3726,15 @@ run(void) {
+</a> 	ttynew();
+ 	cresize(w, h);
+ 
+<a href="#h0-5-3" id="h0-5-3" class="d">-	gettimeofday(&amp;last, NULL);
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+	clock_gettime(CLOCK_MONOTONIC, &amp;last);
+</a> 	lastblink = last;
+ 
+ 	for(xev = actionfps;;) {
+<a href="#h0-5-8" id="h0-5-8" class="d">-		long deltatime;
+</a><a href="#h0-5-9" id="h0-5-9" class="d">-
+</a> 		FD_ZERO(&amp;rfd);
+ 		FD_SET(cmdfd, &amp;rfd);
+ 		FD_SET(xfd, &amp;rfd);
+ 
+<a href="#h0-5-14" id="h0-5-14" class="d">-		if(select(MAX(xfd, cmdfd)+1, &amp;rfd, NULL, NULL, tv) &lt; 0) {
+</a><a href="#h0-5-15" id="h0-5-15" class="i">+		if(pselect(MAX(xfd, cmdfd)+1, &amp;rfd, NULL, NULL, tv, NULL) &lt; 0) {
+</a> 			if(errno == EINTR)
+ 				continue;
+ 			die(&quot;select failed: %s\n&quot;, strerror(errno));
+<a href="#h0-6" id="h0-6" class="h">@@ -3752,9 +3751,9 @@ run(void) {
+</a> 		if(FD_ISSET(xfd, &amp;rfd))
+ 			xev = actionfps;
+ 
+<a href="#h0-6-3" id="h0-6-3" class="d">-		gettimeofday(&amp;now, NULL);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+		clock_gettime(CLOCK_MONOTONIC, &amp;now);
+</a> 		drawtimeout.tv_sec = 0;
+<a href="#h0-6-6" id="h0-6-6" class="d">-		drawtimeout.tv_usec = (1000/xfps) * 1000;
+</a><a href="#h0-6-7" id="h0-6-7" class="i">+		drawtimeout.tv_nsec = (1000/xfps) * 10E6;
+</a> 		tv = &amp;drawtimeout;
+ 
+ 		dodraw = 0;
+<a href="#h0-7" id="h0-7" class="h">@@ -3789,9 +3788,9 @@ run(void) {
+</a> 				if(blinkset) {
+ 					if(TIMEDIFF(now, lastblink) \
+ 							&gt; blinktimeout) {
+<a href="#h0-7-3" id="h0-7-3" class="d">-						drawtimeout.tv_usec = 1;
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+						drawtimeout.tv_nsec = 1000;
+</a> 					} else {
+<a href="#h0-7-6" id="h0-7-6" class="d">-						drawtimeout.tv_usec = (1000 * \
+</a><a href="#h0-7-7" id="h0-7-7" class="i">+						drawtimeout.tv_nsec = (10E6 * \
+</a> 							(blinktimeout - \
+ 							TIMEDIFF(now,
+ 								lastblink)));
+</pre>
+</div>
+</body>
+</html>

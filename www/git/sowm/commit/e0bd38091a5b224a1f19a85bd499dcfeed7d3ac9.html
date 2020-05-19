@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>sowm: fix crashes with cur - sowm - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="sowm Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>sowm</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/e0bd38091a5b224a1f19a85bd499dcfeed7d3ac9.html">e0bd38091a5b224a1f19a85bd499dcfeed7d3ac9</a>
+<b>parent</b> <a href="../commit/68257b329d59e7e9b25747dee90c73afc90e7a8b.html">68257b329d59e7e9b25747dee90c73afc90e7a8b</a>
+<b>Author:</b> Dylan Araps &lt;<a href="mailto:dylan.araps@gmail.com">dylan.araps@gmail.com</a>&gt;
+<b>Date:</b>   Fri, 18 Oct 2019 11:42:57 +0300
+
+sowm: fix crashes with cur
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">sowm.c</a></td><td> | </td><td class="num">15</td><td><span class="i">+++++++++++</span><span class="d">----</span></td></tr>
+</table></pre><pre>1 file changed, 11 insertions(+), 4 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/sowm.c.html">sowm.c</a> b/<a href="../file/sowm.c.html">sowm.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -45,7 +45,7 @@ static void win_to_ws(const Arg arg);
+</a> static void ws_go(const Arg arg);
+ static int  xerror() { return 0;}
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-static client       *list = {0}, *ws_list[10] = {0}, *cur;
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static client       *list = {0}, *ws_list[10] = {0}, *cur = {0};
+</a> static int          ws = 1, sw, sh, wx, wy;
+ static unsigned int ww, wh;
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -180,10 +180,12 @@ void win_del(Window w) {
+</a> }
+ 
+ void win_kill() {
+<a href="#h0-1-3" id="h0-1-3" class="d">-    if (cur-&gt;w ^ root) XKillClient(d, cur-&gt;w);
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+    if (cur) XKillClient(d, cur-&gt;w);
+</a> }
+ 
+ void win_center(const Arg arg) {
+<a href="#h0-1-8" id="h0-1-8" class="i">+    if (!cur) return;
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+
+</a>     Window w = arg.w ? arg.w : cur-&gt;w;
+ 
+     win_size(w, &amp;(int){0}, &amp;(int){0}, &amp;ww, &amp;wh);
+<a href="#h0-2" id="h0-2" class="h">@@ -192,6 +194,8 @@ void win_center(const Arg arg) {
+</a> }
+ 
+ void win_fs() {
+<a href="#h0-2-3" id="h0-2-3" class="i">+    if (!cur) return;
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+
+</a>     if ((cur-&gt;f = cur-&gt;f == 0 ? 1 : 0)) {
+         win_size(cur-&gt;w, &amp;cur-&gt;wx, &amp;cur-&gt;wy, &amp;cur-&gt;ww, &amp;cur-&gt;wh);
+         XMoveResizeWindow(d, cur-&gt;w, 0, 0, sw, sh);
+<a href="#h0-3" id="h0-3" class="h">@@ -218,6 +222,8 @@ void win_to_ws(const Arg arg) {
+</a> }
+ 
+ void win_next() {
+<a href="#h0-3-3" id="h0-3-3" class="i">+    if (!list) return;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+
+</a>     client *c = cur-&gt;next ? cur-&gt;next : list;
+ 
+     win_focus(c-&gt;w);
+<a href="#h0-4" id="h0-4" class="h">@@ -260,13 +266,14 @@ void map_request(XEvent *e) {
+</a>     Window w = e-&gt;xmaprequest.window;
+ 
+     XSelectInput(d, w, StructureNotifyMask|EnterWindowMask);
+<a href="#h0-4-3" id="h0-4-3" class="i">+
+</a>     win_size(w, &amp;wx, &amp;wy, &amp;ww, &amp;wh);
+<a href="#h0-4-5" id="h0-4-5" class="i">+    win_add(w);
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+    win_focus(w);
+</a> 
+     if (wx == 0 &amp;&amp; wy == 0) win_center((Arg){.i = w});
+ 
+     XMapWindow(d, w);
+<a href="#h0-4-11" id="h0-4-11" class="d">-    win_focus(w);
+</a><a href="#h0-4-12" id="h0-4-12" class="d">-    win_add(w);
+</a> }
+ 
+ void run(const Arg arg) {
+</pre>
+</div>
+</body>
+</html>

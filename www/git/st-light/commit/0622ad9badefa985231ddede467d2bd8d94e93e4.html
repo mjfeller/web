@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Make tputc, tsetchar and techo accept unicode - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/0622ad9badefa985231ddede467d2bd8d94e93e4.html">0622ad9badefa985231ddede467d2bd8d94e93e4</a>
+<b>parent</b> <a href="../commit/21f765426c36991edd8b14f4989d66187e9ff597.html">21f765426c36991edd8b14f4989d66187e9ff597</a>
+<b>Author:</b> noname@inventati.org &lt;<a href="mailto:noname@inventati.org">noname@inventati.org</a>&gt;
+<b>Date:</b>   Tue, 21 Apr 2015 23:29:15 +0200
+
+Make tputc, tsetchar and techo accept unicode
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">107</td><td><span class="i">+++++++++++++++++++++++++++++++++</span><span class="d">----------------------------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 45 insertions(+), 62 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -383,20 +383,20 @@ static void tmoveato(int, int);
+</a> static void tnew(int, int);
+ static void tnewline(int);
+ static void tputtab(int);
+<a href="#h0-0-3" id="h0-0-3" class="d">-static void tputc(char *, int);
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+static void tputc(long);
+</a> static void treset(void);
+ static void tresize(int, int);
+ static void tscrollup(int, int);
+ static void tscrolldown(int, int);
+ static void tsetattr(int *, int);
+<a href="#h0-0-10" id="h0-0-10" class="d">-static void tsetchar(char *, Glyph *, int, int);
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+static void tsetchar(long, Glyph *, int, int);
+</a> static void tsetscroll(int, int);
+ static void tswapscreen(void);
+ static void tsetdirt(int, int);
+ static void tsetdirtattr(int);
+ static void tsetmode(bool, bool, int *, int);
+ static void tfulldirt(void);
+<a href="#h0-0-18" id="h0-0-18" class="d">-static void techo(char *, int);
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+static void techo(long);
+</a> static void tcontrolcode(uchar );
+ static void tdectest(char );
+ static int32_t tdefcolor(int *, int *, int);
+<a href="#h0-1" id="h0-1" class="h">@@ -1332,7 +1332,6 @@ ttyread(void) {
+</a> 	static char buf[BUFSIZ];
+ 	static int buflen = 0;
+ 	char *ptr;
+<a href="#h0-1-3" id="h0-1-3" class="d">-	char s[UTF_SIZ];
+</a> 	int charsize; /* size of utf8 char in bytes */
+ 	long unicodep;
+ 	int ret;
+<a href="#h0-2" id="h0-2" class="h">@@ -1345,8 +1344,7 @@ ttyread(void) {
+</a> 	buflen += ret;
+ 	ptr = buf;
+ 	while((charsize = utf8decode(ptr, &amp;unicodep, buflen))) {
+<a href="#h0-2-3" id="h0-2-3" class="d">-		utf8encode(unicodep, s);
+</a><a href="#h0-2-4" id="h0-2-4" class="d">-		tputc(s, charsize);
+</a><a href="#h0-2-5" id="h0-2-5" class="i">+		tputc(unicodep);
+</a> 		ptr += charsize;
+ 		buflen -= charsize;
+ 	}
+<a href="#h0-3" id="h0-3" class="h">@@ -1363,9 +1361,16 @@ ttywrite(const char *s, size_t n) {
+</a> 
+ void
+ ttysend(char *s, size_t n) {
+<a href="#h0-3-3" id="h0-3-3" class="i">+	int len;
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	long u;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+
+</a> 	ttywrite(s, n);
+ 	if(IS_SET(MODE_ECHO))
+<a href="#h0-3-8" id="h0-3-8" class="d">-		techo(s, n);
+</a><a href="#h0-3-9" id="h0-3-9" class="i">+		while((len = utf8decode(s, &amp;u, n)) &gt; 0) {
+</a><a href="#h0-3-10" id="h0-3-10" class="i">+			techo(u);
+</a><a href="#h0-3-11" id="h0-3-11" class="i">+			n -= len;
+</a><a href="#h0-3-12" id="h0-3-12" class="i">+			s += len;
+</a><a href="#h0-3-13" id="h0-3-13" class="i">+		}
+</a> }
+ 
+ void
+<a href="#h0-4" id="h0-4" class="h">@@ -1614,7 +1619,7 @@ tmoveto(int x, int y) {
+</a> }
+ 
+ void
+<a href="#h0-4-3" id="h0-4-3" class="d">-tsetchar(char *c, Glyph *attr, int x, int y) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+tsetchar(long u, Glyph *attr, int x, int y) {
+</a> 	static char *vt100_0[62] = { /* 0x41 - 0x7e */
+ 		&quot;↑&quot;, &quot;↓&quot;, &quot;→&quot;, &quot;←&quot;, &quot;█&quot;, &quot;▚&quot;, &quot;☃&quot;, /* A - G */
+ 		0, 0, 0, 0, 0, 0, 0, 0, /* H - O */
+<a href="#h0-5" id="h0-5" class="h">@@ -1629,11 +1634,9 @@ tsetchar(char *c, Glyph *attr, int x, int y) {
+</a> 	/*
+ 	 * The table is proudly stolen from rxvt.
+ 	 */
+<a href="#h0-5-3" id="h0-5-3" class="d">-	if(term.trantbl[term.charset] == CS_GRAPHIC0) {
+</a><a href="#h0-5-4" id="h0-5-4" class="d">-		if(BETWEEN(c[0], 0x41, 0x7e) &amp;&amp; vt100_0[c[0] - 0x41]) {
+</a><a href="#h0-5-5" id="h0-5-5" class="d">-			c = vt100_0[c[0] - 0x41];
+</a><a href="#h0-5-6" id="h0-5-6" class="d">-		}
+</a><a href="#h0-5-7" id="h0-5-7" class="d">-	}
+</a><a href="#h0-5-8" id="h0-5-8" class="i">+	if(term.trantbl[term.charset] == CS_GRAPHIC0 &amp;&amp;
+</a><a href="#h0-5-9" id="h0-5-9" class="i">+	   BETWEEN(u, 0x41, 0x7e) &amp;&amp; vt100_0[u - 0x41])
+</a><a href="#h0-5-10" id="h0-5-10" class="i">+		utf8decode(vt100_0[u - 0x41], &amp;u, UTF_SIZ);
+</a> 
+ 	if(term.line[y][x].mode &amp; ATTR_WIDE) {
+ 		if(x+1 &lt; term.col) {
+<a href="#h0-6" id="h0-6" class="h">@@ -1647,7 +1650,7 @@ tsetchar(char *c, Glyph *attr, int x, int y) {
+</a> 
+ 	term.dirty[y] = 1;
+ 	term.line[y][x] = *attr;
+<a href="#h0-6-3" id="h0-6-3" class="d">-	utf8decode(c, &amp;term.line[y][x].u, UTF_SIZ);
+</a><a href="#h0-6-4" id="h0-6-4" class="i">+	term.line[y][x].u = u;
+</a> }
+ 
+ void
+<a href="#h0-7" id="h0-7" class="h">@@ -2431,26 +2434,18 @@ tputtab(int n) {
+</a> }
+ 
+ void
+<a href="#h0-7-3" id="h0-7-3" class="d">-techo(char *buf, int len) {
+</a><a href="#h0-7-4" id="h0-7-4" class="d">-	for(; len &gt; 0; buf++, len--) {
+</a><a href="#h0-7-5" id="h0-7-5" class="d">-		char c = *buf;
+</a><a href="#h0-7-6" id="h0-7-6" class="d">-
+</a><a href="#h0-7-7" id="h0-7-7" class="d">-		if(ISCONTROL((uchar) c)) { /* control code */
+</a><a href="#h0-7-8" id="h0-7-8" class="d">-			if(c &amp; 0x80) {
+</a><a href="#h0-7-9" id="h0-7-9" class="d">-				c &amp;= 0x7f;
+</a><a href="#h0-7-10" id="h0-7-10" class="d">-				tputc(&quot;^&quot;, 1);
+</a><a href="#h0-7-11" id="h0-7-11" class="d">-				tputc(&quot;[&quot;, 1);
+</a><a href="#h0-7-12" id="h0-7-12" class="d">-			} else if(c != &#39;\n&#39; &amp;&amp; c != &#39;\r&#39; &amp;&amp; c != &#39;\t&#39;) {
+</a><a href="#h0-7-13" id="h0-7-13" class="d">-				c ^= 0x40;
+</a><a href="#h0-7-14" id="h0-7-14" class="d">-				tputc(&quot;^&quot;, 1);
+</a><a href="#h0-7-15" id="h0-7-15" class="d">-			}
+</a><a href="#h0-7-16" id="h0-7-16" class="d">-			tputc(&amp;c, 1);
+</a><a href="#h0-7-17" id="h0-7-17" class="d">-		} else {
+</a><a href="#h0-7-18" id="h0-7-18" class="d">-			break;
+</a><a href="#h0-7-19" id="h0-7-19" class="i">+techo(long u) {
+</a><a href="#h0-7-20" id="h0-7-20" class="i">+	if(ISCONTROL(u)) { /* control code */
+</a><a href="#h0-7-21" id="h0-7-21" class="i">+		if(u &amp; 0x80) {
+</a><a href="#h0-7-22" id="h0-7-22" class="i">+			u &amp;= 0x7f;
+</a><a href="#h0-7-23" id="h0-7-23" class="i">+			tputc(&#39;^&#39;);
+</a><a href="#h0-7-24" id="h0-7-24" class="i">+			tputc(&#39;[&#39;);
+</a><a href="#h0-7-25" id="h0-7-25" class="i">+		} else if(u != &#39;\n&#39; &amp;&amp; u != &#39;\r&#39; &amp;&amp; u != &#39;\t&#39;) {
+</a><a href="#h0-7-26" id="h0-7-26" class="i">+			u ^= 0x40;
+</a><a href="#h0-7-27" id="h0-7-27" class="i">+			tputc(&#39;^&#39;);
+</a> 		}
+ 	}
+<a href="#h0-7-30" id="h0-7-30" class="d">-	if(len)
+</a><a href="#h0-7-31" id="h0-7-31" class="d">-		tputc(buf, len);
+</a><a href="#h0-7-32" id="h0-7-32" class="i">+	tputc(u);
+</a> }
+ 
+ void
+<a href="#h0-8" id="h0-8" class="h">@@ -2468,13 +2463,12 @@ tdeftran(char ascii) {
+</a> 
+ void
+ tdectest(char c) {
+<a href="#h0-8-3" id="h0-8-3" class="d">-	static char E[UTF_SIZ] = &quot;E&quot;;
+</a> 	int x, y;
+ 
+ 	if(c == &#39;8&#39;) { /* DEC screen alignment test. */
+ 		for(x = 0; x &lt; term.col; ++x) {
+ 			for(y = 0; y &lt; term.row; ++y)
+<a href="#h0-8-9" id="h0-8-9" class="d">-				tsetchar(E, &amp;term.c.attr, x, y);
+</a><a href="#h0-8-10" id="h0-8-10" class="i">+				tsetchar(&#39;E&#39;, &amp;term.c.attr, x, y);
+</a> 		}
+ 	}
+ }
+<a href="#h0-9" id="h0-9" class="h">@@ -2502,8 +2496,6 @@ tstrsequence(uchar c) {
+</a> 
+ void
+ tcontrolcode(uchar ascii) {
+<a href="#h0-9-3" id="h0-9-3" class="d">-	static char question[UTF_SIZ] = &quot;?&quot;;
+</a><a href="#h0-9-4" id="h0-9-4" class="d">-
+</a> 	switch(ascii) {
+ 	case &#39;\t&#39;:   /* HT */
+ 		tputtab(1);
+<a href="#h0-10" id="h0-10" class="h">@@ -2541,7 +2533,7 @@ tcontrolcode(uchar ascii) {
+</a> 		term.charset = 1 - (ascii - &#39;\016&#39;);
+ 		return;
+ 	case &#39;\032&#39;: /* SUB */
+<a href="#h0-10-3" id="h0-10-3" class="d">-		tsetchar(question, &amp;term.c.attr, term.c.x, term.c.y);
+</a><a href="#h0-10-4" id="h0-10-4" class="i">+		tsetchar(&#39;?&#39;, &amp;term.c.attr, term.c.x, term.c.y);
+</a> 	case &#39;\030&#39;: /* CAN */
+ 		csireset();
+ 		break;
+<a href="#h0-11" id="h0-11" class="h">@@ -2665,28 +2657,21 @@ eschandle(uchar ascii) {
+</a> }
+ 
+ void
+<a href="#h0-11-3" id="h0-11-3" class="d">-tputc(char *c, int len) {
+</a><a href="#h0-11-4" id="h0-11-4" class="d">-	uchar ascii;
+</a><a href="#h0-11-5" id="h0-11-5" class="i">+tputc(long u) {
+</a><a href="#h0-11-6" id="h0-11-6" class="i">+	char c[UTF_SIZ];
+</a> 	bool control;
+<a href="#h0-11-8" id="h0-11-8" class="d">-	long unicodep;
+</a><a href="#h0-11-9" id="h0-11-9" class="d">-	int width;
+</a><a href="#h0-11-10" id="h0-11-10" class="i">+	int width, len;
+</a> 	Glyph *gp;
+ 
+<a href="#h0-11-13" id="h0-11-13" class="d">-	if(len == 1) {
+</a><a href="#h0-11-14" id="h0-11-14" class="i">+	len = utf8encode(u, c);
+</a><a href="#h0-11-15" id="h0-11-15" class="i">+	if((width = wcwidth(u)) == -1) {
+</a><a href="#h0-11-16" id="h0-11-16" class="i">+		memcpy(c, &quot;\357\277\275&quot;, 4); /* UTF_INVALID */
+</a> 		width = 1;
+<a href="#h0-11-18" id="h0-11-18" class="d">-		unicodep = ascii = *c;
+</a><a href="#h0-11-19" id="h0-11-19" class="d">-	} else {
+</a><a href="#h0-11-20" id="h0-11-20" class="d">-		utf8decode(c, &amp;unicodep, UTF_SIZ);
+</a><a href="#h0-11-21" id="h0-11-21" class="d">-		if ((width = wcwidth(unicodep)) == -1) {
+</a><a href="#h0-11-22" id="h0-11-22" class="d">-			c = &quot;\357\277\275&quot;;	/* UTF_INVALID */
+</a><a href="#h0-11-23" id="h0-11-23" class="d">-			width = 1;
+</a><a href="#h0-11-24" id="h0-11-24" class="d">-		}
+</a><a href="#h0-11-25" id="h0-11-25" class="d">-		ascii = unicodep;
+</a> 	}
+ 
+ 	if(IS_SET(MODE_PRINT))
+ 		tprinter(c, len);
+<a href="#h0-11-30" id="h0-11-30" class="d">-	control = ISCONTROL(unicodep);
+</a><a href="#h0-11-31" id="h0-11-31" class="i">+	control = ISCONTROL(u);
+</a> 
+ 	/*
+ 	 * STR sequence must be checked before anything else
+<a href="#h0-12" id="h0-12" class="h">@@ -2695,10 +2680,8 @@ tputc(char *c, int len) {
+</a> 	 * character.
+ 	 */
+ 	if(term.esc &amp; ESC_STR) {
+<a href="#h0-12-3" id="h0-12-3" class="d">-		if(len == 1 &amp;&amp;
+</a><a href="#h0-12-4" id="h0-12-4" class="d">-		   (ascii == &#39;\a&#39; || ascii == 030 ||
+</a><a href="#h0-12-5" id="h0-12-5" class="d">-		    ascii == 032  || ascii == 033 ||
+</a><a href="#h0-12-6" id="h0-12-6" class="d">-		    ISCONTROLC1(unicodep))) {
+</a><a href="#h0-12-7" id="h0-12-7" class="i">+		if(u == &#39;\a&#39; || u == 030 || u == 032 || u == 033 ||
+</a><a href="#h0-12-8" id="h0-12-8" class="i">+		   ISCONTROLC1(u)) {
+</a> 			term.esc &amp;= ~(ESC_START|ESC_STR);
+ 			term.esc |= ESC_STR_END;
+ 		} else if(strescseq.len + len &lt; sizeof(strescseq.buf) - 1) {
+<a href="#h0-13" id="h0-13" class="h">@@ -2729,15 +2712,15 @@ tputc(char *c, int len) {
+</a> 	 * they must not cause conflicts with sequences.
+ 	 */
+ 	if(control) {
+<a href="#h0-13-3" id="h0-13-3" class="d">-		tcontrolcode(ascii);
+</a><a href="#h0-13-4" id="h0-13-4" class="i">+		tcontrolcode(u);
+</a> 		/*
+ 		 * control codes are not shown ever
+ 		 */
+ 		return;
+ 	} else if(term.esc &amp; ESC_START) {
+ 		if(term.esc &amp; ESC_CSI) {
+<a href="#h0-13-11" id="h0-13-11" class="d">-			csiescseq.buf[csiescseq.len++] = ascii;
+</a><a href="#h0-13-12" id="h0-13-12" class="d">-			if(BETWEEN(ascii, 0x40, 0x7E)
+</a><a href="#h0-13-13" id="h0-13-13" class="i">+			csiescseq.buf[csiescseq.len++] = u;
+</a><a href="#h0-13-14" id="h0-13-14" class="i">+			if(BETWEEN(u, 0x40, 0x7E)
+</a> 					|| csiescseq.len &gt;= \
+ 					sizeof(csiescseq.buf)-1) {
+ 				term.esc = 0;
+<a href="#h0-14" id="h0-14" class="h">@@ -2746,11 +2729,11 @@ tputc(char *c, int len) {
+</a> 			}
+ 			return;
+ 		} else if(term.esc &amp; ESC_ALTCHARSET) {
+<a href="#h0-14-3" id="h0-14-3" class="d">-			tdeftran(ascii);
+</a><a href="#h0-14-4" id="h0-14-4" class="i">+			tdeftran(u);
+</a> 		} else if(term.esc &amp; ESC_TEST) {
+<a href="#h0-14-6" id="h0-14-6" class="d">-			tdectest(ascii);
+</a><a href="#h0-14-7" id="h0-14-7" class="i">+			tdectest(u);
+</a> 		} else {
+<a href="#h0-14-9" id="h0-14-9" class="d">-			if (!eschandle(ascii))
+</a><a href="#h0-14-10" id="h0-14-10" class="i">+			if (!eschandle(u))
+</a> 				return;
+ 			/* sequence already finished */
+ 		}
+<a href="#h0-15" id="h0-15" class="h">@@ -2779,7 +2762,7 @@ tputc(char *c, int len) {
+</a> 		gp = &amp;term.line[term.c.y][term.c.x];
+ 	}
+ 
+<a href="#h0-15-3" id="h0-15-3" class="d">-	tsetchar(c, &amp;term.c.attr, term.c.x, term.c.y);
+</a><a href="#h0-15-4" id="h0-15-4" class="i">+	tsetchar(u, &amp;term.c.attr, term.c.x, term.c.y);
+</a> 
+ 	if(width == 2) {
+ 		gp-&gt;mode |= ATTR_WIDE;
+</pre>
+</div>
+</body>
+</html>

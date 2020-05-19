@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>support for x11 xterm mouse reporting - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/80da37203e1699d9143cacfcfaeae7e7645c645d.html">80da37203e1699d9143cacfcfaeae7e7645c645d</a>
+<b>parent</b> <a href="../commit/8eaed2cdda375e8e951eb389af3859e18761eddc.html">8eaed2cdda375e8e951eb389af3859e18761eddc</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Tue, 10 May 2011 22:22:44 +0200
+
+support for x11 xterm mouse reporting
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">37</td><td><span class="i">++++++++++++++++++++++++++++++++++++</span><span class="d">-</span></td></tr>
+</table></pre><pre>1 file changed, 36 insertions(+), 1 deletion(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -62,7 +62,7 @@ enum { CURSOR_UP, CURSOR_DOWN, CURSOR_LEFT, CURSOR_RIGHT,
+</a> enum { CURSOR_DEFAULT = 0, CURSOR_HIDE = 1, CURSOR_WRAPNEXT = 2 };
+ enum { GLYPH_SET=1, GLYPH_DIRTY=2 };
+ enum { MODE_WRAP=1, MODE_INSERT=2, MODE_APPKEYPAD=4, MODE_ALTSCREEN=8,
+<a href="#h0-0-3" id="h0-0-3" class="d">-       MODE_CRLF=16 };
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+       MODE_CRLF=16, MODE_MOUSE=32 };
+</a> enum { ESC_START=1, ESC_CSI=2, ESC_OSC=4, ESC_TITLE=8, ESC_ALTCHARSET=16 };
+ enum { WIN_VISIBLE=1, WIN_REDRAW=2, WIN_FOCUSED=4 };
+ 
+<a href="#h0-1" id="h0-1" class="h">@@ -410,7 +410,35 @@ getbuttoninfo(XEvent *e, int *b, int *x, int *y) {
+</a> }
+ 
+ void
+<a href="#h0-1-3" id="h0-1-3" class="i">+mousereport(XEvent *e) {
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	int x = (e-&gt;xbutton.x - BORDER)/xw.cw;
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	int y = (e-&gt;xbutton.y - BORDER)/xw.ch;
+</a><a href="#h0-1-6" id="h0-1-6" class="i">+	int button = e-&gt;xbutton.button;
+</a><a href="#h0-1-7" id="h0-1-7" class="i">+	int state = e-&gt;xbutton.state;
+</a><a href="#h0-1-8" id="h0-1-8" class="i">+	char buf[] = { &#39;\033&#39;, &#39;[&#39;, &#39;M&#39;, 0, 32+x+1, 32+y+1 };
+</a><a href="#h0-1-9" id="h0-1-9" class="i">+	
+</a><a href="#h0-1-10" id="h0-1-10" class="i">+	if(!IS_SET(MODE_MOUSE))
+</a><a href="#h0-1-11" id="h0-1-11" class="i">+		return;
+</a><a href="#h0-1-12" id="h0-1-12" class="i">+	
+</a><a href="#h0-1-13" id="h0-1-13" class="i">+	/* from urxvt */
+</a><a href="#h0-1-14" id="h0-1-14" class="i">+	if(e-&gt;xbutton.type == ButtonRelease || button == AnyButton)
+</a><a href="#h0-1-15" id="h0-1-15" class="i">+		button = 3;
+</a><a href="#h0-1-16" id="h0-1-16" class="i">+	else {
+</a><a href="#h0-1-17" id="h0-1-17" class="i">+		button -= Button1;
+</a><a href="#h0-1-18" id="h0-1-18" class="i">+		if(button &gt;= 3)
+</a><a href="#h0-1-19" id="h0-1-19" class="i">+			button += 64 - 3;
+</a><a href="#h0-1-20" id="h0-1-20" class="i">+	}
+</a><a href="#h0-1-21" id="h0-1-21" class="i">+	
+</a><a href="#h0-1-22" id="h0-1-22" class="i">+	buf[3] = 32 + button + (state &amp; ShiftMask ? 4 : 0)
+</a><a href="#h0-1-23" id="h0-1-23" class="i">+		+ (state &amp; Mod4Mask    ? 8  : 0)
+</a><a href="#h0-1-24" id="h0-1-24" class="i">+		+ (state &amp; ControlMask ? 16 : 0);
+</a><a href="#h0-1-25" id="h0-1-25" class="i">+	
+</a><a href="#h0-1-26" id="h0-1-26" class="i">+	ttywrite(buf, sizeof(buf));
+</a><a href="#h0-1-27" id="h0-1-27" class="i">+}
+</a><a href="#h0-1-28" id="h0-1-28" class="i">+
+</a><a href="#h0-1-29" id="h0-1-29" class="i">+void
+</a> bpress(XEvent *e) {
+<a href="#h0-1-31" id="h0-1-31" class="i">+	mousereport(e);
+</a> 	sel.mode = 1;
+ 	sel.ex = sel.bx = (e-&gt;xbutton.x - BORDER)/xw.cw;
+ 	sel.ey = sel.by = (e-&gt;xbutton.y - BORDER)/xw.ch;
+<a href="#h0-2" id="h0-2" class="h">@@ -526,6 +554,7 @@ brelease(XEvent *e) {
+</a> 
+ 	sel.mode = 0;
+ 	getbuttoninfo(e, &amp;b, &amp;sel.ex, &amp;sel.ey);
+<a href="#h0-2-3" id="h0-2-3" class="i">+	mousereport(e);
+</a> 	if(sel.bx == sel.ex &amp;&amp; sel.by == sel.ey) {
+ 		sel.bx = -1;
+ 		if(b == 2)
+<a href="#h0-3" id="h0-3" class="h">@@ -1085,6 +1114,9 @@ csihandle(void) {
+</a> 			case 25:
+ 				term.c.state |= CURSOR_HIDE;
+ 				break;
+<a href="#h0-3-3" id="h0-3-3" class="i">+			case 1000: /* disable X11 xterm mouse reporting */
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+				term.mode &amp;= ~MODE_MOUSE;
+</a><a href="#h0-3-5" id="h0-3-5" class="i">+				break;
+</a> 			case 1049: /* = 1047 and 1048 */
+ 			case 1047:
+ 				if(IS_SET(MODE_ALTSCREEN)) {
+<a href="#h0-4" id="h0-4" class="h">@@ -1148,6 +1180,9 @@ csihandle(void) {
+</a> 			case 25:
+ 				term.c.state &amp;= ~CURSOR_HIDE;
+ 				break;
+<a href="#h0-4-3" id="h0-4-3" class="i">+			case 1000: /* enable X11 xterm mouse reporting */
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+				term.mode |= MODE_MOUSE;
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+				break;
+</a> 			case 1049: /* = 1047 and 1048 */
+ 			case 1047:
+ 				if(IS_SET(MODE_ALTSCREEN))
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>This adds the fontcache dependency to try something out. Additionally the - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/2752018e27420947a034d50f1ce165bbb76ae1a8.html">2752018e27420947a034d50f1ce165bbb76ae1a8</a>
+<b>parent</b> <a href="../commit/0d88f1ef75c2fe9403a72c80d6fa8ed199ec474f.html">0d88f1ef75c2fe9403a72c80d6fa8ed199ec474f</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Thu,  4 Oct 2012 22:59:45 +0200
+
+This adds the fontcache dependency to try something out. Additionally the
+
+invert mode now works as expected. In the config.def.h autohint is set to
+false, so the fonts are drawn correctly, without any overlapping.
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">config.def.h</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.mk</a></td><td> | </td><td class="num">2</td><td><span class="i">+</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.c</a></td><td> | </td><td class="num">96</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">------------------------</span></td></tr>
+</table></pre><pre>3 files changed, 69 insertions(+), 31 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -1,5 +1,5 @@
+</a> 
+<a href="#h0-0-1" id="h0-0-1" class="d">-#define FONT &quot;Liberation Mono:pixelsize=12:antialias=true:autohint=true&quot;
+</a><a href="#h0-0-2" id="h0-0-2" class="i">+#define FONT &quot;Liberation Mono:pixelsize=12:antialias=true:autohint=false&quot;
+</a> 
+ /* Space in pixels around the terminal buffer */
+ #define BORDER 2
+<b>diff --git a/<a id="h1" href="../file/config.mk.html">config.mk</a> b/<a href="../file/config.mk.html">config.mk</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -12,7 +12,7 @@ X11LIB = /usr/X11R6/lib
+</a> 
+ # includes and libs
+ INCS = -I. -I/usr/include -I${X11INC} -I/usr/include/freetype2
+<a href="#h1-0-3" id="h1-0-3" class="d">-LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lutil -lXext -lXft
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+LIBS = -L/usr/lib -lc -L${X11LIB} -lX11 -lutil -lXext -lXft -lfontconfig
+</a> 
+ # flags
+ CPPFLAGS = -DVERSION=\&quot;${VERSION}\&quot;
+<b>diff --git a/<a id="h2" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -26,6 +26,7 @@
+</a> #include &lt;X11/keysym.h&gt;
+ #include &lt;X11/extensions/Xdbe.h&gt;
+ #include &lt;X11/Xft/Xft.h&gt;
+<a href="#h2-0-3" id="h2-0-3" class="i">+#include &lt;fontconfig/fontconfig.h&gt;
+</a> #define Glyph Glyph_
+ #define Font Font_
+ 
+<a href="#h2-1" id="h2-1" class="h">@@ -235,6 +236,8 @@ typedef struct {
+</a> 
+ /* Font structure */
+ typedef struct {
+<a href="#h2-1-3" id="h2-1-3" class="i">+	int height;
+</a><a href="#h2-1-4" id="h2-1-4" class="i">+	int width;
+</a> 	int ascent;
+ 	int descent;
+ 	short lbearing;
+<a href="#h2-2" id="h2-2" class="h">@@ -1345,7 +1348,7 @@ tsetmode(bool priv, bool set, int *args, int narg) {
+</a> 			case 1: /* DECCKM -- Cursor key */
+ 				MODBIT(term.mode, set, MODE_APPKEYPAD);
+ 				break;
+<a href="#h2-2-3" id="h2-2-3" class="d">-			case 5: /* DECSCNM -- Reverve video */
+</a><a href="#h2-2-4" id="h2-2-4" class="i">+			case 5: /* DECSCNM -- Reverse video */
+</a> 				mode = term.mode;
+ 				MODBIT(term.mode, set, MODE_REVERSE);
+ 				if(mode != term.mode)
+<a href="#h2-3" id="h2-3" class="h">@@ -1965,8 +1968,8 @@ xloadcols(void) {
+</a> 	}
+ 
+ 	/* load colors [16-255] ; same colors as xterm */
+<a href="#h2-3-3" id="h2-3-3" class="d">-	for(i = 16, r = 0; r &lt; 6; r++)
+</a><a href="#h2-3-4" id="h2-3-4" class="d">-		for(g = 0; g &lt; 6; g++)
+</a><a href="#h2-3-5" id="h2-3-5" class="i">+	for(i = 16, r = 0; r &lt; 6; r++) {
+</a><a href="#h2-3-6" id="h2-3-6" class="i">+		for(g = 0; g &lt; 6; g++) {
+</a> 			for(b = 0; b &lt; 6; b++) {
+ 				xft_color.red = r == 0 ? 0 : 0x3737 + 0x2828 * r;
+ 				xft_color.green = g == 0 ? 0 : 0x3737 + 0x2828 * g;
+<a href="#h2-4" id="h2-4" class="h">@@ -1976,12 +1979,13 @@ xloadcols(void) {
+</a> 				}
+ 				i++;
+ 			}
+<a href="#h2-4-3" id="h2-4-3" class="i">+		}
+</a><a href="#h2-4-4" id="h2-4-4" class="i">+	}
+</a> 
+ 	for(r = 0; r &lt; 24; r++, i++) {
+ 		xft_color.red = xft_color.green = xft_color.blue = 0x0808 + 0x0a0a * r;
+ 		if(!XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;xft_color, &amp;dc.xft_col[i])) {
+<a href="#h2-4-9" id="h2-4-9" class="d">-			dc.xft_col[i] = dc.xft_col[256];
+</a><a href="#h2-4-10" id="h2-4-10" class="d">-			fprintf(stderr, &quot;Could not allocate color %d\n&quot;, i);
+</a><a href="#h2-4-11" id="h2-4-11" class="i">+			die(&quot;Could not allocate color %d\n&quot;, i);
+</a> 		}
+ 	}
+ }
+<a href="#h2-5" id="h2-5" class="h">@@ -2045,15 +2049,29 @@ xhints(void) {
+</a> 
+ void
+ xinitfont(Font *f, char *fontstr) {
+<a href="#h2-5-3" id="h2-5-3" class="d">-	f-&gt;xft_set = XftFontOpenName(xw.dpy, xw.scr, fontstr);
+</a><a href="#h2-5-4" id="h2-5-4" class="d">-
+</a><a href="#h2-5-5" id="h2-5-5" class="d">-	if(!f-&gt;xft_set)
+</a><a href="#h2-5-6" id="h2-5-6" class="i">+	FcPattern *pattern, *match;
+</a><a href="#h2-5-7" id="h2-5-7" class="i">+	FcResult result;
+</a><a href="#h2-5-8" id="h2-5-8" class="i">+
+</a><a href="#h2-5-9" id="h2-5-9" class="i">+	pattern = FcNameParse((FcChar8 *)fontstr);
+</a><a href="#h2-5-10" id="h2-5-10" class="i">+	if(!pattern)
+</a><a href="#h2-5-11" id="h2-5-11" class="i">+		die(&quot;st: can&#39;t open font %s\n&quot;, fontstr);
+</a><a href="#h2-5-12" id="h2-5-12" class="i">+
+</a><a href="#h2-5-13" id="h2-5-13" class="i">+	match = XftFontMatch(xw.dpy, xw.scr, pattern, &amp;result);
+</a><a href="#h2-5-14" id="h2-5-14" class="i">+	FcPatternDestroy(pattern);
+</a><a href="#h2-5-15" id="h2-5-15" class="i">+	if(!match)
+</a><a href="#h2-5-16" id="h2-5-16" class="i">+		die(&quot;st: can&#39;t open font %s\n&quot;, fontstr);
+</a><a href="#h2-5-17" id="h2-5-17" class="i">+	if(!(f-&gt;xft_set = XftFontOpenPattern(xw.dpy, match))) {
+</a><a href="#h2-5-18" id="h2-5-18" class="i">+		FcPatternDestroy(match);
+</a> 		die(&quot;st: can&#39;t open font %s.\n&quot;, fontstr);
+<a href="#h2-5-20" id="h2-5-20" class="i">+	}
+</a> 
+ 	f-&gt;ascent = f-&gt;xft_set-&gt;ascent;
+ 	f-&gt;descent = f-&gt;xft_set-&gt;descent;
+ 	f-&gt;lbearing = 0;
+ 	f-&gt;rbearing = f-&gt;xft_set-&gt;max_advance_width;
+<a href="#h2-5-26" id="h2-5-26" class="i">+
+</a><a href="#h2-5-27" id="h2-5-27" class="i">+	f-&gt;height = f-&gt;xft_set-&gt;height;
+</a><a href="#h2-5-28" id="h2-5-28" class="i">+	f-&gt;width = f-&gt;lbearing + f-&gt;rbearing;
+</a> }
+ 
+ void
+<a href="#h2-6" id="h2-6" class="h">@@ -2061,6 +2079,8 @@ initfonts(char *fontstr) {
+</a> 	char *fstr;
+ 
+ 	xinitfont(&amp;dc.font, fontstr);
+<a href="#h2-6-3" id="h2-6-3" class="i">+	xw.cw = dc.font.width;
+</a><a href="#h2-6-4" id="h2-6-4" class="i">+	xw.ch = dc.font.height;
+</a> 
+ 	fstr = smstrcat(fontstr, &quot;:weight=bold&quot;, NULL);
+ 	xinitfont(&amp;dc.bfont, fstr);
+<a href="#h2-7" id="h2-7" class="h">@@ -2090,10 +2110,6 @@ xinit(void) {
+</a> 	/* font */
+ 	initfonts((opt_font != NULL)? opt_font : FONT);
+ 
+<a href="#h2-7-3" id="h2-7-3" class="d">-	/* XXX: Assuming same size for bold font */
+</a><a href="#h2-7-4" id="h2-7-4" class="d">-	xw.cw = dc.font.rbearing - dc.font.lbearing;
+</a><a href="#h2-7-5" id="h2-7-5" class="d">-	xw.ch = dc.font.ascent + dc.font.descent;
+</a><a href="#h2-7-6" id="h2-7-6" class="d">-
+</a> 	/* colors */
+ 	xw.cmap = XDefaultColormap(xw.dpy, xw.scr);
+ 	xloadcols();
+<a href="#h2-8" id="h2-8" class="h">@@ -2166,37 +2182,59 @@ xinit(void) {
+</a> 
+ void
+ xdraws(char *s, Glyph base, int x, int y, int charlen, int bytelen) {
+<a href="#h2-8-3" id="h2-8-3" class="d">-	int fg = base.fg, bg = base.bg, temp;
+</a><a href="#h2-8-4" id="h2-8-4" class="d">-	int winx = BORDER+x*xw.cw, winy = BORDER+y*xw.ch + dc.font.ascent, width = charlen*xw.cw;
+</a><a href="#h2-8-5" id="h2-8-5" class="i">+	int winx = BORDER+x*xw.cw, winy = BORDER+y*xw.ch,
+</a><a href="#h2-8-6" id="h2-8-6" class="i">+	    width = charlen*xw.cw;
+</a> 	Font *font = &amp;dc.font;
+ 	XGlyphInfo extents;
+<a href="#h2-8-9" id="h2-8-9" class="d">-
+</a><a href="#h2-8-10" id="h2-8-10" class="d">-	/* only switch default fg/bg if term is in RV mode */
+</a><a href="#h2-8-11" id="h2-8-11" class="d">-	if(IS_SET(MODE_REVERSE)) {
+</a><a href="#h2-8-12" id="h2-8-12" class="d">-		if(fg == DefaultFG)
+</a><a href="#h2-8-13" id="h2-8-13" class="d">-			fg = DefaultBG;
+</a><a href="#h2-8-14" id="h2-8-14" class="d">-		if(bg == DefaultBG)
+</a><a href="#h2-8-15" id="h2-8-15" class="d">-			bg = DefaultFG;
+</a><a href="#h2-8-16" id="h2-8-16" class="d">-	}
+</a><a href="#h2-8-17" id="h2-8-17" class="i">+	XftColor *fg = &amp;dc.xft_col[base.fg], *bg = &amp;dc.xft_col[base.bg],
+</a><a href="#h2-8-18" id="h2-8-18" class="i">+		 *temp, revfg, revbg;
+</a><a href="#h2-8-19" id="h2-8-19" class="i">+	XRenderColor colfg, colbg;
+</a> 
+ 	if(base.mode &amp; ATTR_REVERSE)
+ 		temp = fg, fg = bg, bg = temp;
+<a href="#h2-8-23" id="h2-8-23" class="d">-
+</a><a href="#h2-8-24" id="h2-8-24" class="d">-	if(base.mode &amp; ATTR_BOLD)
+</a><a href="#h2-8-25" id="h2-8-25" class="i">+	if(base.mode &amp; ATTR_BOLD) {
+</a><a href="#h2-8-26" id="h2-8-26" class="i">+		fg = &amp;dc.xft_col[base.fg + 8];
+</a> 		font = &amp;dc.bfont;
+<a href="#h2-8-28" id="h2-8-28" class="d">-
+</a><a href="#h2-8-29" id="h2-8-29" class="i">+	}
+</a> 	if(base.mode &amp; ATTR_ITALIC)
+ 		font = &amp;dc.ifont;
+ 	if(base.mode &amp; (ATTR_ITALIC|ATTR_ITALIC))
+ 		font = &amp;dc.ibfont;
+ 
+<a href="#h2-8-35" id="h2-8-35" class="d">-	XftTextExtentsUtf8(xw.dpy, font-&gt;xft_set, (FcChar8 *)s, bytelen, &amp;extents);
+</a><a href="#h2-8-36" id="h2-8-36" class="i">+	if(IS_SET(MODE_REVERSE)) {
+</a><a href="#h2-8-37" id="h2-8-37" class="i">+		if(fg == &amp;dc.xft_col[DefaultFG]) {
+</a><a href="#h2-8-38" id="h2-8-38" class="i">+			fg = &amp;dc.xft_col[DefaultBG];
+</a><a href="#h2-8-39" id="h2-8-39" class="i">+		} else {
+</a><a href="#h2-8-40" id="h2-8-40" class="i">+			colfg.red = ~fg-&gt;color.red;
+</a><a href="#h2-8-41" id="h2-8-41" class="i">+			colfg.green = ~fg-&gt;color.green;
+</a><a href="#h2-8-42" id="h2-8-42" class="i">+			colfg.blue = ~fg-&gt;color.blue;
+</a><a href="#h2-8-43" id="h2-8-43" class="i">+			colfg.alpha = fg-&gt;color.alpha;
+</a><a href="#h2-8-44" id="h2-8-44" class="i">+			XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;colfg, &amp;revfg);
+</a><a href="#h2-8-45" id="h2-8-45" class="i">+			fg = &amp;revfg;
+</a><a href="#h2-8-46" id="h2-8-46" class="i">+		}
+</a><a href="#h2-8-47" id="h2-8-47" class="i">+
+</a><a href="#h2-8-48" id="h2-8-48" class="i">+		if(bg == &amp;dc.xft_col[DefaultBG]) {
+</a><a href="#h2-8-49" id="h2-8-49" class="i">+			bg = &amp;dc.xft_col[DefaultFG];
+</a><a href="#h2-8-50" id="h2-8-50" class="i">+		} else {
+</a><a href="#h2-8-51" id="h2-8-51" class="i">+			colbg.red = ~bg-&gt;color.red;
+</a><a href="#h2-8-52" id="h2-8-52" class="i">+			colbg.green = ~bg-&gt;color.green;
+</a><a href="#h2-8-53" id="h2-8-53" class="i">+			colbg.blue = ~bg-&gt;color.blue;
+</a><a href="#h2-8-54" id="h2-8-54" class="i">+			colbg.alpha = bg-&gt;color.alpha;
+</a><a href="#h2-8-55" id="h2-8-55" class="i">+			XftColorAllocValue(xw.dpy, xw.vis, xw.cmap, &amp;colbg, &amp;revbg);
+</a><a href="#h2-8-56" id="h2-8-56" class="i">+			bg = &amp;revbg;
+</a><a href="#h2-8-57" id="h2-8-57" class="i">+		}
+</a><a href="#h2-8-58" id="h2-8-58" class="i">+	}
+</a><a href="#h2-8-59" id="h2-8-59" class="i">+
+</a><a href="#h2-8-60" id="h2-8-60" class="i">+	XftTextExtentsUtf8(xw.dpy, font-&gt;xft_set, (FcChar8 *)s, bytelen,
+</a><a href="#h2-8-61" id="h2-8-61" class="i">+			&amp;extents);
+</a> 	width = extents.xOff;
+<a href="#h2-8-63" id="h2-8-63" class="d">-	XftDrawRect(xw.xft_draw, &amp;dc.xft_col[bg], winx, winy - font-&gt;ascent, width, xw.ch);
+</a><a href="#h2-8-64" id="h2-8-64" class="d">-	XftDrawStringUtf8(xw.xft_draw, &amp;dc.xft_col[fg], font-&gt;xft_set, winx, winy, (FcChar8 *)s, bytelen);
+</a><a href="#h2-8-65" id="h2-8-65" class="i">+
+</a><a href="#h2-8-66" id="h2-8-66" class="i">+	XftDrawRect(xw.xft_draw, bg, winx, winy, width, xw.ch);
+</a><a href="#h2-8-67" id="h2-8-67" class="i">+	XftDrawStringUtf8(xw.xft_draw, fg, font-&gt;xft_set, winx,
+</a><a href="#h2-8-68" id="h2-8-68" class="i">+			winy + font-&gt;ascent, (FcChar8 *)s, bytelen);
+</a> 
+ 	if(base.mode &amp; ATTR_UNDERLINE) {
+<a href="#h2-8-71" id="h2-8-71" class="d">-		XftDrawRect(xw.xft_draw, &amp;dc.xft_col[fg], winx, winy+1,
+</a><a href="#h2-8-72" id="h2-8-72" class="i">+		XftDrawRect(xw.xft_draw, fg, winx, winy+1,
+</a> 				width, 1);
+ 	}
+ }
+</pre>
+</div>
+</body>
+</html>

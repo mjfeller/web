@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>show dark cursor when unfocused. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/be2877cd042eaf5d0f7dda102f526357aa577232.html">be2877cd042eaf5d0f7dda102f526357aa577232</a>
+<b>parent</b> <a href="../commit/d8e11bdb0ecbccbaab7d944a577b9557ccff5d52.html">d8e11bdb0ecbccbaab7d944a577b9557ccff5d52</a>
+<b>Author:</b> Aurélien Aptel &lt;<a href="mailto:aurelien.aptel@gmail.com">aurelien.aptel@gmail.com</a>&gt;
+<b>Date:</b>   Wed, 15 Feb 2012 19:33:48 +0100
+
+show dark cursor when unfocused.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">TODO</a></td><td> | </td><td class="num">7</td><td><span class="i">++++++</span><span class="d">-</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h1">config.def.h</a></td><td> | </td><td class="num">10</td><td><span class="i">++++++</span><span class="d">----</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h2">st.c</a></td><td> | </td><td class="num">8</td><td><span class="i">++++++</span><span class="d">--</span></td></tr>
+</table></pre><pre>3 files changed, 18 insertions(+), 7 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/TODO.html">TODO</a> b/<a href="../file/TODO.html">TODO</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -10,10 +10,15 @@ code &amp; interface
+</a> 
+ * clean selection code
+ * clean and complete terminfo entry
+<a href="#h0-0-3" id="h0-0-3" class="d">-* fix shift up/down (shift selection in emacs)
+</a> * fast drawing
+ * ...
+ 
+<a href="#h0-0-7" id="h0-0-7" class="i">+bugs
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+----
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+* handle XOpenMI() errors
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+* fix shift up/down (shift selection in emacs)
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a> misc
+ ----
+ 
+<b>diff --git a/<a id="h1" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -32,13 +32,15 @@ static const char *colorname[] = {
+</a> 	
+ 	/* more colors can be added to use with DefaultXX */
+ 	&quot;#cccccc&quot;,
+<a href="#h1-0-3" id="h1-0-3" class="i">+	&quot;#333333&quot;,
+</a> };
+ 
+ /* Default colors (colorname index)
+<a href="#h1-0-7" id="h1-0-7" class="d">-   foreground, background, cursor   */
+</a><a href="#h1-0-8" id="h1-0-8" class="d">-#define DefaultFG 7
+</a><a href="#h1-0-9" id="h1-0-9" class="d">-#define DefaultBG 0
+</a><a href="#h1-0-10" id="h1-0-10" class="d">-#define DefaultCS 16
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+   foreground, background, cursor, unfocused cursor */
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+#define DefaultFG  7
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+#define DefaultBG  0
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+#define DefaultCS  16
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+#define DefaultUCS 17
+</a> 
+ /* Special keys (change &amp; recompile st.info accordingly)
+    Keep in mind that kpress() in st.c hardcodes some keys.
+<b>diff --git a/<a id="h2" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1826,10 +1826,14 @@ xdrawcursor(void) {
+</a> 	xcopy(oldx, oldy, 1, 1);
+ 
+ 	/* draw the new one */
+<a href="#h2-0-3" id="h2-0-3" class="d">-	if(!(term.c.state &amp; CURSOR_HIDE) &amp;&amp; (xw.state &amp; WIN_FOCUSED)) {
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-		sl = utf8size(g.c);
+</a><a href="#h2-0-5" id="h2-0-5" class="i">+	if(!(term.c.state &amp; CURSOR_HIDE)) {
+</a><a href="#h2-0-6" id="h2-0-6" class="i">+		if(!(xw.state &amp; WIN_FOCUSED))
+</a><a href="#h2-0-7" id="h2-0-7" class="i">+			g.bg = DefaultUCS;
+</a><a href="#h2-0-8" id="h2-0-8" class="i">+
+</a> 		if(IS_SET(MODE_REVERSE))
+ 			g.mode |= ATTR_REVERSE, g.fg = DefaultCS, g.bg = DefaultFG;
+<a href="#h2-0-11" id="h2-0-11" class="i">+
+</a><a href="#h2-0-12" id="h2-0-12" class="i">+		sl = utf8size(g.c);
+</a> 		xdraws(g.c, g, term.c.x, term.c.y, 1, sl);
+ 		oldx = term.c.x, oldy = term.c.y;
+ 	}
+</pre>
+</div>
+</body>
+</html>

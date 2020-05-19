@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Adding an FAQ entry for the keypad handling. - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/73879c172943928542225cdc975b3b7e2449ddc0.html">73879c172943928542225cdc975b3b7e2449ddc0</a>
+<b>parent</b> <a href="../commit/5facd29f75401891fbac9c83d64c684bdb8f7c39.html">5facd29f75401891fbac9c83d64c684bdb8f7c39</a>
+<b>Author:</b> Christoph Lohmann &lt;<a href="mailto:20h@r-36.net">20h@r-36.net</a>&gt;
+<b>Date:</b>   Mon,  7 Jan 2013 19:53:41 +0100
+
+Adding an FAQ entry for the keypad handling.
+
+Thanks &quot;Roberto E. Vargas Caballero&quot; &lt;k0ga@shike2.com&gt;!
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">FAQ</a></td><td> | </td><td class="num">35</td><td><span class="i">+++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+</table></pre><pre>1 file changed, 35 insertions(+), 0 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/FAQ.html">FAQ</a> b/<a href="../file/FAQ.html">FAQ</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -37,4 +37,39 @@ back mode aka “copy mode”, it’s C-a ESC. You probably want defscrollback
+</a> [0] http://en.wikipedia.org/wiki/GNU_Screen
+ [1] http://en.wikipedia.org/wiki/Tmux
+ --
+<a href="#h0-0-3" id="h0-0-3" class="i">+Why doesn&#39;t the Del key work in some programs?
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+Taken from the terminfo manpage:
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	If the terminal has a keypad that transmits codes when the keys
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	are pressed, this information can be given. Note that it is not
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	possible to handle terminals where the keypad only works in
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	local (this applies, for example, to the unshifted HP 2621 keys).
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	If the keypad can be set to transmit or not transmit, tive these
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+	codes as smkx and rmkx. Otherwise the keypad is assumed to
+</a><a href="#h0-0-13" id="h0-0-13" class="i">+	always transmit.
+</a><a href="#h0-0-14" id="h0-0-14" class="i">+
+</a><a href="#h0-0-15" id="h0-0-15" class="i">+In the st case smkx=\E[?1h\E= and rmkx=\E[?1l\E&gt;, so it is mandatory that
+</a><a href="#h0-0-16" id="h0-0-16" class="i">+applications which want to test against keypad keys, have to send these
+</a><a href="#h0-0-17" id="h0-0-17" class="i">+sequences.
+</a><a href="#h0-0-18" id="h0-0-18" class="i">+
+</a><a href="#h0-0-19" id="h0-0-19" class="i">+But buggy applications like bash and irssi for example don&#39;t do this. A fast
+</a><a href="#h0-0-20" id="h0-0-20" class="i">+solution for them is to use the following command:
+</a><a href="#h0-0-21" id="h0-0-21" class="i">+
+</a><a href="#h0-0-22" id="h0-0-22" class="i">+	$ echo ^[?1h^[= &gt;/dev/tty
+</a><a href="#h0-0-23" id="h0-0-23" class="i">+
+</a><a href="#h0-0-24" id="h0-0-24" class="i">+or
+</a><a href="#h0-0-25" id="h0-0-25" class="i">+	$ echo $(tput smkx) &gt;/dev/tty
+</a><a href="#h0-0-26" id="h0-0-26" class="i">+
+</a><a href="#h0-0-27" id="h0-0-27" class="i">+In the case of bash it is using readline, which has a different not in its
+</a><a href="#h0-0-28" id="h0-0-28" class="i">+manpage:
+</a><a href="#h0-0-29" id="h0-0-29" class="i">+
+</a><a href="#h0-0-30" id="h0-0-30" class="i">+	enable-keypad (Off)
+</a><a href="#h0-0-31" id="h0-0-31" class="i">+		When set to On, readline will try to enable the
+</a><a href="#h0-0-32" id="h0-0-32" class="i">+		application keypad when it is called. Some systems
+</a><a href="#h0-0-33" id="h0-0-33" class="i">+		need this to enable arrow keys.
+</a><a href="#h0-0-34" id="h0-0-34" class="i">+
+</a><a href="#h0-0-35" id="h0-0-35" class="i">+Adding this option to your .inputrc will fix the keypad problem for all
+</a><a href="#h0-0-36" id="h0-0-36" class="i">+applications using readline.
+</a><a href="#h0-0-37" id="h0-0-37" class="i">+--
+</a> 
+</pre>
+</div>
+</body>
+</html>

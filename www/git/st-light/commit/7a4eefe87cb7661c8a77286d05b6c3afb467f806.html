@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Add support for multiple charset definitions - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/7a4eefe87cb7661c8a77286d05b6c3afb467f806.html">7a4eefe87cb7661c8a77286d05b6c3afb467f806</a>
+<b>parent</b> <a href="../commit/c5c2365ab7c7ac2671b6e7d31cc9b0d41636393c.html">c5c2365ab7c7ac2671b6e7d31cc9b0d41636393c</a>
+<b>Author:</b> Roberto E. Vargas Caballero &lt;<a href="mailto:k0ga@shike2.com">k0ga@shike2.com</a>&gt;
+<b>Date:</b>   Tue,  1 Oct 2013 21:23:11 +0200
+
+Add support for multiple charset definitions
+
+vt100 has support for two defined charset, G0 and G1. Each charset
+can be defined, but in each moment is selected only one of both
+charset. This is usually used selecting a national charset in G0
+and graphic charset in G1, so you can switch between graphic
+charset and text charset without losing the national charset
+already defined.
+
+st hasn&#39;t support for national charsets, because it is an utf8
+based terminal emulator, but it has support for graphic
+charset because it is heavily used, but it only supports G0,
+without understanding G1 selection sequences, which causes some
+programs in some moments can print some garbage in the screen.
+
+This patch adds a fake support for multiple charset definitions,
+where we only support graphic charset and us-ascii charset, but
+we allow more of one charset definition.
+
+This patch allow define G0 until G3 charsets, but only accepts
+select G0 or G1, and it accepts some national charset definitions
+but all of them are mapped to us-ascii.
+
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">st.c</a></td><td> | </td><td class="num">82</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d">--------------------------</span></td></tr>
+</table></pre><pre>1 file changed, 55 insertions(+), 27 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -137,6 +137,16 @@ enum term_mode {
+</a> 	                  |MODE_MOUSEMANY,
+ };
+ 
+<a href="#h0-0-3" id="h0-0-3" class="i">+enum charset {
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+	CS_GRAPHIC0,
+</a><a href="#h0-0-5" id="h0-0-5" class="i">+	CS_GRAPHIC1,
+</a><a href="#h0-0-6" id="h0-0-6" class="i">+	CS_UK,
+</a><a href="#h0-0-7" id="h0-0-7" class="i">+	CS_USA,
+</a><a href="#h0-0-8" id="h0-0-8" class="i">+	CS_MULTI,
+</a><a href="#h0-0-9" id="h0-0-9" class="i">+	CS_GER,
+</a><a href="#h0-0-10" id="h0-0-10" class="i">+	CS_FIN
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+};
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a> enum escape_state {
+ 	ESC_START      = 1,
+ 	ESC_CSI        = 2,
+<a href="#h0-1" id="h0-1" class="h">@@ -216,6 +226,9 @@ typedef struct {
+</a> 	int bot;      /* bottom scroll limit */
+ 	int mode;     /* terminal mode flags */
+ 	int esc;      /* escape state flags */
+<a href="#h0-1-3" id="h0-1-3" class="i">+	char trantbl[4]; /* charset table translation */
+</a><a href="#h0-1-4" id="h0-1-4" class="i">+	int charset;  /* current charset */
+</a><a href="#h0-1-5" id="h0-1-5" class="i">+	int icharset; /* selected charset for sequence */
+</a> 	bool numlock; /* lock numbers in keyboard */
+ 	bool *tabs;
+ } Term;
+<a href="#h0-2" id="h0-2" class="h">@@ -367,6 +380,8 @@ static void tsetmode(bool, bool, int *, int);
+</a> static void tfulldirt(void);
+ static void techo(char *, int);
+ static long tdefcolor(int *, int *, int);
+<a href="#h0-2-3" id="h0-2-3" class="i">+static void tselcs(void);
+</a><a href="#h0-2-4" id="h0-2-4" class="i">+static void tdeftran(char);
+</a> static inline bool match(uint, uint);
+ static void ttynew(void);
+ static void ttyread(void);
+<a href="#h0-3" id="h0-3" class="h">@@ -1369,6 +1384,8 @@ treset(void) {
+</a> 	term.top = 0;
+ 	term.bot = term.row - 1;
+ 	term.mode = MODE_WRAP;
+<a href="#h0-3-3" id="h0-3-3" class="i">+	memset(term.trantbl, sizeof(term.trantbl), CS_USA);
+</a><a href="#h0-3-4" id="h0-3-4" class="i">+	term.charset = 0;
+</a> 
+ 	tclearregion(0, 0, term.col-1, term.row-1);
+ 	tmoveto(0, 0);
+<a href="#h0-4" id="h0-4" class="h">@@ -2260,6 +2277,33 @@ techo(char *buf, int len) {
+</a> }
+ 
+ void
+<a href="#h0-4-3" id="h0-4-3" class="i">+tdeftran(char ascii) {
+</a><a href="#h0-4-4" id="h0-4-4" class="i">+	char c, (*bp)[2];
+</a><a href="#h0-4-5" id="h0-4-5" class="i">+	static char tbl[][2] = {
+</a><a href="#h0-4-6" id="h0-4-6" class="i">+		{&#39;0&#39;, CS_GRAPHIC0}, {&#39;1&#39;, CS_GRAPHIC1}, {&#39;A&#39;, CS_UK},
+</a><a href="#h0-4-7" id="h0-4-7" class="i">+		{&#39;B&#39;, CS_USA},      {&#39;&lt;&#39;, CS_MULTI},    {&#39;K&#39;, CS_GER},
+</a><a href="#h0-4-8" id="h0-4-8" class="i">+		{&#39;5&#39;, CS_FIN},      {&#39;C&#39;, CS_FIN},
+</a><a href="#h0-4-9" id="h0-4-9" class="i">+		{0, 0}
+</a><a href="#h0-4-10" id="h0-4-10" class="i">+	};
+</a><a href="#h0-4-11" id="h0-4-11" class="i">+
+</a><a href="#h0-4-12" id="h0-4-12" class="i">+	for (bp = &amp;tbl[0]; (c = (*bp)[0]) &amp;&amp; c != ascii; ++bp)
+</a><a href="#h0-4-13" id="h0-4-13" class="i">+		/* nothing */;
+</a><a href="#h0-4-14" id="h0-4-14" class="i">+
+</a><a href="#h0-4-15" id="h0-4-15" class="i">+	if (c == 0)
+</a><a href="#h0-4-16" id="h0-4-16" class="i">+		fprintf(stderr, &quot;esc unhandled charset: ESC ( %c\n&quot;, ascii);
+</a><a href="#h0-4-17" id="h0-4-17" class="i">+	else
+</a><a href="#h0-4-18" id="h0-4-18" class="i">+		term.trantbl[term.icharset] = (*bp)[1];
+</a><a href="#h0-4-19" id="h0-4-19" class="i">+}
+</a><a href="#h0-4-20" id="h0-4-20" class="i">+
+</a><a href="#h0-4-21" id="h0-4-21" class="i">+void
+</a><a href="#h0-4-22" id="h0-4-22" class="i">+tselcs(void) {
+</a><a href="#h0-4-23" id="h0-4-23" class="i">+	if (term.trantbl[term.charset] == CS_GRAPHIC0)
+</a><a href="#h0-4-24" id="h0-4-24" class="i">+		term.c.attr.mode |= ATTR_GFX;
+</a><a href="#h0-4-25" id="h0-4-25" class="i">+	else
+</a><a href="#h0-4-26" id="h0-4-26" class="i">+		term.c.attr.mode &amp;= ~ATTR_GFX;
+</a><a href="#h0-4-27" id="h0-4-27" class="i">+}
+</a><a href="#h0-4-28" id="h0-4-28" class="i">+
+</a><a href="#h0-4-29" id="h0-4-29" class="i">+void
+</a> tputc(char *c, int len) {
+ 	uchar ascii = *c;
+ 	bool control = ascii &lt; &#39;\x20&#39; || ascii == 0177;
+<a href="#h0-5" id="h0-5" class="h">@@ -2351,13 +2395,12 @@ tputc(char *c, int len) {
+</a> 			term.esc = ESC_START;
+ 			return;
+ 		case &#39;\016&#39;: /* SO */
+<a href="#h0-5-3" id="h0-5-3" class="i">+			term.charset = 0;
+</a><a href="#h0-5-4" id="h0-5-4" class="i">+			tselcs();
+</a><a href="#h0-5-5" id="h0-5-5" class="i">+			return;
+</a> 		case &#39;\017&#39;: /* SI */
+<a href="#h0-5-7" id="h0-5-7" class="d">-			/*
+</a><a href="#h0-5-8" id="h0-5-8" class="d">-			 * Different charsets are hard to handle. Applications
+</a><a href="#h0-5-9" id="h0-5-9" class="d">-			 * should use the right alt charset escapes for the
+</a><a href="#h0-5-10" id="h0-5-10" class="d">-			 * only reason they still exist: line drawing. The
+</a><a href="#h0-5-11" id="h0-5-11" class="d">-			 * rest is incompatible history st should not support.
+</a><a href="#h0-5-12" id="h0-5-12" class="d">-			 */
+</a><a href="#h0-5-13" id="h0-5-13" class="i">+			term.charset = 1;
+</a><a href="#h0-5-14" id="h0-5-14" class="i">+			tselcs();
+</a> 			return;
+ 		case &#39;\032&#39;: /* SUB */
+ 		case &#39;\030&#39;: /* CAN */
+<a href="#h0-6" id="h0-6" class="h">@@ -2385,22 +2428,8 @@ tputc(char *c, int len) {
+</a> 			if(ascii == &#39;\\&#39;)
+ 				strhandle();
+ 		} else if(term.esc &amp; ESC_ALTCHARSET) {
+<a href="#h0-6-3" id="h0-6-3" class="d">-			switch(ascii) {
+</a><a href="#h0-6-4" id="h0-6-4" class="d">-			case &#39;0&#39;: /* Line drawing set */
+</a><a href="#h0-6-5" id="h0-6-5" class="d">-				term.c.attr.mode |= ATTR_GFX;
+</a><a href="#h0-6-6" id="h0-6-6" class="d">-				break;
+</a><a href="#h0-6-7" id="h0-6-7" class="d">-			case &#39;B&#39;: /* USASCII */
+</a><a href="#h0-6-8" id="h0-6-8" class="d">-				term.c.attr.mode &amp;= ~ATTR_GFX;
+</a><a href="#h0-6-9" id="h0-6-9" class="d">-				break;
+</a><a href="#h0-6-10" id="h0-6-10" class="d">-			case &#39;A&#39;: /* UK (IGNORED) */
+</a><a href="#h0-6-11" id="h0-6-11" class="d">-			case &#39;&lt;&#39;: /* multinational charset (IGNORED) */
+</a><a href="#h0-6-12" id="h0-6-12" class="d">-			case &#39;5&#39;: /* Finnish (IGNORED) */
+</a><a href="#h0-6-13" id="h0-6-13" class="d">-			case &#39;C&#39;: /* Finnish (IGNORED) */
+</a><a href="#h0-6-14" id="h0-6-14" class="d">-			case &#39;K&#39;: /* German (IGNORED) */
+</a><a href="#h0-6-15" id="h0-6-15" class="d">-				break;
+</a><a href="#h0-6-16" id="h0-6-16" class="d">-			default:
+</a><a href="#h0-6-17" id="h0-6-17" class="d">-				fprintf(stderr, &quot;esc unhandled charset: ESC ( %c\n&quot;, ascii);
+</a><a href="#h0-6-18" id="h0-6-18" class="d">-			}
+</a><a href="#h0-6-19" id="h0-6-19" class="i">+			tdeftran(ascii);
+</a><a href="#h0-6-20" id="h0-6-20" class="i">+			tselcs();
+</a> 			term.esc = 0;
+ 		} else if(term.esc &amp; ESC_TEST) {
+ 			if(ascii == &#39;8&#39;) { /* DEC screen alignment test. */
+<a href="#h0-7" id="h0-7" class="h">@@ -2431,13 +2460,12 @@ tputc(char *c, int len) {
+</a> 				term.esc |= ESC_STR;
+ 				break;
+ 			case &#39;(&#39;: /* set primary charset G0 */
+<a href="#h0-7-3" id="h0-7-3" class="i">+			case &#39;)&#39;: /* set secondary charset G1 */
+</a><a href="#h0-7-4" id="h0-7-4" class="i">+			case &#39;*&#39;: /* set tertiary charset G2 */
+</a><a href="#h0-7-5" id="h0-7-5" class="i">+			case &#39;+&#39;: /* set quaternary charset G3 */
+</a><a href="#h0-7-6" id="h0-7-6" class="i">+				term.icharset = ascii - &#39;(&#39;;
+</a> 				term.esc |= ESC_ALTCHARSET;
+ 				break;
+<a href="#h0-7-9" id="h0-7-9" class="d">-			case &#39;)&#39;: /* set secondary charset G1 (IGNORED) */
+</a><a href="#h0-7-10" id="h0-7-10" class="d">-			case &#39;*&#39;: /* set tertiary charset G2 (IGNORED) */
+</a><a href="#h0-7-11" id="h0-7-11" class="d">-			case &#39;+&#39;: /* set quaternary charset G3 (IGNORED) */
+</a><a href="#h0-7-12" id="h0-7-12" class="d">-				term.esc = 0;
+</a><a href="#h0-7-13" id="h0-7-13" class="d">-				break;
+</a> 			case &#39;D&#39;: /* IND -- Linefeed */
+ 				if(term.c.y == term.bot) {
+ 					tscrollup(term.top, 1);
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>fix build - st-light - Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</title>
+<link rel="icon" type="image/png" href="../favicon.png" />
+<link rel="alternate" type="application/atom+xml" title="st-light Atom Feed" href="../atom.xml" />
+<link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<table><tr><td><a href="../../"><img src="/logo.png" alt="" width="32" height="32" /></a></td><td><h1>st-light</h1><span class="desc">Unnamed repository; edit this file &#39;description&#39; to name the repository.
+</span></td></tr><tr><td></td><td>
+<a href="../log.html">Log</a> | <a href="../files.html">Files</a> | <a href="../refs.html">Refs</a> | <a href="../file/README.html">README</a> | <a href="../file/LICENSE.html">LICENSE</a></td></tr></table>
+<hr/>
+<div id="content">
+<pre><b>commit</b> <a href="../commit/596bb133a55a6aba13b55795a9a38e29fcf1b38b.html">596bb133a55a6aba13b55795a9a38e29fcf1b38b</a>
+<b>parent</b> <a href="../commit/0ba53e48c76a2a2668dfa270cfd0227461c3a91b.html">0ba53e48c76a2a2668dfa270cfd0227461c3a91b</a>
+<b>Author:</b> pancake &lt;<a href="mailto:pancake@nopcode.org">pancake@nopcode.org</a>&gt;
+<b>Date:</b>   Mon, 30 Aug 2010 23:49:15 +0200
+
+fix build
+
+use config.def.h mechanism
+add SHELL in config.h
+<b>Diffstat:</b>
+<table><tr><td class="M">M</td><td><a href="#h0">Makefile</a></td><td> | </td><td class="num">5</td><td><span class="i">++++</span><span class="d">-</span></td></tr>
+<tr><td class="A">A</td><td><a href="#h1">config.def.h</a></td><td> | </td><td class="num">90</td><td><span class="i">+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</span><span class="d"></span></td></tr>
+<tr><td class="D">D</td><td><a href="#h2">config.h</a></td><td> | </td><td class="num">89</td><td><span class="i"></span><span class="d">-------------------------------------------------------------------------------</span></td></tr>
+<tr><td class="M">M</td><td><a href="#h3">st.c</a></td><td> | </td><td class="num">6</td><td><span class="i">+++</span><span class="d">---</span></td></tr>
+</table></pre><pre>4 files changed, 97 insertions(+), 93 deletions(-)
+<hr/><b>diff --git a/<a id="h0" href="../file/Makefile.html">Makefile</a> b/<a href="../file/Makefile.html">Makefile</a></b>
+<a href="#h0-0" id="h0-0" class="h">@@ -8,12 +8,15 @@ OBJ = ${SRC:.c=.o}
+</a> 
+ all: options st
+ 
+<a href="#h0-0-3" id="h0-0-3" class="d">-options:
+</a><a href="#h0-0-4" id="h0-0-4" class="i">+options: options
+</a> 	@echo st build options:
+ 	@echo &quot;CFLAGS   = ${CFLAGS}&quot;
+ 	@echo &quot;LDFLAGS  = ${LDFLAGS}&quot;
+ 	@echo &quot;CC       = ${CC}&quot;
+ 
+<a href="#h0-0-10" id="h0-0-10" class="i">+config.h:
+</a><a href="#h0-0-11" id="h0-0-11" class="i">+	cp config.def.h config.h
+</a><a href="#h0-0-12" id="h0-0-12" class="i">+
+</a> .c.o:
+ 	@echo CC $&lt;
+ 	@${CC} -c ${CFLAGS} $&lt;
+<b>diff --git a/<a id="h1" href="../file/config.def.h.html">config.def.h</a> b/<a href="../file/config.def.h.html">config.def.h</a></b>
+<a href="#h1-0" id="h1-0" class="h">@@ -0,0 +1,90 @@
+</a><a href="#h1-0-0" id="h1-0-0" class="i">+#define TAB    8
+</a><a href="#h1-0-1" id="h1-0-1" class="i">+#define TNAME &quot;st-256color&quot;
+</a><a href="#h1-0-2" id="h1-0-2" class="i">+#define FONT &quot;6x13&quot;
+</a><a href="#h1-0-3" id="h1-0-3" class="i">+#define BOLDFONT &quot;6x13bold&quot;
+</a><a href="#h1-0-4" id="h1-0-4" class="i">+#define BORDER 2
+</a><a href="#h1-0-5" id="h1-0-5" class="i">+#define SHELL &quot;/bin/sh&quot;
+</a><a href="#h1-0-6" id="h1-0-6" class="i">+
+</a><a href="#h1-0-7" id="h1-0-7" class="i">+/* Terminal colors */
+</a><a href="#h1-0-8" id="h1-0-8" class="i">+static const char *colorname[] = {
+</a><a href="#h1-0-9" id="h1-0-9" class="i">+	&quot;black&quot;,
+</a><a href="#h1-0-10" id="h1-0-10" class="i">+	&quot;#CC0000&quot;,
+</a><a href="#h1-0-11" id="h1-0-11" class="i">+	&quot;#4E9A06&quot;,
+</a><a href="#h1-0-12" id="h1-0-12" class="i">+	&quot;#C4A000&quot;,
+</a><a href="#h1-0-13" id="h1-0-13" class="i">+	&quot;#3465A4&quot;,
+</a><a href="#h1-0-14" id="h1-0-14" class="i">+	&quot;#75507B&quot;,
+</a><a href="#h1-0-15" id="h1-0-15" class="i">+	&quot;#06989A&quot;,
+</a><a href="#h1-0-16" id="h1-0-16" class="i">+	&quot;#888a85&quot;,
+</a><a href="#h1-0-17" id="h1-0-17" class="i">+	&quot;#555753&quot;,
+</a><a href="#h1-0-18" id="h1-0-18" class="i">+	&quot;#EF2929&quot;,
+</a><a href="#h1-0-19" id="h1-0-19" class="i">+	&quot;#8AE234&quot;,
+</a><a href="#h1-0-20" id="h1-0-20" class="i">+	&quot;#FCE94F&quot;,
+</a><a href="#h1-0-21" id="h1-0-21" class="i">+	&quot;#729FCF&quot;,
+</a><a href="#h1-0-22" id="h1-0-22" class="i">+	&quot;#AD7FA8&quot;,
+</a><a href="#h1-0-23" id="h1-0-23" class="i">+	&quot;#34E2E2&quot;,
+</a><a href="#h1-0-24" id="h1-0-24" class="i">+	&quot;#EEEEEC&quot;
+</a><a href="#h1-0-25" id="h1-0-25" class="i">+};
+</a><a href="#h1-0-26" id="h1-0-26" class="i">+
+</a><a href="#h1-0-27" id="h1-0-27" class="i">+/* Default colors (colorname index) */
+</a><a href="#h1-0-28" id="h1-0-28" class="i">+/* foreground, background, cursor, visual bell */
+</a><a href="#h1-0-29" id="h1-0-29" class="i">+#define DefaultFG 7
+</a><a href="#h1-0-30" id="h1-0-30" class="i">+#define DefaultBG 0
+</a><a href="#h1-0-31" id="h1-0-31" class="i">+#define DefaultCS 1
+</a><a href="#h1-0-32" id="h1-0-32" class="i">+
+</a><a href="#h1-0-33" id="h1-0-33" class="i">+/* special keys */
+</a><a href="#h1-0-34" id="h1-0-34" class="i">+static Key key[] = {
+</a><a href="#h1-0-35" id="h1-0-35" class="i">+	{ XK_BackSpace, &quot;\177&quot; },
+</a><a href="#h1-0-36" id="h1-0-36" class="i">+	{ XK_Delete,    &quot;\033[3~&quot; },
+</a><a href="#h1-0-37" id="h1-0-37" class="i">+	{ XK_Home,      &quot;\033[1~&quot; },
+</a><a href="#h1-0-38" id="h1-0-38" class="i">+	{ XK_End,       &quot;\033[4~&quot; },
+</a><a href="#h1-0-39" id="h1-0-39" class="i">+	{ XK_Prior,     &quot;\033[5~&quot; },
+</a><a href="#h1-0-40" id="h1-0-40" class="i">+	{ XK_Next,      &quot;\033[6~&quot; },
+</a><a href="#h1-0-41" id="h1-0-41" class="i">+	{ XK_F1,        &quot;\033OP&quot;   },
+</a><a href="#h1-0-42" id="h1-0-42" class="i">+	{ XK_F2,        &quot;\033OQ&quot;   },
+</a><a href="#h1-0-43" id="h1-0-43" class="i">+	{ XK_F3,        &quot;\033OR&quot;   },
+</a><a href="#h1-0-44" id="h1-0-44" class="i">+	{ XK_F4,        &quot;\033OS&quot;   },
+</a><a href="#h1-0-45" id="h1-0-45" class="i">+	{ XK_F5,        &quot;\033[15~&quot; },
+</a><a href="#h1-0-46" id="h1-0-46" class="i">+	{ XK_F6,        &quot;\033[17~&quot; },
+</a><a href="#h1-0-47" id="h1-0-47" class="i">+	{ XK_F7,        &quot;\033[18~&quot; },
+</a><a href="#h1-0-48" id="h1-0-48" class="i">+	{ XK_F8,        &quot;\033[19~&quot; },
+</a><a href="#h1-0-49" id="h1-0-49" class="i">+	{ XK_F9,        &quot;\033[20~&quot; },
+</a><a href="#h1-0-50" id="h1-0-50" class="i">+	{ XK_F10,       &quot;\033[21~&quot; },
+</a><a href="#h1-0-51" id="h1-0-51" class="i">+	{ XK_F11,       &quot;\033[23~&quot; },
+</a><a href="#h1-0-52" id="h1-0-52" class="i">+	{ XK_F12,       &quot;\033[24~&quot; },
+</a><a href="#h1-0-53" id="h1-0-53" class="i">+};
+</a><a href="#h1-0-54" id="h1-0-54" class="i">+
+</a><a href="#h1-0-55" id="h1-0-55" class="i">+static char gfx[] = {
+</a><a href="#h1-0-56" id="h1-0-56" class="i">+	[&#39;}&#39;] = &#39;f&#39;,
+</a><a href="#h1-0-57" id="h1-0-57" class="i">+	[&#39;.&#39;] = &#39;v&#39;,
+</a><a href="#h1-0-58" id="h1-0-58" class="i">+	[&#39;,&#39;] = &#39;&lt;&#39;,
+</a><a href="#h1-0-59" id="h1-0-59" class="i">+	[&#39;+&#39;] = &#39;&gt;&#39;,
+</a><a href="#h1-0-60" id="h1-0-60" class="i">+	[&#39;-&#39;] = &#39;^&#39;,
+</a><a href="#h1-0-61" id="h1-0-61" class="i">+	[&#39;h&#39;] = &#39;#&#39;,
+</a><a href="#h1-0-62" id="h1-0-62" class="i">+	[&#39;~&#39;] = &#39;o&#39;,
+</a><a href="#h1-0-63" id="h1-0-63" class="i">+	[&#39;a&#39;] = &#39;:&#39;,
+</a><a href="#h1-0-64" id="h1-0-64" class="i">+	[&#39;f&#39;] = &#39;\\&#39;,
+</a><a href="#h1-0-65" id="h1-0-65" class="i">+	[&#39;`&#39;] = &#39;+&#39;,
+</a><a href="#h1-0-66" id="h1-0-66" class="i">+	[&#39;z&#39;] = &#39;&gt;&#39;,
+</a><a href="#h1-0-67" id="h1-0-67" class="i">+	[&#39;{&#39;] = &#39;*&#39;,
+</a><a href="#h1-0-68" id="h1-0-68" class="i">+	[&#39;q&#39;] = &#39;-&#39;,
+</a><a href="#h1-0-69" id="h1-0-69" class="i">+	[&#39;i&#39;] = &#39;#&#39;,
+</a><a href="#h1-0-70" id="h1-0-70" class="i">+	[&#39;n&#39;] = &#39;+&#39;,
+</a><a href="#h1-0-71" id="h1-0-71" class="i">+	[&#39;y&#39;] = &#39;&lt;&#39;,
+</a><a href="#h1-0-72" id="h1-0-72" class="i">+	[&#39;m&#39;] = &#39;+&#39;,
+</a><a href="#h1-0-73" id="h1-0-73" class="i">+	[&#39;j&#39;] = &#39;+&#39;,
+</a><a href="#h1-0-74" id="h1-0-74" class="i">+	[&#39;|&#39;] = &#39;!&#39;,
+</a><a href="#h1-0-75" id="h1-0-75" class="i">+	[&#39;g&#39;] = &#39;#&#39;,
+</a><a href="#h1-0-76" id="h1-0-76" class="i">+	[&#39;o&#39;] = &#39;~&#39;,
+</a><a href="#h1-0-77" id="h1-0-77" class="i">+	[&#39;p&#39;] = &#39;-&#39;,
+</a><a href="#h1-0-78" id="h1-0-78" class="i">+	[&#39;r&#39;] = &#39;-&#39;,
+</a><a href="#h1-0-79" id="h1-0-79" class="i">+	[&#39;s&#39;] = &#39;_&#39;,
+</a><a href="#h1-0-80" id="h1-0-80" class="i">+	[&#39;0&#39;] = &#39;#&#39;,
+</a><a href="#h1-0-81" id="h1-0-81" class="i">+	[&#39;w&#39;] = &#39;+&#39;,
+</a><a href="#h1-0-82" id="h1-0-82" class="i">+	[&#39;u&#39;] = &#39;+&#39;,
+</a><a href="#h1-0-83" id="h1-0-83" class="i">+	[&#39;t&#39;] = &#39;+&#39;,
+</a><a href="#h1-0-84" id="h1-0-84" class="i">+	[&#39;v&#39;] = &#39;+&#39;,
+</a><a href="#h1-0-85" id="h1-0-85" class="i">+	[&#39;l&#39;] = &#39;+&#39;,
+</a><a href="#h1-0-86" id="h1-0-86" class="i">+	[&#39;k&#39;] = &#39;+&#39;,
+</a><a href="#h1-0-87" id="h1-0-87" class="i">+	[&#39;x&#39;] = &#39;|&#39;,
+</a><a href="#h1-0-88" id="h1-0-88" class="i">+	[255] = 0,
+</a><a href="#h1-0-89" id="h1-0-89" class="i">+};
+</a><b>diff --git a/<a id="h2" href="../file/config.h.html">config.h</a> b/<a href="../file/config.h.html">config.h</a></b>
+<a href="#h2-0" id="h2-0" class="h">@@ -1,89 +0,0 @@
+</a><a href="#h2-0-0" id="h2-0-0" class="d">-#define TAB    8
+</a><a href="#h2-0-1" id="h2-0-1" class="d">-#define TNAME &quot;st-256color&quot;
+</a><a href="#h2-0-2" id="h2-0-2" class="d">-#define FONT &quot;6x13&quot;
+</a><a href="#h2-0-3" id="h2-0-3" class="d">-#define BOLDFONT &quot;6x13bold&quot;
+</a><a href="#h2-0-4" id="h2-0-4" class="d">-#define BORDER 2
+</a><a href="#h2-0-5" id="h2-0-5" class="d">-
+</a><a href="#h2-0-6" id="h2-0-6" class="d">-/* Terminal colors */
+</a><a href="#h2-0-7" id="h2-0-7" class="d">-static const char *colorname[] = {
+</a><a href="#h2-0-8" id="h2-0-8" class="d">-	&quot;black&quot;,
+</a><a href="#h2-0-9" id="h2-0-9" class="d">-	&quot;#CC0000&quot;,
+</a><a href="#h2-0-10" id="h2-0-10" class="d">-	&quot;#4E9A06&quot;,
+</a><a href="#h2-0-11" id="h2-0-11" class="d">-	&quot;#C4A000&quot;,
+</a><a href="#h2-0-12" id="h2-0-12" class="d">-	&quot;#3465A4&quot;,
+</a><a href="#h2-0-13" id="h2-0-13" class="d">-	&quot;#75507B&quot;,
+</a><a href="#h2-0-14" id="h2-0-14" class="d">-	&quot;#06989A&quot;,
+</a><a href="#h2-0-15" id="h2-0-15" class="d">-	&quot;#888a85&quot;,
+</a><a href="#h2-0-16" id="h2-0-16" class="d">-	&quot;#555753&quot;,
+</a><a href="#h2-0-17" id="h2-0-17" class="d">-	&quot;#EF2929&quot;,
+</a><a href="#h2-0-18" id="h2-0-18" class="d">-	&quot;#8AE234&quot;,
+</a><a href="#h2-0-19" id="h2-0-19" class="d">-	&quot;#FCE94F&quot;,
+</a><a href="#h2-0-20" id="h2-0-20" class="d">-	&quot;#729FCF&quot;,
+</a><a href="#h2-0-21" id="h2-0-21" class="d">-	&quot;#AD7FA8&quot;,
+</a><a href="#h2-0-22" id="h2-0-22" class="d">-	&quot;#34E2E2&quot;,
+</a><a href="#h2-0-23" id="h2-0-23" class="d">-	&quot;#EEEEEC&quot;
+</a><a href="#h2-0-24" id="h2-0-24" class="d">-};
+</a><a href="#h2-0-25" id="h2-0-25" class="d">-
+</a><a href="#h2-0-26" id="h2-0-26" class="d">-/* Default colors (colorname index) */
+</a><a href="#h2-0-27" id="h2-0-27" class="d">-/* foreground, background, cursor, visual bell */
+</a><a href="#h2-0-28" id="h2-0-28" class="d">-#define DefaultFG 7
+</a><a href="#h2-0-29" id="h2-0-29" class="d">-#define DefaultBG 0
+</a><a href="#h2-0-30" id="h2-0-30" class="d">-#define DefaultCS 1
+</a><a href="#h2-0-31" id="h2-0-31" class="d">-
+</a><a href="#h2-0-32" id="h2-0-32" class="d">-/* special keys */
+</a><a href="#h2-0-33" id="h2-0-33" class="d">-static Key key[] = {
+</a><a href="#h2-0-34" id="h2-0-34" class="d">-	{ XK_BackSpace, &quot;\177&quot; },
+</a><a href="#h2-0-35" id="h2-0-35" class="d">-	{ XK_Delete, &quot;\033[3~&quot; },
+</a><a href="#h2-0-36" id="h2-0-36" class="d">-	{ XK_Home,   &quot;\033[1~&quot; },
+</a><a href="#h2-0-37" id="h2-0-37" class="d">-	{ XK_End,    &quot;\033[4~&quot; },
+</a><a href="#h2-0-38" id="h2-0-38" class="d">-	{ XK_Prior,  &quot;\033[5~&quot; },
+</a><a href="#h2-0-39" id="h2-0-39" class="d">-	{ XK_Next,   &quot;\033[6~&quot; },
+</a><a href="#h2-0-40" id="h2-0-40" class="d">-	{ XK_F1,        &quot;\033OP&quot;   },
+</a><a href="#h2-0-41" id="h2-0-41" class="d">-	{ XK_F2,        &quot;\033OQ&quot;   },
+</a><a href="#h2-0-42" id="h2-0-42" class="d">-	{ XK_F3,        &quot;\033OR&quot;   },
+</a><a href="#h2-0-43" id="h2-0-43" class="d">-	{ XK_F4,        &quot;\033OS&quot;   },
+</a><a href="#h2-0-44" id="h2-0-44" class="d">-	{ XK_F5,        &quot;\033[15~&quot; },
+</a><a href="#h2-0-45" id="h2-0-45" class="d">-	{ XK_F6,        &quot;\033[17~&quot; },
+</a><a href="#h2-0-46" id="h2-0-46" class="d">-	{ XK_F7,        &quot;\033[18~&quot; },
+</a><a href="#h2-0-47" id="h2-0-47" class="d">-	{ XK_F8,        &quot;\033[19~&quot; },
+</a><a href="#h2-0-48" id="h2-0-48" class="d">-	{ XK_F9,        &quot;\033[20~&quot; },
+</a><a href="#h2-0-49" id="h2-0-49" class="d">-	{ XK_F10,       &quot;\033[21~&quot; },
+</a><a href="#h2-0-50" id="h2-0-50" class="d">-	{ XK_F11,       &quot;\033[23~&quot; },
+</a><a href="#h2-0-51" id="h2-0-51" class="d">-	{ XK_F12,       &quot;\033[24~&quot; },
+</a><a href="#h2-0-52" id="h2-0-52" class="d">-};
+</a><a href="#h2-0-53" id="h2-0-53" class="d">-
+</a><a href="#h2-0-54" id="h2-0-54" class="d">-static char gfx[] = {
+</a><a href="#h2-0-55" id="h2-0-55" class="d">-	[&#39;}&#39;] = &#39;f&#39;,
+</a><a href="#h2-0-56" id="h2-0-56" class="d">-	[&#39;.&#39;] = &#39;v&#39;,
+</a><a href="#h2-0-57" id="h2-0-57" class="d">-	[&#39;,&#39;] = &#39;&lt;&#39;,
+</a><a href="#h2-0-58" id="h2-0-58" class="d">-	[&#39;+&#39;] = &#39;&gt;&#39;,
+</a><a href="#h2-0-59" id="h2-0-59" class="d">-	[&#39;-&#39;] = &#39;^&#39;,
+</a><a href="#h2-0-60" id="h2-0-60" class="d">-	[&#39;h&#39;] = &#39;#&#39;,
+</a><a href="#h2-0-61" id="h2-0-61" class="d">-	[&#39;~&#39;] = &#39;o&#39;,
+</a><a href="#h2-0-62" id="h2-0-62" class="d">-	[&#39;a&#39;] = &#39;:&#39;,
+</a><a href="#h2-0-63" id="h2-0-63" class="d">-	[&#39;f&#39;] = &#39;\\&#39;,
+</a><a href="#h2-0-64" id="h2-0-64" class="d">-	[&#39;`&#39;] = &#39;+&#39;,
+</a><a href="#h2-0-65" id="h2-0-65" class="d">-	[&#39;z&#39;] = &#39;&gt;&#39;,
+</a><a href="#h2-0-66" id="h2-0-66" class="d">-	[&#39;{&#39;] = &#39;*&#39;,
+</a><a href="#h2-0-67" id="h2-0-67" class="d">-	[&#39;q&#39;] = &#39;-&#39;,
+</a><a href="#h2-0-68" id="h2-0-68" class="d">-	[&#39;i&#39;] = &#39;#&#39;,
+</a><a href="#h2-0-69" id="h2-0-69" class="d">-	[&#39;n&#39;] = &#39;+&#39;,
+</a><a href="#h2-0-70" id="h2-0-70" class="d">-	[&#39;y&#39;] = &#39;&lt;&#39;,
+</a><a href="#h2-0-71" id="h2-0-71" class="d">-	[&#39;m&#39;] = &#39;+&#39;,
+</a><a href="#h2-0-72" id="h2-0-72" class="d">-	[&#39;j&#39;] = &#39;+&#39;,
+</a><a href="#h2-0-73" id="h2-0-73" class="d">-	[&#39;|&#39;] = &#39;!&#39;,
+</a><a href="#h2-0-74" id="h2-0-74" class="d">-	[&#39;g&#39;] = &#39;#&#39;,
+</a><a href="#h2-0-75" id="h2-0-75" class="d">-	[&#39;o&#39;] = &#39;~&#39;,
+</a><a href="#h2-0-76" id="h2-0-76" class="d">-	[&#39;p&#39;] = &#39;-&#39;,
+</a><a href="#h2-0-77" id="h2-0-77" class="d">-	[&#39;r&#39;] = &#39;-&#39;,
+</a><a href="#h2-0-78" id="h2-0-78" class="d">-	[&#39;s&#39;] = &#39;_&#39;,
+</a><a href="#h2-0-79" id="h2-0-79" class="d">-	[&#39;0&#39;] = &#39;#&#39;,
+</a><a href="#h2-0-80" id="h2-0-80" class="d">-	[&#39;w&#39;] = &#39;+&#39;,
+</a><a href="#h2-0-81" id="h2-0-81" class="d">-	[&#39;u&#39;] = &#39;+&#39;,
+</a><a href="#h2-0-82" id="h2-0-82" class="d">-	[&#39;t&#39;] = &#39;+&#39;,
+</a><a href="#h2-0-83" id="h2-0-83" class="d">-	[&#39;v&#39;] = &#39;+&#39;,
+</a><a href="#h2-0-84" id="h2-0-84" class="d">-	[&#39;l&#39;] = &#39;+&#39;,
+</a><a href="#h2-0-85" id="h2-0-85" class="d">-	[&#39;k&#39;] = &#39;+&#39;,
+</a><a href="#h2-0-86" id="h2-0-86" class="d">-	[&#39;x&#39;] = &#39;|&#39;,
+</a><a href="#h2-0-87" id="h2-0-87" class="d">-	[255] = 0,
+</a><a href="#h2-0-88" id="h2-0-88" class="d">-};
+</a><b>diff --git a/<a id="h3" href="../file/st.c.html">st.c</a> b/<a href="../file/st.c.html">st.c</a></b>
+<a href="#h3-0" id="h3-0" class="h">@@ -213,10 +213,10 @@ static inline int selected(int x, int y) {
+</a> 	if ((seley==y &amp;&amp; selby==y)) {
+ 		int bx = MIN(selbx, selex);
+ 		int ex = MAX(selbx, selex);
+<a href="#h3-0-3" id="h3-0-3" class="d">-		return if(x&gt;=bx &amp;&amp; x&lt;=ex)
+</a><a href="#h3-0-4" id="h3-0-4" class="i">+		return (x&gt;=bx &amp;&amp; x&lt;=ex);
+</a> 	}
+ 	return (((y&gt;sb[1] &amp;&amp; y&lt;se[1]) || (y==se[1] &amp;&amp; x&lt;=se[0])) || \
+<a href="#h3-0-7" id="h3-0-7" class="d">-		(y==sb[1] &amp;&amp; x&gt;=sb[0] &amp;&amp; (x&lt;=se[0] || sb[1]!=se[1])))
+</a><a href="#h3-0-8" id="h3-0-8" class="i">+		(y==sb[1] &amp;&amp; x&gt;=sb[0] &amp;&amp; (x&lt;=se[0] || sb[1]!=se[1])));
+</a> }
+ 
+ static void getbuttoninfo(XEvent *e, int *b, int *x, int *y) {
+<a href="#h3-1" id="h3-1" class="h">@@ -331,7 +331,7 @@ die(const char *errstr, ...) {
+</a> void
+ execsh(void) {
+ 	char *args[3] = {getenv(&quot;SHELL&quot;), &quot;-i&quot;, NULL};
+<a href="#h3-1-3" id="h3-1-3" class="d">-	DEFAULT(args[0], &quot;/bin/sh&quot;); /* if getenv() failed */
+</a><a href="#h3-1-4" id="h3-1-4" class="i">+	DEFAULT(args[0], SHELL); /* if getenv() failed */
+</a> 	putenv(&quot;TERM=&quot; TNAME);
+ 	execvp(args[0], args);
+ }
+</pre>
+</div>
+</body>
+</html>
